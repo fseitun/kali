@@ -10,7 +10,6 @@ class KaliApp {
   private static instance: KaliApp | null = null
 
   constructor() {
-    // Handle hot reload - dispose of existing instance
     if (KaliApp.instance) {
       KaliApp.instance.dispose()
     }
@@ -21,8 +20,6 @@ class KaliApp {
     this.startButton = document.getElementById('start-button')! as HTMLButtonElement
 
     this.setupStartButton()
-
-    this.log(`🔄 [${new Date().toISOString()}] KaliApp instance created`)
   }
 
   private setupStartButton() {
@@ -37,34 +34,26 @@ class KaliApp {
 
   private async initialize() {
     try {
-      const initTime = new Date().toISOString()
-      this.log(`🚀 [${initTime}] Initializing Kali...`)
+      this.log('🚀 Initializing Kali...')
 
-      // Check for required APIs
       await this.checkBrowserSupport()
-
-      // Initialize wake word detector (includes audio context)
       await this.initializeWakeWord()
 
       this.initialized = true
       this.startButton.style.display = 'none'
       this.updateStatus('Say "Kali" to wake me up!')
-      this.log(`✅ [${new Date().toISOString()}] Core initialization complete`)
+      this.log('✅ Kali is ready')
 
     } catch (error) {
       this.startButton.disabled = false
       this.startButton.textContent = 'Start Kali'
       this.updateStatus('Initialization failed')
-      const errorTime = new Date().toISOString()
-      this.log(`❌ [${errorTime}] Error: ${error}`)
+      this.log(`❌ Error: ${error}`)
       console.error('Kali initialization error:', error)
     }
   }
 
   private async checkBrowserSupport() {
-    const checkTime = new Date().toISOString()
-    this.log(`🔍 [${checkTime}] Checking browser support...`)
-
     const requiredAPIs = [
       { name: 'AudioContext', api: window.AudioContext || (window as typeof window & { webkitAudioContext?: typeof AudioContext }).webkitAudioContext },
       { name: 'MediaDevices', api: navigator.mediaDevices },
@@ -77,39 +66,31 @@ class KaliApp {
         throw new Error(`${name} API not supported`)
       }
     }
-
-    this.log(`✅ [${new Date().toISOString()}] All required APIs available`)
   }
 
 
   private async initializeWakeWord() {
-    const wakeTime = new Date().toISOString()
-    this.log(`🎤 [${wakeTime}] Initializing wake word detector...`)
+    this.log('🎤 Initializing speech recognition...')
 
-    this.wakeWordDetector = new WakeWordDetector(() => {
-      this.handleWakeWord()
+    this.wakeWordDetector = new WakeWordDetector(
+      () => this.handleWakeWord(),
+      (text) => this.handleTranscription(text)
+    )
+
+    await this.wakeWordDetector.initialize((percent) => {
+      this.updateStatus(`Downloading model... ${percent}%`)
     })
 
-    await this.wakeWordDetector.initialize()
     await this.wakeWordDetector.startListening()
-
-    this.log(`✅ [${new Date().toISOString()}] Wake word detector initialized and listening`)
   }
 
   private handleWakeWord() {
-    const timestamp = new Date().toISOString()
-    this.log(`🔥 [${timestamp}] Wake word detected! Ready for voice command...`)
     this.updateStatus('Listening for command...')
+  }
 
-    // Debug: Show that wake word handler is triggered
-    console.log(`🚨 [${timestamp}] WAKE WORD HANDLER CALLED`)
-
-    // TODO: Start VAD and STT pipeline here
-    // For now, just reset status after a delay
-    setTimeout(() => {
-      this.updateStatus('Say "Kali" to wake me up!')
-      console.log(`⏰ [${new Date().toISOString()}] Wake word timeout - returning to listening state`)
-    }, 3000)
+  private handleTranscription(text: string) {
+    this.log(`You said: "${text}"`)
+    this.updateStatus('Say "Kali" to wake me up!')
   }
 
   private updateStatus(status: string) {
@@ -125,24 +106,16 @@ class KaliApp {
   }
 
   private async dispose() {
-    this.log(`🔄 [${new Date().toISOString()}] Disposing KaliApp instance for hot reload...`)
-
-    // Clean up wake word detector
     if (this.wakeWordDetector) {
       await this.wakeWordDetector.destroy()
       this.wakeWordDetector = null
     }
 
-    // Reset UI state
     this.initialized = false
     this.startButton.disabled = false
     this.startButton.textContent = 'Start Kali'
     this.updateStatus('Click "Start Kali" to begin voice interaction')
-
-    // Clear console logs
     this.consoleElement.innerHTML = ''
-
-    this.log(`✅ [${new Date().toISOString()}] KaliApp instance disposed`)
   }
 
   // Public methods for HMR access
@@ -161,9 +134,7 @@ document.addEventListener('DOMContentLoaded', () => {
   new KaliApp()
 })
 
-// Hot Module Replacement (HMR) support
 if (import.meta.hot) {
-  // Handle disposal on module invalidation
   import.meta.hot.dispose(async () => {
     const instance = KaliApp.getInstance()
     if (instance) {

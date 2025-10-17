@@ -14,9 +14,9 @@ This model ensures the Orchestrator's code remains small and universal, while th
 Technologies
 Platform: Foreground Web App (PWA) with the screen always on.
 
-Audio Pipeline: WebAudio AudioWorklet for processing, Porcupine WASM for wake-word, and a VAD for speech framing.
+Audio Pipeline: WebAudio AudioWorklet for processing, Vosk for wake-word detection and speech-to-text.
 
-STT: whisper.wasm (on-device) or a cloud fallback.
+STT: Vosk (on-device, fully offline and free) with runtime model caching.
 
 LLM: Remote API (e.g., OpenAI, Google Gemini).
 
@@ -26,19 +26,25 @@ State Store: IndexedDB for persistent session state.
 
 TTS & Sounds: Browser's speechSynthesis API and WebAudio for preloaded local sound effects.
 
+Note: Initially planned to use Porcupine for wake word detection, but Vosk provides both wake word and full STT capabilities with zero cost and unlimited users, making it ideal for families.
+
 Phased Development Plan
-Phase 1: The Core Audio Pipeline
+Phase 1: The Core Audio Pipeline ✅ COMPLETE
 Goal: Reliably capture a voice command after the wake word.
 
 Tasks:
 
-Implement the wake-word listener using AudioWorklet and Porcupine.
+✅ Implement the wake-word listener using AudioWorklet and Vosk keyword spotting.
 
-Integrate a Voice Activity Detector (VAD) to isolate speech.
+✅ State machine to switch between wake word listening and full transcription.
 
-Pipe the captured audio to an STT engine.
+✅ Runtime model downloading with Cache API for offline persistence.
+
+✅ Full speech-to-text transcription after wake word detection.
 
 Milestone: The system accurately transcribes a user's spoken command to the console after they say "Kali...".
+
+Status: COMPLETE - System detects "Kali" wake word, transcribes following speech, and displays results.
 
 Phase 2: The Primitive Orchestration Loop
 Goal: Build and validate the core LLM -> Validator -> DB Write cycle using primitive actions.

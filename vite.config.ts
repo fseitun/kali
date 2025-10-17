@@ -7,15 +7,32 @@ export default defineConfig({
       registerType: 'autoUpdate',
       workbox: {
         globPatterns: ['**/*.{js,css,html,ico,png,svg}'],
-        maximumFileSizeToCacheInBytes: 10 * 1024 * 1024 // 10 MB limit
+        maximumFileSizeToCacheInBytes: 10 * 1024 * 1024,
+        runtimeCaching: [
+          {
+            urlPattern: /^https:\/\/alphacephei\.com\/vosk\/models\/.*/i,
+            handler: 'CacheFirst',
+            options: {
+              cacheName: 'kali-models-v1',
+              expiration: {
+                maxEntries: 10,
+                maxAgeSeconds: 60 * 60 * 24 * 365
+              },
+              cacheableResponse: {
+                statuses: [0, 200]
+              }
+            }
+          }
+        ]
       },
       manifest: {
         name: 'Kali - Voice Game Moderator',
         short_name: 'Kali',
-        description: 'Voice-first game moderator',
+        description: 'Voice-first game moderator for kids',
         theme_color: '#000000',
         background_color: '#000000',
         display: 'standalone',
+        start_url: '/',
         icons: [
           {
             src: 'icon-192.svg',
@@ -32,7 +49,14 @@ export default defineConfig({
     })
   ],
   build: {
-    target: 'esnext'
+    target: 'esnext',
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          'vosk': ['vosk-browser']
+        }
+      }
+    }
   },
   server: {
     hmr: {
