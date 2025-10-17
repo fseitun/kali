@@ -24,7 +24,8 @@ export class WakeWordDetector {
 
   constructor(
     private onWakeWord: () => void,
-    private onTranscription: (text: string) => void
+    private onTranscription: (text: string) => void,
+    private onRawTranscription?: (raw: string, processed: string, wakeWordDetected: boolean) => void
   ) {
     this.isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
   }
@@ -107,7 +108,7 @@ export class WakeWordDetector {
 
       this.isListening = true
       this.state = DetectorState.LISTENING_FOR_WAKE_WORD
-      console.log('✅ Listening for wake word "kali"')
+      console.log('✅ Listening for wake word "zookeeper"')
 
     } catch (error) {
       console.error('Failed to start listening:', error)
@@ -149,7 +150,13 @@ export class WakeWordDetector {
     const lowerText = text.toLowerCase()
 
     if (this.state === DetectorState.LISTENING_FOR_WAKE_WORD) {
-      if (lowerText.includes('kali') || lowerText.includes('calli') || lowerText.includes('cally')) {
+      const wakeWordDetected = lowerText.includes('zookeeper') || lowerText.includes('zoo keeper')
+
+      if (this.onRawTranscription) {
+        this.onRawTranscription(text, wakeWordDetected ? text : '...', wakeWordDetected)
+      }
+
+      if (wakeWordDetected) {
         console.log('🔥 Wake word detected!')
         this.state = DetectorState.TRANSCRIBING
         this.onWakeWord()
@@ -158,6 +165,9 @@ export class WakeWordDetector {
     } else if (this.state === DetectorState.TRANSCRIBING) {
       if (!isPartial && text.trim()) {
         console.log(`📝 Transcription: "${text}"`)
+        if (this.onRawTranscription) {
+          this.onRawTranscription(text, text, true)
+        }
         this.onTranscription(text)
         this.resetToWakeWordMode()
       }
@@ -181,7 +191,7 @@ export class WakeWordDetector {
       this.transcriptionTimeout = null
     }
     this.state = DetectorState.LISTENING_FOR_WAKE_WORD
-    console.log('👂 Listening for wake word...')
+    console.log('👂 Listening for wake word "zookeeper"...')
   }
 
   async stopListening() {

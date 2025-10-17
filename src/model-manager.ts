@@ -1,5 +1,13 @@
+// TODO: Migrate to S3 or CORS-enabled CDN for production
+// Current: Loading from local /public/ directory due to CORS restrictions on alphacephei.com
+// Future: Upload model to AWS S3 with CORS policy configured:
+//   - Bucket policy: Allow s3:GetObject from your domain
+//   - CORS config: Add Access-Control-Allow-Origin header
+//   - Update MODEL_URL to S3 endpoint (e.g., https://your-bucket.s3.amazonaws.com/vosk-model-small-en-us-0.15.zip)
+// The caching infrastructure below is ready for S3 migration
+
 const MODEL_CACHE_NAME = 'kali-models-v1'
-const MODEL_URL = 'https://alphacephei.com/vosk/models/vosk-model-small-en-us-0.15.zip'
+const MODEL_URL = '/vosk-model-small-en-us-0.15.zip' // TODO: Replace with S3 URL when available
 const MODEL_VERSION = '0.15'
 
 export class ModelManager {

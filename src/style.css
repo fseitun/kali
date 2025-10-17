@@ -44,6 +44,72 @@ body {
   opacity: 0.8;
 }
 
+#transcription {
+  background: var(--console-bg);
+  border: 2px solid var(--accent-color);
+  border-radius: 4px;
+  padding: 1rem;
+  min-height: 150px;
+  max-height: 200px;
+  overflow-y: auto;
+  text-align: left;
+  font-family: 'Courier New', monospace;
+  font-size: 0.9rem;
+  line-height: 1.4;
+  margin-bottom: 1rem;
+}
+
+#transcription:empty::before {
+  content: 'Transcriptions will appear here...';
+  opacity: 0.4;
+  font-style: italic;
+}
+
+.transcription-entry {
+  margin-bottom: 0.75rem;
+  padding: 0.5rem;
+  border-radius: 3px;
+  border-left: 3px solid;
+  transition: all 0.3s ease;
+}
+
+.transcription-entry.detected {
+  background: rgba(0, 255, 0, 0.1);
+  border-left-color: var(--accent-color);
+}
+
+.transcription-entry.ignored {
+  background: rgba(255, 255, 255, 0.05);
+  border-left-color: rgba(255, 255, 255, 0.3);
+  opacity: 0.6;
+}
+
+.transcription-entry .timestamp {
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 0.8rem;
+  margin-right: 0.5rem;
+}
+
+.transcription-entry .raw {
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.transcription-entry .arrow {
+  margin: 0 0.5rem;
+  color: var(--accent-color);
+  font-weight: bold;
+}
+
+.transcription-entry.detected .processed {
+  color: var(--accent-color);
+  font-weight: bold;
+}
+
+.transcription-entry.ignored .processed {
+  color: rgba(255, 255, 255, 0.3);
+  font-style: italic;
+}
+
 #console {
   background: var(--console-bg);
   border: 1px solid var(--accent-color);

@@ -5,6 +5,7 @@ class KaliApp {
   private statusElement: HTMLElement
   private consoleElement: HTMLElement
   private startButton: HTMLButtonElement
+  private transcriptionElement: HTMLElement
   private wakeWordDetector: WakeWordDetector | null = null
   private initialized = false
   private static instance: KaliApp | null = null
@@ -18,6 +19,7 @@ class KaliApp {
     this.statusElement = document.getElementById('status')!
     this.consoleElement = document.getElementById('console')!
     this.startButton = document.getElementById('start-button')! as HTMLButtonElement
+    this.transcriptionElement = document.getElementById('transcription')!
 
     this.setupStartButton()
   }
@@ -41,7 +43,7 @@ class KaliApp {
 
       this.initialized = true
       this.startButton.style.display = 'none'
-      this.updateStatus('Say "Kali" to wake me up!')
+      this.updateStatus('Say "Zookeeper" to wake me up!')
       this.log('✅ Kali is ready')
 
     } catch (error) {
@@ -74,7 +76,8 @@ class KaliApp {
 
     this.wakeWordDetector = new WakeWordDetector(
       () => this.handleWakeWord(),
-      (text) => this.handleTranscription(text)
+      (text) => this.handleTranscription(text),
+      (raw, processed, wakeWordDetected) => this.handleRawTranscription(raw, processed, wakeWordDetected)
     )
 
     await this.wakeWordDetector.initialize((percent) => {
@@ -90,7 +93,26 @@ class KaliApp {
 
   private handleTranscription(text: string) {
     this.log(`You said: "${text}"`)
-    this.updateStatus('Say "Kali" to wake me up!')
+    this.updateStatus('Say "Zookeeper" to wake me up!')
+  }
+
+  private handleRawTranscription(raw: string, processed: string, wakeWordDetected: boolean) {
+    const timestamp = new Date().toLocaleTimeString()
+    const statusClass = wakeWordDetected ? 'detected' : 'ignored'
+
+    this.transcriptionElement.innerHTML = `
+      <div class="transcription-entry ${statusClass}">
+        <span class="timestamp">[${timestamp}]</span>
+        <span class="raw">"${raw}"</span>
+        <span class="arrow">→</span>
+        <span class="processed">"${processed}"</span>
+      </div>
+    ` + this.transcriptionElement.innerHTML
+
+    const entries = this.transcriptionElement.querySelectorAll('.transcription-entry')
+    if (entries.length > 10) {
+      entries[entries.length - 1].remove()
+    }
   }
 
   private updateStatus(status: string) {
