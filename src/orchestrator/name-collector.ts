@@ -65,6 +65,7 @@ export class NameCollector {
 
     return new Promise<number>((resolve) => {
       const handler = (text: string) => {
+        Logger.info(`Player count handler received: "${text}"`)
         if (this.timeoutHandle) {
           clearTimeout(this.timeoutHandle)
           this.timeoutHandle = null
@@ -85,15 +86,16 @@ export class NameCollector {
           resolve(count)
         } else {
           this.speechService.speak('Please say a number from 2 to 4.')
-          this.setupTimeout(() => resolve(2), 5000)
+          this.setupTimeout(() => resolve(2), 10000)
         }
       }
 
       onTranscript(handler)
       this.setupTimeout(() => {
+        Logger.info('Player count timeout - no response received')
         this.speechService.speak('No response. Defaulting to 2 players.')
         resolve(2)
-      }, 5000)
+      }, 10000)
     })
   }
 
@@ -104,6 +106,7 @@ export class NameCollector {
       let attempts = 0
 
       const handler = (text: string) => {
+        Logger.info(`Name handler for player ${playerNumber} received: "${text}"`)
         if (this.timeoutHandle) {
           clearTimeout(this.timeoutHandle)
           this.timeoutHandle = null
@@ -118,7 +121,7 @@ export class NameCollector {
           attempts++
           if (attempts < 2) {
             this.speechService.speak('Sorry, I didn\'t catch that. What\'s your name?')
-            this.setupTimeout(() => this.handleNameTimeout(playerNumber, resolve), 5000)
+            this.setupTimeout(() => this.handleNameTimeout(playerNumber, resolve), 10000)
           } else {
             this.handleNameTimeout(playerNumber, resolve)
           }
@@ -126,7 +129,10 @@ export class NameCollector {
       }
 
       onTranscript(handler)
-      this.setupTimeout(() => this.handleNameTimeout(playerNumber, resolve), 5000)
+      this.setupTimeout(() => {
+        Logger.info(`Name timeout for player ${playerNumber} - no valid response`)
+        this.handleNameTimeout(playerNumber, resolve)
+      }, 10000)
     })
   }
 
@@ -139,6 +145,7 @@ export class NameCollector {
     await this.speechService.speak(`${name}, is that correct?`)
 
     const confirmHandler = (text: string) => {
+      Logger.info(`Confirmation handler received: "${text}"`)
       if (this.timeoutHandle) {
         clearTimeout(this.timeoutHandle)
         this.timeoutHandle = null
@@ -160,9 +167,10 @@ export class NameCollector {
 
     onTranscript(confirmHandler)
     this.setupTimeout(() => {
+      Logger.info('Confirmation timeout - assuming yes')
       this.speechService.speak(`Great, ${name}!`)
       resolve(name)
-    }, 5000)
+    }, 10000)
   }
 
   private async retryNameCollection(
@@ -171,6 +179,7 @@ export class NameCollector {
     resolve: (value: string) => void
   ): Promise<void> {
     const handler = (text: string) => {
+      Logger.info(`Retry name handler received: "${text}"`)
       if (this.timeoutHandle) {
         clearTimeout(this.timeoutHandle)
         this.timeoutHandle = null
@@ -187,7 +196,10 @@ export class NameCollector {
     }
 
     onTranscript(handler)
-    this.setupTimeout(() => this.handleNameTimeout(playerNumber, resolve), 5000)
+    this.setupTimeout(() => {
+      Logger.info('Retry timeout - using fallback name')
+      this.handleNameTimeout(playerNumber, resolve)
+    }, 10000)
   }
 
   private handleNameTimeout(playerNumber: number, resolve: (value: string) => void): void {
@@ -243,6 +255,7 @@ export class NameCollector {
   ): Promise<string> {
     return new Promise<string>((resolve) => {
       const handler = (text: string) => {
+        Logger.info(`Conflict resolution handler received: "${text}"`)
         if (this.timeoutHandle) {
           clearTimeout(this.timeoutHandle)
           this.timeoutHandle = null
@@ -262,7 +275,10 @@ export class NameCollector {
       }
 
       onTranscript(handler)
-      this.setupTimeout(() => resolve(suggestion), 5000)
+      this.setupTimeout(() => {
+        Logger.info('Conflict resolution timeout - using suggestion')
+        resolve(suggestion)
+      }, 10000)
     })
   }
 
@@ -272,6 +288,7 @@ export class NameCollector {
     resolve: (value: string) => void
   ): Promise<void> {
     const handler = (text: string) => {
+      Logger.info(`Alternative name handler received: "${text}"`)
       if (this.timeoutHandle) {
         clearTimeout(this.timeoutHandle)
         this.timeoutHandle = null
@@ -292,10 +309,11 @@ export class NameCollector {
 
     onTranscript(handler)
     this.setupTimeout(() => {
+      Logger.info('Alternative name timeout - using fallback')
       const kindName = generateNickname(fallback, this.collectedNames)
       this.speechService.speak(`Let's go with ${kindName}.`)
       resolve(kindName)
-    }, 5000)
+    }, 10000)
   }
 
   private async createPlayers(): Promise<void> {

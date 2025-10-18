@@ -195,11 +195,18 @@ export class WakeWordDetector {
       }
     } else if (this.state === DetectorState.TRANSCRIBING) {
       if (!isPartial && text.trim()) {
+        let cleanedText = text
+        CONFIG.WAKE_WORD.TEXT.forEach(word => {
+          const regex = new RegExp(`\\b${word}\\b`, 'gi')
+          cleanedText = cleanedText.replace(regex, '')
+        })
+        cleanedText = cleanedText.trim()
+
         Logger.transcription(`Transcription: "${text}"`)
         if (this.onRawTranscription) {
-          this.onRawTranscription(text, text, true)
+          this.onRawTranscription(text, cleanedText, true)
         }
-        this.onTranscription(text)
+        this.onTranscription(cleanedText)
         this.resetToWakeWordMode()
       }
     }

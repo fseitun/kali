@@ -1,0 +1,12 @@
+.production-ui {
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 80vh;
+}
+
+.production-ui #start-button {
+  margin-top: 2rem;
+}

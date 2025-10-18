@@ -1,6 +1,4 @@
-import { CONFIG } from '../config'
 import { StatusIndicator } from '../components/status-indicator'
-import { Profiler } from '../utils/profiler'
 import { IUIService } from './ui-service'
 
 export class DebugUIService implements IUIService {
@@ -9,23 +7,22 @@ export class DebugUIService implements IUIService {
   constructor(
     private statusElement: HTMLElement,
     private consoleElement: HTMLElement,
-    private transcriptionElement: HTMLElement,
     private startButton: HTMLButtonElement
   ) {
     this.statusIndicator = new StatusIndicator('status-indicator')
-    this.setupPerformanceButton()
+    this.setupCopyLogsButton()
   }
 
-  private setupPerformanceButton(): void {
-    const perfButton = document.createElement('button')
-    perfButton.textContent = '📊 Performance Report'
-    perfButton.className = 'perf-button'
-    perfButton.style.cssText = `
+  private setupCopyLogsButton(): void {
+    const copyButton = document.createElement('button')
+    copyButton.textContent = '📋 Copy Logs'
+    copyButton.className = 'copy-logs-button'
+    copyButton.style.cssText = `
       position: fixed;
       bottom: 1rem;
       right: 1rem;
       padding: 0.5rem 1rem;
-      background: rgba(255, 191, 0, 0.8);
+      background: rgba(0, 255, 0, 0.8);
       color: #000;
       border: none;
       border-radius: 4px;
@@ -34,11 +31,23 @@ export class DebugUIService implements IUIService {
       font-size: 0.9rem;
       z-index: 1000;
     `
-    perfButton.addEventListener('click', () => {
-      console.log(Profiler.getReport())
-      alert('Performance report logged to console')
+    copyButton.addEventListener('click', async () => {
+      const logText = this.consoleElement.innerText
+      try {
+        await navigator.clipboard.writeText(logText)
+        const originalText = copyButton.textContent
+        copyButton.textContent = '✅ Copied!'
+        setTimeout(() => {
+          copyButton.textContent = originalText
+        }, 2000)
+      } catch {
+        copyButton.textContent = '❌ Failed'
+        setTimeout(() => {
+          copyButton.textContent = '📋 Copy Logs'
+        }, 2000)
+      }
     })
-    document.body.appendChild(perfButton)
+    document.body.appendChild(copyButton)
   }
 
   getStatusIndicator(): StatusIndicator {
@@ -57,23 +66,7 @@ export class DebugUIService implements IUIService {
     this.consoleElement.scrollTop = this.consoleElement.scrollHeight
   }
 
-  addTranscription(raw: string, processed: string, wakeWordDetected: boolean): void {
-    const timestamp = new Date().toLocaleTimeString()
-    const statusClass = wakeWordDetected ? 'detected' : 'ignored'
-
-    this.transcriptionElement.innerHTML = `
-      <div class="transcription-entry ${statusClass}">
-        <span class="timestamp">[${timestamp}]</span>
-        <span class="raw">"${raw}"</span>
-        <span class="arrow">→</span>
-        <span class="processed">"${processed}"</span>
-      </div>
-    ` + this.transcriptionElement.innerHTML
-
-    const entries = this.transcriptionElement.querySelectorAll('.transcription-entry')
-    if (entries.length > CONFIG.UI.MAX_TRANSCRIPTION_ENTRIES) {
-      entries[entries.length - 1].remove()
-    }
+  addTranscription(_raw: string, _processed: string, _wakeWordDetected: boolean): void {
   }
 
   clearConsole(): void {

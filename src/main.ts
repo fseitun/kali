@@ -1,7 +1,9 @@
-import './style.css'
+import './styles/shared.css'
+import './styles/production.css'
 import { KaliAppCore } from './kali-app-core'
 import { ProductionUIService } from './services/production-ui-service'
 import { SpeechService } from './services/speech-service'
+import { Logger } from './utils/logger'
 
 class KaliApp {
   private core: KaliAppCore
@@ -19,6 +21,8 @@ class KaliApp {
 
     this.uiService = new ProductionUIService(startButton)
     this.speechService = new SpeechService()
+
+    Logger.setUIService(this.uiService)
 
     this.core = new KaliAppCore(this.uiService, this.speechService)
 

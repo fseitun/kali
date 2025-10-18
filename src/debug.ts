@@ -1,8 +1,9 @@
-import './style.css'
-import './components/debug-ui.css'
+import './styles/shared.css'
+import './styles/debug.css'
 import { KaliAppCore } from './kali-app-core'
 import { DebugUIService } from './services/debug-ui-service'
 import { SpeechService } from './services/speech-service'
+import { Logger } from './utils/logger'
 
 class KaliDebugApp {
   private core: KaliAppCore
@@ -19,10 +20,11 @@ class KaliDebugApp {
     const statusElement = document.getElementById('status') as HTMLElement
     const consoleElement = document.getElementById('console') as HTMLElement
     const startButton = document.getElementById('start-button') as HTMLButtonElement
-    const transcriptionElement = document.getElementById('transcription') as HTMLElement
 
-    this.uiService = new DebugUIService(statusElement, consoleElement, transcriptionElement, startButton)
+    this.uiService = new DebugUIService(statusElement, consoleElement, startButton)
     this.speechService = new SpeechService()
+
+    Logger.setUIService(this.uiService)
 
     this.core = new KaliAppCore(this.uiService, this.speechService)
 
