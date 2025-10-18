@@ -3,7 +3,7 @@ import { GameState, PrimitiveAction } from '../orchestrator/types'
 import { CONFIG } from '../config'
 import { Logger } from '../utils/logger'
 import { Profiler } from '../utils/profiler'
-import { buildSystemPrompt } from './system-prompt'
+import { buildSystemPrompt, formatStateContext } from './system-prompt'
 
 export class GeminiClient implements ILLMClient {
   private systemPrompt: string = ''
@@ -23,7 +23,8 @@ export class GeminiClient implements ILLMClient {
     }
 
     try {
-      const userMessage = `Current State: ${JSON.stringify(state)}\n\nUser Command: "${transcript}"`
+      const stateContext = formatStateContext(state)
+      const userMessage = `${stateContext}\n\nUser Command: "${transcript}"`
       const fullPrompt = `${this.systemPrompt}\n\n${userMessage}`
 
       Profiler.start('llm.network')

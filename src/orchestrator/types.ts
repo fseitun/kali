@@ -1,5 +1,11 @@
 export type GameState = Record<string, unknown>
 
+export enum GamePhase {
+  SETUP = 'SETUP',
+  PLAYING = 'PLAYING',
+  FINISHED = 'FINISHED'
+}
+
 /**
  * Context for tracking execution depth to prevent infinite loops in agentic chains.
  */

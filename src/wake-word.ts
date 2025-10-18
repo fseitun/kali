@@ -131,6 +131,22 @@ export class WakeWordDetector {
     }
   }
 
+  /**
+   * Temporarily switches to transcription mode without wake word.
+   * Used for setup phases where direct voice input is expected.
+   */
+  enableDirectTranscription(): void {
+    this.state = DetectorState.TRANSCRIBING
+    Logger.info('Direct transcription mode enabled')
+  }
+
+  /**
+   * Returns to wake word listening mode.
+   */
+  disableDirectTranscription(): void {
+    this.resetToWakeWordMode()
+  }
+
   private processAudioData(pcm16: Int16Array) {
     if (!this.recognizer || !this.isListening) return
 

@@ -9,6 +9,8 @@ import { StateManager } from './state-manager'
 import { DebugUIService } from './services/debug-ui-service'
 import { SpeechService } from './services/speech-service'
 import { GameLoader, GameModule } from './game-loader'
+import { NameCollector } from './orchestrator/name-collector'
+import { GamePhase } from './orchestrator/types'
 import { checkBrowserSupport } from './utils/browser-support'
 import { CONFIG } from './config'
 
@@ -20,6 +22,7 @@ class KaliDebugApp {
   private stateManager: StateManager | null = null
   private initialized = false
   private static instance: KaliDebugApp | null = null
+  private currentNameHandler: ((text: string) => void) | null = null
 
   constructor() {
     if (KaliDebugApp.instance) {
@@ -57,10 +60,11 @@ class KaliDebugApp {
       checkBrowserSupport()
       await this.initializeOrchestrator()
       await this.initializeWakeWord()
+      await this.runNameCollection()
 
       this.initialized = true
       this.uiService.hideButton()
-      indicator.setState('idle')
+      indicator.setState('listening')
       this.uiService.updateStatus(`Say "${CONFIG.WAKE_WORD.TEXT[0]}" to wake me up!`)
       this.uiService.log('✅ Kali is ready')
 
@@ -85,11 +89,8 @@ class KaliDebugApp {
     this.stateManager = new StateManager()
     await this.stateManager.init(gameModule.initialState)
 
-    const currentState = await this.stateManager.getState()
-    if (!this.isValidGameState(currentState, gameModule)) {
-      this.uiService.log('⚠️ State schema mismatch detected, resetting state...')
-      await this.stateManager.resetState(gameModule.initialState)
-    }
+    this.uiService.log('🔄 Resetting to fresh game state...')
+    await this.stateManager.resetState(gameModule.initialState)
 
     this.uiService.log(`🤖 Configuring LLM (${CONFIG.LLM_PROVIDER}) with game rules...`)
     const llmClient = this.createLLMClient()
@@ -118,15 +119,6 @@ class KaliDebugApp {
       default:
         throw new Error(`Unknown LLM provider: ${CONFIG.LLM_PROVIDER}`)
     }
-  }
-
-  private isValidGameState(state: Record<string, unknown>, gameModule: GameModule): boolean {
-    const expectedGameName = gameModule.initialState.game as Record<string, unknown>
-    const currentGame = state.game as Record<string, unknown> | undefined
-
-    if (!currentGame) return false
-
-    return currentGame.name === expectedGameName.name
   }
 
   private formatGameRules(gameModule: GameModule): string {
@@ -170,6 +162,45 @@ ${rules.examples.map((ex, i) => `${i + 1}. ${ex}`).join('\n')}
     indicator.setState('listening')
   }
 
+  private async runNameCollection() {
+    if (!this.stateManager || !this.wakeWordDetector) {
+      throw new Error('Cannot run name collection: components not initialized')
+    }
+
+    try {
+      const state = await this.stateManager.getState()
+      const game = state.game as Record<string, unknown> | undefined
+
+      this.uiService.log(`🎮 Name collection check - phase: ${game?.phase} (expected: ${GamePhase.SETUP})`)
+
+      if (game?.phase !== GamePhase.SETUP) {
+        this.uiService.log('⏭️ Skipping name collection - not in SETUP phase')
+        return
+      }
+
+      this.uiService.log('👋 Starting name collection...')
+      const gameName = (game.name as string) || 'the game'
+      const nameCollector = new NameCollector(this.speechService, this.stateManager, gameName)
+
+      this.wakeWordDetector.enableDirectTranscription()
+
+      await nameCollector.collectNames((handler) => {
+        this.currentNameHandler = handler
+      })
+
+      this.currentNameHandler = null
+      this.wakeWordDetector.disableDirectTranscription()
+      this.uiService.log('✅ Name collection complete')
+    } catch (error) {
+      this.uiService.log(`❌ Name collection failed: ${error}`)
+      this.currentNameHandler = null
+      if (this.wakeWordDetector) {
+        this.wakeWordDetector.disableDirectTranscription()
+      }
+      throw error
+    }
+  }
+
   private handleWakeWord() {
     this.uiService.updateStatus('Listening for command...')
     const indicator = this.uiService.getStatusIndicator()
@@ -178,6 +209,11 @@ ${rules.examples.map((ex, i) => `${i + 1}. ${ex}`).join('\n')}
 
   private async handleTranscription(text: string) {
     this.uiService.log(`You said: "${text}"`)
+
+    if (this.currentNameHandler) {
+      this.currentNameHandler(text)
+      return
+    }
 
     if (this.orchestrator) {
       await this.orchestrator.handleTranscript(text)

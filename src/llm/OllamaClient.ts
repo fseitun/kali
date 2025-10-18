@@ -3,7 +3,7 @@ import { GameState, PrimitiveAction } from '../orchestrator/types'
 import { CONFIG } from '../config'
 import { Logger } from '../utils/logger'
 import { Profiler } from '../utils/profiler'
-import { buildSystemPrompt } from './system-prompt'
+import { buildSystemPrompt, formatStateContext } from './system-prompt'
 
 /**
  * Ollama LLM client implementation that communicates with a local Ollama instance.
@@ -22,7 +22,8 @@ export class OllamaClient implements ILLMClient {
     }
 
     try {
-      const userMessage = `Current State: ${JSON.stringify(state)}\n\nUser Command: "${transcript}"`
+      const stateContext = formatStateContext(state)
+      const userMessage = `${stateContext}\n\nUser Command: "${transcript}"`
 
       Profiler.start('llm.network')
       const response = await fetch(CONFIG.OLLAMA.API_URL, {

@@ -8,6 +8,8 @@ import { StateManager } from './state-manager'
 import { ProductionUIService } from './services/production-ui-service'
 import { SpeechService } from './services/speech-service'
 import { GameLoader, GameModule } from './game-loader'
+import { NameCollector } from './orchestrator/name-collector'
+import { GamePhase } from './orchestrator/types'
 import { checkBrowserSupport } from './utils/browser-support'
 import { CONFIG } from './config'
 
@@ -19,6 +21,7 @@ class KaliApp {
   private stateManager: StateManager | null = null
   private initialized = false
   private static instance: KaliApp | null = null
+  private currentNameHandler: ((text: string) => void) | null = null
 
   constructor() {
     if (KaliApp.instance) {
@@ -52,10 +55,11 @@ class KaliApp {
       checkBrowserSupport()
       await this.initializeOrchestrator()
       await this.initializeWakeWord()
+      await this.runNameCollection()
 
       this.initialized = true
       this.uiService.hideButton()
-      indicator.setState('idle')
+      indicator.setState('listening')
 
     } catch (error) {
       this.uiService.setButtonState('Start Kali', false)
@@ -73,10 +77,7 @@ class KaliApp {
     this.stateManager = new StateManager()
     await this.stateManager.init(gameModule.initialState)
 
-    const currentState = await this.stateManager.getState()
-    if (!this.isValidGameState(currentState, gameModule)) {
-      await this.stateManager.resetState(gameModule.initialState)
-    }
+    await this.stateManager.resetState(gameModule.initialState)
 
     const llmClient = this.createLLMClient()
     llmClient.setGameRules(this.formatGameRules(gameModule))
@@ -101,15 +102,6 @@ class KaliApp {
       default:
         throw new Error(`Unknown LLM provider: ${CONFIG.LLM_PROVIDER}`)
     }
-  }
-
-  private isValidGameState(state: Record<string, unknown>, gameModule: GameModule): boolean {
-    const expectedGameName = gameModule.initialState.game as Record<string, unknown>
-    const currentGame = state.game as Record<string, unknown> | undefined
-
-    if (!currentGame) return false
-
-    return currentGame.name === expectedGameName.name
   }
 
   private formatGameRules(gameModule: GameModule): string {
@@ -145,9 +137,47 @@ ${rules.examples.map((ex, i) => `${i + 1}. ${ex}`).join('\n')}
     )
 
     await this.wakeWordDetector.initialize()
-
     await this.wakeWordDetector.startListening()
     indicator.setState('listening')
+  }
+
+  private async runNameCollection() {
+    if (!this.stateManager || !this.wakeWordDetector) {
+      throw new Error('Cannot run name collection: components not initialized')
+    }
+
+    try {
+      const state = await this.stateManager.getState()
+      const game = state.game as Record<string, unknown> | undefined
+
+      console.log('🎮 Name collection check - phase:', game?.phase, 'expected:', GamePhase.SETUP)
+
+      if (game?.phase !== GamePhase.SETUP) {
+        console.log('⏭️ Skipping name collection - not in SETUP phase')
+        return
+      }
+
+      console.log('👋 Starting name collection...')
+      const gameName = (game.name as string) || 'the game'
+      const nameCollector = new NameCollector(this.speechService, this.stateManager, gameName)
+
+      this.wakeWordDetector.enableDirectTranscription()
+
+      await nameCollector.collectNames((handler) => {
+        this.currentNameHandler = handler
+      })
+
+      this.currentNameHandler = null
+      this.wakeWordDetector.disableDirectTranscription()
+      console.log('✅ Name collection complete')
+    } catch (error) {
+      console.error('❌ Name collection failed:', error)
+      this.currentNameHandler = null
+      if (this.wakeWordDetector) {
+        this.wakeWordDetector.disableDirectTranscription()
+      }
+      throw error
+    }
   }
 
   private handleWakeWord() {
@@ -156,6 +186,11 @@ ${rules.examples.map((ex, i) => `${i + 1}. ${ex}`).join('\n')}
   }
 
   private async handleTranscription(text: string) {
+    if (this.currentNameHandler) {
+      this.currentNameHandler(text)
+      return
+    }
+
     if (this.orchestrator) {
       await this.orchestrator.handleTranscript(text)
     }

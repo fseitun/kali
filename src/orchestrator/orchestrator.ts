@@ -40,6 +40,33 @@ export class Orchestrator {
   }
 
   /**
+   * Corrects common transcription errors from speech recognition.
+   * @param transcript - The raw transcript from speech recognition
+   * @returns Corrected transcript
+   */
+  private correctTranscriptionErrors(transcript: string): string {
+    const corrections: Record<string, string> = {
+      'i rode': 'i rolled',
+      'I rode': 'I rolled',
+      'i wrote': 'i rolled',
+      'I wrote': 'I rolled',
+      ' rode a ': ' rolled a ',
+      ' rode an ': ' rolled an ',
+      ' wrote a ': ' rolled a ',
+      ' wrote an ': ' rolled an ',
+      ' wrote than ': ' rolled an ',
+      ' rode than ': ' rolled an ',
+    }
+
+    let corrected = transcript
+    for (const [error, correction] of Object.entries(corrections)) {
+      corrected = corrected.replace(new RegExp(error, 'g'), correction)
+    }
+
+    return corrected
+  }
+
+  /**
    * Processes a voice transcript by sending to LLM and executing returned actions.
    * This is the main entry point for handling user voice commands.
    * @param transcript - The transcribed user command
@@ -69,13 +96,14 @@ export class Orchestrator {
     context: ExecutionContext
   ): Promise<void> {
     try {
-      Logger.brain(`Orchestrator processing: ${transcript} (depth: ${context.depth})`)
+      const correctedTranscript = this.correctTranscriptionErrors(transcript)
+      Logger.brain(`Orchestrator processing: ${correctedTranscript} (depth: ${context.depth})`)
 
       const state = await this.stateManager.getState()
       Logger.state('Current state:', state)
 
       Profiler.start('orchestrator.llm')
-      const actions = await this.llmClient.getActions(transcript, state)
+      const actions = await this.llmClient.getActions(correctedTranscript, state)
       Profiler.end('orchestrator.llm')
 
       Logger.robot('LLM returned actions:', actions)
