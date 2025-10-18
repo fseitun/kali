@@ -124,6 +124,25 @@ This model ensures the Orchestrator's code remains small and universal, while th
 
 ### Medium Priority
 
+#### Hybrid Deterministic Rule Enforcement
+**Context:** Currently, ladder/snake moves in Snakes and Ladders are automatically enforced by the orchestrator after position changes. This hybrid approach keeps game-specific deterministic rules in code while letting the LLM handle narrative and interpretation.
+
+**Status:** Implemented for ladder/snake moves in Snakes and Ladders (see `orchestrator.ts:checkAndApplyBoardMoves`)
+
+**Future Expansion Considerations:**
+* **Win Condition Checking:** Automatically detect and enforce win conditions (e.g., position >= 100) rather than relying on LLM
+* **Bounds Checking:** Prevent invalid moves (e.g., position < 0, position > max)
+* **Turn Validation:** Automatically enforce turn order rather than trusting LLM
+* **Resource Management:** In complex games (D&D), enforce resource constraints (e.g., can't spend more mana than available)
+
+**Trade-offs:**
+* **Pro:** 100% reliable, fast, cheaper, deterministic
+* **Pro:** Catches LLM errors silently without breaking game flow
+* **Con:** Game-specific logic in orchestrator (less generic)
+* **Con:** Need to update code for each game's deterministic rules
+
+**Decision Point:** Evaluate per-game whether critical rules should be code-enforced or LLM-handled. Simple deterministic rules (ladders, bounds) are good candidates for code enforcement. Complex rules requiring interpretation (combat strategies, roleplay outcomes) should stay with LLM.
+
 #### State History & Rollback System
 **Context:** Users can authoritatively override state (e.g., "I'm at level 81 with a sword"), but they might make mistakes and need to recover from errors.
 

@@ -6,6 +6,7 @@ import { validateActions } from './validator'
 import { PrimitiveAction, ExecutionContext, ActionHandler } from './types'
 import { Logger } from '../utils/logger'
 import { Profiler } from '../utils/profiler'
+import { getPlayerIndex } from '../utils/player-helper'
 
 /**
  * Core orchestrator that processes voice transcripts through LLM,
@@ -40,33 +41,6 @@ export class Orchestrator {
   }
 
   /**
-   * Corrects common transcription errors from speech recognition.
-   * @param transcript - The raw transcript from speech recognition
-   * @returns Corrected transcript
-   */
-  private correctTranscriptionErrors(transcript: string): string {
-    const corrections: Record<string, string> = {
-      'i rode': 'i rolled',
-      'I rode': 'I rolled',
-      'i wrote': 'i rolled',
-      'I wrote': 'I rolled',
-      ' rode a ': ' rolled a ',
-      ' rode an ': ' rolled an ',
-      ' wrote a ': ' rolled a ',
-      ' wrote an ': ' rolled an ',
-      ' wrote than ': ' rolled an ',
-      ' rode than ': ' rolled an ',
-    }
-
-    let corrected = transcript
-    for (const [error, correction] of Object.entries(corrections)) {
-      corrected = corrected.replace(new RegExp(error, 'g'), correction)
-    }
-
-    return corrected
-  }
-
-  /**
    * Processes a voice transcript by sending to LLM and executing returned actions.
    * This is the main entry point for handling user voice commands.
    * @param transcript - The transcribed user command
@@ -96,14 +70,13 @@ export class Orchestrator {
     context: ExecutionContext
   ): Promise<void> {
     try {
-      const correctedTranscript = this.correctTranscriptionErrors(transcript)
-      Logger.brain(`Orchestrator processing: ${correctedTranscript} (depth: ${context.depth})`)
+      Logger.brain(`Orchestrator processing: ${transcript} (depth: ${context.depth})`)
 
       const state = await this.stateManager.getState()
       Logger.state('Current state:', state)
 
       Profiler.start('orchestrator.llm')
-      const actions = await this.llmClient.getActions(correctedTranscript, state)
+      const actions = await this.llmClient.getActions(transcript, state)
       Profiler.end('orchestrator.llm')
 
       Logger.robot('LLM returned actions:', actions)
@@ -151,6 +124,63 @@ export class Orchestrator {
     }
   }
 
+  private async checkAndApplyBoardMoves(path: string): Promise<void> {
+    const playerPositionMatch = path.match(/^players\.(\d+)\.position$/)
+    if (!playerPositionMatch) {
+      return
+    }
+
+    const position = await this.stateManager.get(path) as number
+
+    if (typeof position !== 'number') {
+      return
+    }
+
+    const state = await this.stateManager.getState()
+    const board = state.board as Record<string, unknown> | undefined
+    const moves = board?.moves as Record<string, number> | undefined
+
+    if (!moves) {
+      return
+    }
+
+    const destination = moves[position.toString()]
+    if (destination !== undefined && destination !== position) {
+      const isLadder = destination > position
+      const moveType = isLadder ? 'ladder' : 'snake'
+      Logger.info(`🎲 Auto-applying ${moveType}: position ${position} → ${destination}`)
+      await this.stateManager.set(path, destination)
+    }
+  }
+
+  private async validatePlayerPath(path: string): Promise<void> {
+    const playerPathMatch = path.match(/^players\.(\d+)\./)
+    if (!playerPathMatch) {
+      return
+    }
+
+    const playerIndex = parseInt(playerPathMatch[1], 10)
+    const state = await this.stateManager.getState()
+    const game = state.game as Record<string, unknown> | undefined
+    const currentTurn = game?.turn as string | undefined
+
+    if (!currentTurn) {
+      return
+    }
+
+    try {
+      const expectedIndex = getPlayerIndex(currentTurn)
+      if (playerIndex !== expectedIndex) {
+        Logger.warn(
+          `⚠️ Player index mismatch! Current turn is ${currentTurn} (players.${expectedIndex}) ` +
+          `but modifying players.${playerIndex}. This may be incorrect.`
+        )
+      }
+    } catch (error) {
+      Logger.warn(`Unable to validate player path: ${error}`)
+    }
+  }
+
   private async executeAction(
     action: PrimitiveAction,
     context: ExecutionContext
@@ -163,14 +193,17 @@ export class Orchestrator {
 
     switch (action.action) {
       case 'SET_STATE': {
+        await this.validatePlayerPath(action.path)
         Logger.write(`Setting state: ${action.path} = ${JSON.stringify(action.value)}`)
         await this.stateManager.set(action.path, action.value)
+        await this.checkAndApplyBoardMoves(action.path)
         const newState = await this.stateManager.getState()
         Logger.state('New state:', newState)
         break
       }
 
       case 'ADD_STATE': {
+        await this.validatePlayerPath(action.path)
         const currentValue = await this.stateManager.get(action.path)
         if (typeof currentValue !== 'number') {
           throw new Error(`Cannot ADD_STATE: ${action.path} is not a number`)
@@ -178,10 +211,12 @@ export class Orchestrator {
         const newValue = currentValue + action.value
         Logger.write(`Adding to state: ${action.path} (${currentValue} + ${action.value} = ${newValue})`)
         await this.stateManager.set(action.path, newValue)
+        await this.checkAndApplyBoardMoves(action.path)
         break
       }
 
       case 'SUBTRACT_STATE': {
+        await this.validatePlayerPath(action.path)
         const currentValue = await this.stateManager.get(action.path)
         if (typeof currentValue !== 'number') {
           throw new Error(`Cannot SUBTRACT_STATE: ${action.path} is not a number`)

@@ -113,8 +113,7 @@ export class NameCollector {
         const validation = validateName(cleaned)
 
         if (validation.valid) {
-          this.speechService.speak(`Great, ${validation.cleaned}!`)
-          resolve(validation.cleaned)
+          this.confirmName(validation.cleaned, onTranscript, playerNumber, resolve)
         } else {
           attempts++
           if (attempts < 2) {
@@ -129,6 +128,66 @@ export class NameCollector {
       onTranscript(handler)
       this.setupTimeout(() => this.handleNameTimeout(playerNumber, resolve), 5000)
     })
+  }
+
+  private async confirmName(
+    name: string,
+    onTranscript: (handler: (text: string) => void) => void,
+    playerNumber: number,
+    resolve: (value: string) => void
+  ): Promise<void> {
+    await this.speechService.speak(`${name}, is that correct?`)
+
+    const confirmHandler = (text: string) => {
+      if (this.timeoutHandle) {
+        clearTimeout(this.timeoutHandle)
+        this.timeoutHandle = null
+      }
+
+      const lower = text.toLowerCase().trim()
+
+      if (lower.includes('yes') || lower.includes('yeah') || lower.includes('correct') || lower.includes('right')) {
+        this.speechService.speak(`Great, ${name}!`)
+        resolve(name)
+      } else if (lower.includes('no') || lower.includes('nope')) {
+        this.speechService.speak('Okay, what should I call you?')
+        this.retryNameCollection(onTranscript, playerNumber, resolve)
+      } else {
+        this.speechService.speak(`Great, ${name}!`)
+        resolve(name)
+      }
+    }
+
+    onTranscript(confirmHandler)
+    this.setupTimeout(() => {
+      this.speechService.speak(`Great, ${name}!`)
+      resolve(name)
+    }, 5000)
+  }
+
+  private async retryNameCollection(
+    onTranscript: (handler: (text: string) => void) => void,
+    playerNumber: number,
+    resolve: (value: string) => void
+  ): Promise<void> {
+    const handler = (text: string) => {
+      if (this.timeoutHandle) {
+        clearTimeout(this.timeoutHandle)
+        this.timeoutHandle = null
+      }
+
+      const cleaned = text.replace(/zookeeper/gi, '').replace(/zoo keeper/gi, '').trim()
+      const validation = validateName(cleaned)
+
+      if (validation.valid) {
+        this.confirmName(validation.cleaned, onTranscript, playerNumber, resolve)
+      } else {
+        this.handleNameTimeout(playerNumber, resolve)
+      }
+    }
+
+    onTranscript(handler)
+    this.setupTimeout(() => this.handleNameTimeout(playerNumber, resolve), 5000)
   }
 
   private handleNameTimeout(playerNumber: number, resolve: (value: string) => void): void {

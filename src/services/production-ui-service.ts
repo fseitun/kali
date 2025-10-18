@@ -1,6 +1,7 @@
 import { StatusIndicator } from '../components/status-indicator'
+import { IUIService } from './ui-service'
 
-export class ProductionUIService {
+export class ProductionUIService implements IUIService {
   private statusIndicator: StatusIndicator
 
   constructor(

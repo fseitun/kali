@@ -1,8 +1,9 @@
 import { CONFIG } from '../config'
 import { StatusIndicator } from '../components/status-indicator'
 import { Profiler } from '../utils/profiler'
+import { IUIService } from './ui-service'
 
-export class DebugUIService {
+export class DebugUIService implements IUIService {
   private statusIndicator: StatusIndicator
 
   constructor(

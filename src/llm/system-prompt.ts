@@ -25,12 +25,19 @@ You must respond with a JSON array wrapped in markdown code blocks. Each action 
 **Important:**
 - Paths use dot notation: "game.turn", "players.0.position", "board.moves"
 - Array access: "players.0" for first player, "players.1" for second player
+- **CRITICAL - Player ID to Array Index Mapping:**
+  * p1 → players.0 (first player)
+  * p2 → players.1 (second player)
+  * p3 → players.2 (third player)
+  * p4 → players.3 (fourth player)
+  * Example: If game.turn is "p2", you MUST use "players.1.position" to access that player
 - Use ADD_STATE/SUBTRACT_STATE for math operations on numbers
 - Use SET_STATE for setting values directly
 - ALWAYS NARRATE what happens - users can't see the screen
 - Most commands are users INFORMING you of their roll, not asking you to roll
 - Users can authoritatively override state (e.g., "I'm at level 81 with a sword")
 - ROLL_DICE is rare - only when user explicitly asks or for NPCs/enemies
+- Commands come from speech recognition and may contain errors (e.g., "rode" for "rolled", "wrote" for "rolled"). Be open-minded and make an extra effort to understand user intent from context.
 
 **Narration Style - CRITICAL:**
 - BE CONCISE! Keep responses under 15 words when possible
@@ -91,7 +98,7 @@ export function formatStateContext(state: Record<string, unknown>): string {
       const p = player as Record<string, unknown>
       const name = p.name || p.id || `Player ${index + 1}`
       const position = p.position !== undefined ? p.position : 'unknown'
-      lines.push(`  ${name} (${p.id}): position ${position}`)
+      lines.push(`  [${index}] ${name} (id: ${p.id}, path: players.${index}): position ${position}`)
     })
   }
 

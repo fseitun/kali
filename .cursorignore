@@ -1,0 +1,17 @@
+# Build outputs
+dist/
+*.map
+
+# Dependencies
+node_modules/
+
+# Lock files
+package-lock.json
+
+# Vosk model files (binary, ~40MB)
+*.zip
+
+# Generated PWA/Service Worker files
+dist/sw.js
+dist/workbox-*.js
+dist/registerSW.js
