@@ -79,12 +79,38 @@ export class SpeechService {
     const targetLang = CONFIG.TTS.VOICE_LANG
 
     const exactMatch = voices.find(v => v.lang === targetLang)
-    if (exactMatch) return exactMatch
+    if (exactMatch) {
+      Logger.info(`Selected voice: ${exactMatch.name} (${exactMatch.lang})`)
+      return exactMatch
+    }
 
     const langPrefix = targetLang.split('-')[0]
-    const langMatch = voices.find(v => v.lang.startsWith(langPrefix))
-    if (langMatch) return langMatch
 
+    const argentinaMatch = voices.find(v =>
+      v.lang.startsWith(langPrefix) &&
+      (v.name.toLowerCase().includes('argentina') || v.name.toLowerCase().includes('argentin'))
+    )
+    if (argentinaMatch) {
+      Logger.info(`Selected voice: ${argentinaMatch.name} (${argentinaMatch.lang})`)
+      return argentinaMatch
+    }
+
+    const latinMatch = voices.find(v =>
+      v.lang.startsWith(langPrefix) &&
+      (v.name.toLowerCase().includes('latin') || v.lang.includes('-MX') || v.lang.includes('-CO'))
+    )
+    if (latinMatch) {
+      Logger.info(`Selected voice: ${latinMatch.name} (${latinMatch.lang})`)
+      return latinMatch
+    }
+
+    const langMatch = voices.find(v => v.lang.startsWith(langPrefix))
+    if (langMatch) {
+      Logger.info(`Selected voice (fallback): ${langMatch.name} (${langMatch.lang})`)
+      return langMatch
+    }
+
+    Logger.warn('No suitable voice found for target language:', targetLang)
     return null
   }
 

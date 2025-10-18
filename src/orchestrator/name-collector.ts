@@ -3,8 +3,9 @@ import { StateManager } from '../state-manager'
 import { GamePhase } from './types'
 import { validateName, findNameConflicts, generateNickname, areNamesSimilar } from '../utils/name-helper'
 import { Logger } from '../utils/logger'
-import { t } from '../i18n'
+import { t, getNumberWords, getConfirmationWords } from '../i18n'
 import { ILLMClient } from '../llm/ILLMClient'
+import { GameMetadata } from '../game-loader/types'
 
 interface Player {
   id: string
@@ -20,14 +21,20 @@ export class NameCollector {
   private collectedNames: string[] = []
   private playerCount = 0
   private timeoutHandle: number | null = null
+  private minPlayers: number
+  private maxPlayers: number
 
   constructor(
     private speechService: SpeechService,
     private stateManager: StateManager,
     private gameName: string,
     private enableDirectTranscription: () => void,
-    private llmClient: ILLMClient
-  ) {}
+    private llmClient: ILLMClient,
+    gameMetadata: GameMetadata
+  ) {
+    this.minPlayers = gameMetadata.minPlayers
+    this.maxPlayers = gameMetadata.maxPlayers
+  }
 
   /**
    * Runs the complete name collection flow.
@@ -70,7 +77,7 @@ export class NameCollector {
   }
 
   private async askPlayerCount(onTranscript: (handler: (text: string) => void) => void): Promise<number> {
-    await this.speechService.speak(t('setup.playerCount'))
+    await this.speechService.speak(t('setup.playerCount', { min: this.minPlayers, max: this.maxPlayers }))
 
     return new Promise<number>((resolve) => {
       const handler = async (text: string) => {
@@ -80,38 +87,39 @@ export class NameCollector {
           this.timeoutHandle = null
         }
 
-        const analysis = await this.llmClient.analyzeResponse(text, 'expecting player count number from 2 to 4')
+        const analysis = await this.llmClient.analyzeResponse(text, `expecting player count number from ${this.minPlayers} to ${this.maxPlayers}`)
         if (!analysis.isOnTopic && analysis.urgentMessage) {
           await this.speechService.speak(t('setup.acknowledgement', { message: analysis.urgentMessage }))
-          await this.speechService.speak(t('setup.playerCount'))
-          this.setupTimeout(() => resolve(2), 10000)
+          await this.speechService.speak(t('setup.playerCount', { min: this.minPlayers, max: this.maxPlayers }))
+          this.setupTimeout(() => resolve(this.minPlayers), 10000)
           return
         }
 
         const lower = text.toLowerCase().trim()
         let count = 0
 
-        if (lower.includes('two') || lower.includes('2') || lower.includes('to') || lower.includes('too')) {
-          count = 2
-        } else if (lower.includes('three') || lower.includes('3')) {
-          count = 3
-        } else if (lower.includes('four') || lower.includes('4') || lower.includes('for')) {
-          count = 4
+        const numberWords = getNumberWords()
+
+        for (let i = 0; i <= 10; i++) {
+          if (lower.includes(String(i)) || lower.includes(numberWords[i])) {
+            count = i
+            break
+          }
         }
 
-        if (count >= 2 && count <= 4) {
+        if (count >= this.minPlayers && count <= this.maxPlayers) {
           resolve(count)
         } else {
-          await this.speechService.speak(t('setup.playerCountInvalid'))
-          this.setupTimeout(() => resolve(2), 10000)
+          await this.speechService.speak(t('setup.playerCountInvalid', { min: this.minPlayers, max: this.maxPlayers }))
+          this.setupTimeout(() => resolve(this.minPlayers), 10000)
         }
       }
 
       onTranscript(handler)
       this.setupTimeout(async () => {
         Logger.info('Player count timeout - no response received')
-        await this.speechService.speak(t('setup.playerCountTimeout'))
-        resolve(2)
+        await this.speechService.speak(t('setup.playerCountTimeout', { count: this.minPlayers }))
+        resolve(this.minPlayers)
       }, 10000)
     })
   }
@@ -189,11 +197,12 @@ export class NameCollector {
       }
 
       const lower = text.toLowerCase().trim()
+      const confirmWords = getConfirmationWords()
 
-      if (lower.includes('yes') || lower.includes('yeah') || lower.includes('sí') || lower.includes('si') || lower.includes('correct') || lower.includes('right') || lower.includes('correcto')) {
+      if (confirmWords.yes.some(word => lower.includes(word))) {
         await this.speechService.speak(t('setup.nameConfirmYes', { name }))
         resolve(name)
-      } else if (lower.includes('no') || lower.includes('nope')) {
+      } else if (confirmWords.no.some(word => lower.includes(word))) {
         await this.speechService.speak(t('setup.nameConfirmRetry'))
         this.retryNameCollection(onTranscript, playerNumber, resolve)
       } else {
@@ -318,11 +327,12 @@ export class NameCollector {
         }
 
         const lower = text.toLowerCase().trim()
+        const confirmWords = getConfirmationWords()
 
-        if (lower.includes('yes') || lower.includes('yeah') || lower.includes('sí') || lower.includes('si') || lower.includes('sure') || lower.includes('okay') || lower.includes('ok') || lower.includes('dale') || lower.includes('bueno')) {
+        if (confirmWords.yes.some(word => lower.includes(word))) {
           await this.speechService.speak(t('setup.nameConflictPerfect'))
           resolve(suggestion)
-        } else if (lower.includes('no') || lower.includes('nope')) {
+        } else if (confirmWords.no.some(word => lower.includes(word))) {
           await this.speechService.speak(t('setup.nameConflictAlternative'))
           await this.resolveAlternativeName(onTranscript, original, resolve)
         } else {

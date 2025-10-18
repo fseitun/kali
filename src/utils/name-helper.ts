@@ -1,25 +1,8 @@
+import { getNicknames } from '../i18n'
+
 /**
  * Utility functions for player name validation, conflict detection, and nickname generation.
  */
-
-const KIND_NICKNAMES = [
-  'the Great',
-  'the Wise',
-  'the Brave',
-  'the Kind',
-  'the Swift',
-  'the Clever',
-  'the Bold',
-  'the Mighty',
-  'the Brilliant',
-  'the Awesome',
-  'the Cool',
-  'the Amazing',
-  'Junior',
-  'Senior',
-  'Big',
-  'Little'
-]
 
 /**
  * Validates a player name for acceptability.
@@ -116,7 +99,8 @@ export function areNamesSimilar(name1: string, name2: string): boolean {
  * @returns A unique nickname
  */
 export function generateNickname(baseName: string, usedNicknames: string[]): string {
-  const availableNicknames = KIND_NICKNAMES.filter(
+  const nicknames = getNicknames()
+  const availableNicknames = nicknames.filter(
     suffix => !usedNicknames.includes(`${baseName} ${suffix}`)
   )
 

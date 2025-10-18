@@ -18,6 +18,7 @@ export class KaliAppCore {
   private orchestrator: Orchestrator | null = null
   private stateManager: StateManager | null = null
   private llmClient: ILLMClient | null = null
+  private gameModule: GameModule | null = null
   private initialized = false
   private currentNameHandler: ((text: string) => void) | null = null
 
@@ -57,19 +58,19 @@ export class KaliAppCore {
 
     Logger.info(`📦 Loading game module: ${CONFIG.GAME.DEFAULT_MODULE}...`)
     const gameLoader = new GameLoader(CONFIG.GAME.MODULES_PATH)
-    const gameModule = await gameLoader.loadGame(CONFIG.GAME.DEFAULT_MODULE)
-    Logger.info(`Loaded: ${gameModule.metadata.name} v${gameModule.metadata.version}`)
+    this.gameModule = await gameLoader.loadGame(CONFIG.GAME.DEFAULT_MODULE)
+    Logger.info(`Loaded: ${this.gameModule.metadata.name} v${this.gameModule.metadata.version}`)
 
     Logger.info('🎮 Initializing game state...')
     this.stateManager = new StateManager()
-    await this.stateManager.init(gameModule.initialState)
+    await this.stateManager.init(this.gameModule.initialState)
 
     Logger.info('🔄 Resetting to fresh game state...')
-    await this.stateManager.resetState(gameModule.initialState)
+    await this.stateManager.resetState(this.gameModule.initialState)
 
     Logger.robot(`Configuring LLM (${CONFIG.LLM_PROVIDER}) with game rules...`)
     this.llmClient = this.createLLMClient()
-    this.llmClient.setGameRules(this.formatGameRules(gameModule))
+    this.llmClient.setGameRules(this.formatGameRules(this.gameModule))
 
     const indicator = this.uiService.getStatusIndicator()
     this.orchestrator = new Orchestrator(
@@ -80,7 +81,7 @@ export class KaliAppCore {
     )
 
     Logger.info('🔊 Loading sound effects...')
-    await gameLoader.loadSoundEffects(gameModule, this.speechService)
+    await gameLoader.loadSoundEffects(this.gameModule, this.speechService)
 
     Logger.info('Orchestrator ready')
   }
@@ -138,7 +139,7 @@ ${rules.examples.map((ex, i) => `${i + 1}. ${ex}`).join('\n')}
   }
 
   private async runNameCollection(): Promise<void> {
-    if (!this.stateManager || !this.wakeWordDetector) {
+    if (!this.stateManager || !this.wakeWordDetector || !this.gameModule) {
       throw new Error('Cannot run name collection: components not initialized')
     }
 
@@ -161,7 +162,8 @@ ${rules.examples.map((ex, i) => `${i + 1}. ${ex}`).join('\n')}
         this.stateManager,
         gameName,
         () => this.wakeWordDetector!.enableDirectTranscription(),
-        this.llmClient!
+        this.llmClient!,
+        this.gameModule.metadata
       )
 
       await nameCollector.collectNames((handler) => {

@@ -40,3 +40,15 @@ export function t(key: TranslationKey, params?: Record<string, string | number>)
 
   return result
 }
+
+export function getNicknames(): string[] {
+  return currentLocale.nicknames || []
+}
+
+export function getNumberWords(): string[] {
+  return currentLocale.numberWords || []
+}
+
+export function getConfirmationWords(): { yes: string[]; no: string[] } {
+  return currentLocale.confirmationWords || { yes: [], no: [] }
+}
