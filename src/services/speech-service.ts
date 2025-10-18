@@ -27,29 +27,38 @@ export class SpeechService {
    * Speaks the provided text using browser TTS.
    * Cancels any currently playing speech before speaking.
    * @param text - The text to speak aloud
+   * @returns Promise that resolves when speech finishes
    */
-  speak(text: string): void {
-    if (!window.speechSynthesis) {
-      Logger.error('TTS not supported')
-      return
-    }
+  speak(text: string): Promise<void> {
+    return new Promise((resolve) => {
+      if (!window.speechSynthesis) {
+        Logger.error('TTS not supported')
+        resolve()
+        return
+      }
 
-    if (!this.primed) {
-      this.prime()
-    }
+      if (!this.primed) {
+        this.prime()
+      }
 
-    window.speechSynthesis.cancel()
+      window.speechSynthesis.cancel()
 
-    const utterance = new SpeechSynthesisUtterance(text)
-    utterance.rate = CONFIG.TTS.RATE
-    utterance.pitch = CONFIG.TTS.PITCH
+      const utterance = new SpeechSynthesisUtterance(text)
+      utterance.rate = CONFIG.TTS.RATE
+      utterance.pitch = CONFIG.TTS.PITCH
 
-    utterance.onerror = (event) => {
-      Logger.error('Speech synthesis error:', event)
-    }
+      utterance.onend = () => {
+        resolve()
+      }
 
-    window.speechSynthesis.speak(utterance)
-    Logger.narration(`Kali: "${text}"`)
+      utterance.onerror = (event) => {
+        Logger.error('Speech synthesis error:', event)
+        resolve()
+      }
+
+      window.speechSynthesis.speak(utterance)
+      Logger.narration(`Kali: "${text}"`)
+    })
   }
 
   /**

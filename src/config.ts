@@ -1,4 +1,6 @@
 export const CONFIG = {
+  LLM_PROVIDER: (import.meta.env.VITE_LLM_PROVIDER || 'gemini') as 'ollama' | 'gemini',
+
   WAKE_WORD: {
     TEXT: ['zookeeper', 'zoo keeper'],
     TRANSCRIPTION_TIMEOUT_MS: 5000,
@@ -13,6 +15,11 @@ export const CONFIG = {
   OLLAMA: {
     API_URL: 'http://localhost:11434/api/chat',
     MODEL: 'llama3.2:latest',
+  },
+
+  GEMINI: {
+    API_URL: 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent',
+    API_KEY: import.meta.env.VITE_GEMINI_API_KEY || '',
   },
 
   AUDIO: {

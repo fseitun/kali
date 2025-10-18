@@ -1,5 +1,6 @@
 import { defineConfig } from 'vite'
 import { VitePWA } from 'vite-plugin-pwa'
+import { resolve } from 'path'
 
 export default defineConfig({
   plugins: [
@@ -51,6 +52,10 @@ export default defineConfig({
   build: {
     target: 'esnext',
     rollupOptions: {
+      input: {
+        main: resolve(__dirname, 'index.html'),
+        debug: resolve(__dirname, 'debug.html')
+      },
       output: {
         manualChunks: {
           'vosk': ['vosk-browser']

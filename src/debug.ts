@@ -1,34 +1,38 @@
 import './style.css'
+import './components/debug-ui.css'
 import { WakeWordDetector } from './wake-word'
 import { Orchestrator } from './orchestrator/orchestrator'
 import { OllamaClient } from './llm/OllamaClient'
 import { GeminiClient } from './llm/GeminiClient'
 import { ILLMClient } from './llm/ILLMClient'
 import { StateManager } from './state-manager'
-import { ProductionUIService } from './services/production-ui-service'
+import { DebugUIService } from './services/debug-ui-service'
 import { SpeechService } from './services/speech-service'
 import { GameLoader, GameModule } from './game-loader'
 import { checkBrowserSupport } from './utils/browser-support'
 import { CONFIG } from './config'
 
-class KaliApp {
-  private uiService: ProductionUIService
+class KaliDebugApp {
+  private uiService: DebugUIService
   private speechService: SpeechService
   private wakeWordDetector: WakeWordDetector | null = null
   private orchestrator: Orchestrator | null = null
   private stateManager: StateManager | null = null
   private initialized = false
-  private static instance: KaliApp | null = null
+  private static instance: KaliDebugApp | null = null
 
   constructor() {
-    if (KaliApp.instance) {
-      KaliApp.instance.dispose()
+    if (KaliDebugApp.instance) {
+      KaliDebugApp.instance.dispose()
     }
-    KaliApp.instance = this
+    KaliDebugApp.instance = this
 
+    const statusElement = document.getElementById('status') as HTMLElement
+    const consoleElement = document.getElementById('console') as HTMLElement
     const startButton = document.getElementById('start-button') as HTMLButtonElement
+    const transcriptionElement = document.getElementById('transcription') as HTMLElement
 
-    this.uiService = new ProductionUIService(startButton)
+    this.uiService = new DebugUIService(statusElement, consoleElement, transcriptionElement, startButton)
     this.speechService = new SpeechService()
 
     this.setupStartButton(startButton)
@@ -48,6 +52,7 @@ class KaliApp {
     try {
       const indicator = this.uiService.getStatusIndicator()
       indicator.setState('processing')
+      this.uiService.log('🚀 Initializing Kali...')
 
       checkBrowserSupport()
       await this.initializeOrchestrator()
@@ -56,28 +61,37 @@ class KaliApp {
       this.initialized = true
       this.uiService.hideButton()
       indicator.setState('idle')
+      this.uiService.updateStatus(`Say "${CONFIG.WAKE_WORD.TEXT[0]}" to wake me up!`)
+      this.uiService.log('✅ Kali is ready')
 
     } catch (error) {
       this.uiService.setButtonState('Start Kali', false)
+      this.uiService.updateStatus('Initialization failed')
+      this.uiService.log(`❌ Error: ${error}`)
       const indicator = this.uiService.getStatusIndicator()
       indicator.setState('idle')
-      console.error('Initialization failed:', error)
     }
   }
 
-
   private async initializeOrchestrator() {
+    this.uiService.log('🧠 Initializing orchestrator...')
+
+    this.uiService.log(`📦 Loading game module: ${CONFIG.GAME.DEFAULT_MODULE}...`)
     const gameLoader = new GameLoader(CONFIG.GAME.MODULES_PATH)
     const gameModule = await gameLoader.loadGame(CONFIG.GAME.DEFAULT_MODULE)
+    this.uiService.log(`✅ Loaded: ${gameModule.metadata.name} v${gameModule.metadata.version}`)
 
+    this.uiService.log('🎮 Initializing game state...')
     this.stateManager = new StateManager()
     await this.stateManager.init(gameModule.initialState)
 
     const currentState = await this.stateManager.getState()
     if (!this.isValidGameState(currentState, gameModule)) {
+      this.uiService.log('⚠️ State schema mismatch detected, resetting state...')
       await this.stateManager.resetState(gameModule.initialState)
     }
 
+    this.uiService.log(`🤖 Configuring LLM (${CONFIG.LLM_PROVIDER}) with game rules...`)
     const llmClient = this.createLLMClient()
     llmClient.setGameRules(this.formatGameRules(gameModule))
 
@@ -89,7 +103,10 @@ class KaliApp {
       indicator
     )
 
+    this.uiService.log('🔊 Loading sound effects...')
     await gameLoader.loadSoundEffects(gameModule, this.speechService)
+
+    this.uiService.log('✅ Orchestrator ready')
   }
 
   private createLLMClient(): ILLMClient {
@@ -136,6 +153,7 @@ ${rules.examples.map((ex, i) => `${i + 1}. ${ex}`).join('\n')}
   }
 
   private async initializeWakeWord() {
+    this.uiService.log('🎤 Initializing speech recognition...')
     const indicator = this.uiService.getStatusIndicator()
 
     this.wakeWordDetector = new WakeWordDetector(
@@ -144,22 +162,28 @@ ${rules.examples.map((ex, i) => `${i + 1}. ${ex}`).join('\n')}
       (raw, processed, wakeWordDetected) => this.uiService.addTranscription(raw, processed, wakeWordDetected)
     )
 
-    await this.wakeWordDetector.initialize()
+    await this.wakeWordDetector.initialize((percent) => {
+      this.uiService.updateStatus(`Downloading model... ${percent}%`)
+    })
 
     await this.wakeWordDetector.startListening()
     indicator.setState('listening')
   }
 
   private handleWakeWord() {
+    this.uiService.updateStatus('Listening for command...')
     const indicator = this.uiService.getStatusIndicator()
     indicator.setState('listening')
   }
 
   private async handleTranscription(text: string) {
+    this.uiService.log(`You said: "${text}"`)
+
     if (this.orchestrator) {
       await this.orchestrator.handleTranscript(text)
     }
 
+    this.uiService.updateStatus(`Say "${CONFIG.WAKE_WORD.TEXT[0]}" to wake me up!`)
     const indicator = this.uiService.getStatusIndicator()
     indicator.setState('listening')
   }
@@ -176,30 +200,29 @@ ${rules.examples.map((ex, i) => `${i + 1}. ${ex}`).join('\n')}
     this.initialized = false
     this.uiService.setButtonState('Start Kali', false)
     this.uiService.showButton()
+    this.uiService.updateStatus('Click "Start Kali" to begin voice interaction')
     const indicator = this.uiService.getStatusIndicator()
     indicator.setState('idle')
     this.uiService.clearConsole()
   }
 
-  // Public methods for HMR access
-  public static getInstance(): KaliApp | null {
-    return KaliApp.instance
+  public static getInstance(): KaliDebugApp | null {
+    return KaliDebugApp.instance
   }
 
   public async disposeForHmr(): Promise<void> {
     await this.dispose()
-    KaliApp.instance = null
+    KaliDebugApp.instance = null
   }
 }
 
-// Initialize the app when DOM is loaded
 document.addEventListener('DOMContentLoaded', () => {
-  new KaliApp()
+  new KaliDebugApp()
 })
 
 if (import.meta.hot) {
   import.meta.hot.dispose(async () => {
-    const instance = KaliApp.getInstance()
+    const instance = KaliDebugApp.getInstance()
     if (instance) {
       await instance.disposeForHmr()
     }

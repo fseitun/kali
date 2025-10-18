@@ -2,6 +2,14 @@
 
 A voice-first game moderator for kids to play board games independently. Uses speech recognition to understand spoken player actions.
 
+## 🎯 Current Status
+
+- ✅ Phase 1: Core Audio Pipeline (Complete)
+- ✅ Phase 2: Orchestration Loop (Complete)
+- ✅ Phase 3: Snakes & Ladders Integration (Complete)
+- ✅ Performance Profiling & Google Gemini Integration (Complete)
+- ✅ Production UI with Status Indicator (Complete)
+
 ## Setup
 
 1. Install dependencies:
@@ -9,14 +17,28 @@ A voice-first game moderator for kids to play board games independently. Uses sp
    npm install
    ```
 
-2. Start development server:
+2. Configure LLM provider (create `.env` file):
+   ```bash
+   # For Google Gemini (fast, recommended)
+   VITE_GEMINI_API_KEY=your_api_key_here
+   VITE_LLM_PROVIDER=gemini
+
+   # Or use Ollama (local, slow but free)
+   VITE_LLM_PROVIDER=ollama
+   ```
+
+3. Start development server:
    ```bash
    npm run dev
    ```
 
-3. Click "Start Kali" and grant microphone permissions
-4. On first load, Vosk model downloads automatically (~40MB, cached for offline use)
-5. Say "Zookeeper" to wake, then speak your command
+4. Choose your interface:
+   - **Production**: `http://localhost:5173/` (minimal pulsating orb)
+   - **Debug**: `http://localhost:5173/debug.html` (full console & logs)
+
+5. Click "Start Kali" and grant microphone permissions
+6. On first load, Vosk model downloads automatically (~40MB, cached for offline use)
+7. Say "Zookeeper" to wake, then speak your command
 
 ## How It Works
 
@@ -36,13 +58,35 @@ A voice-first game moderator for kids to play board games independently. Uses sp
 
 **Example**: "Zookeeper" → "I rolled a six and landed on square twelve"
 
-## Phase 1: Core Audio Pipeline ✅ COMPLETE
+## Features
 
-- ✅ Wake word detection using Vosk keyword spotting
-- ✅ Full speech transcription after wake word
-- ✅ Runtime model downloading with caching
-- ✅ Fully offline operation after first load
-- ✅ PWA with service worker caching
+### Phase 1: Core Audio Pipeline ✅
+- Wake word detection using Vosk keyword spotting
+- Full speech transcription after wake word
+- Runtime model downloading with caching
+- Fully offline operation after first load
+- PWA with service worker caching
+
+### Phase 2: Orchestration Loop ✅
+- LLM integration (Ollama & Google Gemini)
+- Primitive action validation
+- IndexedDB state persistence
+- Text-to-speech narration
+
+### Phase 3: Game Integration ✅
+- Snakes & Ladders fully playable
+- Sound effects support
+- Turn management
+- Win condition detection
+
+### Latest: Performance & UI ✅
+- **Performance Profiling**: Track LLM response times
+- **Processing Lock**: Prevents overlapping requests
+- **Status Indicator**: Visual feedback (idle → listening → processing → speaking)
+- **Dual UI Modes**:
+  - Production: Minimal pulsating orb at `/`
+  - Debug: Full console logs at `/debug.html`
+- **Google Gemini**: Fast API integration (~1-3s vs 48s for local Ollama)
 
 ## Technologies
 

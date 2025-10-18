@@ -5,10 +5,7 @@ import { Logger } from '../utils/logger'
 import { Profiler } from '../utils/profiler'
 import { buildSystemPrompt } from './system-prompt'
 
-/**
- * Ollama LLM client implementation that communicates with a local Ollama instance.
- */
-export class OllamaClient implements ILLMClient {
+export class GeminiClient implements ILLMClient {
   private systemPrompt: string = ''
 
   setGameRules(rules: string): void {
@@ -21,34 +18,49 @@ export class OllamaClient implements ILLMClient {
       throw new Error('Game rules not set. Call setGameRules() first.')
     }
 
+    if (!CONFIG.GEMINI.API_KEY) {
+      throw new Error('VITE_GEMINI_API_KEY not set in environment')
+    }
+
     try {
       const userMessage = `Current State: ${JSON.stringify(state)}\n\nUser Command: "${transcript}"`
+      const fullPrompt = `${this.systemPrompt}\n\n${userMessage}`
 
       Profiler.start('llm.network')
-      const response = await fetch(CONFIG.OLLAMA.API_URL, {
+      const response = await fetch(CONFIG.GEMINI.API_URL, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'X-goog-api-key': CONFIG.GEMINI.API_KEY,
         },
         body: JSON.stringify({
-          model: CONFIG.OLLAMA.MODEL,
-          messages: [
-            { role: 'system', content: this.systemPrompt },
-            { role: 'user', content: userMessage }
-          ],
-          stream: false
+          contents: [{
+            parts: [{
+              text: fullPrompt
+            }]
+          }],
+          generationConfig: {
+            temperature: 0.7,
+            maxOutputTokens: 1024,
+          }
         })
       })
 
       if (!response.ok) {
         Profiler.end('llm.network')
-        throw new Error(`Ollama API error: ${response.status} ${response.statusText}`)
+        const errorText = await response.text()
+        throw new Error(`Gemini API error: ${response.status} ${response.statusText}\n${errorText}`)
       }
 
       const data = await response.json()
       Profiler.end('llm.network')
 
-      const content = data.message?.content || ''
+      const content = data.candidates?.[0]?.content?.parts?.[0]?.text || ''
+
+      if (!content) {
+        Logger.error('No content in Gemini response:', data)
+        return []
+      }
 
       Profiler.start('llm.parsing')
       const actions = this.extractActions(content)
@@ -57,7 +69,7 @@ export class OllamaClient implements ILLMClient {
       return actions
 
     } catch (error) {
-      Logger.error('OllamaClient error:', error)
+      Logger.error('GeminiClient error:', error)
       return []
     }
   }

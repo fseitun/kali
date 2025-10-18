@@ -1,9 +1,11 @@
 import { ILLMClient } from '../llm/ILLMClient'
 import { StateManager } from '../state-manager'
 import { SpeechService } from '../services/speech-service'
+import { StatusIndicator } from '../components/status-indicator'
 import { validateActions } from './validator'
 import { PrimitiveAction, ExecutionContext, ActionHandler } from './types'
 import { Logger } from '../utils/logger'
+import { Profiler } from '../utils/profiler'
 
 /**
  * Core orchestrator that processes voice transcripts through LLM,
@@ -11,12 +13,22 @@ import { Logger } from '../utils/logger'
  */
 export class Orchestrator {
   private actionHandlers: Map<string, ActionHandler> = new Map()
+  private isProcessing = false
 
   constructor(
     private llmClient: ILLMClient,
     private stateManager: StateManager,
-    private speechService: SpeechService
+    private speechService: SpeechService,
+    private statusIndicator: StatusIndicator
   ) {}
+
+  /**
+   * Checks if the orchestrator is currently processing a request.
+   * @returns true if processing, false otherwise
+   */
+  isLocked(): boolean {
+    return this.isProcessing
+  }
 
   /**
    * Registers a custom action handler for extending primitive actions.
@@ -33,8 +45,23 @@ export class Orchestrator {
    * @param transcript - The transcribed user command
    */
   async handleTranscript(transcript: string): Promise<void> {
-    const context: ExecutionContext = { depth: 0, maxDepth: 5 }
-    await this.processTranscript(transcript, context)
+    if (this.isProcessing) {
+      Logger.warn('⏸️ Orchestrator busy, ignoring new request')
+      return
+    }
+
+    this.isProcessing = true
+    this.statusIndicator.setState('processing')
+    Profiler.start('orchestrator.total')
+
+    try {
+      const context: ExecutionContext = { depth: 0, maxDepth: 5 }
+      await this.processTranscript(transcript, context)
+    } finally {
+      this.isProcessing = false
+      Profiler.end('orchestrator.total')
+      this.statusIndicator.setState('listening')
+    }
   }
 
   private async processTranscript(
@@ -47,7 +74,10 @@ export class Orchestrator {
       const state = await this.stateManager.getState()
       Logger.state('Current state:', state)
 
+      Profiler.start('orchestrator.llm')
       const actions = await this.llmClient.getActions(transcript, state)
+      Profiler.end('orchestrator.llm')
+
       Logger.robot('LLM returned actions:', actions)
 
       if (actions.length === 0) {
@@ -55,7 +85,9 @@ export class Orchestrator {
         return
       }
 
+      Profiler.start('orchestrator.validation')
       const validation = validateActions(actions, state, this.stateManager)
+      Profiler.end('orchestrator.validation')
 
       if (!validation.valid) {
         Logger.error('Validation failed:', validation.error)
@@ -63,7 +95,9 @@ export class Orchestrator {
       }
 
       Logger.info('Actions validated, executing...')
+      Profiler.start('orchestrator.execution')
       await this.executeActions(actions, context)
+      Profiler.end('orchestrator.execution')
       Logger.info('Actions executed successfully')
 
     } catch (error) {
@@ -138,10 +172,11 @@ export class Orchestrator {
 
       case 'NARRATE': {
         Logger.narration(`Narrating: "${action.text}"`)
+        this.statusIndicator.setState('speaking')
         if (action.soundEffect) {
           this.speechService.playSound(action.soundEffect)
         }
-        this.speechService.speak(action.text)
+        await this.speechService.speak(action.text)
         break
       }
 

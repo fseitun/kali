@@ -27,11 +27,46 @@ body {
   padding: 2rem;
 }
 
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
+
+.production-ui {
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 80vh;
+}
+
+.debug-ui {
+  text-align: center;
+}
+
+.debug-badge {
+  font-size: 0.5em;
+  color: rgba(255, 191, 0, 0.9);
+  border: 2px solid rgba(255, 191, 0, 0.9);
+  padding: 0.2em 0.5em;
+  border-radius: 4px;
+  margin-left: 0.5em;
+}
+
 .status {
   text-align: center;
 }
 
-.status h1 {
+.status h1,
+.debug-ui h1 {
   font-size: 3rem;
   margin-bottom: 1rem;
   color: var(--accent-color);
@@ -42,6 +77,10 @@ body {
   font-size: 1.2rem;
   margin-bottom: 2rem;
   opacity: 0.8;
+}
+
+.production-ui #start-button {
+  margin-top: 2rem;
 }
 
 #transcription {
@@ -165,4 +204,95 @@ body {
 @keyframes hmr-pulse {
   0%, 100% { opacity: 1; }
   50% { opacity: 0.7; }
+}
+
+.status-orb {
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  margin: 2rem auto;
+  position: relative;
+  transition: all 0.5s ease;
+}
+
+.status-orb::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background: inherit;
+  filter: blur(20px);
+  opacity: 0.6;
+}
+
+.status-orb.idle {
+  background: rgba(0, 255, 0, 0.3);
+  box-shadow: 0 0 30px rgba(0, 255, 0, 0.3);
+  animation: pulse-slow 3s ease-in-out infinite;
+}
+
+.status-orb.listening {
+  background: rgba(0, 255, 0, 0.8);
+  box-shadow: 0 0 50px rgba(0, 255, 0, 0.8);
+  animation: pulse-medium 1.5s ease-in-out infinite;
+}
+
+.status-orb.processing {
+  background: rgba(255, 191, 0, 0.9);
+  box-shadow: 0 0 60px rgba(255, 191, 0, 0.9);
+  animation: pulse-fast 0.8s ease-in-out infinite;
+}
+
+.status-orb.speaking {
+  background: rgba(0, 150, 255, 0.9);
+  box-shadow: 0 0 60px rgba(0, 150, 255, 0.9);
+  animation: pulse-steady 2s ease-in-out infinite;
+}
+
+@keyframes pulse-slow {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 0.6;
+  }
+  50% {
+    transform: scale(1.05);
+    opacity: 0.8;
+  }
+}
+
+@keyframes pulse-medium {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 0.8;
+  }
+  50% {
+    transform: scale(1.1);
+    opacity: 1;
+  }
+}
+
+@keyframes pulse-fast {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 0.9;
+  }
+  50% {
+    transform: scale(1.15);
+    opacity: 1;
+  }
+}
+
+@keyframes pulse-steady {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 0.95;
+  }
+  50% {
+    transform: scale(1.05);
+    opacity: 1;
+  }
 }
