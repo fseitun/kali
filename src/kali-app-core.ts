@@ -155,9 +155,12 @@ ${rules.examples.map((ex, i) => `${i + 1}. ${ex}`).join('\n')}
       Logger.info('👋 Starting name collection...')
       this.uiService.updateStatus(`Say "${CONFIG.WAKE_WORD.TEXT[0]}" before speaking`)
       const gameName = (game.name as string) || 'the game'
-      const nameCollector = new NameCollector(this.speechService, this.stateManager, gameName)
-
-      this.wakeWordDetector.enableDirectTranscription()
+      const nameCollector = new NameCollector(
+        this.speechService,
+        this.stateManager,
+        gameName,
+        () => this.wakeWordDetector!.enableDirectTranscription()
+      )
 
       await nameCollector.collectNames((handler) => {
         this.currentNameHandler = handler
@@ -177,17 +180,21 @@ ${rules.examples.map((ex, i) => `${i + 1}. ${ex}`).join('\n')}
   }
 
   private handleWakeWord(): void {
+    const indicator = this.uiService.getStatusIndicator()
+    indicator.setState('active')
+
     if (this.currentNameHandler) {
       this.uiService.updateStatus(`Say "${CONFIG.WAKE_WORD.TEXT[0]}" before speaking`)
     } else {
       this.uiService.updateStatus('Listening for command...')
     }
-    const indicator = this.uiService.getStatusIndicator()
-    indicator.setState('listening')
   }
 
   private async handleTranscription(text: string): Promise<void> {
     Logger.info(`You said: "${text}"`)
+
+    const indicator = this.uiService.getStatusIndicator()
+    indicator.setState('listening')
 
     if (this.currentNameHandler) {
       this.currentNameHandler(text)
@@ -199,8 +206,6 @@ ${rules.examples.map((ex, i) => `${i + 1}. ${ex}`).join('\n')}
     }
 
     this.uiService.updateStatus(`Say "${CONFIG.WAKE_WORD.TEXT[0]}" to wake me up!`)
-    const indicator = this.uiService.getStatusIndicator()
-    indicator.setState('listening')
   }
 
   async dispose(): Promise<void> {

@@ -113,6 +113,12 @@ body {
   animation: pulse-medium 1.5s ease-in-out infinite;
 }
 
+.status-orb.active {
+  background: rgba(0, 255, 0, 1);
+  box-shadow: 0 0 80px rgba(0, 255, 0, 1), 0 0 120px rgba(0, 255, 0, 0.5);
+  animation: pulse-active 0.5s ease-in-out infinite;
+}
+
 .status-orb.processing {
   background: rgba(255, 191, 0, 0.9);
   box-shadow: 0 0 60px rgba(255, 191, 0, 0.9);
@@ -165,6 +171,17 @@ body {
   }
   50% {
     transform: scale(1.05);
+    opacity: 1;
+  }
+}
+
+@keyframes pulse-active {
+  0%, 100% {
+    transform: scale(1.1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.2);
     opacity: 1;
   }
 }

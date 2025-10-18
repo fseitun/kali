@@ -1,4 +1,4 @@
-export type IndicatorState = 'idle' | 'listening' | 'processing' | 'speaking'
+export type IndicatorState = 'idle' | 'listening' | 'active' | 'processing' | 'speaking'
 
 export class StatusIndicator {
   private container: HTMLElement
@@ -33,4 +33,3 @@ export class StatusIndicator {
     return this.currentState
   }
 }
-

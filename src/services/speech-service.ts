@@ -52,7 +52,12 @@ export class SpeechService {
       }
 
       utterance.onerror = (event) => {
-        Logger.error('Speech synthesis error:', event)
+        Logger.error('Speech synthesis error:', {
+          error: event.error,
+          type: event.type,
+          charIndex: event.charIndex,
+          elapsedTime: event.elapsedTime
+        })
         resolve()
       }
 
