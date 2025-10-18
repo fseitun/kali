@@ -5,6 +5,7 @@ import { OllamaClient } from './llm/OllamaClient'
 import { StateManager } from './state-manager'
 import { UIService } from './services/ui-service'
 import { SpeechService } from './services/speech-service'
+import { GameLoader, GameModule } from './game-loader'
 import { checkBrowserSupport } from './utils/browser-support'
 import { CONFIG } from './config'
 
@@ -38,6 +39,7 @@ class KaliApp {
     startButton.addEventListener('click', async () => {
       if (this.initialized) return
 
+      this.speechService.prime()
       this.uiService.setButtonState('Initializing...', true)
       await this.initialize()
     })
@@ -67,17 +69,67 @@ class KaliApp {
   private async initializeOrchestrator() {
     this.uiService.log('🧠 Initializing orchestrator...')
 
-    this.stateManager = new StateManager()
-    await this.stateManager.init()
+    this.uiService.log(`📦 Loading game module: ${CONFIG.GAME.DEFAULT_MODULE}...`)
+    const gameLoader = new GameLoader(CONFIG.GAME.MODULES_PATH)
+    const gameModule = await gameLoader.loadGame(CONFIG.GAME.DEFAULT_MODULE)
+    this.uiService.log(`✅ Loaded: ${gameModule.metadata.name} v${gameModule.metadata.version}`)
 
+    this.uiService.log('🎮 Initializing game state...')
+    this.stateManager = new StateManager()
+    await this.stateManager.init(gameModule.initialState)
+
+    const currentState = await this.stateManager.getState()
+    if (!this.isValidGameState(currentState, gameModule)) {
+      this.uiService.log('⚠️ State schema mismatch detected, resetting state...')
+      await this.stateManager.resetState(gameModule.initialState)
+    }
+
+    this.uiService.log('🤖 Configuring LLM with game rules...')
     const llmClient = new OllamaClient()
+    llmClient.setGameRules(this.formatGameRules(gameModule))
+
     this.orchestrator = new Orchestrator(
       llmClient,
       this.stateManager,
-      (text) => this.speechService.speak(text)
+      this.speechService
     )
 
+    this.uiService.log('🔊 Loading sound effects...')
+    await gameLoader.loadSoundEffects(gameModule, this.speechService)
+
     this.uiService.log('✅ Orchestrator ready')
+  }
+
+  private isValidGameState(state: Record<string, unknown>, gameModule: GameModule): boolean {
+    const expectedGameName = gameModule.initialState.game as Record<string, unknown>
+    const currentGame = state.game as Record<string, unknown> | undefined
+
+    if (!currentGame) return false
+
+    return currentGame.name === expectedGameName.name
+  }
+
+  private formatGameRules(gameModule: GameModule): string {
+    const { rules, metadata } = gameModule
+
+    return `
+## ${metadata.name} Rules
+
+You are moderating a game of ${metadata.name}.
+
+**Objective:** ${rules.objective}
+
+**Mechanics:** ${rules.mechanics}
+
+**Turn Structure:**
+${rules.turnStructure}
+
+**Board Layout:**
+${rules.boardLayout}
+
+**Example Sequences:**
+${rules.examples.map((ex, i) => `${i + 1}. ${ex}`).join('\n')}
+`
   }
 
   private async initializeWakeWord() {

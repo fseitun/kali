@@ -6,6 +6,14 @@ export interface ValidationResult {
   error?: string
 }
 
+/**
+ * Validates an array of primitive actions against current game state.
+ * Ensures actions are well-formed and reference valid state paths.
+ * @param actions - The actions array to validate
+ * @param state - Current game state for path validation
+ * @param stateManager - State manager for path operations
+ * @returns Validation result with error message if invalid
+ */
 export function validateActions(
   actions: unknown,
   state: GameState,
@@ -50,12 +58,18 @@ function validateAction(
   }
 
   switch (action.action) {
-    case 'WRITE_STATE':
-      return validateWriteState(action, state, stateManager, index)
+    case 'SET_STATE':
+      return validateSetState(action, state, stateManager, index)
+    case 'ADD_STATE':
+      return validateAddState(action, state, stateManager, index)
+    case 'SUBTRACT_STATE':
+      return validateSubtractState(action, state, stateManager, index)
     case 'READ_STATE':
       return validateReadState(action, state, stateManager, index)
     case 'NARRATE':
       return validateNarrate(action, index)
+    case 'ROLL_DICE':
+      return validateRollDice(action, index)
     default:
       return {
         valid: false,
@@ -92,20 +106,20 @@ function validateField(
   return { valid: true }
 }
 
-function validateWriteState(
+function validateSetState(
   action: PrimitiveAction,
   state: GameState,
   stateManager: StateManager,
   index: number
 ): ValidationResult {
   const actionRecord = action as unknown as Record<string, unknown>
-  const pathValidation = validateField(actionRecord, 'path', 'string', 'WRITE_STATE', index)
+  const pathValidation = validateField(actionRecord, 'path', 'string', 'SET_STATE', index)
   if (!pathValidation.valid) return pathValidation
 
   if (!('value' in action)) {
     return {
       valid: false,
-      error: `WRITE_STATE at index ${index} missing 'value' field`
+      error: `SET_STATE at index ${index} missing 'value' field`
     }
   }
 
@@ -113,7 +127,73 @@ function validateWriteState(
     if (!stateManager.pathExists(state, action.path)) {
       return {
         valid: false,
-        error: `WRITE_STATE at index ${index} references non-existent path: ${action.path}`
+        error: `SET_STATE at index ${index} references non-existent path: ${action.path}`
+      }
+    }
+  }
+
+  return { valid: true }
+}
+
+function validateAddState(
+  action: PrimitiveAction,
+  state: GameState,
+  stateManager: StateManager,
+  index: number
+): ValidationResult {
+  const actionRecord = action as unknown as Record<string, unknown>
+  const pathValidation = validateField(actionRecord, 'path', 'string', 'ADD_STATE', index)
+  if (!pathValidation.valid) return pathValidation
+
+  const valueValidation = validateField(actionRecord, 'value', 'number', 'ADD_STATE', index)
+  if (!valueValidation.valid) return valueValidation
+
+  if ('path' in action && typeof action.path === 'string') {
+    if (!stateManager.pathExists(state, action.path)) {
+      return {
+        valid: false,
+        error: `ADD_STATE at index ${index} references non-existent path: ${action.path}`
+      }
+    }
+
+    const currentValue = stateManager.getByPath(state, action.path)
+    if (typeof currentValue !== 'number') {
+      return {
+        valid: false,
+        error: `ADD_STATE at index ${index} requires numeric value at path ${action.path}, got ${typeof currentValue}`
+      }
+    }
+  }
+
+  return { valid: true }
+}
+
+function validateSubtractState(
+  action: PrimitiveAction,
+  state: GameState,
+  stateManager: StateManager,
+  index: number
+): ValidationResult {
+  const actionRecord = action as unknown as Record<string, unknown>
+  const pathValidation = validateField(actionRecord, 'path', 'string', 'SUBTRACT_STATE', index)
+  if (!pathValidation.valid) return pathValidation
+
+  const valueValidation = validateField(actionRecord, 'value', 'number', 'SUBTRACT_STATE', index)
+  if (!valueValidation.valid) return valueValidation
+
+  if ('path' in action && typeof action.path === 'string') {
+    if (!stateManager.pathExists(state, action.path)) {
+      return {
+        valid: false,
+        error: `SUBTRACT_STATE at index ${index} references non-existent path: ${action.path}`
+      }
+    }
+
+    const currentValue = stateManager.getByPath(state, action.path)
+    if (typeof currentValue !== 'number') {
+      return {
+        valid: false,
+        error: `SUBTRACT_STATE at index ${index} requires numeric value at path ${action.path}, got ${typeof currentValue}`
       }
     }
   }
@@ -148,5 +228,20 @@ function validateNarrate(
   index: number
 ): ValidationResult {
   const actionRecord = action as unknown as Record<string, unknown>
-  return validateField(actionRecord, 'text', 'string', 'NARRATE', index)
+  const textValidation = validateField(actionRecord, 'text', 'string', 'NARRATE', index)
+  if (!textValidation.valid) return textValidation
+
+  if ('soundEffect' in actionRecord && actionRecord.soundEffect !== null && actionRecord.soundEffect !== undefined) {
+    return validateField(actionRecord, 'soundEffect', 'string', 'NARRATE', index, false)
+  }
+
+  return { valid: true }
+}
+
+function validateRollDice(
+  action: PrimitiveAction,
+  index: number
+): ValidationResult {
+  const actionRecord = action as unknown as Record<string, unknown>
+  return validateField(actionRecord, 'die', 'string', 'ROLL_DICE', index)
 }

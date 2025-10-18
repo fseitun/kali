@@ -1,3 +1,8 @@
+/**
+ * Creates a deep clone of an object, handling nested objects, arrays, and dates.
+ * @param obj - The object to clone
+ * @returns A deep copy of the object
+ */
 export function deepClone<T>(obj: T): T {
   if (obj === null || typeof obj !== 'object') {
     return obj

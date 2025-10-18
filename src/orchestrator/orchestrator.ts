@@ -1,19 +1,48 @@
 import { ILLMClient } from '../llm/ILLMClient'
 import { StateManager } from '../state-manager'
+import { SpeechService } from '../services/speech-service'
 import { validateActions } from './validator'
-import { PrimitiveAction } from './types'
+import { PrimitiveAction, ExecutionContext, ActionHandler } from './types'
 import { Logger } from '../utils/logger'
 
+/**
+ * Core orchestrator that processes voice transcripts through LLM,
+ * validates generated actions, and executes them on game state.
+ */
 export class Orchestrator {
+  private actionHandlers: Map<string, ActionHandler> = new Map()
+
   constructor(
     private llmClient: ILLMClient,
     private stateManager: StateManager,
-    private speakFn: (text: string) => void
+    private speechService: SpeechService
   ) {}
 
+  /**
+   * Registers a custom action handler for extending primitive actions.
+   * @param actionType - The action type to handle (e.g., "CUSTOM_ACTION")
+   * @param handler - Function to execute when action is encountered
+   */
+  registerActionHandler(actionType: string, handler: ActionHandler): void {
+    this.actionHandlers.set(actionType, handler)
+  }
+
+  /**
+   * Processes a voice transcript by sending to LLM and executing returned actions.
+   * This is the main entry point for handling user voice commands.
+   * @param transcript - The transcribed user command
+   */
   async handleTranscript(transcript: string): Promise<void> {
+    const context: ExecutionContext = { depth: 0, maxDepth: 5 }
+    await this.processTranscript(transcript, context)
+  }
+
+  private async processTranscript(
+    transcript: string,
+    context: ExecutionContext
+  ): Promise<void> {
     try {
-      Logger.brain(`Orchestrator processing: ${transcript}`)
+      Logger.brain(`Orchestrator processing: ${transcript} (depth: ${context.depth})`)
 
       const state = await this.stateManager.getState()
       Logger.state('Current state:', state)
@@ -34,7 +63,7 @@ export class Orchestrator {
       }
 
       Logger.info('Actions validated, executing...')
-      await this.executeActions(actions)
+      await this.executeActions(actions, context)
       Logger.info('Actions executed successfully')
 
     } catch (error) {
@@ -42,23 +71,62 @@ export class Orchestrator {
     }
   }
 
-  private async executeActions(actions: PrimitiveAction[]): Promise<void> {
+  private async executeActions(
+    actions: PrimitiveAction[],
+    context: ExecutionContext
+  ): Promise<void> {
+    if (context.depth >= context.maxDepth) {
+      Logger.warn(`Max execution depth (${context.maxDepth}) reached, stopping`)
+      return
+    }
+
     for (const action of actions) {
       try {
-        await this.executeAction(action)
+        await this.executeAction(action, context)
       } catch (error) {
         Logger.error('Failed to execute action:', action, error)
       }
     }
   }
 
-  private async executeAction(action: PrimitiveAction): Promise<void> {
+  private async executeAction(
+    action: PrimitiveAction,
+    context: ExecutionContext
+  ): Promise<void> {
+    const customHandler = this.actionHandlers.get(action.action)
+    if (customHandler) {
+      await customHandler(action, context)
+      return
+    }
+
     switch (action.action) {
-      case 'WRITE_STATE': {
-        Logger.write(`Writing state: ${action.path} = ${JSON.stringify(action.value)}`)
+      case 'SET_STATE': {
+        Logger.write(`Setting state: ${action.path} = ${JSON.stringify(action.value)}`)
         await this.stateManager.set(action.path, action.value)
         const newState = await this.stateManager.getState()
         Logger.state('New state:', newState)
+        break
+      }
+
+      case 'ADD_STATE': {
+        const currentValue = await this.stateManager.get(action.path)
+        if (typeof currentValue !== 'number') {
+          throw new Error(`Cannot ADD_STATE: ${action.path} is not a number`)
+        }
+        const newValue = currentValue + action.value
+        Logger.write(`Adding to state: ${action.path} (${currentValue} + ${action.value} = ${newValue})`)
+        await this.stateManager.set(action.path, newValue)
+        break
+      }
+
+      case 'SUBTRACT_STATE': {
+        const currentValue = await this.stateManager.get(action.path)
+        if (typeof currentValue !== 'number') {
+          throw new Error(`Cannot SUBTRACT_STATE: ${action.path} is not a number`)
+        }
+        const newValue = currentValue - action.value
+        Logger.write(`Subtracting from state: ${action.path} (${currentValue} - ${action.value} = ${newValue})`)
+        await this.stateManager.set(action.path, newValue)
         break
       }
 
@@ -70,7 +138,30 @@ export class Orchestrator {
 
       case 'NARRATE': {
         Logger.narration(`Narrating: "${action.text}"`)
-        this.speakFn(action.text)
+        if (action.soundEffect) {
+          this.speechService.playSound(action.soundEffect)
+        }
+        this.speechService.speak(action.text)
+        break
+      }
+
+      case 'ROLL_DICE': {
+        const roll = Math.floor(Math.random() * 6) + 1
+        Logger.info(`Rolling ${action.die}: ${roll}`)
+
+        this.speechService.speak(`You rolled a ${roll}`)
+
+        await this.stateManager.set('game.lastRoll', roll)
+
+        const newContext: ExecutionContext = {
+          depth: context.depth + 1,
+          maxDepth: context.maxDepth
+        }
+
+        await this.processTranscript(
+          `The player rolled a ${roll}. What happens next?`,
+          newContext
+        )
         break
       }
     }

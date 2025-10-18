@@ -3,17 +3,25 @@ import { CONFIG } from './config'
 import { deepClone } from './utils/deep-clone'
 import { Logger } from './utils/logger'
 
+/**
+ * Manages persistent game state in IndexedDB with dot-notation path access.
+ */
 export class StateManager {
   private db: IDBDatabase | null = null
 
-  async init(): Promise<void> {
+  /**
+   * Initializes the IndexedDB connection and ensures state exists.
+   * @param initialState - Default state to use if no saved state exists
+   * @throws Error if database connection fails or no initial state provided when needed
+   */
+  async init(initialState?: GameState): Promise<void> {
     return new Promise((resolve, reject) => {
       const request = indexedDB.open(CONFIG.STATE.DB_NAME, 1)
 
       request.onerror = () => reject(request.error)
       request.onsuccess = () => {
         this.db = request.result
-        this.initializeState().then(resolve).catch(reject)
+        this.initializeState(initialState).then(resolve).catch(reject)
       }
 
       request.onupgradeneeded = (event) => {
@@ -25,19 +33,22 @@ export class StateManager {
     })
   }
 
-  private async initializeState(): Promise<void> {
+  private async initializeState(initialState?: GameState): Promise<void> {
     const existingState = await this.getState()
     if (!existingState || Object.keys(existingState).length === 0) {
-      const initialState: GameState = {
-        game: {
-          counter: 0
-        }
+      if (!initialState) {
+        throw new Error('No initial state provided and no existing state found')
       }
       await this.setState(initialState)
       Logger.info('Initialized game state:', initialState)
     }
   }
 
+  /**
+   * Retrieves the current game state from IndexedDB.
+   * @returns The complete game state object
+   * @throws Error if database not initialized
+   */
   async getState(): Promise<GameState> {
     if (!this.db) throw new Error('Database not initialized')
 
@@ -51,6 +62,11 @@ export class StateManager {
     })
   }
 
+  /**
+   * Replaces the entire game state in IndexedDB.
+   * @param state - The new state to persist
+   * @throws Error if database not initialized
+   */
   async setState(state: GameState): Promise<void> {
     if (!this.db) throw new Error('Database not initialized')
 
@@ -64,17 +80,45 @@ export class StateManager {
     })
   }
 
+  /**
+   * Resets the game state to the provided initial state.
+   * @param initialState - The state to reset to
+   * @throws Error if database not initialized
+   */
+  async resetState(initialState: GameState): Promise<void> {
+    if (!this.db) throw new Error('Database not initialized')
+
+    await this.setState(initialState)
+    Logger.info('Game state reset:', initialState)
+  }
+
+  /**
+   * Gets a value from state using dot-notation path.
+   * @param path - Path to the value (e.g., "players.0.position")
+   * @returns The value at the specified path
+   */
   async get(path: string): Promise<unknown> {
     const state = await this.getState()
     return this.getByPath(state, path)
   }
 
+  /**
+   * Sets a value in state using dot-notation path.
+   * @param path - Path to the value (e.g., "players.0.position")
+   * @param value - The value to set
+   */
   async set(path: string, value: unknown): Promise<void> {
     const state = await this.getState()
     const newState = this.setByPath(state, path, value)
     await this.setState(newState)
   }
 
+  /**
+   * Checks if a path exists in the given state.
+   * @param state - The state object to check
+   * @param path - Path to verify (e.g., "players.0.position")
+   * @returns True if path exists and value is not undefined
+   */
   pathExists(state: GameState, path: string): boolean {
     try {
       const value = this.getByPath(state, path)
@@ -84,7 +128,13 @@ export class StateManager {
     }
   }
 
-  private getByPath(obj: GameState, path: string): unknown {
+  /**
+   * Retrieves a value from an object using dot-notation path.
+   * @param obj - The object to traverse
+   * @param path - Path to the value (e.g., "players.0.position")
+   * @returns The value at the path, or undefined if not found
+   */
+  getByPath(obj: GameState, path: string): unknown {
     const parts = path.split('.')
     let current: unknown = obj
 

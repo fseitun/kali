@@ -13,6 +13,10 @@ enum DetectorState {
   TRANSCRIBING = 'TRANSCRIBING'
 }
 
+/**
+ * Manages wake word detection and speech transcription using Vosk.
+ * Operates as a state machine: listens for wake word, then transcribes full command.
+ */
 export class WakeWordDetector {
   private model: VoskModel | null = null
   private recognizer: VoskRecognizer | null = null
@@ -32,6 +36,11 @@ export class WakeWordDetector {
     this.isMobile = isMobileDevice()
   }
 
+  /**
+   * Initializes the Vosk model and audio worklet for speech recognition.
+   * @param onProgress - Optional callback for model download progress (0-100)
+   * @throws Error if initialization fails
+   */
   async initialize(onProgress?: (percent: number) => void) {
     try {
       Logger.mic('Initializing Vosk speech recognition...')
@@ -73,6 +82,10 @@ export class WakeWordDetector {
     }
   }
 
+  /**
+   * Starts microphone capture and begins listening for the wake word.
+   * @throws Error if detector not initialized or microphone access fails
+   */
   async startListening() {
     if (!this.model || !this.recognizer || !this.audioContext) {
       throw new Error('Wake word detector not initialized')
@@ -226,6 +239,9 @@ export class WakeWordDetector {
     return this.isListening
   }
 
+  /**
+   * Cleans up resources: stops microphone, closes audio context, terminates recognizer.
+   */
   async destroy() {
     await this.stopListening()
 

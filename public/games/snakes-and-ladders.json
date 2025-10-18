@@ -1,0 +1,57 @@
+{
+  "metadata": {
+    "id": "snakes-and-ladders",
+    "name": "Snakes and Ladders",
+    "description": "A classic board game where players race to reach position 100, climbing ladders and sliding down snakes.",
+    "version": "1.0.0",
+    "minPlayers": 2,
+    "maxPlayers": 4
+  },
+  "initialState": {
+    "game": {
+      "name": "Snakes and Ladders",
+      "turn": "p1",
+      "winner": null,
+      "lastRoll": 0
+    },
+    "players": [
+      { "id": "p1", "name": "Player 1", "position": 0 },
+      { "id": "p2", "name": "Player 2", "position": 0 }
+    ],
+    "board": {
+      "winPosition": 100,
+      "moves": {
+        "4": 14,
+        "9": 31,
+        "17": 7,
+        "20": 38,
+        "28": 84,
+        "40": 59,
+        "51": 67,
+        "54": 34,
+        "62": 19,
+        "63": 81,
+        "64": 60,
+        "71": 91,
+        "87": 24,
+        "93": 73,
+        "95": 75,
+        "98": 79
+      }
+    }
+  },
+  "rules": {
+    "objective": "Be the first player to reach position 100.",
+    "mechanics": "Players take turns rolling a six-sided die and moving their piece forward by the number of squares shown. If a player lands on a square with the bottom of a ladder, they climb up to the square at the top of the ladder. If they land on a square with the head of a snake, they slide down to the square at the tail of the snake.",
+    "turnStructure": "CRITICAL: Players must say 'roll the dice' or similar. When they do, return ONLY a ROLL_DICE action. DO NOT manually process rolls that players report (like 'I rolled a 3'). After the ROLL_DICE action executes, you will receive the result and must: determine whose turn it is (check game.turn), find that player in the players array, add the roll to their position using ADD_STATE, check if they landed on a snake or ladder (board.moves), if they landed on a special square use SET_STATE to move them, check win condition (position >= board.winPosition), switch turns if game not won (game.turn switches between p1 and p2), and narrate what happened with appropriate sound effects.",
+    "boardLayout": "The board.moves object contains snakes and ladders. If the value is HIGHER than the key it is a LADDER (use soundEffect: ladder_up). If the value is LOWER than the key it is a SNAKE (use soundEffect: snake_down).",
+    "examples": [
+      "User: Roll the dice | You: [{ \"action\": \"ROLL_DICE\", \"die\": \"1d6\" }]",
+      "System: The player rolled a 4. What happens next? | You: [{ \"action\": \"ADD_STATE\", \"path\": \"players.0.position\", \"value\": 4 }, { \"action\": \"SET_STATE\", \"path\": \"players.0.position\", \"value\": 14 }, { \"action\": \"SET_STATE\", \"path\": \"game.turn\", \"value\": \"p2\" }, { \"action\": \"NARRATE\", \"text\": \"Player 1 moves to square 4 and climbs a ladder to square 14! Player 2's turn.\", \"soundEffect\": \"ladder_up\" }]"
+    ]
+  },
+  "soundEffects": {
+    "ladder_up": "/sounds/ladder_up.wav",
+    "snake_down": "/sounds/snake_down.wav"
+  }
+}

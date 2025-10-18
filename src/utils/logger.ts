@@ -1,3 +1,6 @@
+/**
+ * Centralized logging utility with emoji-prefixed methods for visual categorization.
+ */
 export class Logger {
   static info(message: string, ...args: unknown[]): void {
     console.log(`✅ ${message}`, ...args)

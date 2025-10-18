@@ -39,5 +39,10 @@ export const CONFIG = {
     PITCH: 1.0,
   },
 
+  GAME: {
+    DEFAULT_MODULE: 'snakes-and-ladders',
+    MODULES_PATH: '/games',
+  },
+
   MOBILE_DEVICE_PATTERN: /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i,
 } as const

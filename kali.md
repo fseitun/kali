@@ -82,3 +82,30 @@ This model ensures the Orchestrator's code remains small and universal, while th
     * Implement a basic **Retrieval-Augmented Generation (RAG)** system: instead of sending the whole rulebook, the Orchestrator searches for the most relevant rule snippet to include in the prompt.
     * Prototype **Agentic Chains:** The Orchestrator learns to handle a multi-step player turn by making a sequence of smaller, validated LLM calls.
 * **Milestone:** Demonstrate that the system can load and play a different simple game without code changes, and show a successful prototype of the RAG and chaining logic required for future complex games.
+
+---
+
+## Future Features & Improvements
+
+### State History & Rollback System
+
+**Context:** Users can authoritatively override state (e.g., "I'm at level 81 with a sword"), but they might make mistakes and need to recover from errors.
+
+**Requirements:**
+* **Automatic Snapshots:** Before every state mutation, store a snapshot in IndexedDB
+  * Structure: `{ timestamp, state, action }` for automatic snapshots
+  * Structure: `{ timestamp, state, label: "user-provided-name" }` for explicit checkpoints
+* **Explicit Checkpoints:** Voice command to create named restore points (e.g., "Kali, checkpoint" or "Kali, save checkpoint before boss fight")
+* **Retention Policy:** Keep last 10 states (FIFO queue)
+* **Voice-Activated Rollback:**
+  * Simple undo: "Kali, undo that" or "Kali, undo"
+  * Multi-step undo: "Kali, undo last 3 actions"
+  * Named restore: "Kali, restore to [checkpoint name]"
+
+**Implementation Notes:**
+* ~100 lines of code for history manager
+* IndexedDB-based storage (async, non-blocking)
+* Minimal overhead: <5ms per snapshot on modern devices
+* Storage minimal: game states are small JSON objects
+
+**Voice-Only Design:** All recovery must be voice-triggered since users cannot see the screen.

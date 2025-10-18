@@ -9,11 +9,18 @@
 import { CONFIG } from './config'
 import { Logger } from './utils/logger'
 
+/**
+ * Singleton manager for downloading and caching the Vosk speech recognition model.
+ * Handles offline-first model caching using the browser Cache API.
+ */
 export class ModelManager {
   private static instance: ModelManager | null = null
 
   private constructor() {}
 
+  /**
+   * Gets the singleton instance of ModelManager.
+   */
   static getInstance(): ModelManager {
     if (!ModelManager.instance) {
       ModelManager.instance = new ModelManager()
@@ -21,6 +28,12 @@ export class ModelManager {
     return ModelManager.instance
   }
 
+  /**
+   * Gets the Vosk model, either from cache or by downloading.
+   * @param onProgress - Optional callback for download progress (0-100)
+   * @returns Blob URL for the cached or downloaded model
+   * @throws Error if download fails
+   */
   async getModel(onProgress?: (percent: number) => void): Promise<string> {
     const cachedModel = await this.getCachedModel()
 
@@ -123,6 +136,9 @@ export class ModelManager {
     }
   }
 
+  /**
+   * Clears the cached Vosk model from browser cache.
+   */
   async clearCache(): Promise<void> {
     try {
       await caches.delete(CONFIG.MODEL.CACHE_NAME)
