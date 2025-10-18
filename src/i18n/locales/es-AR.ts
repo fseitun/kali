@@ -16,6 +16,8 @@ export const esAR = {
     nameConflictFallback: 'Bueno, seguimos con {name}.',
     allNamesReady: '¡Genial! Ya estamos: {names}. ¿Listos para jugar?',
     ready: '¡Perfecto! Arranquemos. {name}, vos empezás.',
+    acknowledgement: 'Uh, {message}. Bueno, volviendo...',
+    extractionFailed: 'No te escuché bien.',
   },
   game: {
     yourTurn: 'Te toca, {name}.',

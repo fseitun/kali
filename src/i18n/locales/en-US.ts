@@ -16,6 +16,8 @@ export const enUS = {
     nameConflictFallback: 'Let\'s go with {name}.',
     allNamesReady: 'Excellent! We have {names}. Ready to play?',
     ready: 'Perfect! Let\'s begin. {name}, you go first.',
+    acknowledgement: 'Oh, {message}. Anyway, back to the game...',
+    extractionFailed: 'I didn\'t catch that.',
   },
   game: {
     yourTurn: 'Your turn, {name}.',

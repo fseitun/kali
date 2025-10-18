@@ -17,6 +17,7 @@ export class KaliAppCore {
   private wakeWordDetector: WakeWordDetector | null = null
   private orchestrator: Orchestrator | null = null
   private stateManager: StateManager | null = null
+  private llmClient: ILLMClient | null = null
   private initialized = false
   private currentNameHandler: ((text: string) => void) | null = null
 
@@ -67,12 +68,12 @@ export class KaliAppCore {
     await this.stateManager.resetState(gameModule.initialState)
 
     Logger.robot(`Configuring LLM (${CONFIG.LLM_PROVIDER}) with game rules...`)
-    const llmClient = this.createLLMClient()
-    llmClient.setGameRules(this.formatGameRules(gameModule))
+    this.llmClient = this.createLLMClient()
+    this.llmClient.setGameRules(this.formatGameRules(gameModule))
 
     const indicator = this.uiService.getStatusIndicator()
     this.orchestrator = new Orchestrator(
-      llmClient,
+      this.llmClient,
       this.stateManager,
       this.speechService,
       indicator
@@ -159,7 +160,8 @@ ${rules.examples.map((ex, i) => `${i + 1}. ${ex}`).join('\n')}
         this.speechService,
         this.stateManager,
         gameName,
-        () => this.wakeWordDetector!.enableDirectTranscription()
+        () => this.wakeWordDetector!.enableDirectTranscription(),
+        this.llmClient!
       )
 
       await nameCollector.collectNames((handler) => {

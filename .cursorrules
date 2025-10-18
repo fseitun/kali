@@ -78,6 +78,15 @@ Audio pipeline follows: idle → listening → processing → speaking
 - Use strict TypeScript with all compiler warnings enabled
 - Follow ESLint rules for code quality
 - **After making code changes, always run `npm run lint` and `npm run type-check` and fix any issues**
+- Add JSDoc comments to:
+  - All public methods and functions
+  - All exported interfaces, types, and classes
+  - Complex private methods where the logic is non-obvious
+- JSDoc should include:
+  - Brief description of what the method/class does
+  - @param tags for all parameters
+  - @returns tag for return values
+  - @throws tag if the method can throw errors
 
 ## Important File Locations
 

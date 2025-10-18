@@ -4,7 +4,7 @@ import { GamePhase } from './types'
 import { validateName, findNameConflicts, generateNickname, areNamesSimilar } from '../utils/name-helper'
 import { Logger } from '../utils/logger'
 import { t } from '../i18n'
-import { CONFIG } from '../config'
+import { ILLMClient } from '../llm/ILLMClient'
 
 interface Player {
   id: string
@@ -14,6 +14,7 @@ interface Player {
 
 /**
  * Handles the voice-based player name collection phase at game start.
+ * Uses LLM for intelligent name extraction and conversational awareness.
  */
 export class NameCollector {
   private collectedNames: string[] = []
@@ -24,7 +25,8 @@ export class NameCollector {
     private speechService: SpeechService,
     private stateManager: StateManager,
     private gameName: string,
-    private enableDirectTranscription: () => void
+    private enableDirectTranscription: () => void,
+    private llmClient: ILLMClient
   ) {}
 
   /**
@@ -78,6 +80,14 @@ export class NameCollector {
           this.timeoutHandle = null
         }
 
+        const analysis = await this.llmClient.analyzeResponse(text, 'expecting player count number from 2 to 4')
+        if (!analysis.isOnTopic && analysis.urgentMessage) {
+          await this.speechService.speak(t('setup.acknowledgement', { message: analysis.urgentMessage }))
+          await this.speechService.speak(t('setup.playerCount'))
+          this.setupTimeout(() => resolve(2), 10000)
+          return
+        }
+
         const lower = text.toLowerCase().trim()
         let count = 0
 
@@ -119,24 +129,31 @@ export class NameCollector {
           this.timeoutHandle = null
         }
 
-        let cleaned = text.trim()
-        CONFIG.WAKE_WORD.TEXT.forEach(wakeWord => {
-          const regex = new RegExp(wakeWord, 'gi')
-          cleaned = cleaned.replace(regex, '')
-        })
-        cleaned = cleaned.trim()
-        const validation = validateName(cleaned)
+        const analysis = await this.llmClient.analyzeResponse(text, 'expecting person name')
+        if (!analysis.isOnTopic && analysis.urgentMessage) {
+          await this.speechService.speak(t('setup.acknowledgement', { message: analysis.urgentMessage }))
+          await this.speechService.speak(t('setup.playerName', { number: playerNumber }))
+          this.setupTimeout(() => this.handleNameTimeout(playerNumber, resolve), 10000)
+          return
+        }
 
-        if (validation.valid) {
-          await this.confirmName(validation.cleaned, onTranscript, playerNumber, resolve)
-        } else {
-          attempts++
-          if (attempts < 2) {
-            await this.speechService.speak(t('setup.nameInvalid'))
-            this.setupTimeout(() => this.handleNameTimeout(playerNumber, resolve), 10000)
-          } else {
-            await this.handleNameTimeout(playerNumber, resolve)
+        const extractedName = await this.llmClient.extractName(text)
+
+        if (extractedName) {
+          const validation = validateName(extractedName)
+          if (validation.valid) {
+            await this.confirmName(validation.cleaned, onTranscript, playerNumber, resolve)
+            return
           }
+        }
+
+        attempts++
+        if (attempts < 2) {
+          await this.speechService.speak(t('setup.extractionFailed'))
+          await this.speechService.speak(t('setup.playerName', { number: playerNumber }))
+          this.setupTimeout(() => this.handleNameTimeout(playerNumber, resolve), 10000)
+        } else {
+          await this.handleNameTimeout(playerNumber, resolve)
         }
       }
 
@@ -161,6 +178,14 @@ export class NameCollector {
       if (this.timeoutHandle) {
         clearTimeout(this.timeoutHandle)
         this.timeoutHandle = null
+      }
+
+      const analysis = await this.llmClient.analyzeResponse(text, 'expecting yes/no confirmation')
+      if (!analysis.isOnTopic && analysis.urgentMessage) {
+        await this.speechService.speak(t('setup.acknowledgement', { message: analysis.urgentMessage }))
+        await this.speechService.speak(t('setup.nameConfirm', { name }))
+        this.setupTimeout(() => resolve(name), 10000)
+        return
       }
 
       const lower = text.toLowerCase().trim()
@@ -197,19 +222,25 @@ export class NameCollector {
         this.timeoutHandle = null
       }
 
-      let cleaned = text.trim()
-      CONFIG.WAKE_WORD.TEXT.forEach(wakeWord => {
-        const regex = new RegExp(wakeWord, 'gi')
-        cleaned = cleaned.replace(regex, '')
-      })
-      cleaned = cleaned.trim()
-      const validation = validateName(cleaned)
-
-      if (validation.valid) {
-        await this.confirmName(validation.cleaned, onTranscript, playerNumber, resolve)
-      } else {
-        await this.handleNameTimeout(playerNumber, resolve)
+      const analysis = await this.llmClient.analyzeResponse(text, 'expecting person name')
+      if (!analysis.isOnTopic && analysis.urgentMessage) {
+        await this.speechService.speak(t('setup.acknowledgement', { message: analysis.urgentMessage }))
+        await this.speechService.speak(t('setup.nameConfirmRetry'))
+        this.setupTimeout(() => this.handleNameTimeout(playerNumber, resolve), 10000)
+        return
       }
+
+      const extractedName = await this.llmClient.extractName(text)
+
+      if (extractedName) {
+        const validation = validateName(extractedName)
+        if (validation.valid) {
+          await this.confirmName(validation.cleaned, onTranscript, playerNumber, resolve)
+          return
+        }
+      }
+
+      await this.handleNameTimeout(playerNumber, resolve)
     }
 
     onTranscript(handler)
@@ -278,6 +309,14 @@ export class NameCollector {
           this.timeoutHandle = null
         }
 
+        const analysis = await this.llmClient.analyzeResponse(text, 'expecting yes/no confirmation for suggested name')
+        if (!analysis.isOnTopic && analysis.urgentMessage) {
+          await this.speechService.speak(t('setup.acknowledgement', { message: analysis.urgentMessage }))
+          await this.speechService.speak(t('setup.nameConflict', { name: original, suggestion }))
+          this.setupTimeout(() => resolve(suggestion), 10000)
+          return
+        }
+
         const lower = text.toLowerCase().trim()
 
         if (lower.includes('yes') || lower.includes('yeah') || lower.includes('sí') || lower.includes('si') || lower.includes('sure') || lower.includes('okay') || lower.includes('ok') || lower.includes('dale') || lower.includes('bueno')) {
@@ -311,22 +350,31 @@ export class NameCollector {
         this.timeoutHandle = null
       }
 
-      let cleaned = text.trim()
-      CONFIG.WAKE_WORD.TEXT.forEach(wakeWord => {
-        const regex = new RegExp(wakeWord, 'gi')
-        cleaned = cleaned.replace(regex, '')
-      })
-      cleaned = cleaned.trim()
-      const validation = validateName(cleaned)
-
-      if (validation.valid && !this.collectedNames.includes(validation.cleaned)) {
-        await this.speechService.speak(t('setup.nameConfirmYes', { name: validation.cleaned }))
-        resolve(validation.cleaned)
-      } else {
-        const kindName = generateNickname(fallback, this.collectedNames)
-        await this.speechService.speak(t('setup.nameConflictFallback', { name: kindName }))
-        resolve(kindName)
+      const analysis = await this.llmClient.analyzeResponse(text, 'expecting alternative person name')
+      if (!analysis.isOnTopic && analysis.urgentMessage) {
+        await this.speechService.speak(t('setup.acknowledgement', { message: analysis.urgentMessage }))
+        await this.speechService.speak(t('setup.nameConflictAlternative'))
+        this.setupTimeout(() => {
+          const kindName = generateNickname(fallback, this.collectedNames)
+          resolve(kindName)
+        }, 10000)
+        return
       }
+
+      const extractedName = await this.llmClient.extractName(text)
+
+      if (extractedName) {
+        const validation = validateName(extractedName)
+        if (validation.valid && !this.collectedNames.includes(validation.cleaned)) {
+          await this.speechService.speak(t('setup.nameConfirmYes', { name: validation.cleaned }))
+          resolve(validation.cleaned)
+          return
+        }
+      }
+
+      const kindName = generateNickname(fallback, this.collectedNames)
+      await this.speechService.speak(t('setup.nameConflictFallback', { name: kindName }))
+      resolve(kindName)
     }
 
     onTranscript(handler)
