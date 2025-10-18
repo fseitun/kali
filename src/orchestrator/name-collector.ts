@@ -3,6 +3,8 @@ import { StateManager } from '../state-manager'
 import { GamePhase } from './types'
 import { validateName, findNameConflicts, generateNickname, areNamesSimilar } from '../utils/name-helper'
 import { Logger } from '../utils/logger'
+import { t } from '../i18n'
+import { CONFIG } from '../config'
 
 interface Player {
   id: string
@@ -34,7 +36,7 @@ export class NameCollector {
     try {
       Logger.info('Starting name collection phase')
 
-      await this.speechService.speak(`Welcome to ${this.gameName}! Let's get started.`)
+      await this.speechService.speak(t('setup.welcome', { game: this.gameName }))
 
       this.playerCount = await this.askPlayerCount(onTranscript)
       Logger.info(`Collecting names for ${this.playerCount} players`)
@@ -53,7 +55,7 @@ export class NameCollector {
 
       await this.createPlayers()
 
-      await this.speechService.speak(`Perfect! Let's begin. ${this.collectedNames[0]}, you go first.`)
+      await this.speechService.speak(t('setup.ready', { name: this.collectedNames[0] }))
 
       await this.stateManager.set('game.phase', GamePhase.PLAYING)
 
@@ -66,7 +68,7 @@ export class NameCollector {
   }
 
   private async askPlayerCount(onTranscript: (handler: (text: string) => void) => void): Promise<number> {
-    await this.speechService.speak('How many players? Say a number from 2 to 4.')
+    await this.speechService.speak(t('setup.playerCount'))
 
     return new Promise<number>((resolve) => {
       const handler = async (text: string) => {
@@ -90,7 +92,7 @@ export class NameCollector {
         if (count >= 2 && count <= 4) {
           resolve(count)
         } else {
-          await this.speechService.speak('Please say a number from 2 to 4.')
+          await this.speechService.speak(t('setup.playerCountInvalid'))
           this.setupTimeout(() => resolve(2), 10000)
         }
       }
@@ -98,14 +100,14 @@ export class NameCollector {
       onTranscript(handler)
       this.setupTimeout(async () => {
         Logger.info('Player count timeout - no response received')
-        await this.speechService.speak('No response. Defaulting to 2 players.')
+        await this.speechService.speak(t('setup.playerCountTimeout'))
         resolve(2)
       }, 10000)
     })
   }
 
   private async askPlayerName(playerNumber: number, onTranscript: (handler: (text: string) => void) => void): Promise<string> {
-    await this.speechService.speak(`Player ${playerNumber}, what's your name?`)
+    await this.speechService.speak(t('setup.playerName', { number: playerNumber }))
 
     return new Promise<string>((resolve) => {
       let attempts = 0
@@ -117,7 +119,12 @@ export class NameCollector {
           this.timeoutHandle = null
         }
 
-        const cleaned = text.replace(/zookeeper/gi, '').replace(/zoo keeper/gi, '').trim()
+        let cleaned = text.trim()
+        CONFIG.WAKE_WORD.TEXT.forEach(wakeWord => {
+          const regex = new RegExp(wakeWord, 'gi')
+          cleaned = cleaned.replace(regex, '')
+        })
+        cleaned = cleaned.trim()
         const validation = validateName(cleaned)
 
         if (validation.valid) {
@@ -125,7 +132,7 @@ export class NameCollector {
         } else {
           attempts++
           if (attempts < 2) {
-            await this.speechService.speak('Sorry, I didn\'t catch that. What\'s your name?')
+            await this.speechService.speak(t('setup.nameInvalid'))
             this.setupTimeout(() => this.handleNameTimeout(playerNumber, resolve), 10000)
           } else {
             await this.handleNameTimeout(playerNumber, resolve)
@@ -147,7 +154,7 @@ export class NameCollector {
     playerNumber: number,
     resolve: (value: string) => void
   ): Promise<void> {
-    await this.speechService.speak(`${name}, is that correct?`)
+    await this.speechService.speak(t('setup.nameConfirm', { name }))
 
     const confirmHandler = async (text: string) => {
       Logger.info(`Confirmation handler received: "${text}"`)
@@ -158,14 +165,14 @@ export class NameCollector {
 
       const lower = text.toLowerCase().trim()
 
-      if (lower.includes('yes') || lower.includes('yeah') || lower.includes('correct') || lower.includes('right')) {
-        await this.speechService.speak(`Great, ${name}!`)
+      if (lower.includes('yes') || lower.includes('yeah') || lower.includes('sí') || lower.includes('si') || lower.includes('correct') || lower.includes('right') || lower.includes('correcto')) {
+        await this.speechService.speak(t('setup.nameConfirmYes', { name }))
         resolve(name)
       } else if (lower.includes('no') || lower.includes('nope')) {
-        await this.speechService.speak('Okay, what should I call you?')
+        await this.speechService.speak(t('setup.nameConfirmRetry'))
         this.retryNameCollection(onTranscript, playerNumber, resolve)
       } else {
-        await this.speechService.speak(`Great, ${name}!`)
+        await this.speechService.speak(t('setup.nameConfirmYes', { name }))
         resolve(name)
       }
     }
@@ -173,7 +180,7 @@ export class NameCollector {
     onTranscript(confirmHandler)
     this.setupTimeout(async () => {
       Logger.info('Confirmation timeout - assuming yes')
-      await this.speechService.speak(`Great, ${name}!`)
+      await this.speechService.speak(t('setup.nameConfirmYes', { name }))
       resolve(name)
     }, 10000)
   }
@@ -190,7 +197,12 @@ export class NameCollector {
         this.timeoutHandle = null
       }
 
-      const cleaned = text.replace(/zookeeper/gi, '').replace(/zoo keeper/gi, '').trim()
+      let cleaned = text.trim()
+      CONFIG.WAKE_WORD.TEXT.forEach(wakeWord => {
+        const regex = new RegExp(wakeWord, 'gi')
+        cleaned = cleaned.replace(regex, '')
+      })
+      cleaned = cleaned.trim()
       const validation = validateName(cleaned)
 
       if (validation.valid) {
@@ -209,7 +221,7 @@ export class NameCollector {
 
   private async handleNameTimeout(playerNumber: number, resolve: (value: string) => void): Promise<void> {
     const kindName = generateNickname(`Player${playerNumber}`, this.collectedNames)
-    await this.speechService.speak(`No problem! I'll call you ${kindName}.`)
+    await this.speechService.speak(t('setup.nameTimeout', { name: kindName }))
     resolve(kindName)
   }
 
@@ -229,7 +241,7 @@ export class NameCollector {
         const suggestion = generateNickname(baseName, usedNames)
 
         await this.speechService.speak(
-          `We already have a ${baseName}. How about ${suggestion} for you?`
+          t('setup.nameConflict', { name: baseName, suggestion })
         )
 
         const response = await this.waitForConfirmation(onTranscript, suggestion, baseName)
@@ -237,8 +249,8 @@ export class NameCollector {
       }
     }
 
-    const allNames = this.collectedNames.join(', ').replace(/, ([^,]*)$/, ' and $1')
-    await this.speechService.speak(`Excellent! We have ${allNames}. Ready to play?`)
+    const allNames = this.collectedNames.join(', ').replace(/, ([^,]*)$/, ' y $1')
+    await this.speechService.speak(t('setup.allNamesReady', { names: allNames }))
 
     await new Promise<void>((resolve) => {
       const handler = () => {
@@ -268,11 +280,11 @@ export class NameCollector {
 
         const lower = text.toLowerCase().trim()
 
-        if (lower.includes('yes') || lower.includes('yeah') || lower.includes('sure') || lower.includes('okay') || lower.includes('ok')) {
-          await this.speechService.speak('Perfect!')
+        if (lower.includes('yes') || lower.includes('yeah') || lower.includes('sí') || lower.includes('si') || lower.includes('sure') || lower.includes('okay') || lower.includes('ok') || lower.includes('dale') || lower.includes('bueno')) {
+          await this.speechService.speak(t('setup.nameConflictPerfect'))
           resolve(suggestion)
         } else if (lower.includes('no') || lower.includes('nope')) {
-          await this.speechService.speak(`What would you like to be called instead?`)
+          await this.speechService.speak(t('setup.nameConflictAlternative'))
           await this.resolveAlternativeName(onTranscript, original, resolve)
         } else {
           resolve(suggestion)
@@ -299,15 +311,20 @@ export class NameCollector {
         this.timeoutHandle = null
       }
 
-      const cleaned = text.replace(/zookeeper/gi, '').replace(/zoo keeper/gi, '').trim()
+      let cleaned = text.trim()
+      CONFIG.WAKE_WORD.TEXT.forEach(wakeWord => {
+        const regex = new RegExp(wakeWord, 'gi')
+        cleaned = cleaned.replace(regex, '')
+      })
+      cleaned = cleaned.trim()
       const validation = validateName(cleaned)
 
       if (validation.valid && !this.collectedNames.includes(validation.cleaned)) {
-        await this.speechService.speak(`Great, ${validation.cleaned}!`)
+        await this.speechService.speak(t('setup.nameConfirmYes', { name: validation.cleaned }))
         resolve(validation.cleaned)
       } else {
         const kindName = generateNickname(fallback, this.collectedNames)
-        await this.speechService.speak(`Let's go with ${kindName}.`)
+        await this.speechService.speak(t('setup.nameConflictFallback', { name: kindName }))
         resolve(kindName)
       }
     }
@@ -316,7 +333,7 @@ export class NameCollector {
     this.setupTimeout(async () => {
       Logger.info('Alternative name timeout - using fallback')
       const kindName = generateNickname(fallback, this.collectedNames)
-      await this.speechService.speak(`Let's go with ${kindName}.`)
+      await this.speechService.speak(t('setup.nameConflictFallback', { name: kindName }))
       resolve(kindName)
     }, 10000)
   }

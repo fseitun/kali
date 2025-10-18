@@ -1,15 +1,17 @@
 export const CONFIG = {
   LLM_PROVIDER: (import.meta.env.VITE_LLM_PROVIDER || 'gemini') as 'ollama' | 'gemini',
 
+  LOCALE: 'es-AR' as 'es-AR' | 'en-US',
+
   WAKE_WORD: {
-    TEXT: ['zookeeper', 'zoo keeper'],
+    TEXT: ['kali', 'cali', 'calli', 'kaly', 'caly'],
     TRANSCRIPTION_TIMEOUT_MS: 5000,
   },
 
   MODEL: {
     CACHE_NAME: 'kali-models-v1',
-    URL: '/vosk-model-small-en-us-0.15.zip',
-    VERSION: '0.15',
+    URL: '/vosk-model-small-es-0.42.zip',
+    VERSION: '0.42',
   },
 
   OLLAMA: {
@@ -44,6 +46,7 @@ export const CONFIG = {
   TTS: {
     RATE: 1.0,
     PITCH: 1.0,
+    VOICE_LANG: 'es-AR',
   },
 
   GAME: {

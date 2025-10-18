@@ -1,15 +1,15 @@
 {
   "metadata": {
     "id": "snakes-and-ladders",
-    "name": "Snakes and Ladders",
-    "description": "A classic board game where players race to reach position 100, climbing ladders and sliding down snakes.",
+    "name": "Serpientes y Escaleras",
+    "description": "Un juego de mesa clásico donde los jugadores compiten para llegar a la posición 100, subiendo escaleras y bajando por serpientes.",
     "version": "1.0.0",
     "minPlayers": 2,
     "maxPlayers": 4
   },
   "initialState": {
     "game": {
-      "name": "Snakes and Ladders",
+      "name": "Serpientes y Escaleras",
       "phase": "SETUP",
       "turn": "p1",
       "winner": null,

@@ -124,6 +124,28 @@ This model ensures the Orchestrator's code remains small and universal, while th
 
 ### Medium Priority
 
+#### User Language Selection at Setup
+**Context:** Currently hardcoded to Spanish (Argentina) with the wake word "Kali". The system uses Spanish (Argentina) voices, Spanish i18n strings, and instructs the LLM to respond in Rioplatense Spanish.
+
+**Requirements:**
+* **Voice-Activated Language Selection:**
+  * On first launch or after language reset: "Choose your language: Spanish or English" / "Elegí tu idioma: Español o Inglés"
+  * User responds: "Spanish" / "Español" or "English" / "Inglés"
+  * System sets locale and restarts with appropriate language
+* **Persistence:**
+  * Store language preference in IndexedDB
+  * Remember choice across sessions
+* **Wake Word:**
+  * "Kali" works phonetically in both languages
+  * No need to change wake word based on language
+* **Implementation:**
+  * Add language selection phase before SETUP
+  * Update `CONFIG.LOCALE` dynamically based on selection
+  * Reload i18n translations
+  * Update LLM system prompt based on selected language
+
+**Status:** Not started - currently defaulting to Spanish (Argentina)
+
 #### Hybrid Deterministic Rule Enforcement
 **Context:** Currently, ladder/snake moves in Snakes and Ladders are automatically enforced by the orchestrator after position changes. This hybrid approach keeps game-specific deterministic rules in code while letting the LLM handle narrative and interpretation.
 
@@ -176,14 +198,12 @@ This model ensures the Orchestrator's code remains small and universal, while th
 
 **Files affected:** `src/model-manager.ts`, `src/main.ts` (error handling in initializeWakeWord)
 
-#### Consider Wake Word Change
-**Current:** Wake word is "zookeeper" (line 3 in `config.ts`)
+#### Wake Word
+**Current:** Wake word is "Kali" with phonetic variants: "kali", "cali", "calli", "kaly", "caly" (in `config.ts`)
 
-**Discussion:** Should it be "Kali" instead? More intuitive and aligns with the app name.
+**Changed from:** Previously "zookeeper" - changed to "Kali" for better alignment with app name and multi-language support.
 
-**Trade-off:** "Kali" is shorter and might have more false positives, but "zookeeper" is unusual and memorable.
-
-**Decision needed:** User preference
+**Note:** "Kali" works phonetically in both Spanish and English, making it ideal for multi-language support.
 
 #### Enhanced Error Messages for Validation Failures
 **Current:** Validation errors are logged but user gets no voice feedback.

@@ -1,5 +1,6 @@
 import './styles/shared.css'
 import './styles/debug.css'
+import './i18n'
 import { KaliAppCore } from './kali-app-core'
 import { DebugUIService } from './services/debug-ui-service'
 import { SpeechService } from './services/speech-service'

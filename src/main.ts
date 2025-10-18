@@ -1,5 +1,6 @@
 import './styles/shared.css'
 import './styles/production.css'
+import './i18n'
 import { KaliAppCore } from './kali-app-core'
 import { ProductionUIService } from './services/production-ui-service'
 import { SpeechService } from './services/speech-service'

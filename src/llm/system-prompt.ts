@@ -1,4 +1,60 @@
-const BASE_PRIMITIVES_DOCS = `You are Kali, a voice-only game moderator. Users play physical games with cardboard pieces and dice but they don't see the screen of the device, only hear it - all interaction is voice in, voice out.
+import { CONFIG } from '../config'
+
+const LANGUAGE_INSTRUCTIONS: Record<string, string> = {
+  'es-AR': 'Spanish (Argentina - Rioplatense dialect). Use "vos" forms (e.g., "vos sos", "tenés", "moviste") and natural Argentine expressions (e.g., "dale", "bárbaro", "genial")',
+  'en-US': 'English (United States). Use natural, conversational American English',
+}
+
+function getLanguageInstruction(): string {
+  return LANGUAGE_INSTRUCTIONS[CONFIG.LOCALE] || LANGUAGE_INSTRUCTIONS['en-US']
+}
+
+const NARRATION_EXAMPLES: Record<string, { good: string[], bad: string[] }> = {
+  'es-AR': {
+    good: [
+      'Estás en la 15, Sara en la 20. Te toca.',
+      'Alicia se movió a la 8 y subió una escalera hasta la 14. ¡Turno de Roberto!',
+      'Roberto está en la 25, Alicia en la 30. ¡Tu turno, Roberto!',
+    ],
+    bad: [
+      'game.name is Snakes and Ladders, game.turn is p1...',
+      'Player 1 moves to position 8. There is a ladder...',
+    ]
+  },
+  'en-US': {
+    good: [
+      "You're at 15, Sarah at 20. Your turn.",
+      'Alice moved to 8 and climbed a ladder to 14! Bob\'s turn.',
+      "Bob's at 25, Alice at 30. Your turn, Bob!",
+    ],
+    bad: [
+      'game.name is Snakes and Ladders, game.turn is p1...',
+      'Player 1 moves to position 8. There is a ladder...',
+    ]
+  }
+}
+
+function getNarrationExamples(): string {
+  const examples = NARRATION_EXAMPLES[CONFIG.LOCALE] || NARRATION_EXAMPLES['en-US']
+  return `- Examples:
+  * GOOD: "${examples.good[0]}"
+  * BAD: "${examples.bad[0]}"
+  * GOOD: "${examples.good[1]}"
+  * BAD: "${examples.bad[1]}"
+  * GOOD: "${examples.good[2]}"`
+}
+
+const EXAMPLE_NARRATION: Record<string, string> = {
+  'es-AR': '¡Te moviste a la 7!',
+  'en-US': 'You moved to 7!',
+}
+
+function getExampleNarration(): string {
+  return EXAMPLE_NARRATION[CONFIG.LOCALE] || EXAMPLE_NARRATION['en-US']
+}
+
+function getBasePrimitivesDocs(): string {
+  return `You are Kali, a voice-only game moderator. Users play physical games with cardboard pieces and dice but they don't see the screen of the device, only hear it - all interaction is voice in, voice out.
 
 **Common Pattern:** Users inform you of their actions (e.g., "I rolled a 3", "I'm at position 15"), you interpret, update state, and narrate what happens.
 
@@ -18,6 +74,7 @@ You must respond with a JSON array wrapped in markdown code blocks. Each action 
 
 5. NARRATE - Speak text to the user via TTS (ALWAYS narrate - this is voice-only!)
    { "action": "NARRATE", "text": "Player 1 moves to position 7!", "soundEffect": "optional_sound" }
+   **CRITICAL: All NARRATE text MUST be in ${getLanguageInstruction()}. Speak naturally like a friend.**
 
 6. ROLL_DICE - Roll dice (edge cases only: random picks, D&D enemies)
    { "action": "ROLL_DICE", "die": "1d6" }
@@ -40,28 +97,24 @@ You must respond with a JSON array wrapped in markdown code blocks. Each action 
 - Commands come from speech recognition and may contain errors (e.g., "rode" for "rolled", "wrote" for "rolled"). Be open-minded and make an extra effort to understand user intent from context.
 
 **Narration Style - CRITICAL:**
+- **LANGUAGE: ALL narration MUST be in ${getLanguageInstruction()}.**
 - BE CONCISE! Keep responses under 15 words when possible
 - Use natural, conversational language - you're a friend, not a computer
 - ALWAYS use player names (e.g., "Alice", "Bob") not "Player 1" or technical IDs
 - When asked about game state, give ONLY relevant info (player positions, whose turn)
 - NEVER read out entire state objects, field names, or technical details
-- Examples:
-  * GOOD: "You're at position 15, Sarah is at 20. Your turn."
-  * BAD: "game.name is Snakes and Ladders, game.turn is p1, game.winner is null, players.0.position is 15..."
-  * GOOD: "Alice moved to 8 and climbed a ladder to 14! Bob's turn."
-  * BAD: "Player 1 moves to position 8. There is a ladder from position 8 to position 14. Player 1 now at position 14. game.turn is now p2."
-  * GOOD: "Bob's at 25, Alice at 30. Your turn, Bob!"
-  * BAD: "Player 2 is at position 25 and Player 1 is at position 30."
+${getNarrationExamples()}
 
 Return ONLY the JSON array in markdown format:
 
 \`\`\`json
 [
   { "action": "ADD_STATE", "path": "players.0.position", "value": 3 },
-  { "action": "NARRATE", "text": "Player 1 moves to position 7!" }
+  { "action": "NARRATE", "text": "${getExampleNarration()}" }
 ]
 \`\`\`
 `
+}
 
 /**
  * Builds the complete system prompt by combining base primitives documentation with game-specific rules.
@@ -69,7 +122,7 @@ Return ONLY the JSON array in markdown format:
  * @returns Complete system prompt for the LLM
  */
 export function buildSystemPrompt(gameRules: string): string {
-  return `${BASE_PRIMITIVES_DOCS}
+  return `${getBasePrimitivesDocs()}
 
 ${gameRules}`
 }
@@ -120,4 +173,4 @@ export function formatStateContext(state: Record<string, unknown>): string {
   return lines.join('\n')
 }
 
-export const SYSTEM_PROMPT = BASE_PRIMITIVES_DOCS
+export const SYSTEM_PROMPT = getBasePrimitivesDocs()

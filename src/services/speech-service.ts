@@ -47,6 +47,12 @@ export class SpeechService {
       utterance.rate = CONFIG.TTS.RATE
       utterance.pitch = CONFIG.TTS.PITCH
 
+      const voice = this.selectVoice()
+      if (voice) {
+        utterance.voice = voice
+        utterance.lang = voice.lang
+      }
+
       utterance.onend = () => {
         resolve()
       }
@@ -64,6 +70,22 @@ export class SpeechService {
       window.speechSynthesis.speak(utterance)
       Logger.narration(`Kali: "${text}"`)
     })
+  }
+
+  private selectVoice(): SpeechSynthesisVoice | null {
+    const voices = window.speechSynthesis.getVoices()
+    if (voices.length === 0) return null
+
+    const targetLang = CONFIG.TTS.VOICE_LANG
+
+    const exactMatch = voices.find(v => v.lang === targetLang)
+    if (exactMatch) return exactMatch
+
+    const langPrefix = targetLang.split('-')[0]
+    const langMatch = voices.find(v => v.lang.startsWith(langPrefix))
+    if (langMatch) return langMatch
+
+    return null
   }
 
   /**
