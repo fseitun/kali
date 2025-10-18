@@ -1,9 +1,13 @@
+const AUDIO_SAMPLE_RATE = 16000
+const WORKLET_BUFFER_SIZE = 2048
+const INT16_MAX = 32768
+
 class VoskAudioProcessor extends AudioWorkletProcessor {
   constructor() {
     super()
     this.buffer = []
     this.isRecording = false
-    this.resampleRatio = sampleRate / 16000
+    this.resampleRatio = sampleRate / AUDIO_SAMPLE_RATE
     this.resampleCounter = 0
 
     this.port.onmessage = (event) => {
@@ -39,12 +43,12 @@ class VoskAudioProcessor extends AudioWorkletProcessor {
 
       if (this.resampleCounter >= this.resampleRatio) {
         this.resampleCounter -= this.resampleRatio
-        const sample = Math.max(-32768, Math.min(32767, channelData[i] * 32768))
+        const sample = Math.max(-INT16_MAX, Math.min(INT16_MAX - 1, channelData[i] * INT16_MAX))
         this.buffer.push(sample)
       }
     }
 
-    if (this.buffer.length >= 2048) {
+    if (this.buffer.length >= WORKLET_BUFFER_SIZE) {
       this.port.postMessage({
         type: 'audioData',
         data: new Int16Array(this.buffer)

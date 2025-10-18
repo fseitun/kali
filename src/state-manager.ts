@@ -1,14 +1,14 @@
 import { GameState } from './orchestrator/types'
+import { CONFIG } from './config'
+import { deepClone } from './utils/deep-clone'
+import { Logger } from './utils/logger'
 
 export class StateManager {
-  private readonly dbName = 'kali-db'
-  private readonly storeName = 'gameState'
-  private readonly stateKey = 'current'
   private db: IDBDatabase | null = null
 
   async init(): Promise<void> {
     return new Promise((resolve, reject) => {
-      const request = indexedDB.open(this.dbName, 1)
+      const request = indexedDB.open(CONFIG.STATE.DB_NAME, 1)
 
       request.onerror = () => reject(request.error)
       request.onsuccess = () => {
@@ -18,8 +18,8 @@ export class StateManager {
 
       request.onupgradeneeded = (event) => {
         const db = (event.target as IDBOpenDBRequest).result
-        if (!db.objectStoreNames.contains(this.storeName)) {
-          db.createObjectStore(this.storeName)
+        if (!db.objectStoreNames.contains(CONFIG.STATE.STORE_NAME)) {
+          db.createObjectStore(CONFIG.STATE.STORE_NAME)
         }
       }
     })
@@ -34,7 +34,7 @@ export class StateManager {
         }
       }
       await this.setState(initialState)
-      console.log('✅ Initialized game state:', initialState)
+      Logger.info('Initialized game state:', initialState)
     }
   }
 
@@ -42,9 +42,9 @@ export class StateManager {
     if (!this.db) throw new Error('Database not initialized')
 
     return new Promise((resolve, reject) => {
-      const transaction = this.db!.transaction([this.storeName], 'readonly')
-      const store = transaction.objectStore(this.storeName)
-      const request = store.get(this.stateKey)
+      const transaction = this.db!.transaction([CONFIG.STATE.STORE_NAME], 'readonly')
+      const store = transaction.objectStore(CONFIG.STATE.STORE_NAME)
+      const request = store.get(CONFIG.STATE.STATE_KEY)
 
       request.onerror = () => reject(request.error)
       request.onsuccess = () => resolve(request.result || {})
@@ -55,9 +55,9 @@ export class StateManager {
     if (!this.db) throw new Error('Database not initialized')
 
     return new Promise((resolve, reject) => {
-      const transaction = this.db!.transaction([this.storeName], 'readwrite')
-      const store = transaction.objectStore(this.storeName)
-      const request = store.put(state, this.stateKey)
+      const transaction = this.db!.transaction([CONFIG.STATE.STORE_NAME], 'readwrite')
+      const store = transaction.objectStore(CONFIG.STATE.STORE_NAME)
+      const request = store.put(state, CONFIG.STATE.STATE_KEY)
 
       request.onerror = () => reject(request.error)
       request.onsuccess = () => resolve()
@@ -103,7 +103,7 @@ export class StateManager {
 
   private setByPath(obj: GameState, path: string, value: unknown): GameState {
     const parts = path.split('.')
-    const newState = JSON.parse(JSON.stringify(obj))
+    const newState = deepClone(obj)
 
     let current: Record<string, unknown> = newState
 

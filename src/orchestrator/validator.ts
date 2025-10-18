@@ -64,18 +64,43 @@ function validateAction(
   }
 }
 
+function validateField(
+  action: Record<string, unknown>,
+  fieldName: string,
+  fieldType: string,
+  actionType: string,
+  index: number,
+  required = true
+): ValidationResult {
+  if (!(fieldName in action)) {
+    if (required) {
+      return {
+        valid: false,
+        error: `${actionType} at index ${index} missing '${fieldName}' field`
+      }
+    }
+    return { valid: true }
+  }
+
+  if (typeof action[fieldName] !== fieldType) {
+    return {
+      valid: false,
+      error: `${actionType} at index ${index} has invalid '${fieldName}' field type`
+    }
+  }
+
+  return { valid: true }
+}
+
 function validateWriteState(
   action: PrimitiveAction,
   state: GameState,
   stateManager: StateManager,
   index: number
 ): ValidationResult {
-  if (!('path' in action) || typeof action.path !== 'string') {
-    return {
-      valid: false,
-      error: `WRITE_STATE at index ${index} missing or invalid 'path' field`
-    }
-  }
+  const actionRecord = action as unknown as Record<string, unknown>
+  const pathValidation = validateField(actionRecord, 'path', 'string', 'WRITE_STATE', index)
+  if (!pathValidation.valid) return pathValidation
 
   if (!('value' in action)) {
     return {
@@ -84,10 +109,12 @@ function validateWriteState(
     }
   }
 
-  if (!stateManager.pathExists(state, action.path)) {
-    return {
-      valid: false,
-      error: `WRITE_STATE at index ${index} references non-existent path: ${action.path}`
+  if ('path' in action && typeof action.path === 'string') {
+    if (!stateManager.pathExists(state, action.path)) {
+      return {
+        valid: false,
+        error: `WRITE_STATE at index ${index} references non-existent path: ${action.path}`
+      }
     }
   }
 
@@ -100,17 +127,16 @@ function validateReadState(
   stateManager: StateManager,
   index: number
 ): ValidationResult {
-  if (!('path' in action) || typeof action.path !== 'string') {
-    return {
-      valid: false,
-      error: `READ_STATE at index ${index} missing or invalid 'path' field`
-    }
-  }
+  const actionRecord = action as unknown as Record<string, unknown>
+  const pathValidation = validateField(actionRecord, 'path', 'string', 'READ_STATE', index)
+  if (!pathValidation.valid) return pathValidation
 
-  if (!stateManager.pathExists(state, action.path)) {
-    return {
-      valid: false,
-      error: `READ_STATE at index ${index} references non-existent path: ${action.path}`
+  if ('path' in action && typeof action.path === 'string') {
+    if (!stateManager.pathExists(state, action.path)) {
+      return {
+        valid: false,
+        error: `READ_STATE at index ${index} references non-existent path: ${action.path}`
+      }
     }
   }
 
@@ -121,12 +147,6 @@ function validateNarrate(
   action: PrimitiveAction,
   index: number
 ): ValidationResult {
-  if (!('text' in action) || typeof action.text !== 'string') {
-    return {
-      valid: false,
-      error: `NARRATE at index ${index} missing or invalid 'text' field`
-    }
-  }
-
-  return { valid: true }
+  const actionRecord = action as unknown as Record<string, unknown>
+  return validateField(actionRecord, 'text', 'string', 'NARRATE', index)
 }

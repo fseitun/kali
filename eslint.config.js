@@ -28,9 +28,8 @@ export default tseslint.config(
     },
     rules: {
       '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_' }],
-      '@typescript-eslint/no-explicit-any': 'warn',
-      '@typescript-eslint/no-unnecessary-type-assertion': 'warn',
       '@typescript-eslint/no-explicit-any': 'error',
+      '@typescript-eslint/no-unnecessary-type-assertion': 'warn',
       'prefer-const': 'error',
       'no-var': 'error'
     }

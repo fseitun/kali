@@ -1,5 +1,8 @@
 import { createModel, VoskModel, VoskRecognizer, VoskResultMessage, VoskPartialResultMessage, RecognitionResult } from 'vosk-browser'
 import { ModelManager } from './model-manager'
+import { CONFIG } from './config'
+import { Logger } from './utils/logger'
+import { isMobileDevice } from './utils/browser-support'
 
 interface ExtendedMediaTrackConstraints extends MediaTrackConstraints {
   sampleRate?: number
@@ -17,22 +20,21 @@ export class WakeWordDetector {
   private mediaStream: MediaStream | null = null
   private workletNode: AudioWorkletNode | null = null
   private isListening = false
-  private isMobile = false
+  private isMobile: boolean
   private state: DetectorState = DetectorState.LISTENING_FOR_WAKE_WORD
   private transcriptionTimeout: number | null = null
-  private readonly TRANSCRIPTION_TIMEOUT_MS = 5000
 
   constructor(
     private onWakeWord: () => void,
     private onTranscription: (text: string) => void,
     private onRawTranscription?: (raw: string, processed: string, wakeWordDetected: boolean) => void
   ) {
-    this.isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
+    this.isMobile = isMobileDevice()
   }
 
   async initialize(onProgress?: (percent: number) => void) {
     try {
-      console.log('🎤 Initializing Vosk speech recognition...')
+      Logger.mic('Initializing Vosk speech recognition...')
 
       const AudioContextClass = window.AudioContext || (window as typeof window & { webkitAudioContext: typeof AudioContext }).webkitAudioContext
       this.audioContext = new AudioContextClass()
@@ -41,14 +43,14 @@ export class WakeWordDetector {
         new URL('./audio-worklet/vosk-processor.js', import.meta.url)
       )
 
-      console.log('📥 Loading Vosk model...')
+      Logger.download('Loading Vosk model...')
       const modelManager = ModelManager.getInstance()
       const modelUrl = await modelManager.getModel(onProgress)
 
       this.model = await createModel(modelUrl)
-      console.log('✅ Vosk model loaded')
+      Logger.info('Vosk model loaded')
 
-      this.recognizer = new this.model.KaldiRecognizer(16000)
+      this.recognizer = new this.model.KaldiRecognizer(CONFIG.AUDIO.SAMPLE_RATE)
       this.recognizer.setWords(true)
 
       this.recognizer.on('result', (message: VoskResultMessage) => {
@@ -60,13 +62,13 @@ export class WakeWordDetector {
       })
 
       this.recognizer.on('error', (error: Error) => {
-        console.error('Recognition error:', error)
+        Logger.error('Recognition error:', error)
       })
 
-      console.log('✅ Wake word detector ready')
+      Logger.info('Wake word detector ready')
 
     } catch (error) {
-      console.error('Failed to initialize wake word detector:', error)
+      Logger.error('Failed to initialize wake word detector:', error)
       throw error
     }
   }
@@ -77,23 +79,23 @@ export class WakeWordDetector {
     }
 
     try {
-      console.log('🎧 Starting microphone...')
+      Logger.headphones('Starting microphone...')
 
       const audioConstraints: ExtendedMediaTrackConstraints = {
-        channelCount: 1,
-        echoCancellation: true,
-        noiseSuppression: true
+        channelCount: CONFIG.AUDIO.CHANNEL_COUNT,
+        echoCancellation: CONFIG.AUDIO.ECHO_CANCELLATION,
+        noiseSuppression: CONFIG.AUDIO.NOISE_SUPPRESSION
       }
 
       if (this.isMobile) {
-        audioConstraints.sampleRate = 16000
+        audioConstraints.sampleRate = CONFIG.AUDIO.SAMPLE_RATE
       }
 
       this.mediaStream = await navigator.mediaDevices.getUserMedia({
         audio: audioConstraints
       })
 
-      this.workletNode = new AudioWorkletNode(this.audioContext, 'vosk-audio-processor')
+      this.workletNode = new AudioWorkletNode(this.audioContext, CONFIG.AUDIO.WORKLET_PROCESSOR_NAME)
 
       this.workletNode.port.onmessage = (event) => {
         if (event.data.type === 'audioData') {
@@ -108,10 +110,10 @@ export class WakeWordDetector {
 
       this.isListening = true
       this.state = DetectorState.LISTENING_FOR_WAKE_WORD
-      console.log('✅ Listening for wake word "zookeeper"')
+      Logger.listening(`Listening for wake word "${CONFIG.WAKE_WORD.TEXT[0]}"`)
 
     } catch (error) {
-      console.error('Failed to start listening:', error)
+      Logger.error('Failed to start listening:', error)
       throw error
     }
   }
@@ -137,9 +139,9 @@ export class WakeWordDetector {
         float32[i] = pcm16[i] / 32768.0
       }
 
-      this.recognizer.acceptWaveformFloat(float32, 16000)
+      this.recognizer.acceptWaveformFloat(float32, CONFIG.AUDIO.SAMPLE_RATE)
     } catch (error) {
-      console.error('Error processing audio:', error)
+      Logger.error('Error processing audio:', error)
     }
   }
 
@@ -150,21 +152,21 @@ export class WakeWordDetector {
     const lowerText = text.toLowerCase()
 
     if (this.state === DetectorState.LISTENING_FOR_WAKE_WORD) {
-      const wakeWordDetected = lowerText.includes('zookeeper') || lowerText.includes('zoo keeper')
+      const wakeWordDetected = CONFIG.WAKE_WORD.TEXT.some(word => lowerText.includes(word))
 
       if (this.onRawTranscription) {
         this.onRawTranscription(text, wakeWordDetected ? text : '...', wakeWordDetected)
       }
 
       if (wakeWordDetected) {
-        console.log('🔥 Wake word detected!')
+        Logger.wakeWord('Wake word detected!')
         this.state = DetectorState.TRANSCRIBING
         this.onWakeWord()
         this.startTranscriptionTimeout()
       }
     } else if (this.state === DetectorState.TRANSCRIBING) {
       if (!isPartial && text.trim()) {
-        console.log(`📝 Transcription: "${text}"`)
+        Logger.transcription(`Transcription: "${text}"`)
         if (this.onRawTranscription) {
           this.onRawTranscription(text, text, true)
         }
@@ -180,9 +182,9 @@ export class WakeWordDetector {
     }
 
     this.transcriptionTimeout = window.setTimeout(() => {
-      console.log('⏱️ Transcription timeout')
+      Logger.timeout('Transcription timeout')
       this.resetToWakeWordMode()
-    }, this.TRANSCRIPTION_TIMEOUT_MS)
+    }, CONFIG.WAKE_WORD.TRANSCRIPTION_TIMEOUT_MS)
   }
 
   private resetToWakeWordMode() {
@@ -191,7 +193,7 @@ export class WakeWordDetector {
       this.transcriptionTimeout = null
     }
     this.state = DetectorState.LISTENING_FOR_WAKE_WORD
-    console.log('👂 Listening for wake word "zookeeper"...')
+    Logger.listening(`Listening for wake word "${CONFIG.WAKE_WORD.TEXT[0]}"...`)
   }
 
   async stopListening() {
@@ -213,10 +215,10 @@ export class WakeWordDetector {
       }
 
       this.isListening = false
-      console.log('🛑 Stopped listening')
+      Logger.stop('Stopped listening')
 
     } catch (error) {
-      console.error('Failed to stop listening:', error)
+      Logger.error('Failed to stop listening:', error)
     }
   }
 

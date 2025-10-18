@@ -16,7 +16,7 @@ A voice-first game moderator for kids to play board games independently. Uses sp
 
 3. Click "Start Kali" and grant microphone permissions
 4. On first load, Vosk model downloads automatically (~40MB, cached for offline use)
-5. Say "Kali" to wake, then speak your command
+5. Say "Zookeeper" to wake, then speak your command
 
 ## How It Works
 
@@ -28,13 +28,13 @@ A voice-first game moderator for kids to play board games independently. Uses sp
 
 ### Voice Interaction
 
-1. Say **"Kali"** - wake word detector activates
+1. Say **"Zookeeper"** - wake word detector activates
 2. System responds: "Listening for command..."
 3. Speak your command (you have 5 seconds)
 4. Your speech is transcribed and displayed
 5. System returns to listening for wake word
 
-**Example**: "Kali" → "I rolled a six and landed on square twelve"
+**Example**: "Zookeeper" → "I rolled a six and landed on square twelve"
 
 ## Phase 1: Core Audio Pipeline ✅ COMPLETE
 

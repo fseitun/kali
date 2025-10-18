@@ -6,9 +6,8 @@
 //   - Update MODEL_URL to S3 endpoint (e.g., https://your-bucket.s3.amazonaws.com/vosk-model-small-en-us-0.15.zip)
 // The caching infrastructure below is ready for S3 migration
 
-const MODEL_CACHE_NAME = 'kali-models-v1'
-const MODEL_URL = '/vosk-model-small-en-us-0.15.zip' // TODO: Replace with S3 URL when available
-const MODEL_VERSION = '0.15'
+import { CONFIG } from './config'
+import { Logger } from './utils/logger'
 
 export class ModelManager {
   private static instance: ModelManager | null = null
@@ -26,41 +25,41 @@ export class ModelManager {
     const cachedModel = await this.getCachedModel()
 
     if (cachedModel) {
-      console.log('✅ Using cached Vosk model')
+      Logger.info('Using cached Vosk model')
       return cachedModel
     }
 
-    console.log('📥 Downloading Vosk model...')
+    Logger.download('Downloading Vosk model...')
     return await this.downloadAndCacheModel(onProgress)
   }
 
   private async getCachedModel(): Promise<string | null> {
     try {
-      const cache = await caches.open(MODEL_CACHE_NAME)
-      const response = await cache.match(MODEL_URL)
+      const cache = await caches.open(CONFIG.MODEL.CACHE_NAME)
+      const response = await cache.match(CONFIG.MODEL.URL)
 
       if (!response) {
         return null
       }
 
       const versionHeader = response.headers.get('X-Model-Version')
-      if (versionHeader !== MODEL_VERSION) {
-        console.log('⚠️ Cached model version mismatch, will download new version')
-        await cache.delete(MODEL_URL)
+      if (versionHeader !== CONFIG.MODEL.VERSION) {
+        Logger.warn('Cached model version mismatch, will download new version')
+        await cache.delete(CONFIG.MODEL.URL)
         return null
       }
 
       const blob = await response.blob()
       return URL.createObjectURL(blob)
     } catch (error) {
-      console.error('Failed to retrieve cached model:', error)
+      Logger.error('Failed to retrieve cached model:', error)
       return null
     }
   }
 
   private async downloadAndCacheModel(onProgress?: (percent: number) => void): Promise<string> {
     try {
-      const response = await fetch(MODEL_URL)
+      const response = await fetch(CONFIG.MODEL.URL)
 
       if (!response.ok) {
         throw new Error(`Failed to download model: ${response.statusText}`)
@@ -96,40 +95,40 @@ export class ModelManager {
       await this.cacheModel(blob)
 
       const url = URL.createObjectURL(blob)
-      console.log('✅ Model downloaded and cached successfully')
+      Logger.info('Model downloaded and cached successfully')
 
       return url
     } catch (error) {
-      console.error('Failed to download model:', error)
+      Logger.error('Failed to download model:', error)
       throw error
     }
   }
 
   private async cacheModel(blob: Blob): Promise<void> {
     try {
-      const cache = await caches.open(MODEL_CACHE_NAME)
+      const cache = await caches.open(CONFIG.MODEL.CACHE_NAME)
 
       const headers = new Headers({
         'Content-Type': 'application/zip',
-        'X-Model-Version': MODEL_VERSION,
+        'X-Model-Version': CONFIG.MODEL.VERSION,
         'X-Cached-At': Date.now().toString()
       })
 
       const response = new Response(blob, { headers })
-      await cache.put(MODEL_URL, response)
+      await cache.put(CONFIG.MODEL.URL, response)
 
-      console.log('✅ Model cached successfully')
+      Logger.info('Model cached successfully')
     } catch (error) {
-      console.error('Failed to cache model:', error)
+      Logger.error('Failed to cache model:', error)
     }
   }
 
   async clearCache(): Promise<void> {
     try {
-      await caches.delete(MODEL_CACHE_NAME)
-      console.log('✅ Model cache cleared')
+      await caches.delete(CONFIG.MODEL.CACHE_NAME)
+      Logger.info('Model cache cleared')
     } catch (error) {
-      console.error('Failed to clear model cache:', error)
+      Logger.error('Failed to clear model cache:', error)
     }
   }
 }
