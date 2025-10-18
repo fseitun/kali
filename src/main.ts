@@ -1,5 +1,8 @@
 import './style.css'
 import { WakeWordDetector } from './wake-word'
+import { Orchestrator } from './orchestrator/orchestrator'
+import { OllamaClient } from './llm/OllamaClient'
+import { StateManager } from './state-manager'
 
 class KaliApp {
   private statusElement: HTMLElement
@@ -7,6 +10,8 @@ class KaliApp {
   private startButton: HTMLButtonElement
   private transcriptionElement: HTMLElement
   private wakeWordDetector: WakeWordDetector | null = null
+  private orchestrator: Orchestrator | null = null
+  private stateManager: StateManager | null = null
   private initialized = false
   private static instance: KaliApp | null = null
 
@@ -39,6 +44,7 @@ class KaliApp {
       this.log('🚀 Initializing Kali...')
 
       await this.checkBrowserSupport()
+      await this.initializeOrchestrator()
       await this.initializeWakeWord()
 
       this.initialized = true
@@ -71,6 +77,22 @@ class KaliApp {
   }
 
 
+  private async initializeOrchestrator() {
+    this.log('🧠 Initializing orchestrator...')
+
+    this.stateManager = new StateManager()
+    await this.stateManager.init()
+
+    const llmClient = new OllamaClient()
+    this.orchestrator = new Orchestrator(
+      llmClient,
+      this.stateManager,
+      (text) => this.speak(text)
+    )
+
+    this.log('✅ Orchestrator ready')
+  }
+
   private async initializeWakeWord() {
     this.log('🎤 Initializing speech recognition...')
 
@@ -91,9 +113,27 @@ class KaliApp {
     this.updateStatus('Listening for command...')
   }
 
-  private handleTranscription(text: string) {
+  private async handleTranscription(text: string) {
     this.log(`You said: "${text}"`)
+
+    if (this.orchestrator) {
+      await this.orchestrator.handleTranscript(text)
+    }
+
     this.updateStatus('Say "Zookeeper" to wake me up!')
+  }
+
+  private speak(text: string): void {
+    if (!window.speechSynthesis) {
+      console.error('TTS not supported')
+      return
+    }
+
+    const utterance = new SpeechSynthesisUtterance(text)
+    utterance.rate = 1.0
+    utterance.pitch = 1.0
+    window.speechSynthesis.speak(utterance)
+    this.log(`🔊 Kali: "${text}"`)
   }
 
   private handleRawTranscription(raw: string, processed: string, wakeWordDetected: boolean) {
@@ -132,6 +172,9 @@ class KaliApp {
       await this.wakeWordDetector.destroy()
       this.wakeWordDetector = null
     }
+
+    this.orchestrator = null
+    this.stateManager = null
 
     this.initialized = false
     this.startButton.disabled = false
