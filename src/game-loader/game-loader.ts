@@ -15,7 +15,7 @@ export class GameLoader {
    * @throws Error if the module fails to load or validation fails
    */
   async loadGame(gameId: string): Promise<GameModule> {
-    const url = `${this.gamesPath}/${gameId}.json`
+    const url = `${this.gamesPath}/${gameId}/config.json`
 
     try {
       Logger.info(`Loading game module: ${gameId}`)

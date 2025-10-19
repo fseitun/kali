@@ -12,6 +12,7 @@ import { GamePhase } from './orchestrator/types'
 import { checkBrowserSupport } from './utils/browser-support'
 import { CONFIG } from './config'
 import { Logger } from './utils/logger'
+import { t } from './i18n'
 
 export class KaliAppCore {
   private wakeWordDetector: WakeWordDetector | null = null
@@ -36,17 +37,37 @@ export class KaliAppCore {
       checkBrowserSupport()
       await this.initializeOrchestrator()
       await this.initializeWakeWord()
-      await this.runNameCollection()
+
+      const shouldStartGame = await this.handleSavedGameOrSetup()
 
       this.initialized = true
       this.uiService.hideButton()
       indicator.setState('listening')
-      this.uiService.updateStatus(`Say "${CONFIG.WAKE_WORD.TEXT[0]}" to wake me up!`)
-      Logger.info('Kali is ready')
+
+      if (shouldStartGame) {
+        this.uiService.updateStatus(t('ui.wakeWordReady', { wakeWord: CONFIG.WAKE_WORD.TEXT[0] }))
+        Logger.info('Kali is ready')
+        await this.proactiveGameStart()
+      } else {
+        if (this.stateManager) {
+          const state = await this.stateManager.getState()
+          const game = state.game as Record<string, unknown> | undefined
+          if (game?.phase === GamePhase.PLAYING) {
+            const message = t('ui.savedGameDetected', { wakeWord: CONFIG.WAKE_WORD.TEXT[0] })
+            this.uiService.updateStatus(message)
+            await this.speechService.speak(message)
+          } else {
+            this.uiService.updateStatus(t('ui.wakeWordReady', { wakeWord: CONFIG.WAKE_WORD.TEXT[0] }))
+          }
+        } else {
+          this.uiService.updateStatus(t('ui.wakeWordReady', { wakeWord: CONFIG.WAKE_WORD.TEXT[0] }))
+        }
+        Logger.info('Kali is ready')
+      }
 
     } catch (error) {
-      this.uiService.setButtonState('Start Kali', false)
-      this.uiService.updateStatus('Initialization failed')
+      this.uiService.setButtonState(t('ui.startKali'), false)
+      this.uiService.updateStatus(t('ui.initializationFailed'))
       Logger.error(`Error: ${error}`)
       const indicator = this.uiService.getStatusIndicator()
       indicator.setState('idle')
@@ -59,14 +80,14 @@ export class KaliAppCore {
     Logger.info(`📦 Loading game module: ${CONFIG.GAME.DEFAULT_MODULE}...`)
     const gameLoader = new GameLoader(CONFIG.GAME.MODULES_PATH)
     this.gameModule = await gameLoader.loadGame(CONFIG.GAME.DEFAULT_MODULE)
-    Logger.info(`Loaded: ${this.gameModule.metadata.name} v${this.gameModule.metadata.version}`)
 
     Logger.info('🎮 Initializing game state...')
     this.stateManager = new StateManager()
     await this.stateManager.init(this.gameModule.initialState)
 
-    Logger.info('🔄 Resetting to fresh game state...')
-    await this.stateManager.resetState(this.gameModule.initialState)
+    if (this.gameModule.stateDisplay) {
+      await this.stateManager.set('stateDisplay', this.gameModule.stateDisplay)
+    }
 
     Logger.robot(`Configuring LLM (${CONFIG.LLM_PROVIDER}) with game rules...`)
     this.llmClient = this.createLLMClient()
@@ -77,7 +98,8 @@ export class KaliAppCore {
       this.llmClient,
       this.stateManager,
       this.speechService,
-      indicator
+      indicator,
+      this.gameModule.initialState
     )
 
     Logger.info('🔊 Loading sound effects...')
@@ -138,6 +160,46 @@ ${rules.examples.map((ex, i) => `${i + 1}. ${ex}`).join('\n')}
     indicator.setState('listening')
   }
 
+  private async handleSavedGameOrSetup(): Promise<boolean> {
+    if (!this.stateManager || !this.gameModule || !this.orchestrator) {
+      throw new Error('Cannot handle saved game: components not initialized')
+    }
+
+    try {
+      const state = await this.stateManager.getState()
+      const game = state.game as Record<string, unknown> | undefined
+
+      Logger.info(`🎮 Startup phase check - phase: ${game?.phase}`)
+
+      if (game?.phase === GamePhase.PLAYING) {
+        Logger.info('📂 Saved game detected - waiting for user command')
+        return false
+      } else if (game?.phase === GamePhase.SETUP) {
+        Logger.info('👋 Starting name collection...')
+        await this.runNameCollection()
+        return true
+      }
+
+      Logger.info('⏭️ No action needed')
+      return false
+    } catch (error) {
+      Logger.error(`Error handling saved game: ${error}. Starting fresh.`)
+      await this.stateManager.resetState(this.gameModule.initialState)
+      await this.runNameCollection()
+      return true
+    }
+  }
+
+  private async proactiveGameStart(): Promise<void> {
+    if (!this.orchestrator) {
+      Logger.error('Cannot start game proactively: orchestrator not initialized')
+      return
+    }
+
+    Logger.info('🎮 Starting game proactively')
+    await this.orchestrator.handleTranscript('Start the game and explain the current situation')
+  }
+
   private async runNameCollection(): Promise<void> {
     if (!this.stateManager || !this.wakeWordDetector || !this.gameModule) {
       throw new Error('Cannot run name collection: components not initialized')
@@ -154,8 +216,7 @@ ${rules.examples.map((ex, i) => `${i + 1}. ${ex}`).join('\n')}
         return
       }
 
-      Logger.info('👋 Starting name collection...')
-      this.uiService.updateStatus(`Say "${CONFIG.WAKE_WORD.TEXT[0]}" before speaking`)
+      this.uiService.updateStatus(t('ui.wakeWordInstruction', { wakeWord: CONFIG.WAKE_WORD.TEXT[0] }))
       const gameName = (game.name as string) || 'the game'
       const nameCollector = new NameCollector(
         this.speechService,
@@ -188,9 +249,9 @@ ${rules.examples.map((ex, i) => `${i + 1}. ${ex}`).join('\n')}
     indicator.setState('active')
 
     if (this.currentNameHandler) {
-      this.uiService.updateStatus(`Say "${CONFIG.WAKE_WORD.TEXT[0]}" before speaking`)
+      this.uiService.updateStatus(t('ui.wakeWordInstruction', { wakeWord: CONFIG.WAKE_WORD.TEXT[0] }))
     } else {
-      this.uiService.updateStatus('Listening for command...')
+      this.uiService.updateStatus(t('ui.listeningForCommand'))
     }
   }
 
@@ -207,9 +268,28 @@ ${rules.examples.map((ex, i) => `${i + 1}. ${ex}`).join('\n')}
 
     if (this.orchestrator) {
       await this.orchestrator.handleTranscript(text)
+
+      if (this.stateManager) {
+        const state = await this.stateManager.getState()
+        const game = state.game as Record<string, unknown> | undefined
+
+        if (game?.phase === GamePhase.SETUP) {
+          const players = state.players as Array<{ name: string }> | undefined
+          const hasNames = players && players.length > 0 && players.every(p => p.name && p.name.trim() !== '')
+
+          if (hasNames) {
+            Logger.info('🔄 Phase is SETUP but players have names, transitioning to PLAYING')
+            await this.stateManager.set('game.phase', GamePhase.PLAYING)
+          } else {
+            Logger.info('🔄 Phase is SETUP after command, triggering name collection')
+            await this.runNameCollection()
+            return
+          }
+        }
+      }
     }
 
-    this.uiService.updateStatus(`Say "${CONFIG.WAKE_WORD.TEXT[0]}" to wake me up!`)
+    this.uiService.updateStatus(t('ui.wakeWordReady', { wakeWord: CONFIG.WAKE_WORD.TEXT[0] }))
   }
 
   async dispose(): Promise<void> {
@@ -222,9 +302,9 @@ ${rules.examples.map((ex, i) => `${i + 1}. ${ex}`).join('\n')}
     this.stateManager = null
 
     this.initialized = false
-    this.uiService.setButtonState('Start Kali', false)
+    this.uiService.setButtonState(t('ui.startKali'), false)
     this.uiService.showButton()
-    this.uiService.updateStatus('Click "Start Kali" to begin voice interaction')
+    this.uiService.updateStatus(t('ui.clickToStart'))
     const indicator = this.uiService.getStatusIndicator()
     indicator.setState('idle')
     this.uiService.clearConsole()

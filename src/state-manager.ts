@@ -89,7 +89,7 @@ export class StateManager {
     if (!this.db) throw new Error('Database not initialized')
 
     await this.setState(initialState)
-    Logger.info('Game state reset:', initialState)
+    Logger.info('Game state reset')
   }
 
   /**

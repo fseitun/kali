@@ -1,5 +1,6 @@
 import { GameState, PrimitiveAction } from './types'
 import { StateManager } from '../state-manager'
+import { getPlayerIndex } from '../utils/player-helper'
 
 export interface ValidationResult {
   valid: boolean
@@ -70,6 +71,8 @@ function validateAction(
       return validateNarrate(action, index)
     case 'ROLL_DICE':
       return validateRollDice(action, index)
+    case 'RESET_GAME':
+      return validateResetGame(action, index)
     default:
       return {
         valid: false,
@@ -106,6 +109,44 @@ function validateField(
   return { valid: true }
 }
 
+function validateTurnOwnership(
+  path: string,
+  state: GameState,
+  actionType: string,
+  index: number
+): ValidationResult {
+  const playerPathMatch = path.match(/^players\.(\d+)\./)
+  if (!playerPathMatch) {
+    return { valid: true }
+  }
+
+  if (path === 'game.turn') {
+    return { valid: true }
+  }
+
+  const playerIndex = parseInt(playerPathMatch[1], 10)
+  const game = state.game as Record<string, unknown> | undefined
+  const currentTurn = game?.turn as string | undefined
+
+  if (!currentTurn) {
+    return { valid: true }
+  }
+
+  try {
+    const expectedIndex = getPlayerIndex(currentTurn)
+    if (playerIndex !== expectedIndex) {
+      return {
+        valid: false,
+        error: `${actionType} at index ${index}: Cannot modify players.${playerIndex} when it's ${currentTurn}'s turn (players.${expectedIndex}). Change game.turn first or modify the correct player.`
+      }
+    }
+  } catch {
+    return { valid: true }
+  }
+
+  return { valid: true }
+}
+
 function validateSetState(
   action: PrimitiveAction,
   state: GameState,
@@ -124,6 +165,9 @@ function validateSetState(
   }
 
   if ('path' in action && typeof action.path === 'string') {
+    const turnValidation = validateTurnOwnership(action.path, state, 'SET_STATE', index)
+    if (!turnValidation.valid) return turnValidation
+
     if (!stateManager.pathExists(state, action.path)) {
       return {
         valid: false,
@@ -149,6 +193,9 @@ function validateAddState(
   if (!valueValidation.valid) return valueValidation
 
   if ('path' in action && typeof action.path === 'string') {
+    const turnValidation = validateTurnOwnership(action.path, state, 'ADD_STATE', index)
+    if (!turnValidation.valid) return turnValidation
+
     if (!stateManager.pathExists(state, action.path)) {
       return {
         valid: false,
@@ -182,6 +229,9 @@ function validateSubtractState(
   if (!valueValidation.valid) return valueValidation
 
   if ('path' in action && typeof action.path === 'string') {
+    const turnValidation = validateTurnOwnership(action.path, state, 'SUBTRACT_STATE', index)
+    if (!turnValidation.valid) return turnValidation
+
     if (!stateManager.pathExists(state, action.path)) {
       return {
         valid: false,
@@ -244,4 +294,12 @@ function validateRollDice(
 ): ValidationResult {
   const actionRecord = action as unknown as Record<string, unknown>
   return validateField(actionRecord, 'die', 'string', 'ROLL_DICE', index)
+}
+
+function validateResetGame(
+  action: PrimitiveAction,
+  index: number
+): ValidationResult {
+  const actionRecord = action as unknown as Record<string, unknown>
+  return validateField(actionRecord, 'keepPlayerNames', 'boolean', 'RESET_GAME', index)
 }

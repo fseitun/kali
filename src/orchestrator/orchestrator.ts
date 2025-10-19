@@ -3,10 +3,11 @@ import { StateManager } from '../state-manager'
 import { SpeechService } from '../services/speech-service'
 import { StatusIndicator } from '../components/status-indicator'
 import { validateActions } from './validator'
-import { PrimitiveAction, ExecutionContext, ActionHandler } from './types'
+import { PrimitiveAction, ExecutionContext, ActionHandler, GameState } from './types'
 import { Logger } from '../utils/logger'
 import { Profiler } from '../utils/profiler'
 import { getPlayerIndex } from '../utils/player-helper'
+import { formatStateContext } from '../llm/system-prompt'
 
 /**
  * Core orchestrator that processes voice transcripts through LLM,
@@ -15,13 +16,17 @@ import { getPlayerIndex } from '../utils/player-helper'
 export class Orchestrator {
   private actionHandlers: Map<string, ActionHandler> = new Map()
   private isProcessing = false
+  private initialState: GameState
 
   constructor(
     private llmClient: ILLMClient,
     private stateManager: StateManager,
     private speechService: SpeechService,
-    private statusIndicator: StatusIndicator
-  ) {}
+    private statusIndicator: StatusIndicator,
+    initialState: GameState
+  ) {
+    this.initialState = initialState
+  }
 
   /**
    * Checks if the orchestrator is currently processing a request.
@@ -73,7 +78,7 @@ export class Orchestrator {
       Logger.brain(`Orchestrator processing: ${transcript} (depth: ${context.depth})`)
 
       const state = await this.stateManager.getState()
-      Logger.state('Current state:', state)
+      Logger.state('Current state:\n' + formatStateContext(state))
 
       Profiler.start('orchestrator.llm')
       const actions = await this.llmClient.getActions(transcript, state)
@@ -153,7 +158,7 @@ export class Orchestrator {
     }
   }
 
-  private async validatePlayerPath(path: string): Promise<void> {
+  private async assertPlayerTurnOwnership(path: string): Promise<void> {
     const playerPathMatch = path.match(/^players\.(\d+)\./)
     if (!playerPathMatch) {
       return
@@ -171,13 +176,15 @@ export class Orchestrator {
     try {
       const expectedIndex = getPlayerIndex(currentTurn)
       if (playerIndex !== expectedIndex) {
-        Logger.warn(
-          `⚠️ Player index mismatch! Current turn is ${currentTurn} (players.${expectedIndex}) ` +
-          `but modifying players.${playerIndex}. This may be incorrect.`
+        throw new Error(
+          `Turn ownership violation: Cannot modify players.${playerIndex} when it's ${currentTurn}'s turn (players.${expectedIndex}). ` +
+          `This should have been caught by the validator - indicates a bug in validation logic.`
         )
       }
     } catch (error) {
-      Logger.warn(`Unable to validate player path: ${error}`)
+      if (error instanceof Error && error.message.includes('Turn ownership violation')) {
+        throw error
+      }
     }
   }
 
@@ -193,17 +200,15 @@ export class Orchestrator {
 
     switch (action.action) {
       case 'SET_STATE': {
-        await this.validatePlayerPath(action.path)
+        await this.assertPlayerTurnOwnership(action.path)
         Logger.write(`Setting state: ${action.path} = ${JSON.stringify(action.value)}`)
         await this.stateManager.set(action.path, action.value)
         await this.checkAndApplyBoardMoves(action.path)
-        const newState = await this.stateManager.getState()
-        Logger.state('New state:', newState)
         break
       }
 
       case 'ADD_STATE': {
-        await this.validatePlayerPath(action.path)
+        await this.assertPlayerTurnOwnership(action.path)
         const currentValue = await this.stateManager.get(action.path)
         if (typeof currentValue !== 'number') {
           throw new Error(`Cannot ADD_STATE: ${action.path} is not a number`)
@@ -216,7 +221,7 @@ export class Orchestrator {
       }
 
       case 'SUBTRACT_STATE': {
-        await this.validatePlayerPath(action.path)
+        await this.assertPlayerTurnOwnership(action.path)
         const currentValue = await this.stateManager.get(action.path)
         if (typeof currentValue !== 'number') {
           throw new Error(`Cannot SUBTRACT_STATE: ${action.path} is not a number`)
@@ -234,7 +239,6 @@ export class Orchestrator {
       }
 
       case 'NARRATE': {
-        Logger.narration(`Narrating: "${action.text}"`)
         this.statusIndicator.setState('speaking')
         if (action.soundEffect) {
           this.speechService.playSound(action.soundEffect)
@@ -260,6 +264,34 @@ export class Orchestrator {
           `The player rolled a ${roll}. What happens next?`,
           newContext
         )
+        break
+      }
+
+      case 'RESET_GAME': {
+        Logger.info(`🔄 Resetting game state (keepPlayerNames: ${action.keepPlayerNames})`)
+
+        let playerNames: string[] = []
+        if (action.keepPlayerNames) {
+          const currentState = await this.stateManager.getState()
+          const players = currentState.players as Array<{ name: string }> | undefined
+          if (players) {
+            playerNames = players.map(p => p.name)
+          }
+        }
+
+        await this.stateManager.resetState(this.initialState)
+
+        if (action.keepPlayerNames && playerNames.length > 0) {
+          const state = await this.stateManager.getState()
+          const players = state.players as Array<{ name: string }> | undefined
+          if (players) {
+            for (let i = 0; i < Math.min(playerNames.length, players.length); i++) {
+              await this.stateManager.set(`players.${i}.name`, playerNames[i])
+            }
+          }
+        }
+
+        Logger.info('Game state reset complete')
         break
       }
     }

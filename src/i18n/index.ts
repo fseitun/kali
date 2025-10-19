@@ -34,7 +34,7 @@ export function t(key: TranslationKey, params?: Record<string, string | number>)
 
   if (params) {
     Object.entries(params).forEach(([param, val]) => {
-      result = result.replace(`{${param}}`, String(val))
+      result = result.replaceAll(`{${param}}`, String(val))
     })
   }
 

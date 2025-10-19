@@ -1,7 +1,7 @@
 export const esAR = {
   setup: {
     welcome: '¡Bienvenidos a {game}! Arranquemos.',
-    playerCount: '¿Cuántos jugadores? Decí un número del {min} al {max}.',
+    playerCount: '¿Cuántos jugadores? El máximo es {max}.',
     playerCountInvalid: 'Por favor, decí un número del {min} al {max}.',
     playerCountTimeout: 'Nadie contestó. Por defecto, van a ser {count} jugadores.',
     playerName: 'Jugador {number}, ¿cómo te llamás?',
@@ -16,7 +16,6 @@ export const esAR = {
     nameConflictFallback: 'Bueno, seguimos con {name}.',
     allNamesReady: '¡Genial! Ya estamos: {names}. ¿Listos para jugar?',
     ready: '¡Perfecto! Arranquemos. {name}, vos empezás.',
-    acknowledgement: 'Uh, {message}. Bueno, volviendo...',
     extractionFailed: 'No te escuché bien.',
   },
   game: {
@@ -30,6 +29,16 @@ export const esAR = {
   ui: {
     startButton: 'Jugar',
     stopButton: 'Parar',
+    startKali: 'Iniciar Kali',
+    clickToStart: 'Hacé clic en "Iniciar Kali" para comenzar',
+    initializationFailed: 'Error al inicializar',
+    listeningForCommand: 'Esperando comando...',
+    wakeWordInstruction: 'Decí "{wakeWord}" antes de hablar',
+    wakeWordReady: 'Decí "{wakeWord}" para despertarme',
+    savedGameDetected: 'Partida guardada. Decí "{wakeWord}, seguir" o "{wakeWord}, juego nuevo"',
+    copyLogs: '📋 Copiar Registros',
+    copied: '✅ ¡Copiado!',
+    copyFailed: '❌ Error',
     status: {
       initializing: 'Iniciando...',
       loading: 'Cargando modelo...',

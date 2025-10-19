@@ -50,7 +50,7 @@ export const CONFIG = {
   },
 
   GAME: {
-    DEFAULT_MODULE: 'snakes-and-ladders',
+    DEFAULT_MODULE: 'kalimba',
     MODULES_PATH: '/games',
   },
 

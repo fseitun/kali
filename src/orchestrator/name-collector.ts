@@ -6,12 +6,7 @@ import { Logger } from '../utils/logger'
 import { t, getNumberWords, getConfirmationWords } from '../i18n'
 import { ILLMClient } from '../llm/ILLMClient'
 import { GameMetadata } from '../game-loader/types'
-
-interface Player {
-  id: string
-  name: string
-  position: number
-}
+import { deepClone } from '../utils/deep-clone'
 
 /**
  * Handles the voice-based player name collection phase at game start.
@@ -77,8 +72,6 @@ export class NameCollector {
   }
 
   private async askPlayerCount(onTranscript: (handler: (text: string) => void) => void): Promise<number> {
-    await this.speechService.speak(t('setup.playerCount', { min: this.minPlayers, max: this.maxPlayers }))
-
     return new Promise<number>((resolve) => {
       const handler = async (text: string) => {
         Logger.info(`Player count handler received: "${text}"`)
@@ -88,8 +81,10 @@ export class NameCollector {
         }
 
         const analysis = await this.llmClient.analyzeResponse(text, `expecting player count number from ${this.minPlayers} to ${this.maxPlayers}`)
-        if (!analysis.isOnTopic && analysis.urgentMessage) {
-          await this.speechService.speak(t('setup.acknowledgement', { message: analysis.urgentMessage }))
+        if (!analysis.isOnTopic) {
+          if (analysis.urgentMessage) {
+            Logger.info(`LLM debug: ${analysis.urgentMessage}`)
+          }
           await this.speechService.speak(t('setup.playerCount', { min: this.minPlayers, max: this.maxPlayers }))
           this.setupTimeout(() => resolve(this.minPlayers), 10000)
           return
@@ -121,12 +116,12 @@ export class NameCollector {
         await this.speechService.speak(t('setup.playerCountTimeout', { count: this.minPlayers }))
         resolve(this.minPlayers)
       }, 10000)
+
+      this.speechService.speak(t('setup.playerCount', { min: this.minPlayers, max: this.maxPlayers }))
     })
   }
 
   private async askPlayerName(playerNumber: number, onTranscript: (handler: (text: string) => void) => void): Promise<string> {
-    await this.speechService.speak(t('setup.playerName', { number: playerNumber }))
-
     return new Promise<string>((resolve) => {
       let attempts = 0
 
@@ -138,10 +133,12 @@ export class NameCollector {
         }
 
         const analysis = await this.llmClient.analyzeResponse(text, 'expecting person name')
-        if (!analysis.isOnTopic && analysis.urgentMessage) {
-          await this.speechService.speak(t('setup.acknowledgement', { message: analysis.urgentMessage }))
+        if (!analysis.isOnTopic) {
+          if (analysis.urgentMessage) {
+            Logger.info(`LLM debug: ${analysis.urgentMessage}`)
+          }
           await this.speechService.speak(t('setup.playerName', { number: playerNumber }))
-          this.setupTimeout(() => this.handleNameTimeout(playerNumber, resolve), 10000)
+          this.setupTimeout(() => this.handleNameTimeout(playerNumber, resolve, onTranscript), 10000)
           return
         }
 
@@ -159,17 +156,19 @@ export class NameCollector {
         if (attempts < 2) {
           await this.speechService.speak(t('setup.extractionFailed'))
           await this.speechService.speak(t('setup.playerName', { number: playerNumber }))
-          this.setupTimeout(() => this.handleNameTimeout(playerNumber, resolve), 10000)
+          this.setupTimeout(() => this.handleNameTimeout(playerNumber, resolve, onTranscript), 10000)
         } else {
-          await this.handleNameTimeout(playerNumber, resolve)
+          await this.handleNameTimeout(playerNumber, resolve, onTranscript)
         }
       }
 
       onTranscript(handler)
       this.setupTimeout(async () => {
         Logger.info(`Name timeout for player ${playerNumber} - no valid response`)
-        await this.handleNameTimeout(playerNumber, resolve)
+        await this.handleNameTimeout(playerNumber, resolve, onTranscript)
       }, 10000)
+
+      this.speechService.speak(t('setup.playerName', { number: playerNumber }))
     })
   }
 
@@ -179,8 +178,6 @@ export class NameCollector {
     playerNumber: number,
     resolve: (value: string) => void
   ): Promise<void> {
-    await this.speechService.speak(t('setup.nameConfirm', { name }))
-
     const confirmHandler = async (text: string) => {
       Logger.info(`Confirmation handler received: "${text}"`)
       if (this.timeoutHandle) {
@@ -189,8 +186,10 @@ export class NameCollector {
       }
 
       const analysis = await this.llmClient.analyzeResponse(text, 'expecting yes/no confirmation')
-      if (!analysis.isOnTopic && analysis.urgentMessage) {
-        await this.speechService.speak(t('setup.acknowledgement', { message: analysis.urgentMessage }))
+      if (!analysis.isOnTopic) {
+        if (analysis.urgentMessage) {
+          Logger.info(`LLM debug: ${analysis.urgentMessage}`)
+        }
         await this.speechService.speak(t('setup.nameConfirm', { name }))
         this.setupTimeout(() => resolve(name), 10000)
         return
@@ -217,6 +216,8 @@ export class NameCollector {
       await this.speechService.speak(t('setup.nameConfirmYes', { name }))
       resolve(name)
     }, 10000)
+
+    this.speechService.speak(t('setup.nameConfirm', { name }))
   }
 
   private async retryNameCollection(
@@ -232,10 +233,12 @@ export class NameCollector {
       }
 
       const analysis = await this.llmClient.analyzeResponse(text, 'expecting person name')
-      if (!analysis.isOnTopic && analysis.urgentMessage) {
-        await this.speechService.speak(t('setup.acknowledgement', { message: analysis.urgentMessage }))
+      if (!analysis.isOnTopic) {
+        if (analysis.urgentMessage) {
+          Logger.info(`LLM debug: ${analysis.urgentMessage}`)
+        }
         await this.speechService.speak(t('setup.nameConfirmRetry'))
-        this.setupTimeout(() => this.handleNameTimeout(playerNumber, resolve), 10000)
+        this.setupTimeout(() => this.handleNameTimeout(playerNumber, resolve, onTranscript), 10000)
         return
       }
 
@@ -249,20 +252,78 @@ export class NameCollector {
         }
       }
 
-      await this.handleNameTimeout(playerNumber, resolve)
+      await this.handleNameTimeout(playerNumber, resolve, onTranscript)
     }
 
     onTranscript(handler)
     this.setupTimeout(async () => {
       Logger.info('Retry timeout - using fallback name')
-      await this.handleNameTimeout(playerNumber, resolve)
+      await this.handleNameTimeout(playerNumber, resolve, onTranscript)
     }, 10000)
   }
 
-  private async handleNameTimeout(playerNumber: number, resolve: (value: string) => void): Promise<void> {
+  private async handleNameTimeout(
+    playerNumber: number,
+    resolve: (value: string) => void,
+    onTranscript?: (handler: (text: string) => void) => void
+  ): Promise<void> {
     const kindName = generateNickname(`Player${playerNumber}`, this.collectedNames)
-    await this.speechService.speak(t('setup.nameTimeout', { name: kindName }))
-    resolve(kindName)
+
+    if (!onTranscript) {
+      await this.speechService.speak(t('setup.nameTimeout', { name: kindName }))
+      resolve(kindName)
+      return
+    }
+
+    await this.confirmFriendlyName(kindName, onTranscript, playerNumber, resolve)
+  }
+
+  private async confirmFriendlyName(
+    name: string,
+    onTranscript: (handler: (text: string) => void) => void,
+    playerNumber: number,
+    resolve: (value: string) => void
+  ): Promise<void> {
+    const confirmHandler = async (text: string) => {
+      Logger.info(`Friendly name confirmation handler received: "${text}"`)
+      if (this.timeoutHandle) {
+        clearTimeout(this.timeoutHandle)
+        this.timeoutHandle = null
+      }
+
+      const analysis = await this.llmClient.analyzeResponse(text, 'expecting yes/no confirmation')
+      if (!analysis.isOnTopic) {
+        if (analysis.urgentMessage) {
+          Logger.info(`LLM debug: ${analysis.urgentMessage}`)
+        }
+        await this.speechService.speak(t('setup.nameConfirm', { name }))
+        this.setupTimeout(() => resolve(name), 10000)
+        return
+      }
+
+      const lower = text.toLowerCase().trim()
+      const confirmWords = getConfirmationWords()
+
+      if (confirmWords.yes.some(word => lower.includes(word))) {
+        await this.speechService.speak(t('setup.nameConfirmYes', { name }))
+        resolve(name)
+      } else if (confirmWords.no.some(word => lower.includes(word))) {
+        await this.speechService.speak(t('setup.nameConfirmRetry'))
+        this.retryNameCollection(onTranscript, playerNumber, resolve)
+      } else {
+        await this.speechService.speak(t('setup.nameConfirmYes', { name }))
+        resolve(name)
+      }
+    }
+
+    onTranscript(confirmHandler)
+    this.setupTimeout(async () => {
+      Logger.info('Friendly name confirmation timeout - assuming yes')
+      await this.speechService.speak(t('setup.nameConfirmYes', { name }))
+      resolve(name)
+    }, 10000)
+
+    this.speechService.speak(t('setup.nameTimeout', { name }) + ' ' + t('setup.nameConfirm', { name }))
   }
 
   private async resolveConflicts(onTranscript: (handler: (text: string) => void) => void): Promise<void> {
@@ -319,8 +380,10 @@ export class NameCollector {
         }
 
         const analysis = await this.llmClient.analyzeResponse(text, 'expecting yes/no confirmation for suggested name')
-        if (!analysis.isOnTopic && analysis.urgentMessage) {
-          await this.speechService.speak(t('setup.acknowledgement', { message: analysis.urgentMessage }))
+        if (!analysis.isOnTopic) {
+          if (analysis.urgentMessage) {
+            Logger.info(`LLM debug: ${analysis.urgentMessage}`)
+          }
           await this.speechService.speak(t('setup.nameConflict', { name: original, suggestion }))
           this.setupTimeout(() => resolve(suggestion), 10000)
           return
@@ -361,8 +424,10 @@ export class NameCollector {
       }
 
       const analysis = await this.llmClient.analyzeResponse(text, 'expecting alternative person name')
-      if (!analysis.isOnTopic && analysis.urgentMessage) {
-        await this.speechService.speak(t('setup.acknowledgement', { message: analysis.urgentMessage }))
+      if (!analysis.isOnTopic) {
+        if (analysis.urgentMessage) {
+          Logger.info(`LLM debug: ${analysis.urgentMessage}`)
+        }
         await this.speechService.speak(t('setup.nameConflictAlternative'))
         this.setupTimeout(() => {
           const kindName = generateNickname(fallback, this.collectedNames)
@@ -397,11 +462,16 @@ export class NameCollector {
   }
 
   private async createPlayers(): Promise<void> {
-    const players: Player[] = this.collectedNames.map((name, index) => ({
-      id: `p${index + 1}`,
-      name,
-      position: 0
-    }))
+    const currentState = await this.stateManager.getState()
+    const playerTemplate = (currentState.players as Record<string, unknown>[])[0]
+
+    const players = this.collectedNames.map((name, index) => {
+      const player = deepClone(playerTemplate)
+      player.id = `p${index + 1}`
+      player.name = name
+      player.position = 0
+      return player
+    })
 
     await this.stateManager.set('players', players)
     Logger.info('Players created:', players)

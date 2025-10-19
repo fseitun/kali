@@ -29,6 +29,7 @@ export type PrimitiveAction =
   | ReadStateAction
   | NarrateAction
   | RollDiceAction
+  | ResetGameAction
 
 /**
  * Sets a value in game state using dot-notation path.
@@ -80,4 +81,12 @@ export interface NarrateAction {
 export interface RollDiceAction {
   action: 'ROLL_DICE'
   die: string
+}
+
+/**
+ * Resets the game state to initial conditions.
+ */
+export interface ResetGameAction {
+  action: 'RESET_GAME'
+  keepPlayerNames: boolean
 }

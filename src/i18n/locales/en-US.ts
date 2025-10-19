@@ -1,7 +1,7 @@
 export const enUS = {
   setup: {
     welcome: 'Welcome to {game}! Let\'s get started.',
-    playerCount: 'How many players? Say a number from {min} to {max}.',
+    playerCount: 'How many players? The maximum is {max}.',
     playerCountInvalid: 'Please say a number from {min} to {max}.',
     playerCountTimeout: 'No response. Defaulting to {count} players.',
     playerName: 'Player {number}, what\'s your name?',
@@ -16,7 +16,6 @@ export const enUS = {
     nameConflictFallback: 'Let\'s go with {name}.',
     allNamesReady: 'Excellent! We have {names}. Ready to play?',
     ready: 'Perfect! Let\'s begin. {name}, you go first.',
-    acknowledgement: 'Oh, {message}. Anyway, back to the game...',
     extractionFailed: 'I didn\'t catch that.',
   },
   game: {
@@ -30,6 +29,16 @@ export const enUS = {
   ui: {
     startButton: 'Start',
     stopButton: 'Stop',
+    startKali: 'Start Kali',
+    clickToStart: 'Click "Start Kali" to begin voice interaction',
+    initializationFailed: 'Initialization failed',
+    listeningForCommand: 'Listening for command...',
+    wakeWordInstruction: 'Say "{wakeWord}" before speaking',
+    wakeWordReady: 'Say "{wakeWord}" to wake me up',
+    savedGameDetected: 'Saved game detected. Say "{wakeWord}, continue" or "{wakeWord}, new game"',
+    copyLogs: '📋 Copy Logs',
+    copied: '✅ Copied!',
+    copyFailed: '❌ Failed',
     status: {
       initializing: 'Initializing...',
       loading: 'Loading model...',

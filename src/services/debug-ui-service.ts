@@ -1,5 +1,6 @@
 import { StatusIndicator } from '../components/status-indicator'
 import { IUIService } from './ui-service'
+import { t } from '../i18n'
 
 export class DebugUIService implements IUIService {
   private statusIndicator: StatusIndicator
@@ -15,7 +16,7 @@ export class DebugUIService implements IUIService {
 
   private setupCopyLogsButton(): void {
     const copyButton = document.createElement('button')
-    copyButton.textContent = '📋 Copy Logs'
+    copyButton.textContent = t('ui.copyLogs')
     copyButton.className = 'copy-logs-button'
     copyButton.style.cssText = `
       position: fixed;
@@ -36,14 +37,14 @@ export class DebugUIService implements IUIService {
       try {
         await navigator.clipboard.writeText(logText)
         const originalText = copyButton.textContent
-        copyButton.textContent = '✅ Copied!'
+        copyButton.textContent = t('ui.copied')
         setTimeout(() => {
           copyButton.textContent = originalText
         }, 2000)
       } catch {
-        copyButton.textContent = '❌ Failed'
+        copyButton.textContent = t('ui.copyFailed')
         setTimeout(() => {
-          copyButton.textContent = '📋 Copy Logs'
+          copyButton.textContent = t('ui.copyLogs')
         }, 2000)
       }
     })

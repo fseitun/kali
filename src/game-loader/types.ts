@@ -24,6 +24,24 @@ export interface GameRules {
 }
 
 /**
+ * Display configuration for state formatting.
+ */
+export interface StateDisplayConfig {
+  primary?: string[]
+  secondary?: string[]
+  hidden?: string[]
+}
+
+/**
+ * State display metadata for controlling what gets shown in logs.
+ */
+export interface StateDisplayMetadata {
+  game?: StateDisplayConfig
+  players?: StateDisplayConfig
+  board?: StateDisplayConfig
+}
+
+/**
  * Complete game module definition loaded from JSON.
  */
 export interface GameModule {
@@ -32,4 +50,5 @@ export interface GameModule {
   rules: GameRules
   soundEffects?: Record<string, string>
   customActions?: string[]
+  stateDisplay?: StateDisplayMetadata
 }
