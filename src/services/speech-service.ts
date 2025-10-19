@@ -8,8 +8,6 @@ export class SpeechService {
   private audioContext?: AudioContext
   private sounds: Map<string, AudioBuffer> = new Map()
   private primed = false
-  private cachedVoice: SpeechSynthesisVoice | null = null
-  private cachedVoiceName: string | null = null
 
   /**
    * Primes the speech synthesis API for immediate use.
@@ -48,12 +46,7 @@ export class SpeechService {
       const utterance = new SpeechSynthesisUtterance(text)
       utterance.rate = CONFIG.TTS.RATE
       utterance.pitch = CONFIG.TTS.PITCH
-
-      const voice = this.getVoice()
-      if (voice) {
-        utterance.voice = voice
-        utterance.lang = voice.lang
-      }
+      utterance.lang = CONFIG.TTS.VOICE_LANG
 
       utterance.onend = () => {
         resolve()
@@ -76,61 +69,6 @@ export class SpeechService {
       window.speechSynthesis.speak(utterance)
       Logger.narration(`Kali: "${text}"`)
     })
-  }
-
-  private getVoice(): SpeechSynthesisVoice | null {
-    if (this.cachedVoice && this.cachedVoice.voiceURI) {
-      return this.cachedVoice
-    }
-    return this.selectVoice()
-  }
-
-  private selectVoice(): SpeechSynthesisVoice | null {
-    const voices = window.speechSynthesis.getVoices()
-    if (voices.length === 0) return null
-
-    const targetLang = CONFIG.TTS.VOICE_LANG
-    let selectedVoice: SpeechSynthesisVoice | null = null
-
-    const exactMatch = voices.find(v => v.lang === targetLang)
-    if (exactMatch) {
-      selectedVoice = exactMatch
-    } else {
-      const langPrefix = targetLang.split('-')[0]
-
-      const argentinaMatch = voices.find(v =>
-        v.lang.startsWith(langPrefix) &&
-        (v.name.toLowerCase().includes('argentina') || v.name.toLowerCase().includes('argentin'))
-      )
-      if (argentinaMatch) {
-        selectedVoice = argentinaMatch
-      } else {
-        const latinMatch = voices.find(v =>
-          v.lang.startsWith(langPrefix) &&
-          (v.name.toLowerCase().includes('latin') || v.lang.includes('-MX') || v.lang.includes('-CO'))
-        )
-        if (latinMatch) {
-          selectedVoice = latinMatch
-        } else {
-          const langMatch = voices.find(v => v.lang.startsWith(langPrefix))
-          if (langMatch) {
-            selectedVoice = langMatch
-          }
-        }
-      }
-    }
-
-    if (selectedVoice && selectedVoice.name !== this.cachedVoiceName) {
-      Logger.info(`Selected voice: ${selectedVoice.name} (${selectedVoice.lang})`)
-      this.cachedVoice = selectedVoice
-      this.cachedVoiceName = selectedVoice.name
-    }
-
-    if (!selectedVoice) {
-      Logger.warn('No suitable voice found for target language:', targetLang)
-    }
-
-    return selectedVoice
   }
 
   /**

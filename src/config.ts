@@ -1,7 +1,7 @@
 export const CONFIG = {
   LLM_PROVIDER: import.meta.env.VITE_LLM_PROVIDER as 'ollama' | 'gemini',
 
-  LOCALE: 'es-AR' as 'es-AR' | 'en-US',
+  LOCALE: (import.meta.env.VITE_LOCALE || 'es-AR') as 'es-AR' | 'en-US',
 
   WAKE_WORD: {
     TEXT: ['kali', 'cali', 'calli', 'kaly', 'caly'],

@@ -2,13 +2,6 @@
 
 This document consolidates all planned improvements and features, ranked by their value-to-complexity ratio.
 
-**Legend:**
-- 🔥 **Critical** - High value, low-medium complexity (do first)
-- ⭐ **High Value** - Significant impact, moderate complexity
-- 💎 **Strategic** - Long-term value, higher complexity
-- 🔧 **Infrastructure** - Foundational, enables other work
-- 🎨 **Polish** - Nice to have, lower priority
-
 ---
 
 ## 🔥 Critical Priority (High Value / Low-Medium Complexity)
@@ -35,7 +28,6 @@ This document consolidates all planned improvements and features, ranked by thei
 **Status:** Analysis complete in `discussions/error-recovery-analysis.md` - ready to implement
 
 ---
-
 
 ### 4. State Manager Batching 🔥
 **Value: 8/10 | Complexity: 4/10 | Ratio: 2.0**
@@ -95,29 +87,6 @@ This document consolidates all planned improvements and features, ranked by thei
 
 ---
 
-### 7. User Language Selection at Setup ⭐
-**Value: 9/10 | Complexity: 6/10 | Ratio: 1.5**
-
-**Problem:** Currently hardcoded to Spanish (Argentina). Need runtime language selection.
-
-**Implementation:**
-- Voice-activated language selection on first launch
-- "Choose your language: Spanish or English" / "Elegí tu idioma: Español o Inglés"
-- Store language preference in IndexedDB
-- Update `CONFIG.LOCALE` dynamically
-- Reload i18n translations
-- Update LLM system prompt based on selected language
-- Wake word "Kali" works phonetically in both languages
-
-**Files:**
-- `src/i18n/index.ts`
-- `src/orchestrator/name-collector.ts` (add language selection phase)
-- `src/config.ts`
-- `src/state-manager.ts` (persist language choice)
-
-**Status:** Currently defaulting to Spanish (Argentina)
-
----
 
 ### 8. Explicit Save/Load Game Feature ⭐
 **Value: 8/10 | Complexity: 6/10 | Ratio: 1.33**
@@ -161,7 +130,75 @@ This document consolidates all planned improvements and features, ranked by thei
 
 ---
 
-### 10. Runtime Game Selection ⭐
+### 10. Background Music & Audio Management System ⭐
+**Value: 7/10 | Complexity: 5/10 | Ratio: 1.4**
+
+**Problem:** No background music or ambient audio. Experience lacks immersion, especially for kids. No audio ducking during voice interaction causes clarity issues.
+
+**Implementation:**
+
+**Phase 1: Core Music System**
+- Implement background music player with per-habitat tracks
+- Per-player music tracking: music follows the current turn player's habitat
+- Automatic habitat detection and music transitions
+- WebAudio API integration with proper mixing/gain nodes
+- Music loop handling with seamless playback
+- Preload all habitat music tracks at game start
+- Game config specifies music files per habitat:
+  - Desert, Forest, Ocean, Arctic, Amazon, Savanna, India
+
+**Phase 2: Volume Ducking (Audio Priority System)**
+- Lower ALL audio (background music + sound effects) during listening state
+- Lower ALL audio during TTS speaking
+- Configurable ducking levels (e.g., music: 20%, effects: 40% during voice interaction)
+- Smooth fade transitions (100-200ms) to avoid jarring cuts
+- Restore full volume when returning to idle state
+- Integration with wake-word state machine
+
+**Phase 3: Crossfading & Transitions**
+- Smooth crossfade between habitat music changes (2-3 second overlap)
+- Detect habitat changes from player position updates
+- Queue next track before current ends for gapless playback
+- Handle edge cases: portals, special teleports, rapid position changes
+
+**Phase 4: Voice Controls (Initially Hardcoded Config)**
+- "Kali, music off" / "Kali, stop the music" → Mute background music
+- "Kali, music on" / "Kali, play music" → Unmute background music
+- "Kali, lower volume" / "Kali, quieter" → Reduce master volume by 20%
+- "Kali, raise volume" / "Kali, louder" → Increase master volume by 20%
+- "Kali, mute" → Mute all audio except TTS
+- Store preferences in CONFIG (later: IndexedDB persistence)
+
+**Phase 5: Config Integration**
+- Add AUDIO section to config.ts:
+  - MUSIC_ENABLED (default: true)
+  - MASTER_VOLUME (0.0-1.0, default: 0.7)
+  - MUSIC_VOLUME (0.0-1.0, default: 0.5)
+  - EFFECTS_VOLUME (0.0-1.0, default: 0.8)
+  - DUCKING_MUSIC_LEVEL (default: 0.2)
+  - DUCKING_EFFECTS_LEVEL (default: 0.4)
+  - CROSSFADE_DURATION_MS (default: 2500)
+- Future: Make these voice-settable and persist to IndexedDB
+
+**Files:**
+- `src/services/audio-manager.ts` (new) - Core music + ducking system
+- `src/services/speech-service.ts` - Integrate ducking callbacks
+- `src/orchestrator/orchestrator.ts` - Habitat change detection
+- `src/config.ts` - Audio configuration constants
+- `src/game-loader/game-loader.ts` - Load music files from game config
+- `src/game-loader/types.ts` - Add musicTracks to GameModule interface
+- `public/games/kalimba/config.json` - Add habitat music paths
+- `public/music/` - Store music files per habitat
+
+**Assets Needed:**
+- 7 looping music tracks (one per habitat) for Kalimba
+- Royalty-free or Creative Commons licensed
+- Format: MP3 or OGG (WebAudio compatible)
+- Length: 1-2 minutes loop minimum
+
+---
+
+### 11. Runtime Game Selection ⭐
 **Value: 7/10 | Complexity: 5/10 | Ratio: 1.4**
 
 **Problem:** Currently defaulting to Kalimba game. Need runtime game selection.
@@ -186,7 +223,7 @@ This document consolidates all planned improvements and features, ranked by thei
 
 ## 💎 Strategic (Long-term Value / Higher Complexity)
 
-### 11. Testing Infrastructure 🔧💎
+### 12. Testing Infrastructure 🔧💎
 **Value: 9/10 | Complexity: 7/10 | Ratio: 1.29**
 
 **Problem:** No tests exist, making refactoring risky. Critical for long-term maintainability.
@@ -222,7 +259,7 @@ This document consolidates all planned improvements and features, ranked by thei
 
 ---
 
-### 12. Game-Agnostic Orchestrator 💎
+### 13. Game-Agnostic Orchestrator 💎
 **Value: 8/10 | Complexity: 7/10 | Ratio: 1.14**
 
 **Problem:** `checkAndApplyBoardMoves` in orchestrator is game-specific (Snakes & Ladders logic). Violates core architecture principle.
@@ -241,7 +278,7 @@ This document consolidates all planned improvements and features, ranked by thei
 
 ---
 
-### 13. State History & Rollback System 💎
+### 14. State History & Rollback System 💎
 **Value: 7/10 | Complexity: 6/10 | Ratio: 1.17**
 
 **Problem:** Users might make mistakes and need to recover from errors. No undo functionality.
@@ -263,7 +300,7 @@ This document consolidates all planned improvements and features, ranked by thei
 
 ---
 
-### 14. LLM Request Optimization 💎
+### 15. LLM Request Optimization 💎
 **Value: 7/10 | Complexity: 6/10 | Ratio: 1.17**
 
 **Problem:** Full system prompt + state sent on every request, no caching. Latency and cost implications.
@@ -280,7 +317,7 @@ This document consolidates all planned improvements and features, ranked by thei
 
 ---
 
-### 15. Enhanced Logging & Debug Tools 💎
+### 16. Enhanced Logging & Debug Tools 💎
 **Value: 6/10 | Complexity: 5/10 | Ratio: 1.2**
 
 **Problem:** Logger is basic, no structured logging or filtering. Hard to debug production issues.
@@ -300,7 +337,7 @@ This document consolidates all planned improvements and features, ranked by thei
 
 ## 🔧 Infrastructure (Foundation for Other Work)
 
-### 16. Dependency Injection Container 🔧
+### 17. Dependency Injection Container 🔧
 **Value: 6/10 | Complexity: 6/10 | Ratio: 1.0**
 
 **Problem:** Hard-coded dependencies make testing difficult and coupling tight.
@@ -319,7 +356,58 @@ This document consolidates all planned improvements and features, ranked by thei
 
 ---
 
-### 17. Event System 🔧
+### 18. Code Refactoring - Large File Extraction 🔧
+**Value: 7/10 | Complexity: 6/10 | Ratio: 1.17**
+
+**Problem:** Several core files have grown large with multiple responsibilities. Orchestrator (536 lines) contains turn management, board effects, and decision point logic mixed with core orchestration. Name collector (487 lines) has repeated confirmation patterns.
+
+**Implementation:**
+
+**Phase 1: Orchestrator Extraction (CRITICAL)**
+- Extract TurnManager module (~100 lines)
+  - hasPendingDecisions, autoAdvanceTurn, assertPlayerTurnOwnership
+- Extract BoardEffectsHandler module (~120 lines)
+  - checkAndApplyBoardMoves, checkAndApplySquareEffects
+- Extract DecisionPointEnforcer module (~60 lines)
+  - enforceDecisionPoints
+- Result: Orchestrator reduced from 536 → ~250 lines
+
+**Phase 2: Name Collector Extraction (MEDIUM)**
+- Extract NameConfirmationHandler module (~150 lines)
+  - Reusable confirmation flows
+- Extract TimeoutManager utility
+  - DRY timeout pattern
+
+**Phase 3: Integration & Testing**
+- Complete game session testing
+- Performance validation
+- Documentation updates
+
+**Benefits:**
+- Smaller, focused files (easier to understand)
+- Better testability (isolated concerns)
+- Clearer architecture (separation of concerns)
+- Reduced cognitive load
+- Foundation for game-agnostic orchestrator
+
+**Files:**
+- `src/orchestrator/turn-manager.ts` (new)
+- `src/orchestrator/board-effects-handler.ts` (new)
+- `src/orchestrator/decision-point-enforcer.ts` (new)
+- `src/orchestrator/name-confirmation-handler.ts` (new)
+- `src/utils/timeout-manager.ts` (new)
+- `src/orchestrator/orchestrator.ts` (refactor)
+- `src/orchestrator/name-collector.ts` (refactor)
+
+**Status:** Analysis complete in `discussions/code-refactoring-analysis.md` - ready to implement
+
+**Estimated Effort:** 12-17 hours
+
+**Note:** Makes testing infrastructure and DI implementation much easier
+
+---
+
+### 19. Event System 🔧
 **Value: 6/10 | Complexity: 6/10 | Ratio: 1.0**
 
 **Problem:** Tight coupling between components, no observable state changes.
@@ -336,7 +424,7 @@ This document consolidates all planned improvements and features, ranked by thei
 
 ---
 
-### 18. Modernize Async Patterns 🔧
+### 20. Modernize Async Patterns 🔧
 **Value: 5/10 | Complexity: 5/10 | Ratio: 1.0**
 
 **Problem:** Some Promise constructor anti-patterns, missing proper error boundaries.
@@ -356,7 +444,7 @@ This document consolidates all planned improvements and features, ranked by thei
 
 ## 🎨 Polish (Nice to Have / Lower Priority)
 
-### 19. Graceful Degradation 🎨
+### 21. Graceful Degradation 🎨
 **Value: 7/10 | Complexity: 4/10 | Ratio: 1.75**
 
 **Problem:** Voice-only approach fails if TTS unavailable. No fallback.
@@ -374,7 +462,7 @@ This document consolidates all planned improvements and features, ranked by thei
 
 ---
 
-### 20. Audio Pipeline Optimization 🎨
+### 22. Audio Pipeline Optimization 🎨
 **Value: 5/10 | Complexity: 6/10 | Ratio: 0.83**
 
 **Problem:** No buffer pooling, potential memory pressure from audio chunks.
@@ -393,7 +481,7 @@ This document consolidates all planned improvements and features, ranked by thei
 
 ---
 
-### 21. TTS Voice Selection 🎨
+### 23. TTS Voice Selection 🎨
 **Value: 6/10 | Complexity: 4/10 | Ratio: 1.5**
 
 **Problem:** Uses default browser voice. No customization.
@@ -410,7 +498,7 @@ This document consolidates all planned improvements and features, ranked by thei
 
 ---
 
-### 22. Improve Model Download Error Recovery 🎨
+### 24. Improve Model Download Error Recovery 🎨
 **Value: 5/10 | Complexity: 4/10 | Ratio: 1.25**
 
 **Problem:** If model download fails, app shows error but no retry mechanism.
@@ -426,7 +514,7 @@ This document consolidates all planned improvements and features, ranked by thei
 
 ---
 
-### 23. Sound Effect Management 🎨
+### 25. Sound Effect Management 🎨
 **Value: 4/10 | Complexity: 4/10 | Ratio: 1.0**
 
 **Problem:** All sound effects loaded at startup.
@@ -442,7 +530,7 @@ This document consolidates all planned improvements and features, ranked by thei
 
 ---
 
-### 24. JSDoc Documentation 🎨
+### 26. JSDoc Documentation 🎨
 **Value: 4/10 | Complexity: 3/10 | Ratio: 1.33**
 
 **Problem:** Code is clean but lacks JSDoc comments on some key classes/methods.
@@ -459,68 +547,24 @@ This document consolidates all planned improvements and features, ranked by thei
 
 ---
 
-## ❌ Deprioritized / Not Needed
+### 7. User Language Selection at Setup ⭐
+**Value: 1/10 | Complexity: 6/10 | Ratio: 0.17**
 
-### State Schema Validation on Startup
-**Status:** Covered by #6 (State Corruption Recovery) - more comprehensive approach
+**Problem:** Currently hardcoded to Spanish (Argentina). Need runtime language selection.
 
-### Project Structure Review
-**Status:** Current structure is clean and scales well - no changes needed
+**Implementation:**
+- Voice-activated language selection on first launch
+- "Choose your language: Spanish or English" / "Elegí tu idioma: Español o Inglés"
+- Store language preference in IndexedDB
+- Update `CONFIG.LOCALE` dynamically
+- Reload i18n translations
+- Update LLM system prompt based on selected language
+- Wake word "Kali" works phonetically in both languages
 
-### IndexedDB Performance Monitoring
-**Status:** Covered by #4 (State Manager Batching) - proactive solution better than monitoring
+**Files:**
+- `src/i18n/index.ts`
+- `src/orchestrator/name-collector.ts` (add language selection phase)
+- `src/config.ts`
+- `src/state-manager.ts` (persist language choice)
 
-### Hybrid Deterministic Rule Enforcement
-**Status:** Exists but should be removed - covered by #12 (Game-Agnostic Orchestrator)
-
----
-
-## Implementation Sequencing Recommendation
-
-Based on dependencies and value/complexity:
-
-1. **Quick Wins (Week 1-2)**
-   - #1: Error Recovery & Voice Feedback
-   - #2: Eliminate LLM Client Duplication
-   - #3: LLM Fallback Strategies
-
-2. **Foundation (Week 3-4)**
-   - #4: State Manager Batching
-   - #5: Type Safety Improvements
-   - #6: State Corruption Recovery
-   - #16: Dependency Injection (enables testing)
-
-3. **Testing Infrastructure (Week 5-6)**
-   - #11: Testing Infrastructure (all phases)
-
-4. **User-Facing Features (Week 7-9)**
-   - #7: User Language Selection
-   - #8: Save/Load Game Feature
-   - #9: LLM Narration Rephrasing
-   - #10: Runtime Game Selection
-
-5. **Strategic Architecture (Week 10-12)**
-   - #12: Game-Agnostic Orchestrator
-   - #13: State History & Rollback
-   - #14: LLM Request Optimization
-   - #17: Event System
-
-6. **Polish (Ongoing)**
-   - #15, #18, #19, #20, #21, #22, #23, #24 as time permits
-
----
-
-## Success Metrics
-
-- ✅ Zero silent errors - all errors have voice feedback
-- ✅ Zero type assertions in production code
-- ✅ 80%+ test coverage on core modules
-- ✅ < 100ms state write latency (batched)
-- ✅ < 2s LLM response time (with caching)
-- ✅ Zero hard-coded game logic in orchestrator
-- ✅ Multi-language support with runtime selection
-- ✅ Save/load functionality for game sessions
-
----
-
-**Last Updated:** 2025-10-19
+**Status:** Currently defaulting to Spanish (Argentina)

@@ -70,6 +70,8 @@ function getBasePrimitivesDocs(): string {
 
 6. **Clarity Over Cleverness**: Use simple, clear language. Avoid ambiguity.
 
+7. **Ask When Uncertain**: You're smart but not psychic. When user intent is ambiguous, ASK for clarification rather than guessing. A quick "¿Tiraste un 2 o un 3?" is better than making wrong assumptions. Asking builds trust; guessing breaks it.
+
 **Common Pattern:** Users inform you of their actions (e.g., "I rolled a 3", "I'm at position 15"), you interpret, update state, and narrate what happens.
 
 You must respond with a JSON array wrapped in markdown code blocks. Each action must be one of:
@@ -78,10 +80,10 @@ You must respond with a JSON array wrapped in markdown code blocks. Each action 
    { "action": "SET_STATE", "path": "game.turn", "value": "p2" }
 
 2. ADD_STATE - Add to a numeric value
-   { "action": "ADD_STATE", "path": "players.0.position", "value": 4 }
+   { "action": "ADD_STATE", "path": "players.p1.position", "value": 4 }
 
 3. SUBTRACT_STATE - Subtract from a numeric value
-   { "action": "SUBTRACT_STATE", "path": "players.0.position", "value": 2 }
+   { "action": "SUBTRACT_STATE", "path": "players.p1.position", "value": 2 }
 
 4. READ_STATE - Read game state (for reference, rarely needed)
    { "action": "READ_STATE", "path": "game.turn" }
@@ -105,47 +107,56 @@ You must respond with a JSON array wrapped in markdown code blocks. Each action 
 5. After reset, game phase is SETUP and name collection will run automatically
 
 **Turn Management & Proactive Moderation - CRITICAL:**
-- **YOU are the game moderator**: Lead proactively, guide players through the game flow, announce whose turn it is
+- **YOU are the game moderator**: Lead proactively, guide players through the game flow
+- **Access current player**: Use players.{game.turn} directly (replace {game.turn} with actual value)
+  * Example: If game.turn="p1", use "players.p1.position"
+  * Example: If game.turn="p2", use "players.p2.hearts"
+  * Example: If game.turn="p3", use "players.p3.items"
 - **TURN ENFORCEMENT IS STRICT - ACTIONS WILL BE REJECTED IF WRONG PLAYER**:
   * The system BLOCKS any modification to a player's state when it's not their turn
-  * You CANNOT modify players.1 when game.turn is "p1" - the action will be rejected
-  * You MUST change game.turn BEFORE modifying a different player's state
-  * If you try to modify the wrong player, your entire action sequence fails
-- **ALWAYS ADVANCE TURNS AFTER COMPLETING A PLAYER'S TURN - THIS IS MANDATORY**:
-  * A turn is complete when: player rolled/moved, resolved ALL square effects, answered any riddles/clarifications
-  * After COMPLETING all steps of a player's turn, use SET_STATE to change game.turn to next player ID
-  * Pattern: Complete all turn steps → SET game.turn → NARRATE with next player's name and instruction
-  * **DO NOT advance turn mid-sequence** (e.g., after roll but before resolving animal encounter or answering riddle)
-  * **NEVER let the same player take two turns in a row unless game rules explicitly require it**
+  * You CANNOT modify players.p2 when game.turn is "p1" - the action will be rejected
+  * You can ONLY modify the current player's state (the one whose turn it is)
+  * The orchestrator enforces this strictly
+- **ORCHESTRATOR CONTROLS TURN ADVANCEMENT - DO NOT USE SET_STATE FOR game.turn**:
+  * **You CANNOT manually change game.turn** - the orchestrator automatically advances turns when all effects complete
+  * **Turn advancement timing**:
+    - User announces action → You process it (movement, encounters, effects, rewards)
+    - You complete ALL effects for current player's turn
+    - Orchestrator automatically advances turn after everything is done
+    - Orchestrator announces next player via TTS
+    - This ensures turns never advance while effects are pending
+  * **What makes a turn complete (all must finish before orchestrator advances):**
+    - Movement applied (ADD_STATE position)
+    - All square effects processed (animals, hazards, items, specials)
+    - All encounters resolved (power checks, riddles, rewards collected)
+    - All consequences applied (skipTurns set, items collected, etc.)
+    - Final narration complete (tell user what happened)
+  * **Pattern: Complete everything, then orchestrator advances**:
+    - User rolls → ADD_STATE position → [Orchestrator injects square effect] → Process encounter → NARRATE completion
+    - Orchestrator auto-advances turn and announces next player
+    - You never touch game.turn
 - **Example of correct turn sequence**:
-  1. { "action": "ADD_STATE", "path": "players.0.position", "value": 3 }  ← Player 1's move (game.turn is "p1")
-  2. { "action": "SET_STATE", "path": "game.turn", "value": "p2" }  ← Change turn BEFORE narrating
-  3. { "action": "NARRATE", "text": "¡Te moviste a la 7! Marina, es tu turno. Tirá el dado." }
-- **Turn cycling pattern**: p1 → p2 → p3 → p4 → p1... (cycle through active players)
-- **Identify current player**: game.turn="p1" means players.0, "p2" means players.1, "p3" means players.2, "p4" means players.3
-- **Stop on win**: When game.winner is set, do NOT advance turns - game is over
-- **Proactive narration pattern - MANDATORY AFTER EVERY TURN**:
-  * Format: "{What happened} + {Next player NAME}, {specific action instruction}"
-  * Example: "¡Te moviste a la 7! Marina, es tu turno. Tirá el dado."
-  * Example: "Fallaste el desafío, volvés a la 0. Marina, ahora te toca. Elegí tu camino: A o B?"
-  * Example: "¡Subiste una escalera! Ahora le toca a Pedro. Tirá el dado, Pedro."
-- **Don't wait passively**: Always guide the next step - tell players EXACTLY what to do (e.g., "Tirá el dado", "Elegí camino A o B")
-- **Turn modifiers**: Some games have mechanics like skip turns (players.X.skipTurns), turn reversal (game.direction), or lose-a-turn effects. These are game-specific and documented in each game's rules. Always check the game rules for these mechanics.
-- **Skip Turn Handling - If players.X.skipTurns > 0**:
-  1. SUBTRACT_STATE players.X.skipTurns by 1
+  1. { "action": "ADD_STATE", "path": "players.p1.position", "value": 3 }  ← Player 1's move
+  2. [Orchestrator injects square effect if needed]
+  3. [You process encounter completely: power check, riddle, rewards]
+  4. { "action": "NARRATE", "text": "¡Te moviste a la 7 y ganaste 3 puntos!" }
+  5. [Orchestrator auto-advances turn to p2]
+- **Proactive narration pattern - MANDATORY**:
+  * Narrate what happened to the current player
+  * You do NOT need to announce whose turn is next (orchestrator handles that)
+  * Example: "¡Te moviste a la 7 y ganaste 3 puntos!"
+  * Example: "Fallaste el desafío, volvés a la 0."
+  * Example: "¡Encontraste un corazón! Ahora tenés 3 corazones."
+- **Don't wait passively**: Guide the current player through their complete turn
+- **Skip Turn Handling - If current player's skipTurns > 0**:
+  1. SUBTRACT_STATE players.{game.turn}.skipTurns by 1 (use actual player ID)
   2. NARRATE the skip (e.g., "Perdés este turno" / "You skip this turn")
-  3. SET_STATE game.turn to next player
-  4. STOP - do NOT process any other actions for that player this turn
+  3. STOP - orchestrator will advance turn automatically
 
 **Important:**
-- Paths use dot notation: "game.turn", "players.0.position", "board.moves"
-- Array access: "players.0" for first player, "players.1" for second player
-- **CRITICAL - Player ID to Array Index Mapping:**
-  * p1 → players.0 (first player)
-  * p2 → players.1 (second player)
-  * p3 → players.2 (third player)
-  * p4 → players.3 (fourth player)
-  * Example: If game.turn is "p2", you MUST use "players.1.position" to access that player
+- Paths use dot notation: "game.turn", "players.p1.position", "board.moves"
+- Object access: "players.p1" for first player, "players.p2" for second player
+- **CRITICAL**: Use players.{current_turn_id} to access current player (e.g., if game.turn="p1", use "players.p1")
 - Use ADD_STATE/SUBTRACT_STATE for math operations on numbers
 - Use SET_STATE for setting values directly
 - ALWAYS NARRATE what happens - users can't see the screen
@@ -156,6 +167,16 @@ You must respond with a JSON array wrapped in markdown code blocks. Each action 
   * Game mechanics require automated rolls (NPCs, enemies, random events controlled by the game)
   * 99% of the time, users roll physical dice and TELL you the result - you don't roll for them
 - Commands come from speech recognition and may contain errors (e.g., "rode" for "rolled", "wrote" for "rolled"). Be open-minded and make an extra effort to understand user intent from context.
+
+**Validation Failures - Learning from Rejection:**
+- If actions are rejected, error message tells you WHY
+- Common errors: wrong player turn, missing required decisions, invalid paths, trying to change game.turn
+- Read error, understand constraint, adjust and try again
+- Example: "Cannot manually change game.turn. Orchestrator controls turn advancement."
+  → Remove SET_STATE game.turn from your actions - orchestrator handles this automatically
+- Example: "Cannot modify players.1 when it's p1's turn"
+  → You tried to modify wrong player - only modify the current player whose turn it is
+- Validator enforces rules deterministically - learn from its feedback
 
 **Verbal Dice Roll Interpretation - Context Aware - CRITICAL:**
 - Users report physical dice results verbally (speech-to-text may create artifacts like duplicated words)
@@ -194,6 +215,50 @@ You must respond with a JSON array wrapped in markdown code blocks. Each action 
 - **Example**: User at position 0 with pathChoice="A" → Skip path question, proceed to roll
 - **Example**: User says "tiré un 3" → Store it, don't ask them to repeat their roll
 
+**State Override Pattern - USER IS AUTHORITATIVE:**
+- **When users correct game state, they are ALWAYS right - persist immediately with SET_STATE**
+- Users may say "we're both at position X", "I have Y hearts", "my score is Z"
+- **CRITICAL**: Update state FIRST, then acknowledge (not instead of)
+- **Pattern**: SET_STATE actions → NARRATE acknowledgment
+- **Examples**:
+  * User: "estamos los dos en la cien" (we're both at 100)
+    → [{ "action": "SET_STATE", "path": "players.0.position", "value": 100 }, { "action": "SET_STATE", "path": "players.1.position", "value": 100 }, { "action": "NARRATE", "text": "Dale, los dos en la 100." }]
+  * User: "tengo 3 corazones" (I have 3 hearts)
+    → [{ "action": "SET_STATE", "path": "players.0.hearts", "value": 3 }, { "action": "NARRATE", "text": "Perfecto, 3 corazones." }]
+  * User: "mi posición es 50" (my position is 50)
+    → [{ "action": "SET_STATE", "path": "players.0.position", "value": 50 }, { "action": "NARRATE", "text": "Dale, estás en la 50." }]
+- **DO NOT** just narrate acknowledgment without updating state
+- **DO NOT** argue with user corrections - they may have information you lack
+- Trust users when they override state - they're looking at the physical game board
+
+**Synthetic Transcript Handling - ORCHESTRATOR AUTHORITY:**
+- The orchestrator may inject \`[SYSTEM: ...]\` messages to enforce game rules
+- These are NOT user speech - they're authoritative commands from the system
+- **When you receive \`[SYSTEM: ...]\` messages, process them immediately**
+- Common synthetic transcript patterns:
+  * \`[SYSTEM: Player landed on square X: {...}. Process encounter.]\` → You MUST handle this square effect now
+  * \`[SYSTEM: PlayerName must choose 'fieldName' before proceeding. Ask: "..."]\` → You MUST ask this question now
+- **DO NOT** wait for user input when processing system messages
+- **DO NOT** narrate "the system says..." - just process the requirement naturally
+- The orchestrator uses these to guarantee critical steps aren't skipped
+- Example flow:
+  1. User: "tiré un 2" → You: ADD_STATE position, NARRATE
+  2. Orchestrator: Auto-advances turn, announces next player
+  3. Orchestrator: [SYSTEM: Player landed on square 5: Cobra...] → You: Process Cobra encounter completely
+  4. This ensures NO encounters are ever missed and turns advance at the right time
+
+**Handling Ambiguity - When in Doubt, Ask:**
+- If user input could mean multiple things, ASK for clarification before acting
+- If value seems unusual, CONFIRM before applying
+- If state suggests confusion, GENTLY clarify
+- Examples:
+  * "tiré dos tres" with 1d6 → "¿Tiraste un 2 o un 3?"
+  * User action seems wrong → "Querés [clarify intent], ¿es así?"
+  * Unusual roll → "¿Dijiste [value]?"
+- Philosophy: 3-second clarification prevents 3-minute argument
+- Balance: Don't over-ask obvious things, DO ask ambiguous ones
+- Use judgment: "tiré un cinco" is clear; "tiré cinco seis" with 1d6 is not
+
 **Narration Style - CRITICAL:**
 - **LANGUAGE: ALL narration MUST be in ${getLanguageInstruction()}.**
 - BE CONCISE! Keep responses under 15 words when possible
@@ -207,7 +272,7 @@ Return ONLY the JSON array in markdown format:
 
 \`\`\`json
 [
-  { "action": "ADD_STATE", "path": "players.0.position", "value": 3 },
+  { "action": "ADD_STATE", "path": "players.p1.position", "value": 3 },
   { "action": "NARRATE", "text": "${getExampleNarration()}" }
 ]
 \`\`\`
@@ -311,13 +376,12 @@ export function formatStateContext(state: Record<string, unknown>): string {
     lines.push(`  ${fields.join(', ')}`)
   }
 
-  if (state.players && Array.isArray(state.players)) {
+  const players = state.players as Record<string, Record<string, unknown>> | undefined
+  if (players) {
     lines.push('\nPlayers:')
-    state.players.forEach((player: unknown, index: number) => {
-      const p = player as Record<string, unknown>
-      const name = p.name || `P${index + 1}`
-      const fields = formatObjectFields(p, displayConfig?.players)
-      lines.push(`  [${index}] ${name}: ${fields.join(', ')}`)
+    Object.entries(players).forEach(([id, player]) => {
+      const fields = formatObjectFields(player, displayConfig?.players)
+      lines.push(`  ${id}: ${fields.join(', ')}`)
     })
   }
 
@@ -330,7 +394,64 @@ export function formatStateContext(state: Record<string, unknown>): string {
     }
   }
 
+  const decisionContext = formatDecisionPointContext(state)
+  if (decisionContext) {
+    lines.push('\n' + decisionContext)
+  }
+
   return lines.join('\n')
+}
+
+function formatDecisionPointContext(state: Record<string, unknown>): string {
+  const decisionPoints = state.decisionPoints as Array<{
+    position: number
+    requiredField: string
+    prompt: string
+  }> | undefined
+
+  if (!decisionPoints || decisionPoints.length === 0) {
+    return ''
+  }
+
+  const players = state.players as Record<string, Record<string, unknown>> | undefined
+  const game = state.game as Record<string, unknown> | undefined
+  const currentTurn = game?.turn as string | undefined
+
+  if (!players || !currentTurn) {
+    return ''
+  }
+
+  const lines: string[] = []
+
+  Object.entries(players).forEach(([id, player]) => {
+    const position = player.position as number | undefined
+    if (typeof position !== 'number') return
+
+    const decisionPoint = decisionPoints.find(dp => dp.position === position)
+    if (!decisionPoint) return
+
+    const fieldValue = player[decisionPoint.requiredField]
+    if (fieldValue === null || fieldValue === undefined) {
+      const playerId = player.id as string || id
+      const playerName = player.name as string || playerId
+      const isCurrent = currentTurn === playerId
+
+      lines.push(`⚠️ DECISION REQUIRED for ${playerName} (${playerId}):`)
+      lines.push(`  Field: ${decisionPoint.requiredField} (currently null)`)
+      lines.push(`  Prompt: "${decisionPoint.prompt}"`)
+      if (isCurrent) {
+        lines.push(`  This is the CURRENT player - INFORMATIONAL (orchestrator will enforce if needed).`)
+      } else {
+        lines.push(`  INFORMATIONAL: Orchestrator will prevent turn advancement until this choice is made.`)
+      }
+    }
+  })
+
+  if (lines.length > 0) {
+    return lines.join('\n')
+  }
+
+  return ''
 }
 
 export const SYSTEM_PROMPT = getBasePrimitivesDocs()

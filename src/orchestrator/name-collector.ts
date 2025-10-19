@@ -463,18 +463,26 @@ export class NameCollector {
 
   private async createPlayers(): Promise<void> {
     const currentState = await this.stateManager.getState()
-    const playerTemplate = (currentState.players as Record<string, unknown>[])[0]
+    const playersArray = Object.values(currentState.players as Record<string, Record<string, unknown>>)
+    const playerTemplate = playersArray[0]
 
-    const players = this.collectedNames.map((name, index) => {
+    const players: Record<string, Record<string, unknown>> = {}
+    const playerOrder: string[] = []
+
+    this.collectedNames.forEach((name, index) => {
+      const playerId = `p${index + 1}`
       const player = deepClone(playerTemplate)
-      player.id = `p${index + 1}`
+      player.id = playerId
       player.name = name
       player.position = 0
-      return player
+      players[playerId] = player
+      playerOrder.push(playerId)
     })
 
     await this.stateManager.set('players', players)
+    await this.stateManager.set('game.playerOrder', playerOrder)
     Logger.info('Players created:', players)
+    Logger.info('Player order:', playerOrder)
   }
 
   private setupTimeout(callback: () => void, ms: number): void {

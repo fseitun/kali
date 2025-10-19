@@ -1,6 +1,6 @@
 import { GameState, PrimitiveAction } from './types'
 import { StateManager } from '../state-manager'
-import { getPlayerIndex } from '../utils/player-helper'
+import { deepClone } from '../utils/deep-clone'
 
 export interface ValidationResult {
   valid: boolean
@@ -8,8 +8,75 @@ export interface ValidationResult {
 }
 
 /**
+ * Simulates the effect of an action on mock state for stateful validation.
+ * Only simulates state-changing actions (SET_STATE, ADD_STATE, SUBTRACT_STATE).
+ * @param state - Mock state to apply action to
+ * @param action - Action to simulate
+ * @param stateManager - State manager for path operations
+ * @returns Updated mock state
+ */
+function applyActionToMockState(
+  state: GameState,
+  action: PrimitiveAction,
+  stateManager: StateManager
+): GameState {
+  const mockState = deepClone(state)
+
+  try {
+    if (action.action === 'SET_STATE' && 'path' in action && 'value' in action) {
+      const parts = action.path.split('.')
+      let current: Record<string, unknown> = mockState
+
+      for (let i = 0; i < parts.length - 1; i++) {
+        const part = parts[i]
+        if (!(part in current)) {
+          return state
+        }
+        current = current[part] as Record<string, unknown>
+      }
+
+      const lastPart = parts[parts.length - 1]
+      current[lastPart] = action.value
+    } else if (action.action === 'ADD_STATE' && 'path' in action && 'value' in action) {
+      const currentValue = stateManager.getByPath(mockState, action.path)
+      if (typeof currentValue === 'number') {
+        const parts = action.path.split('.')
+        let current: Record<string, unknown> = mockState
+
+        for (let i = 0; i < parts.length - 1; i++) {
+          const part = parts[i]
+          current = current[part] as Record<string, unknown>
+        }
+
+        const lastPart = parts[parts.length - 1]
+        current[lastPart] = currentValue + action.value
+      }
+    } else if (action.action === 'SUBTRACT_STATE' && 'path' in action && 'value' in action) {
+      const currentValue = stateManager.getByPath(mockState, action.path)
+      if (typeof currentValue === 'number') {
+        const parts = action.path.split('.')
+        let current: Record<string, unknown> = mockState
+
+        for (let i = 0; i < parts.length - 1; i++) {
+          const part = parts[i]
+          current = current[part] as Record<string, unknown>
+        }
+
+        const lastPart = parts[parts.length - 1]
+        current[lastPart] = currentValue - action.value
+      }
+    }
+  } catch {
+    return state
+  }
+
+  return mockState
+}
+
+/**
  * Validates an array of primitive actions against current game state.
- * Ensures actions are well-formed and reference valid state paths.
+ * Uses stateful validation - simulates each action's effect before validating the next.
+ * This allows sequential commands like "choose path A and roll 5" to work correctly.
  * @param actions - The actions array to validate
  * @param state - Current game state for path validation
  * @param stateManager - State manager for path operations
@@ -27,12 +94,16 @@ export function validateActions(
     }
   }
 
+  let mockState = deepClone(state)
+
   for (let i = 0; i < actions.length; i++) {
     const action = actions[i] as PrimitiveAction
-    const result = validateAction(action, state, stateManager, i)
+    const result = validateAction(action, mockState, stateManager, i)
     if (!result.valid) {
       return result
     }
+
+    mockState = applyActionToMockState(mockState, action, stateManager)
   }
 
   return { valid: true }
@@ -115,7 +186,7 @@ function validateTurnOwnership(
   actionType: string,
   index: number
 ): ValidationResult {
-  const playerPathMatch = path.match(/^players\.(\d+)\./)
+  const playerPathMatch = path.match(/^players\.(p\d+)\./)
   if (!playerPathMatch) {
     return { valid: true }
   }
@@ -124,7 +195,7 @@ function validateTurnOwnership(
     return { valid: true }
   }
 
-  const playerIndex = parseInt(playerPathMatch[1], 10)
+  const playerId = playerPathMatch[1]
   const game = state.game as Record<string, unknown> | undefined
   const currentTurn = game?.turn as string | undefined
 
@@ -132,16 +203,64 @@ function validateTurnOwnership(
     return { valid: true }
   }
 
-  try {
-    const expectedIndex = getPlayerIndex(currentTurn)
-    if (playerIndex !== expectedIndex) {
-      return {
-        valid: false,
-        error: `${actionType} at index ${index}: Cannot modify players.${playerIndex} when it's ${currentTurn}'s turn (players.${expectedIndex}). Change game.turn first or modify the correct player.`
-      }
+  if (playerId !== currentTurn) {
+    return {
+      valid: false,
+      error: `${actionType} at index ${index}: Cannot modify players.${playerId} when it's ${currentTurn}'s turn. Modify players.${currentTurn} instead.`
     }
-  } catch {
+  }
+
+  return { valid: true }
+}
+
+function validateDecisionBeforeMove(
+  path: string,
+  state: GameState,
+  actionType: string,
+  index: number
+): ValidationResult {
+  const playerPathMatch = path.match(/^players\.(p\d+)\.position$/)
+  if (!playerPathMatch) {
     return { valid: true }
+  }
+
+  const playerId = playerPathMatch[1]
+  const players = state.players as Record<string, Record<string, unknown>> | undefined
+  const player = players?.[playerId]
+
+  if (!player) {
+    return { valid: true }
+  }
+
+  const currentPosition = player.position as number | undefined
+
+  if (typeof currentPosition !== 'number') {
+    return { valid: true }
+  }
+
+  const decisionPoints = state.decisionPoints as Array<{
+    position: number
+    requiredField: string
+    prompt: string
+  }> | undefined
+
+  if (!decisionPoints || decisionPoints.length === 0) {
+    return { valid: true }
+  }
+
+  const decisionPoint = decisionPoints.find(dp => dp.position === currentPosition)
+
+  if (!decisionPoint) {
+    return { valid: true }
+  }
+
+  const fieldValue = player[decisionPoint.requiredField]
+
+  if (fieldValue === null || fieldValue === undefined) {
+    return {
+      valid: false,
+      error: `${actionType} at index ${index}: Cannot move from position ${currentPosition}. Player must choose '${decisionPoint.requiredField}' first. ${decisionPoint.prompt}`
+    }
   }
 
   return { valid: true }
@@ -165,8 +284,23 @@ function validateSetState(
   }
 
   if ('path' in action && typeof action.path === 'string') {
+    if (action.path === 'game.turn') {
+      const game = state.game as Record<string, unknown> | undefined
+      const currentPhase = game?.phase as string | undefined
+
+      if (currentPhase !== 'SETUP') {
+        return {
+          valid: false,
+          error: `SET_STATE at index ${index}: Cannot manually change game.turn. The orchestrator automatically advances turns when all effects are complete. Remove this action and let the orchestrator handle turn advancement.`
+        }
+      }
+    }
+
     const turnValidation = validateTurnOwnership(action.path, state, 'SET_STATE', index)
     if (!turnValidation.valid) return turnValidation
+
+    const decisionMoveValidation = validateDecisionBeforeMove(action.path, state, 'SET_STATE', index)
+    if (!decisionMoveValidation.valid) return decisionMoveValidation
 
     if (!stateManager.pathExists(state, action.path)) {
       return {
@@ -195,6 +329,9 @@ function validateAddState(
   if ('path' in action && typeof action.path === 'string') {
     const turnValidation = validateTurnOwnership(action.path, state, 'ADD_STATE', index)
     if (!turnValidation.valid) return turnValidation
+
+    const decisionMoveValidation = validateDecisionBeforeMove(action.path, state, 'ADD_STATE', index)
+    if (!decisionMoveValidation.valid) return decisionMoveValidation
 
     if (!stateManager.pathExists(state, action.path)) {
       return {
