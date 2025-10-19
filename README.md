@@ -192,248 +192,29 @@ Audio pipeline follows: idle → listening → processing → speaking
   - All exported interfaces, types, and classes
   - Complex private methods where the logic is non-obvious
 
-## Todo & Future Improvements
+## Development Roadmap
 
-### High Priority
+For a comprehensive, prioritized list of all planned improvements and features, see:
 
-#### Error Recovery & Voice Feedback
-**Context:** Currently, all errors (validation failures, LLM network errors, execution errors) are silently logged to console with no voice feedback. This is unacceptable for a voice-only interface - users have no way to know if something went wrong, if they should retry, or if the system heard them.
+**📋 [Prioritized Development Roadmap](./discussions/prioritized-roadmap.md)**
 
-**Plan:** [See detailed analysis and implementation plan](./error-recovery-analysis.md)
+All todos are ranked by value-to-complexity ratio and organized into:
+- 🔥 **Critical Priority** - High value, low-medium complexity (do first)
+- ⭐ **High Value** - Significant impact, moderate complexity
+- 💎 **Strategic** - Long-term value, higher complexity
+- 🔧 **Infrastructure** - Foundational work that enables other improvements
+- 🎨 **Polish** - Nice to have, lower priority
 
-**Key Issues:**
-* **Validation failures** (turn violations): Silent exit, no user feedback
-* **LLM network errors**: Returns empty array, silent exit
-* **Execution errors**: Partial state corruption possible
-* **No state rollback**: Failed actions can leave game in inconsistent state
+### Current Focus Areas
 
-**Implementation Priority:**
-1. **Phase 1** (Immediate): Add voice feedback for all error types with specific, helpful messages
-2. **Phase 2** (Medium): Add state snapshotting and rollback for atomic execution
-3. **Phase 3** (Future): Make validator simulate action sequences to catch mid-sequence violations
+The immediate priorities are:
+1. **Error Recovery & Voice Feedback** - All errors need voice feedback (voice-only UX)
+2. **Code Quality** - Eliminate duplication, improve type safety
+3. **Reliability** - LLM fallbacks, state corruption recovery
+4. **Performance** - State batching, LLM optimization
+5. **Testing Infrastructure** - Add Vitest and comprehensive test coverage
 
-**Status:** Analysis complete - ready to implement Phase 1
-
-#### LLM Narration Rephrasing
-**Context:** Currently, all system messages and i18n strings are spoken as-is, making Kali sound robotic and repetitive. This makes the experience feel rigid, especially for kids.
-
-**Plan:** [See detailed implementation plan](./llm-narration-rephrasing.md)
-
-**Status:** Planned - ready to implement
-
-#### Explicit Save/Load Game Feature
-**Context:** Currently, the app always starts fresh on every launch (resets to SETUP phase). This is the correct default for voice-controlled board games, but users might want to explicitly save and resume games.
-
-**Requirements:**
-* **Voice Commands:**
-  * "Kali, save this game as [name]" - Saves current state with a label
-  * "Kali, load game [name]" - Loads a saved game
-  * "Kali, what games are saved?" - Lists available saved games
-* **Resume Flow:**
-  * When loading, have each player confirm their name and position
-  * "Alice, you're at position 23, correct?" (wait for yes/no)
-  * If player says "no", ask them to correct: "Where are you?"
-  * Validate all players before continuing
-* **Storage:**
-  * Store saved games separately from active session in IndexedDB
-  * Structure: `{ saveName, timestamp, state }`
-  * Allow multiple saved games per browser
-
-**Implementation:**
-* Create `src/save-manager.ts` for save/load operations
-* Add SAVE_GAME and LOAD_GAME as custom action handlers in orchestrator
-* Create voice-driven validation flow for loaded games
-* Update system prompt with save/load commands
-
-**Status:** Not started - future enhancement
-
-#### Runtime Game Selection
-**Context:** Currently defaulting to Kalimba game (set in `CONFIG.GAME.DEFAULT_MODULE`). Similar to language selection, users should be able to choose which game to play at runtime.
-
-**Requirements:**
-* **Voice-Activated Game Selection:**
-  * After language selection (or at setup if language is already set): "Choose a game: Kalimba or Snakes and Ladders" / "Elegí un juego: Kalimba o Serpientes y Escaleras"
-  * User responds with game name
-  * System loads the selected game module and initializes with appropriate rules
-* **Persistence:**
-  * Store last played game preference in IndexedDB
-  * Option to change games: "Kali, change game" / "Kali, cambiar juego"
-* **Game Discovery:**
-  * Automatically detect available games from `/public/games/*.json`
-  * Voice command to list available games: "Kali, what games can we play?" / "Kali, ¿qué juegos hay?"
-* **Implementation:**
-  * Add game selection phase between language selection and player setup
-  * Update `GameLoader` to support dynamic game selection
-  * Create voice flow for game switching mid-session (with confirmation to avoid losing progress)
-  * Update system prompt dynamically based on selected game
-
-**Status:** Not started - currently defaulting to Kalimba
-
-#### User Language Selection at Setup
-**Context:** Currently hardcoded to Spanish (Argentina) with the wake word "Kali". The system uses Spanish (Argentina) voices, Spanish i18n strings, and instructs the LLM to respond in Rioplatense Spanish.
-
-**Requirements:**
-* **Voice-Activated Language Selection:**
-  * On first launch or after language reset: "Choose your language: Spanish or English" / "Elegí tu idioma: Español o Inglés"
-  * User responds: "Spanish" / "Español" or "English" / "Inglés"
-  * System sets locale and restarts with appropriate language
-* **Persistence:**
-  * Store language preference in IndexedDB
-  * Remember choice across sessions
-* **Wake Word:**
-  * "Kali" works phonetically in both languages
-  * No need to change wake word based on language
-* **Implementation:**
-  * Add language selection phase before SETUP
-  * Update `CONFIG.LOCALE` dynamically based on selection
-  * Reload i18n translations
-  * Update LLM system prompt based on selected language
-
-**Status:** Not started - currently defaulting to Spanish (Argentina)
-
-### Medium Priority
-
-#### Hybrid Deterministic Rule Enforcement
-**Context:** Currently, ladder/snake moves in Snakes and Ladders are automatically enforced by the orchestrator after position changes. This hybrid approach keeps game-specific deterministic rules in code while letting the LLM handle narrative and interpretation.
-
-**Status:** Implemented for ladder/snake moves in Snakes and Ladders (see `orchestrator.ts:checkAndApplyBoardMoves`)
-
-**Future Expansion Considerations:**
-* **Win Condition Checking:** Automatically detect and enforce win conditions (e.g., position >= 100) rather than relying on LLM
-* **Bounds Checking:** Prevent invalid moves (e.g., position < 0, position > max)
-* **Turn Validation:** Automatically enforce turn order rather than trusting LLM
-* **Resource Management:** In complex games (D&D), enforce resource constraints (e.g., can't spend more mana than available)
-
-**Trade-offs:**
-* **Pro:** 100% reliable, fast, cheaper, deterministic
-* **Pro:** Catches LLM errors silently without breaking game flow
-* **Con:** Game-specific logic in orchestrator (less generic)
-* **Con:** Need to update code for each game's deterministic rules
-
-**Decision Point:** Evaluate per-game whether critical rules should be code-enforced or LLM-handled. Simple deterministic rules (ladders, bounds) are good candidates for code enforcement. Complex rules requiring interpretation (combat strategies, roleplay outcomes) should stay with LLM.
-
-#### State History & Rollback System
-**Context:** Users can authoritatively override state (e.g., "I'm at level 81 with a sword"), but they might make mistakes and need to recover from errors.
-
-**Requirements:**
-* **Automatic Snapshots:** Before every state mutation, store a snapshot in IndexedDB
-  * Structure: `{ timestamp, state, action }` for automatic snapshots
-  * Structure: `{ timestamp, state, label: "user-provided-name" }` for explicit checkpoints
-* **Explicit Checkpoints:** Voice command to create named restore points (e.g., "Kali, checkpoint" or "Kali, save checkpoint before boss fight")
-* **Retention Policy:** Keep last 10 states (FIFO queue)
-* **Voice-Activated Rollback:**
-  * Simple undo: "Kali, undo that" or "Kali, undo"
-  * Multi-step undo: "Kali, undo last 3 actions"
-  * Named restore: "Kali, restore to [checkpoint name]"
-
-**Implementation:**
-* Create `src/history-manager.ts`
-* Automatic snapshots before every state change
-* ~100 lines of code for history manager
-* IndexedDB-based storage (async, non-blocking)
-* Minimal overhead: <5ms per snapshot on modern devices
-* Storage minimal: game states are small JSON objects
-* **Voice-Only Design:** All recovery must be voice-triggered since users cannot see the screen
-
-#### Improve Error Recovery for Model Download
-**Current:** If model download fails, the app shows an error but doesn't offer retry mechanism.
-
-**Suggestions:**
-* Add retry button/mechanism for failed model downloads
-* Show progress more clearly (currently just percentage)
-* Consider chunked download with resume capability for poor connections
-
-**Files affected:** `src/model-manager.ts`, `src/main.ts` (error handling in initializeWakeWord)
-
-#### Wake Word
-**Current:** Wake word is "Kali" with phonetic variants: "kali", "cali", "calli", "kaly", "caly" (in `config.ts`)
-
-**Changed from:** Previously "zookeeper" - changed to "Kali" for better alignment with app name and multi-language support.
-
-**Note:** "Kali" works phonetically in both Spanish and English, making it ideal for multi-language support.
-
-#### Enhanced Error Messages for Validation Failures
-**Current:** Validation errors are logged but user gets no voice feedback.
-
-**Enhancement:**
-* When validation fails, Kali should narrate "Sorry, I couldn't process that" or similar
-* Helps with voice-only interaction (users can't see console errors)
-
-**Files affected:** `src/orchestrator/orchestrator.ts`
-
-#### TTS Voice Selection
-**Current:** Uses default browser voice (in `speech-service.ts`)
-
-**Enhancement:**
-* Allow voice selection/preference
-* Consider gender/accent preferences for family use
-* Could be voice-configured: "Kali, use a male voice" / "Kali, use a female voice"
-
-**Files affected:** `src/services/speech-service.ts`, `src/config.ts` (add voice preference config)
-
-### Low Priority
-
-#### Add State Schema Validation on Startup
-**Current:** There's a basic `isValidGameState` check in `main.ts` that only validates the game name.
-
-**Enhancement:**
-* Consider deeper schema validation (validate player structure, board structure, etc.)
-* Prevent subtle state corruption from persisting across sessions
-
-**Files affected:** `src/main.ts`, potentially create `src/schema-validator.ts`
-
-#### Sound Effect Management
-**Current:** Sound effects are loaded at startup in `main.ts`
-
-**Enhancement:**
-* Lazy load sound effects (load on first use)
-* Preload only essential sounds
-* Graceful degradation if sound fails to load
-
-**Files affected:** `src/services/speech-service.ts`, `src/game-loader/game-loader.ts`
-
-#### Add Inline Documentation
-**Current:** Code is clean but lacks JSDoc comments on key classes/methods.
-
-**Enhancement:** Add JSDoc to public methods in:
-* `StateManager`
-* `Orchestrator`
-* `SpeechService`
-* `GameLoader`
-
-#### Project Structure Review
-**Current structure is clean:**
-```
-src/
-  ├── llm/              ✅ LLM clients and prompts
-  ├── orchestrator/     ✅ Core orchestration logic
-  ├── services/         ✅ Speech and UI services
-  ├── utils/            ✅ Utilities and helpers
-  ├── game-loader/      ✅ Game loading logic
-  └── audio-worklet/    ✅ Audio processing
-```
-
-**Status:** No structural changes needed - organization is logical and scales well.
-
-#### Add Unit Tests
-**Current:** No tests exist.
-
-**Priority:** Low (prototype phase), but consider for Phase 4.
-
-**Suggested framework:** Vitest (already in Vite ecosystem)
-
-**Test candidates:**
-* `validator.ts` (pure functions, easy to test)
-* `state-manager.ts` (path operations)
-* `OllamaClient.ts` (JSON parsing logic)
-
-#### IndexedDB Performance Monitoring
-**Current:** Every state change writes to IndexedDB in `state-manager.ts`
-
-**Consideration:**
-* Monitor if this becomes a bottleneck with complex games (D&D with large state)
-* Consider batching state updates or debouncing writes
-* Currently not an issue for Snakes & Ladders
+See the [roadmap document](./discussions/prioritized-roadmap.md) for detailed implementation plans and sequencing recommendations.
 
 ## Key Patterns & Implementation Details
 
