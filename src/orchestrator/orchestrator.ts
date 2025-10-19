@@ -1,4 +1,4 @@
-import { ILLMClient } from '../llm/ILLMClient'
+import { LLMClient } from '../llm/LLMClient'
 import { StateManager } from '../state-manager'
 import { SpeechService } from '../services/speech-service'
 import { StatusIndicator } from '../components/status-indicator'
@@ -8,6 +8,7 @@ import { Logger } from '../utils/logger'
 import { Profiler } from '../utils/profiler'
 import { getPlayerIndex } from '../utils/player-helper'
 import { formatStateContext } from '../llm/system-prompt'
+import { t } from '../i18n'
 
 /**
  * Core orchestrator that processes voice transcripts through LLM,
@@ -19,7 +20,7 @@ export class Orchestrator {
   private initialState: GameState
 
   constructor(
-    private llmClient: ILLMClient,
+    private llmClient: LLMClient,
     private stateManager: StateManager,
     private speechService: SpeechService,
     private statusIndicator: StatusIndicator,
@@ -88,6 +89,7 @@ export class Orchestrator {
 
       if (actions.length === 0) {
         Logger.warn('No actions returned from LLM')
+        await this.speechService.speak(t('llm.allRetriesFailed'))
         return
       }
 

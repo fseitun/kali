@@ -55,6 +55,11 @@ export const esAR = {
     modelDownload: 'Error al descargar el modelo.',
     ttsNotSupported: 'El sistema de voz no es compatible.',
   },
+  llm: {
+    retrying: 'Dejame intentar de nuevo...',
+    allRetriesFailed: 'Disculpá, no te pude entender. ¿Podés intentar otra vez?',
+    networkError: 'Tengo problemas de conexión. Intentalo de nuevo.',
+  },
   nicknames: [
     'el Grande',
     'el Sabio',

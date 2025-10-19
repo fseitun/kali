@@ -55,6 +55,11 @@ export const enUS = {
     modelDownload: 'Error downloading model.',
     ttsNotSupported: 'Text-to-Speech is not supported.',
   },
+  llm: {
+    retrying: 'Let me try that again...',
+    allRetriesFailed: 'Sorry, I didn\'t catch that. Can you try again?',
+    networkError: 'I\'m having connection problems. Please try again.',
+  },
   nicknames: [
     'the Great',
     'the Wise',

@@ -3,7 +3,7 @@ import { GameState, PrimitiveAction } from '../orchestrator/types'
 /**
  * Interface for LLM clients that translate voice commands into primitive actions.
  */
-export interface ILLMClient {
+export interface LLMClient {
   /**
    * Sets the game rules that will be included in the LLM system prompt.
    * @param rules - The game rules as formatted text
@@ -34,4 +34,18 @@ export interface ILLMClient {
    * @returns Analysis result with on-topic flag and optional urgent message
    */
   analyzeResponse(transcript: string, expectedContext: string): Promise<{isOnTopic: boolean, urgentMessage?: string}>
+
+  /**
+   * Optional callback invoked when a retry attempt is made.
+   * @param attempt - Current attempt number (1-indexed)
+   * @param maxAttempts - Maximum number of attempts
+   */
+  onRetry?: (attempt: number, maxAttempts: number) => void
+
+  /**
+   * Optional callback invoked when an error occurs.
+   * @param error - The error that occurred
+   * @param willRetry - Whether another retry attempt will be made
+   */
+  onError?: (error: Error, willRetry: boolean) => void
 }

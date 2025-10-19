@@ -6,7 +6,7 @@ Make Kali rephrase all hardcoded narration (i18n strings, system messages) throu
 ## Implementation Strategy
 
 ### 1. Extend LLM Client Interface
-Add a new method to `ILLMClient` interface:
+Add a new method to `LLMClient` interface:
 ```typescript
 rephraseNarration(text: string, locale: string): Promise<string>
 ```
@@ -65,7 +65,7 @@ NARRATION: {
 - `src/services/narration-rephrasing-service.ts`
 
 **Modified files:**
-- `src/llm/ILLMClient.ts` - Add rephraseNarration method
+- `src/llm/LLMClient.ts` - Add rephraseNarration method
 - `src/llm/GeminiClient.ts` - Implement rephrasing
 - `src/llm/OllamaClient.ts` - Implement rephrasing
 - `src/services/speech-service.ts` - Integrate rephrasing service
@@ -92,7 +92,7 @@ NARRATION: {
 ## Todo
 
 - [ ] Add NARRATION config to src/config.ts with MAX_VARIATIONS and ENABLE_REPHRASING
-- [ ] Extend ILLMClient interface with rephraseNarration method
+- [ ] Extend LLMClient interface with rephraseNarration method
 - [ ] Implement rephraseNarration in GeminiClient with focused prompt
 - [ ] Implement rephraseNarration in OllamaClient with focused prompt
 - [ ] Create NarrationRephrasingService with variation caching and rotation logic

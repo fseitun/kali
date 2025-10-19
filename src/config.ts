@@ -1,5 +1,5 @@
 export const CONFIG = {
-  LLM_PROVIDER: (import.meta.env.VITE_LLM_PROVIDER || 'gemini') as 'ollama' | 'gemini',
+  LLM_PROVIDER: import.meta.env.VITE_LLM_PROVIDER as 'ollama' | 'gemini',
 
   LOCALE: 'es-AR' as 'es-AR' | 'en-US',
 
@@ -21,7 +21,7 @@ export const CONFIG = {
 
   GEMINI: {
     API_URL: 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent',
-    API_KEY: import.meta.env.VITE_GEMINI_API_KEY || '',
+    API_KEY: import.meta.env.VITE_GEMINI_API_KEY,
   },
 
   AUDIO: {

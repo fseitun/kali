@@ -4,7 +4,7 @@ import { GamePhase } from './types'
 import { validateName, findNameConflicts, generateNickname, areNamesSimilar } from '../utils/name-helper'
 import { Logger } from '../utils/logger'
 import { t, getNumberWords, getConfirmationWords } from '../i18n'
-import { ILLMClient } from '../llm/ILLMClient'
+import { LLMClient } from '../llm/LLMClient'
 import { GameMetadata } from '../game-loader/types'
 import { deepClone } from '../utils/deep-clone'
 
@@ -24,7 +24,7 @@ export class NameCollector {
     private stateManager: StateManager,
     private gameName: string,
     private enableDirectTranscription: () => void,
-    private llmClient: ILLMClient,
+    private llmClient: LLMClient,
     gameMetadata: GameMetadata
   ) {
     this.minPlayers = gameMetadata.minPlayers

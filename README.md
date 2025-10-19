@@ -112,7 +112,7 @@ Audio pipeline follows: idle → listening → processing → speaking
 - Users cannot see errors, so voice feedback is critical
 
 ### LLM Swappability
-- All LLM clients implement `ILLMClient` interface
+- All LLM clients implement `LLMClient` interface
 - Switching providers is a one-line change
 
 ### Processing Lock
@@ -271,7 +271,7 @@ See `checkAndApplyBoardMoves` in `orchestrator.ts` for implementation.
   - `types.ts` - Type definitions for primitives
   - `name-collector.ts` - Voice-based player name collection
 - `src/llm/` - LLM clients and system prompts
-  - `ILLMClient.ts` - Interface for LLM providers
+  - `LLMClient.ts` - Interface for LLM providers
   - `GeminiClient.ts` - Google Gemini integration
   - `OllamaClient.ts` - Local Ollama integration
   - `system-prompt.ts` - LLM system prompt generator

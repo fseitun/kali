@@ -36,43 +36,6 @@ This document consolidates all planned improvements and features, ranked by thei
 
 ---
 
-### 2. Eliminate LLM Client Duplication 🔥
-**Value: 8/10 | Complexity: 3/10 | Ratio: 2.67**
-
-**Problem:** `GeminiClient.ts` and `OllamaClient.ts` share 90% identical code for `extractName()` and `analyzeResponse()` methods.
-
-**Implementation:**
-- Create `BaseLLMClient` abstract class with shared methods
-- Move `extractName()` and `analyzeResponse()` to base class
-- Both clients extend base class and only implement `getActions()`
-- Reduces code duplication by ~200 lines
-
-**Files:**
-- `src/llm/BaseLLMClient.ts` (new)
-- `src/llm/GeminiClient.ts` (refactor)
-- `src/llm/OllamaClient.ts` (refactor)
-
----
-
-### 3. LLM Fallback Strategies 🔥
-**Value: 9/10 | Complexity: 4/10 | Ratio: 2.25**
-
-**Problem:** Empty array returned on LLM failure, no user feedback or recovery.
-
-**Implementation:**
-- Add fallback responses for common commands (roll dice, check position, whose turn)
-- Implement retry logic with alternate prompts
-- Add voice feedback for LLM errors
-- Cache recent successful responses as fallbacks
-- Add request deduplication/debouncing
-
-**Files:**
-- `src/llm/GeminiClient.ts`
-- `src/llm/OllamaClient.ts`
-- `src/orchestrator/orchestrator.ts`
-- `src/llm/fallback-responses.ts` (new)
-
----
 
 ### 4. State Manager Batching 🔥
 **Value: 8/10 | Complexity: 4/10 | Ratio: 2.0**

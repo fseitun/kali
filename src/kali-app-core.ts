@@ -2,7 +2,7 @@ import { WakeWordDetector } from './wake-word'
 import { Orchestrator } from './orchestrator/orchestrator'
 import { OllamaClient } from './llm/OllamaClient'
 import { GeminiClient } from './llm/GeminiClient'
-import { ILLMClient } from './llm/ILLMClient'
+import { LLMClient } from './llm/LLMClient'
 import { StateManager } from './state-manager'
 import { IUIService } from './services/ui-service'
 import { SpeechService } from './services/speech-service'
@@ -10,6 +10,7 @@ import { GameLoader, GameModule } from './game-loader'
 import { NameCollector } from './orchestrator/name-collector'
 import { GamePhase } from './orchestrator/types'
 import { checkBrowserSupport } from './utils/browser-support'
+import { validateConfig } from './utils/config-validator'
 import { CONFIG } from './config'
 import { Logger } from './utils/logger'
 import { t } from './i18n'
@@ -18,7 +19,7 @@ export class KaliAppCore {
   private wakeWordDetector: WakeWordDetector | null = null
   private orchestrator: Orchestrator | null = null
   private stateManager: StateManager | null = null
-  private llmClient: ILLMClient | null = null
+  private llmClient: LLMClient | null = null
   private gameModule: GameModule | null = null
   private initialized = false
   private currentNameHandler: ((text: string) => void) | null = null
@@ -30,6 +31,8 @@ export class KaliAppCore {
 
   async initialize(): Promise<void> {
     try {
+      validateConfig()
+
       const indicator = this.uiService.getStatusIndicator()
       indicator.setState('processing')
       Logger.info('🚀 Initializing Kali...')
@@ -108,7 +111,7 @@ export class KaliAppCore {
     Logger.info('Orchestrator ready')
   }
 
-  private createLLMClient(): ILLMClient {
+  private createLLMClient(): LLMClient {
     switch (CONFIG.LLM_PROVIDER) {
       case 'gemini':
         return new GeminiClient()
