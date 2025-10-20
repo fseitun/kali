@@ -15,6 +15,7 @@ The system is built on a clear separation of concerns between deterministic cont
 - Ensures required decisions are made
 - Guarantees data integrity
 - Blocks invalid actions
+- **Calculates all state changes** (position math, score updates, etc.)
 
 **Mindset:** "I don't care WHAT the user said. Just tell me: A or B?"
 
@@ -25,14 +26,15 @@ The orchestrator doesn't interpret language. It enforces rules:
 
 ### LLM = Interpreter (Flexible)
 **Role:** Interprets WHAT the user means
-- Translates messy human language into clean state updates
+- Translates messy human language into event primitives
 - Handles context, intent, and variations
-- Maps "quiero el más largo que tiene más aventura" → `pathChoice = "B"`
+- Maps "quiero el más largo" → `PLAYER_ANSWERED` with answer "B"
 - Understands game rules and player intent
+- **Reports events, does NOT calculate state**
 
-**Mindset:** "User said they want the longer path. That means B."
+**Mindset:** "User said they want the longer path. That means answer is 'B'."
 
-The LLM doesn't enforce - it interprets. The orchestrator validates its output.
+The LLM doesn't enforce or calculate - it interprets. The orchestrator validates and executes.
 
 ### LLM Is Not an Oracle
 
@@ -74,12 +76,68 @@ A perfect example of this separation:
 ### LLM Interprets
 - Receives state context with decision warnings
 - Hears user say "quiero el más largo"
-- Returns: `SET_STATE players.X.pathChoice = "B"`
-- Orchestrator validates and applies
+- Returns: `PLAYER_ANSWERED` with answer "B"
+- Orchestrator validates, applies to pathChoice, and proceeds
 
 ### Result: Deterministic Flow + Natural Language
 
 The orchestrator guarantees Santiago MUST choose before his turn advances. The LLM figures out whether his words mean "A" or "B".
+
+---
+
+## Thin LLM Principle
+
+**The LLM is a translator, not a calculator.**
+
+### What This Means
+
+**LLM Reports Events:**
+```json
+{action: "PLAYER_ROLLED", value: 5}
+{action: "PLAYER_ANSWERED", answer: "fight"}
+```
+
+**Orchestrator Calculates State:**
+```typescript
+// Orchestrator owns the math:
+newPosition = currentPosition + rollValue
+newScore = currentScore + points
+```
+
+### Why This Matters
+
+**Before (LLM calculates):**
+- LLM: "Player rolled 5, position is 10, so 10+5=15" → `ADD_STATE value: 5`
+- Problem: LLM can make math errors
+- Problem: Hard to test (depends on LLM being correct)
+- Problem: LLM knows too much about state mechanics
+
+**After (LLM reports):**
+- LLM: "User said they rolled 5" → `PLAYER_ROLLED value: 5`
+- Orchestrator: `position = currentPosition + 5`
+- Benefit: Deterministic calculation
+- Benefit: Easy to test
+- Benefit: LLM is thin (just translates speech)
+
+### Pure JSON Requirement
+
+**The LLM must return PURE JSON** - no markdown, no code blocks:
+
+```json
+[
+  {"action": "PLAYER_ROLLED", "value": 5},
+  {"action": "NARRATE", "text": "Moving!"}
+]
+```
+
+**Not this:**
+```markdown
+\`\`\`json
+[{"action": "PLAYER_ROLLED", "value": 5}]
+\`\`\`
+```
+
+**Benefit:** Strict parsing with `JSON.parse()`, clear error messages, one retry with feedback.
 
 ## Why This Matters
 
@@ -135,11 +193,12 @@ await this.processTranscript(
 ```
 
 **How it works:**
-1. User announces action (e.g., "rolled a 2")
-2. LLM processes: ADD_STATE position, advance turn, NARRATE
-3. Orchestrator detects position change, checks board.squares
-4. If square has content, orchestrator injects synthetic transcript
-5. LLM processes encounter (power check, riddle, rewards)
+1. User announces action (e.g., "I rolled a 5")
+2. LLM reports: PLAYER_ROLLED value: 5, NARRATE
+3. Orchestrator calculates new position (position += 5)
+4. Orchestrator checks board.squares at new position
+5. If square has content, orchestrator injects synthetic transcript
+6. LLM processes encounter (asks questions, captures answers via PLAYER_ANSWERED)
 
 **Why synthetic transcripts:**
 - Guarantees critical steps happen (LLM cannot skip)
@@ -154,10 +213,25 @@ await this.processTranscript(
 
 This is the mechanism that makes the orchestrator truly authoritative while keeping the LLM flexible.
 
+### Pattern 5: Turn Start Sanity Check
+
+The orchestrator automatically announces at each turn start:
+
+```typescript
+"[PlayerName], it's your turn. You're at position [X]. Tell me what you rolled, or where you landed."
+```
+
+**Benefits:**
+- State verification (user will correct if wrong)
+- Clear prompt for what to say
+- Flexible (accepts delta or absolute position)
+- LLM doesn't need to remember to ask
+
 ## North Star Principle
 
 > **The orchestrator controls the WHEN (deterministic flow).**
 > **The LLM interprets the WHAT (natural language).**
+> **The LLM reports events, does NOT calculate state.**
 > **Synthetic transcripts bridge the gap.**
 
 When in doubt:
@@ -165,5 +239,6 @@ When in doubt:
 - Need to understand user intent? → LLM interprets and acts
 - Need game-specific data? → Config JSON
 - Need to guarantee something happens? → Synthetic transcript
+- Need to calculate state? → Orchestrator owns all math
 
-This keeps Kali maintainable, reliable, and game-agnostic.
+This keeps Kali maintainable, reliable, testable, and game-agnostic.

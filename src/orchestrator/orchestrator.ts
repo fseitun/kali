@@ -128,7 +128,9 @@ export class Orchestrator {
     }
 
     if (!playerOrder || playerOrder.length === 0) {
-      Logger.warn('No playerOrder set, cannot advance')
+      if (phase === 'PLAYING') {
+        Logger.warn('No playerOrder set, cannot advance')
+      }
       return
     }
 
@@ -146,8 +148,13 @@ export class Orchestrator {
       Logger.info(`🔄 Auto-advancing turn: ${currentTurn} → ${nextPlayerId}`)
       await this.stateManager.set('game.turn', nextPlayerId)
 
+      // Sanity check narration: Tell player their name, position, and what to do
       const nextPlayerName = nextPlayer?.name as string || nextPlayerId
-      await this.speechService.speak(`${nextPlayerName}, es tu turno.`)
+      const nextPlayerPosition = nextPlayer?.position as number || 0
+      const message = `${nextPlayerName}, it's your turn. You're at position ${nextPlayerPosition}. Tell me what you rolled, or where you landed.`
+
+      Logger.info(`🎯 Turn start sanity check: ${nextPlayerName} at ${nextPlayerPosition}`)
+      await this.speechService.speak(message)
     } catch (error) {
       Logger.error('Failed to auto-advance turn:', error)
     }
@@ -184,6 +191,57 @@ export class Orchestrator {
     }
   }
 
+  /**
+   * Test-only: Execute actions directly without LLM interpretation.
+   * Bypasses LLM for testing orchestrator validation and execution logic.
+   * @param actions - Array of primitive actions to validate and execute
+   * @returns true if execution succeeded, false otherwise
+   */
+  async testExecuteActions(actions: PrimitiveAction[]): Promise<boolean> {
+    if (this.isProcessing) {
+      Logger.warn('⏸️ Orchestrator busy, ignoring test request')
+      return false
+    }
+
+    this.isProcessing = true
+    this.statusIndicator.setState('processing')
+    Profiler.start('orchestrator.test')
+
+    try {
+      Logger.info('🧪 Test mode: Executing actions directly')
+      const state = await this.stateManager.getState()
+      Logger.state('Current state:\n' + formatStateContext(state))
+
+      Profiler.start('orchestrator.test.validation')
+      const validation = validateActions(actions, state, this.stateManager)
+      Profiler.end('orchestrator.test.validation')
+
+      if (!validation.valid) {
+        Logger.error('❌ Test validation failed:', validation.error)
+        await this.speechService.speak('Invalid actions')
+        return false
+      }
+
+      Logger.info('✅ Test validation passed, executing...')
+      const context: ExecutionContext = { depth: 0, maxDepth: 5 }
+      Profiler.start('orchestrator.test.execution')
+      await this.executeActions(actions, context)
+      Profiler.end('orchestrator.test.execution')
+      Logger.info('✅ Test actions executed successfully')
+
+      await this.autoAdvanceTurn()
+
+      return true
+    } catch (error) {
+      Logger.error('❌ Test execution error:', error)
+      return false
+    } finally {
+      this.isProcessing = false
+      Profiler.end('orchestrator.test')
+      this.statusIndicator.setState('listening')
+    }
+  }
+
   private async processTranscript(
     transcript: string,
     context: ExecutionContext
@@ -194,9 +252,9 @@ export class Orchestrator {
       const state = await this.stateManager.getState()
       Logger.state('Current state:\n' + formatStateContext(state))
 
-      Profiler.start('orchestrator.llm')
+      Profiler.start(`orchestrator.llm.${context.depth}`)
       const actions = await this.llmClient.getActions(transcript, state)
-      Profiler.end('orchestrator.llm')
+      Profiler.end(`orchestrator.llm.${context.depth}`)
 
       Logger.robot('LLM returned actions:', actions)
 
@@ -206,9 +264,9 @@ export class Orchestrator {
         return false
       }
 
-      Profiler.start('orchestrator.validation')
+      Profiler.start(`orchestrator.validation.${context.depth}`)
       const validation = validateActions(actions, state, this.stateManager)
-      Profiler.end('orchestrator.validation')
+      Profiler.end(`orchestrator.validation.${context.depth}`)
 
       if (!validation.valid) {
         Logger.error('Validation failed:', validation.error)
@@ -217,10 +275,12 @@ export class Orchestrator {
       }
 
       Logger.info('Actions validated, executing...')
-      Profiler.start('orchestrator.execution')
+      Profiler.start(`orchestrator.execution.${context.depth}`)
       await this.executeActions(actions, context)
-      Profiler.end('orchestrator.execution')
-      Logger.info('Actions executed successfully')
+      Profiler.end(`orchestrator.execution.${context.depth}`)
+      if (context.depth === 0) {
+        Logger.info('Actions executed successfully')
+      }
 
       await this.enforceDecisionPoints(context)
 
@@ -250,8 +310,7 @@ export class Orchestrator {
   }
 
   private async checkAndApplyBoardMoves(path: string): Promise<void> {
-    const playerPositionMatch = path.match(/^players\.(\d+)\.position$/)
-    if (!playerPositionMatch) {
+    if (!path.endsWith('.position') || !path.startsWith('players.')) {
       return
     }
 
@@ -279,8 +338,7 @@ export class Orchestrator {
   }
 
   private async checkAndApplySquareEffects(path: string, context: ExecutionContext): Promise<void> {
-    const playerPositionMatch = path.match(/^players\.(\d+)\.position$/)
-    if (!playerPositionMatch) {
+    if (!path.endsWith('.position') || !path.startsWith('players.')) {
       return
     }
 
@@ -387,12 +445,16 @@ export class Orchestrator {
   }
 
   private async assertPlayerTurnOwnership(path: string): Promise<void> {
-    const playerPathMatch = path.match(/^players\.(p\d+)\./)
-    if (!playerPathMatch) {
+    if (!path.startsWith('players.')) {
       return
     }
 
-    const playerId = playerPathMatch[1]
+    const parts = path.split('.')
+    if (parts.length < 2) {
+      return
+    }
+
+    const playerId = parts[1]
     const state = await this.stateManager.getState()
     const game = state.game as Record<string, unknown> | undefined
     const currentTurn = game?.turn as string | undefined
@@ -410,91 +472,72 @@ export class Orchestrator {
   }
 
   private async executeAction(
-    action: PrimitiveAction,
+    primitive: PrimitiveAction,
     context: ExecutionContext
   ): Promise<void> {
-    const customHandler = this.actionHandlers.get(action.action)
+    const customHandler = this.actionHandlers.get(primitive.action)
     if (customHandler) {
-      await customHandler(action, context)
+      await customHandler(primitive, context)
       return
     }
 
-    switch (action.action) {
-      case 'SET_STATE': {
-        await this.assertPlayerTurnOwnership(action.path)
-        Logger.write(`Setting state: ${action.path} = ${JSON.stringify(action.value)}`)
-        await this.stateManager.set(action.path, action.value)
-        await this.checkAndApplyBoardMoves(action.path)
-        await this.checkAndApplySquareEffects(action.path, context)
-        break
-      }
-
-      case 'ADD_STATE': {
-        await this.assertPlayerTurnOwnership(action.path)
-        const currentValue = await this.stateManager.get(action.path)
-        if (typeof currentValue !== 'number') {
-          throw new Error(`Cannot ADD_STATE: ${action.path} is not a number`)
-        }
-        const newValue = currentValue + action.value
-        Logger.write(`Adding to state: ${action.path} (${currentValue} + ${action.value} = ${newValue})`)
-        await this.stateManager.set(action.path, newValue)
-        await this.checkAndApplyBoardMoves(action.path)
-        await this.checkAndApplySquareEffects(action.path, context)
-        break
-      }
-
-      case 'SUBTRACT_STATE': {
-        await this.assertPlayerTurnOwnership(action.path)
-        const currentValue = await this.stateManager.get(action.path)
-        if (typeof currentValue !== 'number') {
-          throw new Error(`Cannot SUBTRACT_STATE: ${action.path} is not a number`)
-        }
-        const newValue = currentValue - action.value
-        Logger.write(`Subtracting from state: ${action.path} (${currentValue} - ${action.value} = ${newValue})`)
-        await this.stateManager.set(action.path, newValue)
-        break
-      }
-
-      case 'READ_STATE': {
-        const value = await this.stateManager.get(action.path)
-        Logger.read(`Reading state: ${action.path} = ${JSON.stringify(value)}`)
-        break
-      }
-
+    switch (primitive.action) {
       case 'NARRATE': {
         this.statusIndicator.setState('speaking')
-        if (action.soundEffect) {
-          this.speechService.playSound(action.soundEffect)
+        if (primitive.soundEffect) {
+          this.speechService.playSound(primitive.soundEffect)
         }
-        await this.speechService.speak(action.text)
+        await this.speechService.speak(primitive.text)
         break
       }
 
-      case 'ROLL_DICE': {
-        const roll = Math.floor(Math.random() * 6) + 1
-        Logger.info(`Rolling ${action.die}: ${roll}`)
+      case 'SET_STATE': {
+        await this.assertPlayerTurnOwnership(primitive.path)
+        Logger.write(`Setting state: ${primitive.path} = ${JSON.stringify(primitive.value)}`)
+        await this.stateManager.set(primitive.path, primitive.value)
+        await this.checkAndApplyBoardMoves(primitive.path)
+        await this.checkAndApplySquareEffects(primitive.path, context)
+        break
+      }
 
-        this.speechService.speak(`You rolled a ${roll}`)
+      case 'PLAYER_ROLLED': {
+        const state = await this.stateManager.getState()
+        const game = state.game as Record<string, unknown> | undefined
+        const currentTurn = game?.turn as string | undefined
 
-        await this.stateManager.set('game.lastRoll', roll)
-
-        const newContext: ExecutionContext = {
-          depth: context.depth + 1,
-          maxDepth: context.maxDepth
+        if (!currentTurn) {
+          throw new Error('Cannot process PLAYER_ROLLED: No current turn set')
         }
 
-        await this.processTranscript(
-          `The player rolled a ${roll}. What happens next?`,
-          newContext
-        )
+        const path = `players.${currentTurn}.position`
+        const currentPosition = await this.stateManager.get(path) as number
+
+        if (typeof currentPosition !== 'number') {
+          throw new Error(`Cannot process PLAYER_ROLLED: ${path} is not a number`)
+        }
+
+        const newPosition = currentPosition + primitive.value
+        Logger.write(`Player rolled ${primitive.value}: ${path} (${currentPosition} + ${primitive.value} = ${newPosition})`)
+
+        await this.stateManager.set(path, newPosition)
+        await this.stateManager.set('game.lastRoll', primitive.value)
+        await this.checkAndApplyBoardMoves(path)
+        await this.checkAndApplySquareEffects(path, context)
+        break
+      }
+
+      case 'PLAYER_ANSWERED': {
+        Logger.info(`Player answered: "${primitive.answer}"`)
+        // Store answer in temporary state for orchestrator to process
+        await this.stateManager.set('game.lastAnswer', primitive.answer)
         break
       }
 
       case 'RESET_GAME': {
-        Logger.info(`🔄 Resetting game state (keepPlayerNames: ${action.keepPlayerNames})`)
+        Logger.info(`🔄 Resetting game state (keepPlayerNames: ${primitive.keepPlayerNames})`)
 
         const playerNames: Map<string, string> = new Map()
-        if (action.keepPlayerNames) {
+        if (primitive.keepPlayerNames) {
           const currentState = await this.stateManager.getState()
           const players = currentState.players as Record<string, { name: string }> | undefined
           if (players) {
@@ -510,7 +553,7 @@ export class Orchestrator {
         await this.stateManager.resetState(this.initialState)
         Logger.info('State reset to initial state')
 
-        if (action.keepPlayerNames && playerNames.size > 0) {
+        if (primitive.keepPlayerNames && playerNames.size > 0) {
           const state = await this.stateManager.getState()
           const game = state.game as Record<string, unknown> | undefined
           const playerOrder = game?.playerOrder as string[] | undefined

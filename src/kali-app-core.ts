@@ -2,13 +2,14 @@ import { WakeWordDetector } from './wake-word'
 import { Orchestrator } from './orchestrator/orchestrator'
 import { OllamaClient } from './llm/OllamaClient'
 import { GeminiClient } from './llm/GeminiClient'
+import { MockLLMClient } from './llm/MockLLMClient'
 import { LLMClient } from './llm/LLMClient'
 import { StateManager } from './state-manager'
 import { IUIService } from './services/ui-service'
 import { SpeechService } from './services/speech-service'
 import { GameLoader, GameModule } from './game-loader'
 import { NameCollector } from './orchestrator/name-collector'
-import { GamePhase } from './orchestrator/types'
+import { GamePhase, PrimitiveAction } from './orchestrator/types'
 import { checkBrowserSupport } from './utils/browser-support'
 import { validateConfig } from './utils/config-validator'
 import { CONFIG } from './config'
@@ -117,6 +118,8 @@ export class KaliAppCore {
         return new GeminiClient()
       case 'ollama':
         return new OllamaClient()
+      case 'mock':
+        return new MockLLMClient(CONFIG.MOCK_SCENARIO)
       default:
         throw new Error(`Unknown LLM provider: ${CONFIG.LLM_PROVIDER}`)
     }
@@ -315,5 +318,68 @@ ${rules.examples.map((ex, i) => `${i + 1}. ${ex}`).join('\n')}
 
   isInitialized(): boolean {
     return this.initialized
+  }
+
+  /**
+   * Test-only: Execute actions directly without LLM interpretation.
+   * Only available when orchestrator is initialized.
+   * @param actions - Array of primitive actions to validate and execute
+   * @returns true if execution succeeded, false otherwise
+   */
+  async testExecuteActions(actions: PrimitiveAction[]): Promise<boolean> {
+    if (!this.orchestrator) {
+      throw new Error('Orchestrator not initialized')
+    }
+    return await this.orchestrator.testExecuteActions(actions)
+  }
+
+  /**
+   * Debug-only: Skip name collection and force game to PLAYING phase with default players.
+   * Useful for testing without waiting through name collection timeouts.
+   */
+  async skipToPlaying(): Promise<void> {
+    if (!this.stateManager || !this.gameModule) {
+      throw new Error('Cannot skip to playing: core components not initialized')
+    }
+
+    Logger.info('🚀 Skipping to PLAYING phase with default players')
+
+    // Create default players
+    const defaultPlayers = {
+      p1: {
+        id: 'p1',
+        name: 'Player 1',
+        position: 0,
+        hearts: 0,
+        points: 0,
+        items: [],
+        instruments: [],
+        bonusDiceNextTurn: false,
+        pathChoice: null,
+        skipTurns: 0,
+        inverseMode: false
+      },
+      p2: {
+        id: 'p2',
+        name: 'Player 2',
+        position: 0,
+        hearts: 0,
+        points: 0,
+        items: [],
+        instruments: [],
+        bonusDiceNextTurn: false,
+        pathChoice: null,
+        skipTurns: 0,
+        inverseMode: false
+      }
+    }
+
+    await this.stateManager.set('players', defaultPlayers)
+    await this.stateManager.set('game.playerOrder', ['p1', 'p2'])
+    await this.stateManager.set('game.turn', 'p1')
+    await this.stateManager.set('game.phase', GamePhase.PLAYING)
+
+    Logger.info('✅ Skipped to PLAYING phase')
+    await this.speechService.speak('Ready to play!')
   }
 }

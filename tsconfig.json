@@ -20,7 +20,8 @@
     "types": ["vite/client"]
   },
   "include": [
-    "src/**/*"
+    "src/**/*",
+    "vitest.config.ts"
   ],
   "exclude": [
     "node_modules"

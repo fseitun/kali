@@ -9,22 +9,21 @@ export interface ValidationResult {
 
 /**
  * Simulates the effect of an action on mock state for stateful validation.
- * Only simulates state-changing actions (SET_STATE, ADD_STATE, SUBTRACT_STATE).
+ * Only simulates state-changing actions (SET_STATE, PLAYER_ROLLED).
  * @param state - Mock state to apply action to
- * @param action - Action to simulate
+ * @param primitive - Action to simulate
  * @param stateManager - State manager for path operations
  * @returns Updated mock state
  */
 function applyActionToMockState(
   state: GameState,
-  action: PrimitiveAction,
-  stateManager: StateManager
+  primitive: PrimitiveAction,
 ): GameState {
   const mockState = deepClone(state)
 
   try {
-    if (action.action === 'SET_STATE' && 'path' in action && 'value' in action) {
-      const parts = action.path.split('.')
+    if (primitive.action === 'SET_STATE' && 'path' in primitive && 'value' in primitive) {
+      const parts = primitive.path.split('.')
       let current: Record<string, unknown> = mockState
 
       for (let i = 0; i < parts.length - 1; i++) {
@@ -36,34 +35,19 @@ function applyActionToMockState(
       }
 
       const lastPart = parts[parts.length - 1]
-      current[lastPart] = action.value
-    } else if (action.action === 'ADD_STATE' && 'path' in action && 'value' in action) {
-      const currentValue = stateManager.getByPath(mockState, action.path)
-      if (typeof currentValue === 'number') {
-        const parts = action.path.split('.')
-        let current: Record<string, unknown> = mockState
+      current[lastPart] = primitive.value
+    } else if (primitive.action === 'PLAYER_ROLLED' && 'value' in primitive) {
+      // Simulate position change for current player
+      const game = mockState.game as Record<string, unknown> | undefined
+      const currentTurn = game?.turn as string | undefined
 
-        for (let i = 0; i < parts.length - 1; i++) {
-          const part = parts[i]
-          current = current[part] as Record<string, unknown>
+      if (currentTurn) {
+        const players = mockState.players as Record<string, Record<string, unknown>> | undefined
+        const player = players?.[currentTurn]
+
+        if (player && typeof player.position === 'number') {
+          player.position += primitive.value
         }
-
-        const lastPart = parts[parts.length - 1]
-        current[lastPart] = currentValue + action.value
-      }
-    } else if (action.action === 'SUBTRACT_STATE' && 'path' in action && 'value' in action) {
-      const currentValue = stateManager.getByPath(mockState, action.path)
-      if (typeof currentValue === 'number') {
-        const parts = action.path.split('.')
-        let current: Record<string, unknown> = mockState
-
-        for (let i = 0; i < parts.length - 1; i++) {
-          const part = parts[i]
-          current = current[part] as Record<string, unknown>
-        }
-
-        const lastPart = parts[parts.length - 1]
-        current[lastPart] = currentValue - action.value
       }
     }
   } catch {
@@ -103,51 +87,47 @@ export function validateActions(
       return result
     }
 
-    mockState = applyActionToMockState(mockState, action, stateManager)
+    mockState = applyActionToMockState(mockState, action)
   }
 
   return { valid: true }
 }
 
 function validateAction(
-  action: PrimitiveAction,
+  primitive: PrimitiveAction,
   state: GameState,
   stateManager: StateManager,
   index: number
 ): ValidationResult {
-  if (!action || typeof action !== 'object') {
+  if (!primitive || typeof primitive !== 'object') {
     return {
       valid: false,
       error: `Action at index ${index} is not an object`
     }
   }
 
-  if (!('action' in action)) {
+  if (!('action' in primitive)) {
     return {
       valid: false,
       error: `Action at index ${index} missing 'action' field`
     }
   }
 
-  switch (action.action) {
-    case 'SET_STATE':
-      return validateSetState(action, state, stateManager, index)
-    case 'ADD_STATE':
-      return validateAddState(action, state, stateManager, index)
-    case 'SUBTRACT_STATE':
-      return validateSubtractState(action, state, stateManager, index)
-    case 'READ_STATE':
-      return validateReadState(action, state, stateManager, index)
+  switch (primitive.action) {
     case 'NARRATE':
-      return validateNarrate(action, index)
-    case 'ROLL_DICE':
-      return validateRollDice(action, index)
+      return validateNarrate(primitive, index)
     case 'RESET_GAME':
-      return validateResetGame(action, index)
+      return validateResetGame(primitive, index)
+    case 'SET_STATE':
+      return validateSetState(primitive, state, stateManager, index)
+    case 'PLAYER_ROLLED':
+      return validatePlayerRolled(primitive, index)
+    case 'PLAYER_ANSWERED':
+      return validatePlayerAnswered(primitive, index)
     default:
       return {
         valid: false,
-        error: `Action at index ${index} has invalid action type: ${(action as { action: string }).action}`
+        error: `Action at index ${index} has invalid action type: ${(primitive as { action: string }).action}`
       }
   }
 }
@@ -186,8 +166,7 @@ function validateTurnOwnership(
   actionType: string,
   index: number
 ): ValidationResult {
-  const playerPathMatch = path.match(/^players\.(p\d+)\./)
-  if (!playerPathMatch) {
+  if (!path.startsWith('players.')) {
     return { valid: true }
   }
 
@@ -195,7 +174,12 @@ function validateTurnOwnership(
     return { valid: true }
   }
 
-  const playerId = playerPathMatch[1]
+  const parts = path.split('.')
+  if (parts.length < 2) {
+    return { valid: true }
+  }
+
+  const playerId = parts[1]
   const game = state.game as Record<string, unknown> | undefined
   const currentTurn = game?.turn as string | undefined
 
@@ -219,12 +203,16 @@ function validateDecisionBeforeMove(
   actionType: string,
   index: number
 ): ValidationResult {
-  const playerPathMatch = path.match(/^players\.(p\d+)\.position$/)
-  if (!playerPathMatch) {
+  if (!path.endsWith('.position') || !path.startsWith('players.')) {
     return { valid: true }
   }
 
-  const playerId = playerPathMatch[1]
+  const parts = path.split('.')
+  if (parts.length !== 3) {
+    return { valid: true }
+  }
+
+  const playerId = parts[1]
   const players = state.players as Record<string, Record<string, unknown>> | undefined
   const player = players?.[playerId]
 
@@ -313,38 +301,20 @@ function validateSetState(
   return { valid: true }
 }
 
-function validateAddState(
+function validatePlayerRolled(
   action: PrimitiveAction,
-  state: GameState,
-  stateManager: StateManager,
   index: number
 ): ValidationResult {
   const actionRecord = action as unknown as Record<string, unknown>
-  const pathValidation = validateField(actionRecord, 'path', 'string', 'ADD_STATE', index)
-  if (!pathValidation.valid) return pathValidation
-
-  const valueValidation = validateField(actionRecord, 'value', 'number', 'ADD_STATE', index)
+  const valueValidation = validateField(actionRecord, 'value', 'number', 'PLAYER_ROLLED', index)
   if (!valueValidation.valid) return valueValidation
 
-  if ('path' in action && typeof action.path === 'string') {
-    const turnValidation = validateTurnOwnership(action.path, state, 'ADD_STATE', index)
-    if (!turnValidation.valid) return turnValidation
-
-    const decisionMoveValidation = validateDecisionBeforeMove(action.path, state, 'ADD_STATE', index)
-    if (!decisionMoveValidation.valid) return decisionMoveValidation
-
-    if (!stateManager.pathExists(state, action.path)) {
+  // Value must be positive
+  if ('value' in actionRecord && typeof actionRecord.value === 'number') {
+    if (actionRecord.value <= 0) {
       return {
         valid: false,
-        error: `ADD_STATE at index ${index} references non-existent path: ${action.path}`
-      }
-    }
-
-    const currentValue = stateManager.getByPath(state, action.path)
-    if (typeof currentValue !== 'number') {
-      return {
-        valid: false,
-        error: `ADD_STATE at index ${index} requires numeric value at path ${action.path}, got ${typeof currentValue}`
+        error: `PLAYER_ROLLED at index ${index} requires positive value, got ${actionRecord.value}`
       }
     }
   }
@@ -352,57 +322,20 @@ function validateAddState(
   return { valid: true }
 }
 
-function validateSubtractState(
+function validatePlayerAnswered(
   action: PrimitiveAction,
-  state: GameState,
-  stateManager: StateManager,
   index: number
 ): ValidationResult {
   const actionRecord = action as unknown as Record<string, unknown>
-  const pathValidation = validateField(actionRecord, 'path', 'string', 'SUBTRACT_STATE', index)
-  if (!pathValidation.valid) return pathValidation
+  const answerValidation = validateField(actionRecord, 'answer', 'string', 'PLAYER_ANSWERED', index)
+  if (!answerValidation.valid) return answerValidation
 
-  const valueValidation = validateField(actionRecord, 'value', 'number', 'SUBTRACT_STATE', index)
-  if (!valueValidation.valid) return valueValidation
-
-  if ('path' in action && typeof action.path === 'string') {
-    const turnValidation = validateTurnOwnership(action.path, state, 'SUBTRACT_STATE', index)
-    if (!turnValidation.valid) return turnValidation
-
-    if (!stateManager.pathExists(state, action.path)) {
+  // Answer cannot be empty
+  if ('answer' in actionRecord && typeof actionRecord.answer === 'string') {
+    if (actionRecord.answer.trim() === '') {
       return {
         valid: false,
-        error: `SUBTRACT_STATE at index ${index} references non-existent path: ${action.path}`
-      }
-    }
-
-    const currentValue = stateManager.getByPath(state, action.path)
-    if (typeof currentValue !== 'number') {
-      return {
-        valid: false,
-        error: `SUBTRACT_STATE at index ${index} requires numeric value at path ${action.path}, got ${typeof currentValue}`
-      }
-    }
-  }
-
-  return { valid: true }
-}
-
-function validateReadState(
-  action: PrimitiveAction,
-  state: GameState,
-  stateManager: StateManager,
-  index: number
-): ValidationResult {
-  const actionRecord = action as unknown as Record<string, unknown>
-  const pathValidation = validateField(actionRecord, 'path', 'string', 'READ_STATE', index)
-  if (!pathValidation.valid) return pathValidation
-
-  if ('path' in action && typeof action.path === 'string') {
-    if (!stateManager.pathExists(state, action.path)) {
-      return {
-        valid: false,
-        error: `READ_STATE at index ${index} references non-existent path: ${action.path}`
+        error: `PLAYER_ANSWERED at index ${index} requires non-empty answer`
       }
     }
   }
@@ -423,14 +356,6 @@ function validateNarrate(
   }
 
   return { valid: true }
-}
-
-function validateRollDice(
-  action: PrimitiveAction,
-  index: number
-): ValidationResult {
-  const actionRecord = action as unknown as Record<string, unknown>
-  return validateField(actionRecord, 'die', 'string', 'ROLL_DICE', index)
 }
 
 function validateResetGame(

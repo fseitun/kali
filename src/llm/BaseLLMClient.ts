@@ -36,35 +36,43 @@ export abstract class BaseLLMClient implements LLMClient {
       return []
     }
 
-    const maxRetries = 3
-    const retryDelays = [500, 1000, 2000]
+    // First attempt
+    try {
+      const actions = await this.attemptLLMCall(transcript, state)
 
-    for (let attempt = 0; attempt < maxRetries; attempt++) {
+      if (actions.length > 0) {
+        this.recordTranscript(transcript)
+        return actions
+      }
+
+      Logger.warn('LLM returned empty actions on first attempt')
+      return []
+
+    } catch (error) {
+      // One retry with error feedback
+      Logger.error('LLM attempt 1 failed:', error)
+      Logger.info('Retrying with error feedback...')
+
       try {
-        const actions = await this.attemptLLMCall(transcript, state)
+        const errorMessage = error instanceof Error ? error.message : String(error)
+        const retryTranscript = `[RETRY: Previous response failed - ${errorMessage}] Original command: "${transcript}"`
+
+        const actions = await this.attemptLLMCall(retryTranscript, state)
 
         if (actions.length > 0) {
           this.recordTranscript(transcript)
           return actions
         }
 
-        if (attempt < maxRetries - 1) {
-          Logger.info(`LLM returned empty actions, retrying (attempt ${attempt + 1}/${maxRetries})`)
-          await this.sleep(retryDelays[attempt])
-        }
-      } catch (error) {
-        const willRetry = attempt < maxRetries - 1
-        Logger.error(`LLM attempt ${attempt + 1} failed:`, error)
+        Logger.warn('LLM returned empty actions on retry')
+        return []
 
-        if (willRetry) {
-          Logger.info(`Retrying in ${retryDelays[attempt]}ms...`)
-          await this.sleep(retryDelays[attempt])
-        }
+      } catch (retryError) {
+        Logger.error('LLM retry attempt failed:', retryError)
+        Logger.warn('All LLM retries exhausted')
+        return []
       }
     }
-
-    Logger.warn('All LLM retries exhausted')
-    return []
   }
 
   private async attemptLLMCall(transcript: string, state: GameState): Promise<PrimitiveAction[]> {
@@ -161,22 +169,22 @@ JSON:`
 
   protected extractActions(content: string): PrimitiveAction[] {
     try {
-      const markdownMatch = content.match(/```(?:json)?\s*\n?([\s\S]*?)\n?```/)
-      const jsonString = markdownMatch ? markdownMatch[1].trim() : content.trim()
-
-      const parsed = JSON.parse(jsonString)
+      // Try pure JSON first (no markdown extraction)
+      const trimmed = content.trim()
+      const parsed = JSON.parse(trimmed)
 
       if (!Array.isArray(parsed)) {
-        Logger.error('LLM response is not an array:', parsed)
-        return []
+        throw new Error(`LLM response is not an array. Got: ${typeof parsed}`)
       }
 
       return parsed as PrimitiveAction[]
 
     } catch (error) {
-      Logger.error('Failed to parse LLM response:', error)
-      Logger.error('Raw content:', content)
-      return []
+      // If parsing fails, throw error with helpful message for retry
+      if (error instanceof SyntaxError) {
+        throw new Error(`Invalid JSON: ${error.message}. Make sure to return PURE JSON array with no markdown or code blocks.`)
+      }
+      throw error
     }
   }
 
@@ -197,9 +205,5 @@ JSON:`
   private recordTranscript(transcript: string): void {
     this.lastTranscript = transcript
     this.lastTranscriptTime = Date.now()
-  }
-
-  private sleep(ms: number): Promise<void> {
-    return new Promise(resolve => setTimeout(resolve, ms))
   }
 }

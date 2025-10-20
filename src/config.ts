@@ -1,5 +1,7 @@
 export const CONFIG = {
-  LLM_PROVIDER: import.meta.env.VITE_LLM_PROVIDER as 'ollama' | 'gemini',
+  LLM_PROVIDER: (import.meta.env.VITE_LLM_PROVIDER || 'gemini') as 'ollama' | 'gemini' | 'mock',
+
+  MOCK_SCENARIO: (import.meta.env.VITE_MOCK_SCENARIO || 'happy-path') as 'happy-path' | 'invalid-actions' | 'chaos' | 'empty' | 'custom',
 
   LOCALE: (import.meta.env.VITE_LOCALE || 'es-AR') as 'es-AR' | 'en-US',
 
