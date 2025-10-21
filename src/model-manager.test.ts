@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { ModelManager } from './model-manager'
 
@@ -37,18 +38,18 @@ describe('ModelManager', () => {
       put: vi.fn()
     }
 
-    global.caches = {
+    globalThis.caches = {
       open: vi.fn().mockResolvedValue(mockCaches)
-    } as any
+    } as unknown as CacheStorage
 
     // Mock fetch
     mockFetch = vi.fn()
-    global.fetch = mockFetch
+    globalThis.fetch = mockFetch
 
     // Mock URL.createObjectURL
-    global.URL = {
+    globalThis.URL = {
       createObjectURL: vi.fn().mockReturnValue('blob:mock-url')
-    } as any
+    } as unknown as typeof URL
 
     vi.clearAllMocks()
   })
@@ -272,9 +273,9 @@ describe('ModelManager', () => {
       mockFetch.mockResolvedValueOnce(mockResponse)
 
       // Mock Blob constructor to throw error
-      global.Blob = vi.fn().mockImplementation(() => {
+      globalThis.Blob = vi.fn().mockImplementation(() => {
         throw new Error('Blob creation failed')
-      }) as any
+      }) as unknown as typeof Blob
 
       await expect(modelManager.getModel()).rejects.toThrow('Blob creation failed')
     })

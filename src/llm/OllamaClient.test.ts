@@ -18,7 +18,7 @@ describe('OllamaClient', () => {
   beforeEach(() => {
     client = new OllamaClient()
     mockFetch = vi.fn()
-    global.fetch = mockFetch
+    globalThis.fetch = mockFetch
   })
 
   afterEach(() => {

@@ -171,9 +171,9 @@ describe('i18n', () => {
     })
 
     it('should handle null/undefined parameters', () => {
-      expect(t('setup.welcome', { game: null as any }))
+      expect(t('setup.welcome', { game: null as unknown as string }))
         .toBe("Welcome to null! Let's get started.")
-      expect(t('setup.welcome', { game: undefined as any }))
+      expect(t('setup.welcome', { game: undefined as unknown as string }))
         .toBe("Welcome to undefined! Let's get started.")
     })
 

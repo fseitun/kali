@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { describe, it, expect, vi } from 'vitest'
 import { validateName, findNameConflicts, generateNickname, areNamesSimilar } from './name-helper'
 
@@ -130,8 +131,6 @@ describe('name-helper', () => {
   })
 
   describe('generateNickname', () => {
-    const mockNicknames = ['the Great', 'the Wise', 'the Brave', 'the Kind', 'the Swift']
-
     it('should generate nickname for valid name', () => {
       const nickname = generateNickname('Alice', [])
       expect(nickname).toMatch(/^Alice the (Great|Wise|Brave|Kind|Swift)$/)

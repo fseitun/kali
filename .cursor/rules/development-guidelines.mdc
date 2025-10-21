@@ -43,6 +43,15 @@ npm run lint     # ESLint
 npm run type-check  # TypeScript compiler
 ```
 
+### Test File Standards
+
+Test files (`*.test.ts`) have more flexibility:
+- **ESLint**: Pragmatic approach - use `/* eslint-disable */` for intentional test patterns
+- **TypeScript**: Use `any`, `as unknown`, or `@ts-nocheck` for complex mocks when needed
+- **Focus**: Tests should be readable and maintainable, not die on strict typing hills
+- **Adversarial tests**: Files testing malformed/adversarial data may use `@ts-nocheck`
+- **Production code**: Must maintain full type safety and lint compliance
+
 ## Key Patterns
 
 ### Primitive Actions

@@ -18,7 +18,7 @@ describe('GeminiClient', () => {
   beforeEach(() => {
     client = new GeminiClient()
     mockFetch = vi.fn()
-    global.fetch = mockFetch
+    globalThis.fetch = mockFetch
   })
 
   afterEach(() => {

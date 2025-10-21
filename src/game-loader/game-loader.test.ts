@@ -27,7 +27,7 @@ describe('GameLoader', () => {
   beforeEach(() => {
     gameLoader = new GameLoader('/test/games')
     mockFetch = vi.fn()
-    global.fetch = mockFetch
+    globalThis.fetch = mockFetch
     vi.clearAllMocks()
   })
 
@@ -41,13 +41,17 @@ describe('GameLoader', () => {
         metadata: {
           id: 'test-game',
           name: 'Test Game',
+          description: 'Test description',
           version: '1.0.0',
           minPlayers: 2,
           maxPlayers: 4
         },
         rules: {
           objective: 'Test objective',
-          mechanics: 'Test mechanics'
+          mechanics: 'Test mechanics',
+          turnStructure: 'Test turn structure',
+          boardLayout: 'Test board layout',
+          examples: ['Test example']
         },
         initialState: {
           players: [],
@@ -179,13 +183,17 @@ describe('GameLoader', () => {
         metadata: {
           id: 'test-game',
           name: 'Test Game',
+          description: 'Test description',
           version: '1.0.0',
           minPlayers: 2,
           maxPlayers: 4
         },
         rules: {
           objective: 'Test objective',
-          mechanics: 'Test mechanics'
+          mechanics: 'Test mechanics',
+          turnStructure: 'Test turn structure',
+          boardLayout: 'Test board layout',
+          examples: ['Test example']
         },
         initialState: {
           players: []
@@ -199,7 +207,7 @@ describe('GameLoader', () => {
 
       mockSpeechService.loadSound.mockResolvedValue(undefined)
 
-      await gameLoader.loadSoundEffects(gameModule, mockSpeechService as any)
+      await gameLoader.loadSoundEffects(gameModule, mockSpeechService as unknown as never)
 
       expect(mockSpeechService.loadSound).toHaveBeenCalledTimes(3)
       expect(mockSpeechService.loadSound).toHaveBeenCalledWith('ladder_up', '/sounds/ladder.mp3')
@@ -212,20 +220,24 @@ describe('GameLoader', () => {
         metadata: {
           id: 'test-game',
           name: 'Test Game',
+          description: 'Test description',
           version: '1.0.0',
           minPlayers: 2,
           maxPlayers: 4
         },
         rules: {
           objective: 'Test objective',
-          mechanics: 'Test mechanics'
+          mechanics: 'Test mechanics',
+          turnStructure: 'Test turn structure',
+          boardLayout: 'Test board layout',
+          examples: ['Test example']
         },
         initialState: {
           players: []
         }
       }
 
-      await gameLoader.loadSoundEffects(gameModule, mockSpeechService as any)
+      await gameLoader.loadSoundEffects(gameModule, mockSpeechService as unknown as never)
 
       expect(mockSpeechService.loadSound).not.toHaveBeenCalled()
     })
@@ -235,13 +247,17 @@ describe('GameLoader', () => {
         metadata: {
           id: 'test-game',
           name: 'Test Game',
+          description: 'Test description',
           version: '1.0.0',
           minPlayers: 2,
           maxPlayers: 4
         },
         rules: {
           objective: 'Test objective',
-          mechanics: 'Test mechanics'
+          mechanics: 'Test mechanics',
+          turnStructure: 'Test turn structure',
+          boardLayout: 'Test board layout',
+          examples: ['Test example']
         },
         initialState: {
           players: []
@@ -257,7 +273,7 @@ describe('GameLoader', () => {
         .mockRejectedValueOnce(new Error('Failed to load')) // Bad sound fails
 
       // Should not throw even if some sounds fail
-      await expect(gameLoader.loadSoundEffects(gameModule, mockSpeechService as any))
+      await expect(gameLoader.loadSoundEffects(gameModule, mockSpeechService as unknown as never))
         .resolves.not.toThrow()
 
       expect(mockSpeechService.loadSound).toHaveBeenCalledTimes(2)
@@ -268,13 +284,17 @@ describe('GameLoader', () => {
         metadata: {
           id: 'test-game',
           name: 'Test Game',
+          description: 'Test description',
           version: '1.0.0',
           minPlayers: 2,
           maxPlayers: 4
         },
         rules: {
           objective: 'Test objective',
-          mechanics: 'Test mechanics'
+          mechanics: 'Test mechanics',
+          turnStructure: 'Test turn structure',
+          boardLayout: 'Test board layout',
+          examples: ['Test example']
         },
         initialState: {
           players: []
@@ -282,7 +302,7 @@ describe('GameLoader', () => {
         soundEffects: {}
       }
 
-      await gameLoader.loadSoundEffects(gameModule, mockSpeechService as any)
+      await gameLoader.loadSoundEffects(gameModule, mockSpeechService as unknown as never)
 
       expect(mockSpeechService.loadSound).not.toHaveBeenCalled()
     })

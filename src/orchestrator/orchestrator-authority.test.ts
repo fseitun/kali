@@ -1,5 +1,5 @@
-/* eslint-disable @typescript-eslint/ban-ts-comment */
-// @ts-nocheck
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/ban-ts-comment */
+// @ts-nocheck - Adversarial tests intentionally use malformed data
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { Orchestrator } from './orchestrator'
 import { StateManager } from '../state-manager'
@@ -112,7 +112,7 @@ describe('Orchestrator Authority - LLM Adversarial Tests', () => {
     it('blocks LLM from modifying wrong player data', async () => {
       mockLLM.getActions = vi.fn(async () => [
         {action: 'SET_STATE', path: 'players.p2.hearts', value: 999}
-      ])
+      ]) as any
 
       await orchestrator.handleTranscript('give Bob all the hearts')
 
@@ -123,7 +123,7 @@ describe('Orchestrator Authority - LLM Adversarial Tests', () => {
     it('blocks LLM from changing game.turn directly', async () => {
       mockLLM.getActions = vi.fn(async () => [
         {action: 'SET_STATE', path: 'game.turn', value: 'p2'}
-      ])
+      ]) as any
 
       await orchestrator.handleTranscript('skip to next player')
 
@@ -195,8 +195,8 @@ describe('Orchestrator Authority - LLM Adversarial Tests', () => {
     })
 
     it('orchestrator triggers square effects even if LLM uses SET_STATE', async () => {
-      let effectTriggered = false
-      testState.players.p1.position = 15
+      let effectTriggered = false;
+      (testState.players as any).p1.position = 15;
 
       mockStateManager.get = vi.fn((path: string) => {
         if (path === 'players.p1.position') return testState.players.p1.position
@@ -204,7 +204,7 @@ describe('Orchestrator Authority - LLM Adversarial Tests', () => {
       })
       mockStateManager.set = vi.fn(async (path: string, value: unknown) => {
         if (path === 'players.p1.position') {
-          testState.players.p1.position = value as number
+          (testState.players as any).p1.position = value as number
         }
       })
 
@@ -231,8 +231,8 @@ describe('Orchestrator Authority - LLM Adversarial Tests', () => {
           requiredField: 'pathChoice',
           prompt: 'Choose A or B'
         }
-      ]
-      testState.players.p1.pathChoice = null
+      ];
+      (testState.players as any).p1.pathChoice = null
 
       mockLLM.getActions = vi.fn(async () => [
         {action: 'SET_STATE', path: 'players.p1.position', value: 15}
@@ -274,8 +274,8 @@ describe('Orchestrator Authority - LLM Adversarial Tests', () => {
           requiredField: 'pathChoice',
           prompt: 'Choose A or B'
         }
-      ]
-      testState.players.p1.pathChoice = null
+      ];
+      (testState.players as any).p1.pathChoice = null
 
       const actions: PrimitiveAction[] = [
         {action: 'SET_STATE', path: 'players.p1.pathChoice', value: 'A'},
@@ -290,7 +290,7 @@ describe('Orchestrator Authority - LLM Adversarial Tests', () => {
     })
 
     it('stateful validation simulates state changes', async () => {
-      testState.players.p1.hearts = 0
+      (testState.players as any).p1.hearts = 0
 
       const actions: PrimitiveAction[] = [
         {action: 'SET_STATE', path: 'players.p1.hearts', value: 5},
@@ -382,7 +382,7 @@ describe('Orchestrator Authority - LLM Adversarial Tests', () => {
 
   describe('Orchestrator Does Not Manage Turn Flow', () => {
     it('executes actions without advancing turn (controller job)', async () => {
-      testState.game.playerOrder = ['p1', 'p2']
+      (testState.game as any).playerOrder = ['p1', 'p2']
 
       const actions: PrimitiveAction[] = [
         {action: 'PLAYER_ROLLED', value: 3}
@@ -401,8 +401,8 @@ describe('Orchestrator Authority - LLM Adversarial Tests', () => {
           requiredField: 'pathChoice',
           prompt: 'Choose A or B'
         }
-      ]
-      testState.players.p1.pathChoice = null
+      ];
+      (testState.players as any).p1.pathChoice = null
 
       const actions: PrimitiveAction[] = [
         {action: 'NARRATE', text: 'Done'}
@@ -415,7 +415,7 @@ describe('Orchestrator Authority - LLM Adversarial Tests', () => {
     })
 
     it('does not check game winner for turn advancement', async () => {
-      testState.game.winner = 'p1'
+      (testState.game as any).winner = 'p1'
 
       const actions: PrimitiveAction[] = [
         {action: 'NARRATE', text: 'Done'}
@@ -430,15 +430,15 @@ describe('Orchestrator Authority - LLM Adversarial Tests', () => {
 
   describe('Square Effect Context - PLAYER_ROLLED Blocking', () => {
     it('blocks PLAYER_ROLLED during square effect processing', async () => {
-      testState.board.squares = {
+      (testState.board as any).squares = {
         '5': {
           type: 'animal',
           name: 'Cobra',
           power: 4
         }
-      }
-      testState.game.turn = 'p1'
-      testState.players.p1.position = 0
+      };
+      (testState.game as any).turn = 'p1';
+      (testState.players as any).p1.position = 0;
 
       mockStateManager.getState = vi.fn(() => testState)
       mockStateManager.get = vi.fn((path: string) => {
@@ -447,7 +447,7 @@ describe('Orchestrator Authority - LLM Adversarial Tests', () => {
       })
       mockStateManager.set = vi.fn(async (path: string, value: unknown) => {
         if (path === 'players.p1.position') {
-          testState.players.p1.position = value as number
+          (testState.players as any).p1.position = value as number
         }
       })
 
@@ -467,20 +467,20 @@ describe('Orchestrator Authority - LLM Adversarial Tests', () => {
       await orchestrator.testExecuteActions(actions)
 
       expect(squareEffectCallCount).toBe(1)
-      expect(testState.players.p1.position).toBe(5)
+      expect((testState.players as any).p1.position).toBe(5)
       expect(mockSpeech.speak).toHaveBeenCalledWith("I couldn't process that.")
     })
 
     it('allows NARRATE during square effect processing', async () => {
-      testState.board.squares = {
+      (testState.board as any).squares = {
         '10': {
           type: 'hazard',
           name: 'Trap',
           effect: 'skipTurn'
         }
-      }
-      testState.game.turn = 'p1'
-      testState.players.p1.position = 5
+      };
+      (testState.game as any).turn = 'p1';
+      (testState.players as any).p1.position = 5;
 
       mockStateManager.getState = vi.fn(() => testState)
       mockStateManager.get = vi.fn((path: string) => {
@@ -489,7 +489,7 @@ describe('Orchestrator Authority - LLM Adversarial Tests', () => {
       })
       mockStateManager.set = vi.fn(async (path: string, value: unknown) => {
         if (path === 'players.p1.position') {
-          testState.players.p1.position = value as number
+          (testState.players as any).p1.position = value as number
         }
       })
 
@@ -511,17 +511,17 @@ describe('Orchestrator Authority - LLM Adversarial Tests', () => {
     })
 
     it('allows SET_STATE during square effect processing', async () => {
-      testState.board.squares = {
+      (testState.board as any).squares = {
         '8': {
           type: 'animal',
           name: 'Wolf',
           power: 3,
           points: 3
         }
-      }
-      testState.game.turn = 'p1'
-      testState.players.p1.position = 5
-      testState.players.p1.points = 0
+      };
+      (testState.game as any).turn = 'p1';
+      (testState.players as any).p1.position = 5;
+      (testState.players as any).p1.points = 0;
 
       mockStateManager.getState = vi.fn(() => testState)
       mockStateManager.get = vi.fn((path: string) => {
@@ -531,10 +531,10 @@ describe('Orchestrator Authority - LLM Adversarial Tests', () => {
       })
       mockStateManager.set = vi.fn(async (path: string, value: unknown) => {
         if (path === 'players.p1.position') {
-          testState.players.p1.position = value as number
+          (testState.players as any).p1.position = value as number
         }
         if (path === 'players.p1.points') {
-          testState.players.p1.points = value as number
+          (testState.players as any).p1.points = value as number
         }
       })
 
@@ -589,8 +589,8 @@ describe('Orchestrator Authority - LLM Adversarial Tests', () => {
           requiredField: 'pathChoice',
           prompt: 'Choose A or B'
         }
-      ]
-      testState.players.p1.pathChoice = null
+      ];
+      (testState.players as any).p1.pathChoice = null
 
       const actions: PrimitiveAction[] = [
         {action: 'SET_STATE', path: 'players.p1.position', value: 20}

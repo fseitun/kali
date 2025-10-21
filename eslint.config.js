@@ -33,5 +33,13 @@ export default tseslint.config(
       'prefer-const': 'error',
       'no-var': 'error'
     }
+  },
+  {
+    files: ['**/*.test.ts'],
+    rules: {
+      '@typescript-eslint/no-explicit-any': ['error', {
+        ignoreRestArgs: true
+      }]
+    }
   }
 )

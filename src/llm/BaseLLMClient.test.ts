@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/ban-ts-comment */
-// @ts-nocheck
 import { describe, it, expect, beforeEach } from 'vitest'
 import { BaseLLMClient } from './BaseLLMClient'
 import { GameState } from '../orchestrator/types'
@@ -178,7 +176,7 @@ describe('LLM - Pure JSON Parsing', () => {
     })
 
     it('does not validate turn ownership (orchestrator job)', async () => {
-      (mockState.game as any).turn = 'p1'
+      (mockState.game as Record<string, unknown>).turn = 'p1'
 
       client.responseQueue = ['[{"action":"SET_STATE","path":"players.p2.position","value":99}]']
 

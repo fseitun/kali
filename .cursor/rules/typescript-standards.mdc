@@ -58,10 +58,21 @@ type GameState = {
 
 ## Testing Standards
 
-Test files may use relaxed rules for mocking:
-- `any` is acceptable in test mocks
-- Global object mocking is allowed
-- Focus on production code type safety
+Test files (`*.test.ts`) have pragmatic flexibility:
+
+### What's Allowed in Tests
+- ✅ `any` for mock implementations and test fixtures
+- ✅ `as unknown as Type` for partial mocks
+- ✅ `@ts-nocheck` for adversarial/malformed data tests
+- ✅ `/* eslint-disable */` for intentional test patterns
+- ✅ Global object mocking (e.g., `globalThis.fetch`, `globalThis.window`)
+- ✅ Type assertions for simplified test setup
+
+### Philosophy
+- Tests should be readable and maintainable
+- Don't die on strict typing hills in tests - use pragmatic solutions
+- Focus type safety efforts on production code
+- Adversarial tests (testing invalid data) may skip type checking entirely
 
 ## Common Patterns
 

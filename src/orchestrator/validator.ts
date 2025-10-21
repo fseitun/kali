@@ -288,6 +288,20 @@ function validateSetState(
       }
     }
 
+    if (action.path === 'game.phase') {
+      return {
+        valid: false,
+        error: `SET_STATE at index ${index}: Cannot manually change game.phase via SET_STATE. The orchestrator manages phase transitions.`
+      }
+    }
+
+    if (action.path === 'game.winner') {
+      return {
+        valid: false,
+        error: `SET_STATE at index ${index}: Cannot manually set game.winner via SET_STATE. The orchestrator detects and sets winners.`
+      }
+    }
+
     const turnValidation = validateTurnOwnership(action.path, state, 'SET_STATE', index)
     if (!turnValidation.valid) return turnValidation
 

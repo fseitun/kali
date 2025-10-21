@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { SpeechService } from './speech-service'
 
@@ -38,9 +39,9 @@ describe('SpeechService', () => {
       speak: vi.fn()
     }
 
-    global.window = {
+    globalThis.window = {
       speechSynthesis: mockSpeechSynthesis
-    } as any
+    } as unknown as Window & typeof globalThis
 
     // Mock AudioContext
     mockAudioContext = {
@@ -49,11 +50,11 @@ describe('SpeechService', () => {
       destination: {}
     }
 
-    global.AudioContext = vi.fn().mockImplementation(() => mockAudioContext) as any
+    globalThis.AudioContext = vi.fn().mockImplementation(() => mockAudioContext) as unknown as typeof AudioContext
 
     // Mock fetch
     mockFetch = vi.fn()
-    global.fetch = mockFetch
+    globalThis.fetch = mockFetch
 
     vi.clearAllMocks()
   })
@@ -69,7 +70,7 @@ describe('SpeechService', () => {
         onerror: null
       }
 
-      global.SpeechSynthesisUtterance = vi.fn().mockImplementation(() => mockUtterance) as any
+      globalThis.SpeechSynthesisUtterance = vi.fn().mockImplementation(() => mockUtterance) as unknown as typeof SpeechSynthesisUtterance
 
       speechService.prime()
 
@@ -78,7 +79,7 @@ describe('SpeechService', () => {
     })
 
     it('should not prime if speechSynthesis not available', () => {
-      global.window = {} as any
+      globalThis.window = {} as unknown as Window & typeof globalThis
 
       speechService.prime()
 
@@ -92,7 +93,7 @@ describe('SpeechService', () => {
         onerror: null
       }
 
-      global.SpeechSynthesisUtterance = vi.fn().mockImplementation(() => mockUtterance) as any
+      globalThis.SpeechSynthesisUtterance = vi.fn().mockImplementation(() => mockUtterance) as unknown as typeof SpeechSynthesisUtterance
 
       speechService.prime()
       speechService.prime() // Second call
@@ -103,7 +104,7 @@ describe('SpeechService', () => {
 
   describe('speak', () => {
     beforeEach(() => {
-      global.SpeechSynthesisUtterance = vi.fn().mockImplementation(() => ({
+      globalThis.SpeechSynthesisUtterance = vi.fn().mockImplementation(() => ({
         onend: null,
         onerror: null,
         rate: 0,
@@ -115,7 +116,7 @@ describe('SpeechService', () => {
     it('should speak text successfully', async () => {
       let utterance: any = null
 
-      global.SpeechSynthesisUtterance = vi.fn().mockImplementation((text) => {
+      globalThis.SpeechSynthesisUtterance = vi.fn().mockImplementation((text) => {
         utterance = {
           text,
           onend: null,
@@ -144,7 +145,7 @@ describe('SpeechService', () => {
     })
 
     it('should handle speech synthesis not available', async () => {
-      global.window = {} as any
+      globalThis.window = {} as unknown as Window & typeof globalThis
 
       await speechService.speak('Hello world')
 
@@ -155,7 +156,7 @@ describe('SpeechService', () => {
     it('should handle speech synthesis error', async () => {
       let utterance: any = null
 
-      global.SpeechSynthesisUtterance = vi.fn().mockImplementation((text) => {
+      globalThis.SpeechSynthesisUtterance = vi.fn().mockImplementation((text) => {
         utterance = {
           text,
           onend: null,
@@ -183,7 +184,7 @@ describe('SpeechService', () => {
     it('should handle interrupted speech', async () => {
       let utterance: any = null
 
-      global.SpeechSynthesisUtterance = vi.fn().mockImplementation((text) => {
+      globalThis.SpeechSynthesisUtterance = vi.fn().mockImplementation((text) => {
         utterance = {
           text,
           onend: null,
@@ -211,7 +212,7 @@ describe('SpeechService', () => {
     it('should prime if not already primed', async () => {
       let utterance: any = null
 
-      global.SpeechSynthesisUtterance = vi.fn().mockImplementation((text) => {
+      globalThis.SpeechSynthesisUtterance = vi.fn().mockImplementation((text) => {
         utterance = {
           text,
           onend: null,
