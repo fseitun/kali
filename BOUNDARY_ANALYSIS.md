@@ -7,10 +7,13 @@
 
 | File | Lines | Status |
 |------|-------|--------|
-| `orchestrator.ts` | 650 | ⚠️ Largest file - could benefit from future decomposition |
+| `orchestrator.ts` | 395 | ✅ Refactored - Phase 1 complete (extracted turn, board, decision modules) |
 | `system-prompt.ts` | 414 | ⚠️ Large - LLM instructions and formatting |
 | `kali-app-core.ts` | 372 | ✅ Reasonable - pure coordination |
 | `wake-word.ts` | 290 | ✅ Reasonable - focused responsibility |
+| `turn-manager.ts` | 182 | ✅ Focused - turn management subsystem |
+| `board-effects-handler.ts` | 122 | ✅ Focused - board mechanics subsystem |
+| `decision-point-enforcer.ts` | 89 | ✅ Focused - decision enforcement subsystem |
 | `state-manager.ts` | 133 | ✅ Small and focused |
 
 ## Responsibilities Matrix
@@ -19,18 +22,21 @@
 
 **Core Identity**: The authoritative game engine that owns all game logic
 
+**After Phase 1 Refactor** - Extracted to modules:
+- TurnManager (182 lines) - Turn advancement, ownership validation, pending decisions
+- BoardEffectsHandler (122 lines) - Board moves, square effects
+- DecisionPointEnforcer (89 lines) - Decision point enforcement
+
 | Responsibility | Methods | Lines |
 |----------------|---------|-------|
-| **State Authority** | `setupPlayers()`, `transitionPhase()`, `advanceTurn()` | ~150 |
+| **State Authority** | `setupPlayers()`, `transitionPhase()` | ~50 |
 | **Primitive Execution** | `executeAction()`, `executeActions()` | ~100 |
 | **LLM Processing** | `handleTranscript()`, `processTranscript()` | ~50 |
-| **Board Mechanics** | `checkAndApplyBoardMoves()`, `checkAndApplySquareEffects()` | ~80 |
-| **Decision Enforcement** | `enforceDecisionPoints()`, `hasPendingDecisions()` | ~100 |
-| **Turn Ownership** | `assertPlayerTurnOwnership()` | ~30 |
+| **Module Coordination** | Delegates to TurnManager, BoardEffectsHandler, DecisionPointEnforcer | ~50 |
 | **Testing** | `testExecuteActions()` | ~40 |
 | **Utilities** | `isLocked()`, `isProcessingEffect()`, `registerActionHandler()` | ~30 |
 
-**Total**: ~650 lines
+**Total**: ~395 lines (down from 650 - 39% reduction)
 
 **Dependencies**:
 - ✅ LLMClient (uses)
@@ -41,13 +47,13 @@
 
 **What it OWNS**:
 - ✅ All game state mutations
-- ✅ Turn advancement logic
+- ✅ Turn advancement logic (via TurnManager module)
 - ✅ Phase transitions
 - ✅ Player creation/setup
-- ✅ Board mechanics (ladders, snakes, squares)
-- ✅ Decision point enforcement
+- ✅ Board mechanics (via BoardEffectsHandler module)
+- ✅ Decision point enforcement (via DecisionPointEnforcer module)
 - ✅ Primitive action validation & execution
-- ✅ Square effect processing
+- ✅ Square effect processing (via BoardEffectsHandler module)
 
 **What it DOES NOT own**:
 - ❌ Component initialization/wiring
@@ -245,52 +251,24 @@
 
 **Recommendation**: ✅ Leave as-is for now, monitor growth
 
-### `orchestrator.ts` (650 lines) ⚠️
+### `orchestrator.ts` (395 lines) ✅
 
-**What it does**: Everything game-engine related
+**OUTDATED - Phase 1 refactor completed 2025-10-20**
 
-**Is it too big?**
-- 🟡 On the edge of "too large"
-- ✅ But has clear, focused responsibility
-- ✅ Each method is focused and small
-- ✅ No God-class smell (doesn't do everything)
+This file has been successfully refactored. See `discussions/orchestrator-refactor-plan.md` for details.
 
-**Could it be split?**
+**What was done**:
+- Extracted TurnManager (182 lines) - Turn advancement, ownership validation
+- Extracted BoardEffectsHandler (122 lines) - Board moves, square effects
+- Extracted DecisionPointEnforcer (89 lines) - Decision point enforcement
+- Reduced orchestrator from 650 → 395 lines (39% reduction)
 
-Option 1: **Extract Board Mechanics**
-```
-orchestrator/
-  orchestrator.ts (450 lines - core logic)
-  board-mechanics.ts (100 lines)
-    - checkAndApplyBoardMoves()
-    - checkAndApplySquareEffects()
-```
-
-Option 2: **Extract Decision Management**
-```
-orchestrator/
-  orchestrator.ts (500 lines)
-  decision-manager.ts (100 lines)
-    - enforceDecisionPoints()
-    - hasPendingDecisions()
-```
-
-Option 3: **Extract Authority Methods**
-```
-orchestrator/
-  orchestrator.ts (500 lines - execution)
-  game-authority.ts (150 lines - state management)
-    - setupPlayers()
-    - transitionPhase()
-    - advanceTurn()
-    - hasPendingDecisions()
-```
-
-**Recommendation**:
-- 🟡 Monitor but don't split yet
-- ✅ Current organization is logical
-- ⏰ Split when it reaches ~800-1000 lines OR when adding major new features
-- 📋 Use Option 3 if splitting (cleanest conceptual separation)
+**Current state**:
+- ✅ Focused on core orchestration and coordination
+- ✅ Clear module boundaries
+- ✅ Significantly improved maintainability
+- ✅ Each subsystem independently testable
+- ✅ No further splitting needed at this time
 
 ---
 
@@ -304,7 +282,7 @@ orchestrator/
 - Duplicate logic
 - UI components mutating state
 
-### After Score: 9/10 ✅
+### After Score: 9.5/10 ✅
 
 **Strengths**:
 - ✅ Clear separation of concerns
@@ -312,15 +290,15 @@ orchestrator/
 - ✅ No duplicate logic
 - ✅ Clean delegation patterns
 - ✅ UI components are pure
-- ✅ 22 tests enforce boundaries
+- ✅ Comprehensive test coverage (138 tests)
 - ✅ Documented axioms
+- ✅ **Orchestrator refactored (Phase 1 complete) - modular subsystems**
 
 **Remaining Concerns**:
-- 🟡 Orchestrator is large (650 lines) - monitor growth
-- 🟡 system-prompt.ts is large (414 lines) - could split
+- 🟡 system-prompt.ts is large (414 lines) - could split if it grows further
 - 🟡 Both classes access SpeechService - acceptable but watch for conflicts
 
-**Missing**: -1 point for:
+**Missing**: -0.5 point for:
 - No tests for KaliAppCore itself (coordination logic untested)
 - Could benefit from integration tests of full app flow
 
@@ -343,9 +321,10 @@ Current boundaries are clear and well-enforced.
    - Saved game handling
    ```
 
-2. **Monitor Orchestrator Growth**
-   - Set alert at 800 lines
-   - Consider Option 3 split if needed
+2. **Add Unit Tests for Orchestrator Modules** ✅ PRIORITY
+   - TurnManager unit tests
+   - BoardEffectsHandler unit tests
+   - DecisionPointEnforcer unit tests
 
 ### Long Term (6-12 months):
 
@@ -376,4 +355,4 @@ Current boundaries are clear and well-enforced.
 - `orchestrator.ts` (650 lines) - largest, but focused
 - `system-prompt.ts` (414 lines) - large, cohesive
 
-**Overall**: Architecture is in excellent shape after refactoring. Boundaries are clear, enforced by tests, and documented in axioms. No immediate action needed, just ongoing monitoring of file sizes.
+**Overall**: Architecture is in excellent shape after Phase 1 refactoring (2025-10-20). Orchestrator successfully decomposed into focused subsystems. Boundaries are clear, enforced by tests, and documented in axioms. Next focus: unit tests for new modules.

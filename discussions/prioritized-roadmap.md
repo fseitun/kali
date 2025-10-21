@@ -40,13 +40,17 @@ This document consolidates all planned improvements and features, ranked by thei
 
 **Files:**
 - `.cursorrules`
+- `README.md`
+- `BOUNDARY_ANALYSIS.md`
 
-**Status:** Ready to implement - simple documentation fix
+**Status:** ✅ COMPLETE (2025-10-21) - All documentation updated
 
 ---
 
 ### 3. IndexedDB Persistence for Resume Game 🔥
 **Value: 8/10 | Complexity: 5/10 | Ratio: 1.6**
+
+**Note:** This is FUTURE work. StateManager is currently in-memory only (documentation now corrected).
 
 **Problem:** State is in-memory only, lost on page reload. No way to resume games after closing the app.
 

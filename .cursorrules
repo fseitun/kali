@@ -157,7 +157,7 @@ If you find code that violates these axioms, it is a **CRITICAL bug** that must 
 - **Audio Pipeline**: WebAudio API + AudioWorklet
 - **Speech Recognition**: Vosk (fully offline, wake word + STT)
 - **LLM Clients**: Gemini (fast, recommended) or Ollama (local)
-- **State Storage**: IndexedDB for persistent sessions
+- **State Storage**: In-memory state management
 - **TTS**: Browser SpeechSynthesis API
 - **Sound Effects**: WebAudio for preloaded local audio
 - **Caching**: Service Worker + Cache API for offline operation
@@ -209,7 +209,10 @@ Audio pipeline follows: idle → listening → processing → speaking
 
 ### Core Logic
 - `src/orchestrator/` - Core validation and execution logic
-  - `orchestrator.ts` - Main orchestration loop
+  - `orchestrator.ts` - Main orchestration loop (refactored into subsystems)
+  - `turn-manager.ts` - Turn advancement and ownership validation
+  - `board-effects-handler.ts` - Board moves and square effects
+  - `decision-point-enforcer.ts` - Decision point requirements
   - `validator.ts` - Primitive action validation
   - `types.ts` - Type definitions for primitives
   - `name-collector.ts` - Voice-based player name collection
@@ -240,7 +243,7 @@ Audio pipeline follows: idle → listening → processing → speaking
   - Each JSON contains: name, rules, initialState, soundEffects
 
 ### State Management
-- `src/state-manager.ts` - IndexedDB wrapper with path-based operations
+- `src/state-manager.ts` - In-memory state manager with path-based operations
 
 ### Utilities
 - `src/utils/` - Helper functions
@@ -320,8 +323,7 @@ See `checkAndApplyBoardMoves` in `orchestrator.ts` for implementation.
 
 ### State Persistence
 - App always starts fresh (SETUP phase) on launch
-- Current session state persists in IndexedDB
-- Future: Explicit save/load game feature planned
+- Current session state is in-memory only
 
 ## Architecture Decisions
 
@@ -336,11 +338,9 @@ See `checkAndApplyBoardMoves` in `orchestrator.ts` for implementation.
 - Ollama: Slow (30-50s), free, fully local
 - Users choose based on needs
 
-### Why IndexedDB?
-- Persistent across sessions
-- Async/non-blocking
-- Large storage capacity
-- Standard browser API
+### Why In-Memory State (for now)?
+- Simple and fast
+- No persistence complexity
 
 ### Why Processing Lock?
 - Prevents overlapping LLM requests

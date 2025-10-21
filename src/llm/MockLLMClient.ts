@@ -2,7 +2,7 @@ import { LLMClient } from './LLMClient'
 import { GameState, PrimitiveAction } from '../orchestrator/types'
 import { Logger } from '../utils/logger'
 
-export type MockScenario = 'happy-path' | 'invalid-actions' | 'chaos' | 'empty' | 'custom'
+export type MockScenario = 'happy-path' | 'invalid-actions' | 'chaos' | 'empty' | 'custom' | 'scripted'
 
 /**
  * Mock LLM client for testing orchestrator validation without real LLM calls.
@@ -14,16 +14,20 @@ export type MockScenario = 'happy-path' | 'invalid-actions' | 'chaos' | 'empty' 
  * - chaos: Random mix of valid and invalid actions
  * - empty: Always returns empty arrays
  * - custom: Use provided custom responses
+ * - scripted: Use scriptedResponses array in sequence (for integration tests)
  */
 export class MockLLMClient implements LLMClient {
   private callCount = 0
   private customResponses: string[]
+  private scriptedResponses: PrimitiveAction[][]
 
   constructor(
     private scenario: MockScenario = 'happy-path',
-    customResponses: string[] = []
+    customResponses: string[] = [],
+    scriptedResponses: PrimitiveAction[][] = []
   ) {
     this.customResponses = customResponses
+    this.scriptedResponses = scriptedResponses
     Logger.info(`MockLLMClient initialized with scenario: ${scenario}`)
   }
 
@@ -36,8 +40,10 @@ export class MockLLMClient implements LLMClient {
     Logger.info(`MockLLMClient call #${this.callCount}: "${transcript}"`)
     Logger.debug('Current state:', state)
 
-    // Small delay to simulate network/processing
-    await this.sleep(100)
+    // Small delay to simulate network/processing (skip for scripted to speed up tests)
+    if (this.scenario !== 'scripted') {
+      await this.sleep(100)
+    }
 
     const response = this.getResponseForScenario()
     Logger.info(`MockLLMClient response:`, response)
@@ -100,10 +106,23 @@ export class MockLLMClient implements LLMClient {
       case 'custom':
         return this.getCustomResponse()
 
+      case 'scripted':
+        return this.getScriptedResponse()
+
       default:
         Logger.warn(`Unknown scenario: ${this.scenario}, using empty response`)
         return []
     }
+  }
+
+  private getScriptedResponse(): PrimitiveAction[] {
+    if (this.scriptedResponses.length === 0) {
+      Logger.warn('Scripted scenario selected but no scripted responses provided')
+      return []
+    }
+
+    const index = Math.min(this.callCount - 1, this.scriptedResponses.length - 1)
+    return this.scriptedResponses[index]
   }
 
   private getHappyPathResponse(): PrimitiveAction[] {
