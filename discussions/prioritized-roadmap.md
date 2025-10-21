@@ -29,20 +29,66 @@ This document consolidates all planned improvements and features, ranked by thei
 
 ---
 
+### 2. Fix StateManager Documentation 🔥
+**Value: 2/10 | Complexity: 1/10 | Ratio: 2.0**
+
+**Problem:** `.cursorrules` incorrectly says StateManager is an "IndexedDB wrapper" but it's just in-memory storage. Documentation mismatch causes confusion.
+
+**Implementation:**
+- Update `.cursorrules` line to say "in-memory state manager with path-based operations"
+- Update any other references to IndexedDB that are incorrect
+
+**Files:**
+- `.cursorrules`
+
+**Status:** Ready to implement - simple documentation fix
+
+---
+
+### 3. IndexedDB Persistence for Resume Game 🔥
+**Value: 8/10 | Complexity: 5/10 | Ratio: 1.6**
+
+**Problem:** State is in-memory only, lost on page reload. No way to resume games after closing the app.
+
+**Implementation:**
+- Add `loadFromIndexedDB()` - Load saved game state on app start
+- Add `saveToIndexedDB()` - Persist state to IndexedDB
+- Add `enableAutosave()` - Automatic state persistence (debounced, e.g., 1s delay)
+- Implement single "current game" save slot initially
+- Handle IndexedDB errors gracefully (fall back to in-memory)
+- Still pure infrastructure layer (no game logic)
+
+**Files:**
+- `src/state-manager.ts`
+- `src/kali-app-core.ts` (initialization)
+
+**Benefits:**
+- Matches original documentation intent
+- Enables "resume game" feature
+- Better user experience (no lost progress)
+- Foundation for multiple save slots later
+
+**Status:** Future enhancement - medium priority
+
+---
+
 ### 4. State Manager Batching 🔥
 **Value: 8/10 | Complexity: 4/10 | Ratio: 2.0**
 
-**Problem:** Each `stateManager.set()` call triggers full state clone and IndexedDB write. Performance bottleneck.
+**Problem:** Each `stateManager.set()` call triggers full state clone. With IndexedDB persistence, this will become a performance bottleneck.
 
 **Implementation:**
 - Add `beginTransaction()` / `commitTransaction()` methods to batch writes
-- Implement debounced state persistence (e.g., 100ms delay)
-- Add in-memory cache layer
-- Target: < 100ms state write latency (currently can be 200-500ms)
+- Only clone state once at commit time (not on every `set()`)
+- Debounce IndexedDB writes (e.g., 100ms delay after last mutation)
+- Add in-memory write buffer
+- Target: < 50ms for batched state updates
 
 **Files:**
 - `src/state-manager.ts`
 - `src/orchestrator/orchestrator.ts`
+
+**Note:** Should be implemented together with IndexedDB persistence (#3)
 
 ---
 
@@ -223,43 +269,7 @@ This document consolidates all planned improvements and features, ranked by thei
 
 ## 💎 Strategic (Long-term Value / Higher Complexity)
 
-### 12. Testing Infrastructure 🔧💎
-**Value: 9/10 | Complexity: 7/10 | Ratio: 1.29**
-
-**Problem:** No tests exist, making refactoring risky. Critical for long-term maintainability.
-
-**Implementation:**
-
-**Phase 1: Core Setup**
-- Add Vitest test framework
-- Create test utilities and mocks
-- Add coverage reporting
-- Target: vitest.config.ts, src/test-utils/
-
-**Phase 2: Unit Tests**
-- Test validator functions with edge cases
-- Test state manager path operations
-- Test turn ownership validation
-- Test primitive action execution
-- Target: 80%+ coverage on core modules
-
-**Phase 3: Integration Tests**
-- Mock LLM responses for predictable testing
-- Test full turn sequences
-- Test error recovery flows
-- Test name collection flow
-
-**Files:**
-- `vitest.config.ts` (new)
-- `package.json` (add vitest)
-- `src/test-utils/` (new)
-- `src/orchestrator/__tests__/validator.test.ts` (new)
-- `src/__tests__/state-manager.test.ts` (new)
-- `src/__tests__/integration/` (new)
-
----
-
-### 13. Game-Agnostic Orchestrator 💎
+### 12. Game-Agnostic Orchestrator 💎
 **Value: 8/10 | Complexity: 7/10 | Ratio: 1.14**
 
 **Problem:** `checkAndApplyBoardMoves` in orchestrator is game-specific (Snakes & Ladders logic). Violates core architecture principle.
@@ -278,7 +288,7 @@ This document consolidates all planned improvements and features, ranked by thei
 
 ---
 
-### 14. State History & Rollback System 💎
+### 13. State History & Rollback System 💎
 **Value: 7/10 | Complexity: 6/10 | Ratio: 1.17**
 
 **Problem:** Users might make mistakes and need to recover from errors. No undo functionality.
@@ -298,9 +308,75 @@ This document consolidates all planned improvements and features, ranked by thei
 
 **Overhead:** <5ms per snapshot, minimal storage
 
+**Note:** Could leverage state transactions (#13b) for atomic rollback
+
 ---
 
-### 15. LLM Request Optimization 💎
+### 13b. State Manager Transactions (Optional) 💎
+**Value: 5/10 | Complexity: 6/10 | Ratio: 0.83**
+
+**Problem:** Each `set()` is independent. No atomic multi-step mutations.
+
+**Potential Enhancement:**
+- Add `startTransaction()` / `commit()` / `rollback()` methods
+- Orchestrator could batch multiple mutations atomically
+- Better error recovery (rollback on validation failure)
+- Foundation for undo/redo system
+
+**Implementation:**
+```typescript
+class StateManager {
+  startTransaction(): Transaction
+  commit(transaction: Transaction): void
+  rollback(transaction: Transaction): void
+}
+```
+
+**Files:**
+- `src/state-manager.ts`
+- `src/orchestrator/orchestrator.ts`
+
+**Status:** Low priority - only needed if:
+- Undo/redo feature is implemented (#13)
+- Complex multi-step mutations need atomicity
+- Error recovery requires state rollback
+
+**Verdict:** Consider only after #13 State History is implemented
+
+---
+
+### 13c. State Change Listeners (Optional) 💎
+**Value: 4/10 | Complexity: 5/10 | Ratio: 0.8**
+
+**Problem:** No way to observe state changes. Components can't react to mutations.
+
+**Potential Enhancement:**
+- Add `subscribe()` / `unsubscribe()` methods
+- UI could reactively update on state changes
+- Better debugging (log all state changes)
+- Enable reactive patterns
+
+**Implementation:**
+```typescript
+class StateManager {
+  subscribe(path: string, callback: (value: unknown) => void): void
+  unsubscribe(path: string, callback: (value: unknown) => void): void
+}
+```
+
+**Files:**
+- `src/state-manager.ts`
+
+**Status:** Very low priority - only needed if:
+- Visual UI is added (currently voice-only)
+- Real-time state visualization for debugging
+- Reactive UI framework integration
+
+**Verdict:** Not needed for voice-only app. Skip unless requirements change.
+
+---
+
+### 14. LLM Request Optimization 💎
 **Value: 7/10 | Complexity: 6/10 | Ratio: 1.17**
 
 **Problem:** Full system prompt + state sent on every request, no caching. Latency and cost implications.
@@ -317,7 +393,7 @@ This document consolidates all planned improvements and features, ranked by thei
 
 ---
 
-### 16. Enhanced Logging & Debug Tools 💎
+### 15. Enhanced Logging & Debug Tools 💎
 **Value: 6/10 | Complexity: 5/10 | Ratio: 1.2**
 
 **Problem:** Logger is basic, no structured logging or filtering. Hard to debug production issues.
@@ -337,26 +413,24 @@ This document consolidates all planned improvements and features, ranked by thei
 
 ## 🔧 Infrastructure (Foundation for Other Work)
 
-### 17. Dependency Injection Container 🔧
+### 16. Dependency Injection Container 🔧
 **Value: 6/10 | Complexity: 6/10 | Ratio: 1.0**
 
-**Problem:** Hard-coded dependencies make testing difficult and coupling tight.
+**Problem:** Hard-coded dependencies make coupling tight.
 
 **Implementation:**
 - Add lightweight DI container for services
 - Make all dependencies injectable
-- Improve testability and modularity
-- Enables mocking for unit tests
+- Improve modularity
 
 **Files:**
 - `src/di-container.ts` (new)
 - Refactor all services to use DI
 
-**Note:** Should be done before extensive testing work
 
 ---
 
-### 18. Code Refactoring - Large File Extraction 🔧
+### 17. Code Refactoring - Large File Extraction 🔧
 **Value: 7/10 | Complexity: 6/10 | Ratio: 1.17**
 
 **Problem:** Several core files have grown large with multiple responsibilities. Orchestrator (536 lines) contains turn management, board effects, and decision point logic mixed with core orchestration. Name collector (487 lines) has repeated confirmation patterns.
@@ -378,14 +452,14 @@ This document consolidates all planned improvements and features, ranked by thei
 - Extract TimeoutManager utility
   - DRY timeout pattern
 
-**Phase 3: Integration & Testing**
-- Complete game session testing
+**Phase 3: Integration & Documentation**
+- Complete game session validation
 - Performance validation
 - Documentation updates
 
 **Benefits:**
 - Smaller, focused files (easier to understand)
-- Better testability (isolated concerns)
+- Isolated concerns for clarity
 - Clearer architecture (separation of concerns)
 - Reduced cognitive load
 - Foundation for game-agnostic orchestrator
@@ -399,15 +473,26 @@ This document consolidates all planned improvements and features, ranked by thei
 - `src/orchestrator/orchestrator.ts` (refactor)
 - `src/orchestrator/name-collector.ts` (refactor)
 
-**Status:** Analysis complete in `discussions/code-refactoring-analysis.md` - ready to implement
+**Status:**
+- Full analysis in `discussions/code-refactoring-analysis.md`
+- Orchestrator refactor plan in `discussions/orchestrator-refactor-plan.md`
+- **Phase 1 (Orchestrator): ✅ COMPLETE** (2025-10-20)
+  - Orchestrator: 650 → 395 lines (39% reduction)
+  - Created: TurnManager (182 lines), BoardEffectsHandler (122 lines), DecisionPointEnforcer (89 lines)
+  - Zero lint/type errors
+- Phase 2 (Name Collector): Planned
+- Phase 3 (Integration & Documentation): Planned
 
-**Estimated Effort:** 12-17 hours
+**Estimated Effort:** 12-17 hours total
+- **Phase 1 (Orchestrator): ✅ DONE in 2 hours**
+- Phase 2 (Name Collector): 4-6 hours
+- Phase 3 (Integration): 2-3 hours
 
-**Note:** Makes testing infrastructure and DI implementation much easier
+**Note:** Makes DI implementation much easier
 
 ---
 
-### 19. Event System 🔧
+### 18. Event System 🔧
 **Value: 6/10 | Complexity: 6/10 | Ratio: 1.0**
 
 **Problem:** Tight coupling between components, no observable state changes.
@@ -424,7 +509,7 @@ This document consolidates all planned improvements and features, ranked by thei
 
 ---
 
-### 20. Modernize Async Patterns 🔧
+### 19. Modernize Async Patterns 🔧
 **Value: 5/10 | Complexity: 5/10 | Ratio: 1.0**
 
 **Problem:** Some Promise constructor anti-patterns, missing proper error boundaries.
@@ -444,7 +529,7 @@ This document consolidates all planned improvements and features, ranked by thei
 
 ## 🎨 Polish (Nice to Have / Lower Priority)
 
-### 21. Graceful Degradation 🎨
+### 20. Graceful Degradation 🎨
 **Value: 7/10 | Complexity: 4/10 | Ratio: 1.75**
 
 **Problem:** Voice-only approach fails if TTS unavailable. No fallback.
@@ -462,7 +547,7 @@ This document consolidates all planned improvements and features, ranked by thei
 
 ---
 
-### 22. Audio Pipeline Optimization 🎨
+### 21. Audio Pipeline Optimization 🎨
 **Value: 5/10 | Complexity: 6/10 | Ratio: 0.83**
 
 **Problem:** No buffer pooling, potential memory pressure from audio chunks.
@@ -481,7 +566,7 @@ This document consolidates all planned improvements and features, ranked by thei
 
 ---
 
-### 23. TTS Voice Selection 🎨
+### 22. TTS Voice Selection 🎨
 **Value: 6/10 | Complexity: 4/10 | Ratio: 1.5**
 
 **Problem:** Uses default browser voice. No customization.
@@ -498,7 +583,7 @@ This document consolidates all planned improvements and features, ranked by thei
 
 ---
 
-### 24. Improve Model Download Error Recovery 🎨
+### 23. Improve Model Download Error Recovery 🎨
 **Value: 5/10 | Complexity: 4/10 | Ratio: 1.25**
 
 **Problem:** If model download fails, app shows error but no retry mechanism.
@@ -514,7 +599,7 @@ This document consolidates all planned improvements and features, ranked by thei
 
 ---
 
-### 25. Sound Effect Management 🎨
+### 24. Sound Effect Management 🎨
 **Value: 4/10 | Complexity: 4/10 | Ratio: 1.0**
 
 **Problem:** All sound effects loaded at startup.
@@ -530,7 +615,7 @@ This document consolidates all planned improvements and features, ranked by thei
 
 ---
 
-### 26. JSDoc Documentation 🎨
+### 25. JSDoc Documentation 🎨
 **Value: 4/10 | Complexity: 3/10 | Ratio: 1.33**
 
 **Problem:** Code is clean but lacks JSDoc comments on some key classes/methods.

@@ -35,12 +35,6 @@ export const CONFIG = {
     WORKLET_PROCESSOR_NAME: 'vosk-audio-processor',
   },
 
-  STATE: {
-    DB_NAME: 'kali-db',
-    STORE_NAME: 'gameState',
-    STATE_KEY: 'current',
-  },
-
   UI: {
     MAX_TRANSCRIPTION_ENTRIES: 10,
   },

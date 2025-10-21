@@ -3,17 +3,30 @@ import { StateManager } from '../state-manager'
 import { SpeechService } from '../services/speech-service'
 import { StatusIndicator } from '../components/status-indicator'
 import { validateActions } from './validator'
-import { PrimitiveAction, ExecutionContext, ActionHandler, GameState } from './types'
+import { PrimitiveAction, ExecutionContext, ActionHandler, GameState, GamePhase } from './types'
 import { Logger } from '../utils/logger'
 import { Profiler } from '../utils/profiler'
 import { formatStateContext } from '../llm/system-prompt'
 import { t } from '../i18n'
+import { deepClone } from '../utils/deep-clone'
+import { TurnManager } from './turn-manager'
+import { BoardEffectsHandler } from './board-effects-handler'
+import { DecisionPointEnforcer } from './decision-point-enforcer'
 
 /**
  * Core orchestrator that processes voice transcripts through LLM,
  * validates generated actions, and executes them on game state.
+ *
+ * AUTHORITY: The orchestrator owns all game state transitions including:
+ * - Turn advancement
+ * - Phase transitions
+ * - Player setup
+ * - Board mechanics
  */
 export class Orchestrator {
+  private turnManager: TurnManager
+  private boardEffectsHandler: BoardEffectsHandler
+  private decisionPointEnforcer: DecisionPointEnforcer
   private actionHandlers: Map<string, ActionHandler> = new Map()
   private isProcessing = false
   private initialState: GameState
@@ -26,6 +39,17 @@ export class Orchestrator {
     initialState: GameState
   ) {
     this.initialState = initialState
+
+    // Instantiate subsystems
+    this.turnManager = new TurnManager(stateManager)
+    this.boardEffectsHandler = new BoardEffectsHandler(
+      stateManager,
+      this.processTranscript.bind(this)
+    )
+    this.decisionPointEnforcer = new DecisionPointEnforcer(
+      stateManager,
+      this.processTranscript.bind(this)
+    )
   }
 
   /**
@@ -34,6 +58,15 @@ export class Orchestrator {
    */
   isLocked(): boolean {
     return this.isProcessing
+  }
+
+  /**
+   * Checks if the orchestrator is currently processing a square effect.
+   * Used by validator to block inappropriate actions during effect resolution.
+   * @returns true if processing square effect, false otherwise
+   */
+  isProcessingEffect(): boolean {
+    return this.boardEffectsHandler.isProcessingEffect()
   }
 
   /**
@@ -46,129 +79,15 @@ export class Orchestrator {
   }
 
   /**
-   * Checks if the current player has pending decisions that must be made before turn can advance.
-   * @param state - Current game state
-   * @returns true if player has pending decisions, false otherwise
-   */
-  private hasPendingDecisions(state: GameState): boolean {
-    const game = state.game as Record<string, unknown> | undefined
-    const currentTurn = game?.turn as string | undefined
-
-    if (!currentTurn) {
-      return false
-    }
-
-    const decisionPoints = state.decisionPoints as Array<{
-      position: number
-      requiredField: string
-      prompt: string
-    }> | undefined
-
-    if (!decisionPoints || decisionPoints.length === 0) {
-      return false
-    }
-
-    try {
-      const players = state.players as Record<string, Record<string, unknown>> | undefined
-      const currentPlayer = players?.[currentTurn]
-
-      if (!currentPlayer) {
-        return false
-      }
-
-      const position = currentPlayer.position as number | undefined
-
-      if (typeof position !== 'number') {
-        return false
-      }
-
-      const decisionPoint = decisionPoints.find(dp => dp.position === position)
-      if (!decisionPoint) {
-        return false
-      }
-
-      const fieldValue = currentPlayer[decisionPoint.requiredField]
-      return fieldValue === null || fieldValue === undefined
-    } catch (error) {
-      Logger.error('Error checking pending decisions:', error)
-      return false
-    }
-  }
-
-  /**
-   * Automatically advances turn to next player when all effects are complete.
-   * Only advances if: game is not finished, no pending decision points for current player.
-   */
-  private async autoAdvanceTurn(): Promise<void> {
-    const state = await this.stateManager.getState()
-    const game = state.game as Record<string, unknown> | undefined
-    const players = state.players as Record<string, Record<string, unknown>> | undefined
-
-    if (!game || !players) {
-      return
-    }
-
-    const currentTurn = game.turn as string | undefined
-    const winner = game.winner as string | undefined
-    const phase = game.phase as string | undefined
-    const playerOrder = game.playerOrder as string[] | undefined
-
-    if (phase !== 'PLAYING') {
-      return
-    }
-
-    if (winner) {
-      Logger.info('Game has winner, not advancing turn')
-      return
-    }
-
-    if (!currentTurn) {
-      Logger.warn('No current turn set, cannot advance')
-      return
-    }
-
-    if (!playerOrder || playerOrder.length === 0) {
-      if (phase === 'PLAYING') {
-        Logger.warn('No playerOrder set, cannot advance')
-      }
-      return
-    }
-
-    if (this.hasPendingDecisions(state)) {
-      Logger.info('⏸️ Turn advancement blocked: current player has pending decisions')
-      return
-    }
-
-    try {
-      const currentIndex = playerOrder.indexOf(currentTurn)
-      const nextIndex = (currentIndex + 1) % playerOrder.length
-      const nextPlayerId = playerOrder[nextIndex]
-      const nextPlayer = players[nextPlayerId]
-
-      Logger.info(`🔄 Auto-advancing turn: ${currentTurn} → ${nextPlayerId}`)
-      await this.stateManager.set('game.turn', nextPlayerId)
-
-      // Sanity check narration: Tell player their name, position, and what to do
-      const nextPlayerName = nextPlayer?.name as string || nextPlayerId
-      const nextPlayerPosition = nextPlayer?.position as number || 0
-      const message = `${nextPlayerName}, it's your turn. You're at position ${nextPlayerPosition}. Tell me what you rolled, or where you landed.`
-
-      Logger.info(`🎯 Turn start sanity check: ${nextPlayerName} at ${nextPlayerPosition}`)
-      await this.speechService.speak(message)
-    } catch (error) {
-      Logger.error('Failed to auto-advance turn:', error)
-    }
-  }
-
-  /**
    * Processes a voice transcript by sending to LLM and executing returned actions.
    * This is the main entry point for handling user voice commands.
    * @param transcript - The transcribed user command
+   * @returns true if execution succeeded, false otherwise
    */
-  async handleTranscript(transcript: string): Promise<void> {
+  async handleTranscript(transcript: string): Promise<boolean> {
     if (this.isProcessing) {
       Logger.warn('⏸️ Orchestrator busy, ignoring new request')
-      return
+      return false
     }
 
     this.isProcessing = true
@@ -180,10 +99,7 @@ export class Orchestrator {
     try {
       const context: ExecutionContext = { depth: 0, maxDepth: 5 }
       executionSucceeded = await this.processTranscript(transcript, context)
-
-      if (context.depth === 0 && executionSucceeded) {
-        await this.autoAdvanceTurn()
-      }
+      return executionSucceeded
     } finally {
       this.isProcessing = false
       Profiler.end('orchestrator.total')
@@ -209,11 +125,11 @@ export class Orchestrator {
 
     try {
       Logger.info('🧪 Test mode: Executing actions directly')
-      const state = await this.stateManager.getState()
+      const state = this.stateManager.getState()
       Logger.state('Current state:\n' + formatStateContext(state))
 
       Profiler.start('orchestrator.test.validation')
-      const validation = validateActions(actions, state, this.stateManager)
+      const validation = validateActions(actions, state, this.stateManager, this)
       Profiler.end('orchestrator.test.validation')
 
       if (!validation.valid) {
@@ -229,8 +145,6 @@ export class Orchestrator {
       Profiler.end('orchestrator.test.execution')
       Logger.info('✅ Test actions executed successfully')
 
-      await this.autoAdvanceTurn()
-
       return true
     } catch (error) {
       Logger.error('❌ Test execution error:', error)
@@ -242,6 +156,68 @@ export class Orchestrator {
     }
   }
 
+  /**
+   * Sets up players in game state from name collection data.
+   * AUTHORITY: Only the orchestrator can initialize player state.
+   * @param playerNames - Array of player names in turn order
+   */
+  setupPlayers(playerNames: string[]): void {
+    const currentState = this.stateManager.getState()
+    const playersArray = Object.values(currentState.players as Record<string, Record<string, unknown>>)
+    const playerTemplate = playersArray[0]
+
+    const players: Record<string, Record<string, unknown>> = {}
+    const playerOrder: string[] = []
+
+    playerNames.forEach((name, index) => {
+      const playerId = `p${index + 1}`
+      const player = deepClone(playerTemplate)
+      player.id = playerId
+      player.name = name
+      player.position = 0
+      players[playerId] = player
+      playerOrder.push(playerId)
+    })
+
+    this.stateManager.set('players', players)
+    this.stateManager.set('game.playerOrder', playerOrder)
+
+    // Set first player's turn
+    if (playerOrder.length > 0) {
+      this.stateManager.set('game.turn', playerOrder[0])
+    }
+
+    Logger.info('Players created:', players)
+    Logger.info('Player order:', playerOrder)
+  }
+
+  /**
+   * Transitions the game to a new phase.
+   * AUTHORITY: Only the orchestrator can change game phase.
+   * @param phase - The phase to transition to
+   */
+  transitionPhase(phase: GamePhase): void {
+    Logger.info(`🎮 Phase transition: ${this.stateManager.get('game.phase')} → ${phase}`)
+    this.stateManager.set('game.phase', phase)
+  }
+
+  /**
+   * Checks if the current player has pending decisions that must be resolved.
+   * @returns true if there are unresolved decisions, false otherwise
+   */
+  hasPendingDecisions(): boolean {
+    return this.turnManager.hasPendingDecisions()
+  }
+
+  /**
+   * Advances to the next player's turn.
+   * AUTHORITY: Only the orchestrator can advance turns.
+   * @returns The next player's ID and details, or null if unable to advance
+   */
+  async advanceTurn(): Promise<{ playerId: string; name: string; position: number } | null> {
+    return await this.turnManager.advanceTurn(this.boardEffectsHandler.isProcessingEffect())
+  }
+
   private async processTranscript(
     transcript: string,
     context: ExecutionContext
@@ -249,7 +225,7 @@ export class Orchestrator {
     try {
       Logger.brain(`Orchestrator processing: ${transcript} (depth: ${context.depth})`)
 
-      const state = await this.stateManager.getState()
+      const state = this.stateManager.getState()
       Logger.state('Current state:\n' + formatStateContext(state))
 
       Profiler.start(`orchestrator.llm.${context.depth}`)
@@ -265,7 +241,7 @@ export class Orchestrator {
       }
 
       Profiler.start(`orchestrator.validation.${context.depth}`)
-      const validation = validateActions(actions, state, this.stateManager)
+      const validation = validateActions(actions, state, this.stateManager, this)
       Profiler.end(`orchestrator.validation.${context.depth}`)
 
       if (!validation.valid) {
@@ -282,7 +258,7 @@ export class Orchestrator {
         Logger.info('Actions executed successfully')
       }
 
-      await this.enforceDecisionPoints(context)
+      await this.decisionPointEnforcer.enforceDecisionPoints(context)
 
       return true
     } catch (error) {
@@ -309,167 +285,6 @@ export class Orchestrator {
     }
   }
 
-  private async checkAndApplyBoardMoves(path: string): Promise<void> {
-    if (!path.endsWith('.position') || !path.startsWith('players.')) {
-      return
-    }
-
-    const position = await this.stateManager.get(path) as number
-
-    if (typeof position !== 'number') {
-      return
-    }
-
-    const state = await this.stateManager.getState()
-    const board = state.board as Record<string, unknown> | undefined
-    const moves = board?.moves as Record<string, number> | undefined
-
-    if (!moves) {
-      return
-    }
-
-    const destination = moves[position.toString()]
-    if (destination !== undefined && destination !== position) {
-      const isLadder = destination > position
-      const moveType = isLadder ? 'ladder' : 'snake'
-      Logger.info(`🎲 Auto-applying ${moveType}: position ${position} → ${destination}`)
-      await this.stateManager.set(path, destination)
-    }
-  }
-
-  private async checkAndApplySquareEffects(path: string, context: ExecutionContext): Promise<void> {
-    if (!path.endsWith('.position') || !path.startsWith('players.')) {
-      return
-    }
-
-    if (context.depth >= context.maxDepth - 1) {
-      Logger.warn('Skipping square effect check: max depth approaching')
-      return
-    }
-
-    const position = await this.stateManager.get(path) as number
-
-    if (typeof position !== 'number') {
-      return
-    }
-
-    const state = await this.stateManager.getState()
-    const board = state.board as Record<string, unknown> | undefined
-    const squares = board?.squares as Record<string, Record<string, unknown>> | undefined
-
-    if (!squares) {
-      return
-    }
-
-    const squareData = squares[position.toString()]
-    if (squareData && Object.keys(squareData).length > 0) {
-      const squareType = squareData.type as string
-      const squareName = squareData.name as string || 'unknown'
-
-      Logger.info(`🎯 Orchestrator enforcing square effect at position ${position}: ${squareType} (${squareName})`)
-
-      const newContext: ExecutionContext = {
-        depth: context.depth + 1,
-        maxDepth: context.maxDepth
-      }
-
-      const squareInfo = JSON.stringify(squareData)
-      await this.processTranscript(
-        `[SYSTEM: Current player just landed on square ${position}. Square data: ${squareInfo}. You MUST process this square's effect now according to game rules.]`,
-        newContext
-      )
-    }
-  }
-
-  private async enforceDecisionPoints(context: ExecutionContext): Promise<void> {
-    if (context.depth >= context.maxDepth - 1) {
-      Logger.warn('Skipping decision point check: max depth approaching')
-      return
-    }
-
-    const state = await this.stateManager.getState()
-    const game = state.game as Record<string, unknown> | undefined
-    const currentTurn = game?.turn as string | undefined
-
-    if (!currentTurn) {
-      return
-    }
-
-    const decisionPoints = state.decisionPoints as Array<{
-      position: number
-      requiredField: string
-      prompt: string
-    }> | undefined
-
-    if (!decisionPoints || decisionPoints.length === 0) {
-      return
-    }
-
-    try {
-      const players = state.players as Record<string, Record<string, unknown>> | undefined
-      const currentPlayer = players?.[currentTurn]
-
-      if (!currentPlayer) {
-        return
-      }
-
-      const playerName = currentPlayer.name as string || currentTurn
-      const position = currentPlayer.position as number | undefined
-
-      if (typeof position !== 'number') {
-        return
-      }
-
-      const decisionPoint = decisionPoints.find(dp => dp.position === position)
-      if (!decisionPoint) {
-        return
-      }
-
-      const fieldValue = currentPlayer[decisionPoint.requiredField]
-      if (fieldValue === null || fieldValue === undefined) {
-        Logger.info(`⚠️ Orchestrator enforcing decision point for ${playerName} at position ${position}: ${decisionPoint.requiredField}`)
-
-        const newContext: ExecutionContext = {
-          depth: context.depth + 1,
-          maxDepth: context.maxDepth
-        }
-
-        await this.processTranscript(
-          `[SYSTEM: ${playerName} (${currentTurn}) is at position ${position} and MUST choose '${decisionPoint.requiredField}' before proceeding. Ask them: "${decisionPoint.prompt}"]`,
-          newContext
-        )
-      }
-    } catch (error) {
-      Logger.error('Error enforcing decision points:', error)
-    }
-  }
-
-  private async assertPlayerTurnOwnership(path: string): Promise<void> {
-    if (!path.startsWith('players.')) {
-      return
-    }
-
-    const parts = path.split('.')
-    if (parts.length < 2) {
-      return
-    }
-
-    const playerId = parts[1]
-    const state = await this.stateManager.getState()
-    const game = state.game as Record<string, unknown> | undefined
-    const currentTurn = game?.turn as string | undefined
-
-    if (!currentTurn) {
-      return
-    }
-
-    if (playerId !== currentTurn) {
-      throw new Error(
-        `Turn ownership violation: Cannot modify players.${playerId} when it's ${currentTurn}'s turn. ` +
-        `This should have been caught by the validator - indicates a bug in validation logic.`
-      )
-    }
-  }
 
   private async executeAction(
     primitive: PrimitiveAction,
@@ -492,16 +307,16 @@ export class Orchestrator {
       }
 
       case 'SET_STATE': {
-        await this.assertPlayerTurnOwnership(primitive.path)
+        await this.turnManager.assertPlayerTurnOwnership(primitive.path)
         Logger.write(`Setting state: ${primitive.path} = ${JSON.stringify(primitive.value)}`)
-        await this.stateManager.set(primitive.path, primitive.value)
-        await this.checkAndApplyBoardMoves(primitive.path)
-        await this.checkAndApplySquareEffects(primitive.path, context)
+        this.stateManager.set(primitive.path, primitive.value)
+        await this.boardEffectsHandler.checkAndApplyBoardMoves(primitive.path)
+        await this.boardEffectsHandler.checkAndApplySquareEffects(primitive.path, context)
         break
       }
 
       case 'PLAYER_ROLLED': {
-        const state = await this.stateManager.getState()
+        const state = this.stateManager.getState()
         const game = state.game as Record<string, unknown> | undefined
         const currentTurn = game?.turn as string | undefined
 
@@ -510,7 +325,7 @@ export class Orchestrator {
         }
 
         const path = `players.${currentTurn}.position`
-        const currentPosition = await this.stateManager.get(path) as number
+        const currentPosition = this.stateManager.get(path) as number
 
         if (typeof currentPosition !== 'number') {
           throw new Error(`Cannot process PLAYER_ROLLED: ${path} is not a number`)
@@ -519,17 +334,17 @@ export class Orchestrator {
         const newPosition = currentPosition + primitive.value
         Logger.write(`Player rolled ${primitive.value}: ${path} (${currentPosition} + ${primitive.value} = ${newPosition})`)
 
-        await this.stateManager.set(path, newPosition)
-        await this.stateManager.set('game.lastRoll', primitive.value)
-        await this.checkAndApplyBoardMoves(path)
-        await this.checkAndApplySquareEffects(path, context)
+        this.stateManager.set(path, newPosition)
+        this.stateManager.set('game.lastRoll', primitive.value)
+        await this.boardEffectsHandler.checkAndApplyBoardMoves(path)
+        await this.boardEffectsHandler.checkAndApplySquareEffects(path, context)
         break
       }
 
       case 'PLAYER_ANSWERED': {
         Logger.info(`Player answered: "${primitive.answer}"`)
         // Store answer in temporary state for orchestrator to process
-        await this.stateManager.set('game.lastAnswer', primitive.answer)
+        this.stateManager.set('game.lastAnswer', primitive.answer)
         break
       }
 
@@ -538,7 +353,7 @@ export class Orchestrator {
 
         const playerNames: Map<string, string> = new Map()
         if (primitive.keepPlayerNames) {
-          const currentState = await this.stateManager.getState()
+          const currentState = this.stateManager.getState()
           const players = currentState.players as Record<string, { name: string }> | undefined
           if (players) {
             for (const [id, player] of Object.entries(players)) {
@@ -550,11 +365,11 @@ export class Orchestrator {
           }
         }
 
-        await this.stateManager.resetState(this.initialState)
+        this.stateManager.resetState(this.initialState)
         Logger.info('State reset to initial state')
 
         if (primitive.keepPlayerNames && playerNames.size > 0) {
-          const state = await this.stateManager.getState()
+          const state = this.stateManager.getState()
           const game = state.game as Record<string, unknown> | undefined
           const playerOrder = game?.playerOrder as string[] | undefined
 
@@ -563,7 +378,7 @@ export class Orchestrator {
             for (const playerId of playerOrder) {
               const savedName = playerNames.get(playerId)
               if (savedName) {
-                await this.stateManager.set(`players.${playerId}.name`, savedName)
+                this.stateManager.set(`players.${playerId}.name`, savedName)
                 Logger.info(`Restored player ${playerId}: "${savedName}"`)
               }
             }

@@ -1,16 +1,16 @@
 import { SpeechService } from '../services/speech-service'
-import { StateManager } from '../state-manager'
-import { GamePhase } from './types'
 import { validateName, findNameConflicts, generateNickname, areNamesSimilar } from '../utils/name-helper'
 import { Logger } from '../utils/logger'
 import { t, getNumberWords, getConfirmationWords } from '../i18n'
 import { LLMClient } from '../llm/LLMClient'
 import { GameMetadata } from '../game-loader/types'
-import { deepClone } from '../utils/deep-clone'
 
 /**
  * Handles the voice-based player name collection phase at game start.
  * Uses LLM for intelligent name extraction and conversational awareness.
+ *
+ * SEPARATION OF CONCERNS: This class only collects names via voice interaction.
+ * It does NOT mutate game state - that's the orchestrator's responsibility.
  */
 export class NameCollector {
   private collectedNames: string[] = []
@@ -21,7 +21,6 @@ export class NameCollector {
 
   constructor(
     private speechService: SpeechService,
-    private stateManager: StateManager,
     private gameName: string,
     private enableDirectTranscription: () => void,
     private llmClient: LLMClient,
@@ -34,9 +33,9 @@ export class NameCollector {
   /**
    * Runs the complete name collection flow.
    * @param onTranscript - Callback to receive transcriptions from speech recognition
-   * @returns Promise that resolves when setup is complete
+   * @returns Promise that resolves with array of collected player names in turn order
    */
-  async collectNames(onTranscript: (handler: (text: string) => void) => void): Promise<void> {
+  async collectNames(onTranscript: (handler: (text: string) => void) => void): Promise<string[]> {
     try {
       Logger.info('Starting name collection phase')
 
@@ -57,13 +56,11 @@ export class NameCollector {
 
       await this.resolveConflicts(onTranscript)
 
-      await this.createPlayers()
-
       await this.speechService.speak(t('setup.ready', { name: this.collectedNames[0] }))
 
-      await this.stateManager.set('game.phase', GamePhase.PLAYING)
-
       Logger.info('Name collection complete')
+
+      return this.collectedNames
 
     } catch (error) {
       Logger.error('Name collection error:', error)
@@ -459,30 +456,6 @@ export class NameCollector {
       await this.speechService.speak(t('setup.nameConflictFallback', { name: kindName }))
       resolve(kindName)
     }, 10000)
-  }
-
-  private async createPlayers(): Promise<void> {
-    const currentState = await this.stateManager.getState()
-    const playersArray = Object.values(currentState.players as Record<string, Record<string, unknown>>)
-    const playerTemplate = playersArray[0]
-
-    const players: Record<string, Record<string, unknown>> = {}
-    const playerOrder: string[] = []
-
-    this.collectedNames.forEach((name, index) => {
-      const playerId = `p${index + 1}`
-      const player = deepClone(playerTemplate)
-      player.id = playerId
-      player.name = name
-      player.position = 0
-      players[playerId] = player
-      playerOrder.push(playerId)
-    })
-
-    await this.stateManager.set('players', players)
-    await this.stateManager.set('game.playerOrder', playerOrder)
-    Logger.info('Players created:', players)
-    Logger.info('Player order:', playerOrder)
   }
 
   private setupTimeout(callback: () => void, ms: number): void {

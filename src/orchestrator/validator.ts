@@ -1,6 +1,7 @@
 import { GameState, PrimitiveAction } from './types'
 import { StateManager } from '../state-manager'
 import { deepClone } from '../utils/deep-clone'
+import type { Orchestrator } from './orchestrator'
 
 export interface ValidationResult {
   valid: boolean
@@ -64,12 +65,14 @@ function applyActionToMockState(
  * @param actions - The actions array to validate
  * @param state - Current game state for path validation
  * @param stateManager - State manager for path operations
+ * @param orchestrator - Orchestrator instance for context checking (optional for backward compatibility)
  * @returns Validation result with error message if invalid
  */
 export function validateActions(
   actions: unknown,
   state: GameState,
-  stateManager: StateManager
+  stateManager: StateManager,
+  orchestrator?: Orchestrator
 ): ValidationResult {
   if (!Array.isArray(actions)) {
     return {
@@ -82,7 +85,7 @@ export function validateActions(
 
   for (let i = 0; i < actions.length; i++) {
     const action = actions[i] as PrimitiveAction
-    const result = validateAction(action, mockState, stateManager, i)
+    const result = validateAction(action, mockState, stateManager, i, orchestrator)
     if (!result.valid) {
       return result
     }
@@ -97,7 +100,8 @@ function validateAction(
   primitive: PrimitiveAction,
   state: GameState,
   stateManager: StateManager,
-  index: number
+  index: number,
+  orchestrator?: Orchestrator
 ): ValidationResult {
   if (!primitive || typeof primitive !== 'object') {
     return {
@@ -121,7 +125,7 @@ function validateAction(
     case 'SET_STATE':
       return validateSetState(primitive, state, stateManager, index)
     case 'PLAYER_ROLLED':
-      return validatePlayerRolled(primitive, index)
+      return validatePlayerRolled(primitive, index, orchestrator)
     case 'PLAYER_ANSWERED':
       return validatePlayerAnswered(primitive, index)
     default:
@@ -303,7 +307,8 @@ function validateSetState(
 
 function validatePlayerRolled(
   action: PrimitiveAction,
-  index: number
+  index: number,
+  orchestrator?: Orchestrator
 ): ValidationResult {
   const actionRecord = action as unknown as Record<string, unknown>
   const valueValidation = validateField(actionRecord, 'value', 'number', 'PLAYER_ROLLED', index)
@@ -316,6 +321,13 @@ function validatePlayerRolled(
         valid: false,
         error: `PLAYER_ROLLED at index ${index} requires positive value, got ${actionRecord.value}`
       }
+    }
+  }
+
+  if (orchestrator?.isProcessingEffect()) {
+    return {
+      valid: false,
+      error: `PLAYER_ROLLED at index ${index}: Cannot roll dice during square effect processing. The square effect must be resolved first (fight/flee decision, etc.).`
     }
   }
 

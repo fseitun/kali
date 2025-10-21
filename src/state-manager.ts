@@ -1,94 +1,58 @@
 import { GameState } from './orchestrator/types'
-import { CONFIG } from './config'
 import { deepClone } from './utils/deep-clone'
 import { Logger } from './utils/logger'
 
 /**
- * Manages persistent game state in IndexedDB with dot-notation path access.
+ * Manages game state in memory with dot-notation path access.
+ *
+ * ARCHITECTURE NOTE: This class is intentionally simple and permissive.
+ * Access control is enforced at the ORCHESTRATOR level, not here.
+ *
+ * AUTHORITY MODEL:
+ * - Orchestrator OWNS all state mutations during gameplay
+ * - App layer (KaliAppCore) should NOT mutate state directly
+ * - NameCollector and other UI components should NOT mutate state directly
+ * - State mutations should only happen via orchestrator methods or primitives
+ *
+ * Exceptions (initialization only):
+ * - Initial state loading during app startup
+ * - Orchestrator's internal methods (setupPlayers, transitionPhase, advanceTurn)
  */
 export class StateManager {
-  private db: IDBDatabase | null = null
+  private state: GameState = {}
 
   /**
-   * Initializes the IndexedDB connection and ensures state exists.
-   * @param initialState - Default state to use if no saved state exists
-   * @throws Error if database connection fails or no initial state provided when needed
+   * Initializes the state manager with initial state.
+   * @param initialState - Initial state to use
+   * @throws Error if no initial state provided
    */
-  async init(initialState?: GameState): Promise<void> {
-    return new Promise((resolve, reject) => {
-      const request = indexedDB.open(CONFIG.STATE.DB_NAME, 1)
-
-      request.onerror = () => reject(request.error)
-      request.onsuccess = () => {
-        this.db = request.result
-        this.initializeState(initialState).then(resolve).catch(reject)
-      }
-
-      request.onupgradeneeded = (event) => {
-        const db = (event.target as IDBOpenDBRequest).result
-        if (!db.objectStoreNames.contains(CONFIG.STATE.STORE_NAME)) {
-          db.createObjectStore(CONFIG.STATE.STORE_NAME)
-        }
-      }
-    })
-  }
-
-  private async initializeState(initialState?: GameState): Promise<void> {
-    const existingState = await this.getState()
-    if (!existingState || Object.keys(existingState).length === 0) {
-      if (!initialState) {
-        throw new Error('No initial state provided and no existing state found')
-      }
-      await this.setState(initialState)
-      Logger.info('Initialized game state:', initialState)
-    }
+  init(initialState: GameState): void {
+    this.state = deepClone(initialState)
+    Logger.info('Initialized game state:', initialState)
   }
 
   /**
-   * Retrieves the current game state from IndexedDB.
+   * Retrieves the current game state.
    * @returns The complete game state object
-   * @throws Error if database not initialized
    */
-  async getState(): Promise<GameState> {
-    if (!this.db) throw new Error('Database not initialized')
-
-    return new Promise((resolve, reject) => {
-      const transaction = this.db!.transaction([CONFIG.STATE.STORE_NAME], 'readonly')
-      const store = transaction.objectStore(CONFIG.STATE.STORE_NAME)
-      const request = store.get(CONFIG.STATE.STATE_KEY)
-
-      request.onerror = () => reject(request.error)
-      request.onsuccess = () => resolve(request.result || {})
-    })
+  getState(): GameState {
+    return this.state
   }
 
   /**
-   * Replaces the entire game state in IndexedDB.
-   * @param state - The new state to persist
-   * @throws Error if database not initialized
+   * Replaces the entire game state.
+   * @param state - The new state
    */
-  async setState(state: GameState): Promise<void> {
-    if (!this.db) throw new Error('Database not initialized')
-
-    return new Promise((resolve, reject) => {
-      const transaction = this.db!.transaction([CONFIG.STATE.STORE_NAME], 'readwrite')
-      const store = transaction.objectStore(CONFIG.STATE.STORE_NAME)
-      const request = store.put(state, CONFIG.STATE.STATE_KEY)
-
-      request.onerror = () => reject(request.error)
-      request.onsuccess = () => resolve()
-    })
+  setState(state: GameState): void {
+    this.state = state
   }
 
   /**
    * Resets the game state to the provided initial state.
    * @param initialState - The state to reset to
-   * @throws Error if database not initialized
    */
-  async resetState(initialState: GameState): Promise<void> {
-    if (!this.db) throw new Error('Database not initialized')
-
-    await this.setState(initialState)
+  resetState(initialState: GameState): void {
+    this.state = deepClone(initialState)
     Logger.info('Game state reset')
   }
 
@@ -97,9 +61,8 @@ export class StateManager {
    * @param path - Path to the value (e.g., "players.0.position")
    * @returns The value at the specified path
    */
-  async get(path: string): Promise<unknown> {
-    const state = await this.getState()
-    return this.getByPath(state, path)
+  get(path: string): unknown {
+    return this.getByPath(this.state, path)
   }
 
   /**
@@ -107,10 +70,8 @@ export class StateManager {
    * @param path - Path to the value (e.g., "players.0.position")
    * @param value - The value to set
    */
-  async set(path: string, value: unknown): Promise<void> {
-    const state = await this.getState()
-    const newState = this.setByPath(state, path, value)
-    await this.setState(newState)
+  set(path: string, value: unknown): void {
+    this.state = this.setByPath(this.state, path, value)
   }
 
   /**

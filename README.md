@@ -130,7 +130,7 @@ Audio pipeline follows: idle → listening → processing → speaking
 
 ### LLM & State
 - **LLM Clients**: Gemini (fast, recommended) or Ollama (local)
-- **State Storage**: IndexedDB for persistent sessions
+- **State Storage**: In-memory state management (IndexedDB persistence planned)
 - **TTS**: Browser SpeechSynthesis API
 - **Sound Effects**: WebAudio for preloaded local audio
 
@@ -150,14 +150,15 @@ Audio pipeline follows: idle → listening → processing → speaking
 ### Phase 2: Orchestration Loop ✅
 - LLM integration (Ollama & Google Gemini)
 - Primitive action validation
-- IndexedDB state persistence
+- In-memory state management
 - Text-to-speech narration
 
 ### Phase 3: Game Integration ✅
 - Snakes & Ladders and Kalimba fully playable
 - Sound effects support
-- Turn management
+- Turn management with modular subsystems
 - Win condition detection
+- Testing infrastructure with Vitest
 
 ### Latest: Performance & UI ✅
 - **Performance Profiling**: Track LLM response times
@@ -186,7 +187,7 @@ Audio pipeline follows: idle → listening → processing → speaking
 - Add comments ONLY when they add significant value
 - Use strict TypeScript with all compiler warnings enabled
 - Follow ESLint rules for code quality
-- **After making code changes, always run `npm test && npm run lint && npm run type-check` and fix any issues**
+- **After making code changes, always run `npm run test && npm run lint && npm run type-check` and fix any issues**
 - Add JSDoc comments to:
   - All public methods and functions
   - All exported interfaces, types, and classes
@@ -234,8 +235,8 @@ See `checkAndApplyBoardMoves` in `orchestrator.ts` for implementation.
 
 ### State Persistence
 - App always starts fresh (SETUP phase) on launch
-- Current session state persists in IndexedDB
-- Future: Explicit save/load game feature planned
+- Current session state is in-memory only
+- Future: IndexedDB persistence and save/load game features planned (see roadmap)
 
 ## Architecture Decisions
 
@@ -266,7 +267,10 @@ See `checkAndApplyBoardMoves` in `orchestrator.ts` for implementation.
 
 ### Core Logic
 - `src/orchestrator/` - Core validation and execution logic
-  - `orchestrator.ts` - Main orchestration loop
+  - `orchestrator.ts` - Main orchestration loop (refactored into subsystems)
+  - `turn-manager.ts` - Turn advancement and ownership validation
+  - `board-effects-handler.ts` - Board moves and square effects
+  - `decision-point-enforcer.ts` - Decision point requirements
   - `validator.ts` - Primitive action validation
   - `types.ts` - Type definitions for primitives
   - `name-collector.ts` - Voice-based player name collection
@@ -297,7 +301,7 @@ See `checkAndApplyBoardMoves` in `orchestrator.ts` for implementation.
   - Each JSON contains: name, rules, initialState, soundEffects
 
 ### State Management
-- `src/state-manager.ts` - IndexedDB wrapper with path-based operations
+- `src/state-manager.ts` - In-memory state manager with path-based operations
 
 ### Utilities
 - `src/utils/` - Helper functions

@@ -32,6 +32,123 @@ The system is built on a strict separation of duties:
 
 This separation ensures the Orchestrator stays small and universal.
 
+## State Management Axioms - CRITICAL ARCHITECTURE
+
+These are ABSOLUTE rules that must NEVER be violated:
+
+### 1. Orchestrator Authority (THE CPU MODEL)
+
+**The orchestrator is the sole authority for ALL game state mutations.**
+
+✅ CORRECT:
+- Orchestrator methods: `setupPlayers()`, `transitionPhase()`, `advanceTurn()`
+- Primitive execution within orchestrator: `SET_STATE`, `PLAYER_ROLLED`, etc.
+- Orchestrator internal state updates: board moves, square effects
+
+❌ FORBIDDEN:
+- App layer directly calling `stateManager.set()`
+- UI components directly calling `stateManager.set()`
+- NameCollector or similar components mutating state
+- Any component bypassing orchestrator to change game state
+
+### 2. Phase Transitions - ORCHESTRATOR ONLY, NEVER LLM
+
+**Phase transitions (SETUP → PLAYING → FINISHED) are orchestrator-owned.**
+
+✅ CORRECT:
+- `orchestrator.transitionPhase(GamePhase.PLAYING)`
+- Orchestrator decides when to transition based on game state
+
+❌ FORBIDDEN:
+- LLM requesting phase transitions via primitives
+- App layer directly setting `game.phase`
+- UI components setting `game.phase`
+- New primitive actions for phase control (phases are NOT user-facing)
+
+**Rationale**: Phases are internal state machine transitions, not game actions.
+
+### 3. Turn Advancement - ORCHESTRATOR ONLY, NEVER LLM
+
+**Turn advancement is orchestrator-owned automatic behavior.**
+
+✅ CORRECT:
+- `orchestrator.advanceTurn()` - returns next player data
+- App layer announces turn change to user
+- Orchestrator blocks turns during effects/decisions
+
+❌ FORBIDDEN:
+- LLM requesting turn advancement via primitives
+- App layer directly setting `game.turn`
+- Manual `SET_STATE` on `game.turn` (validator blocks this)
+- Bypassing orchestrator's turn logic
+
+**Rationale**: Turn advancement has complex rules (effects, decisions, win conditions).
+
+### 4. UI Components Return Data, Never Mutate State
+
+**UI components collect data and return it. State mutations go through orchestrator.**
+
+✅ CORRECT:
+- `nameCollector.collectNames()` returns `string[]`
+- Caller: `orchestrator.setupPlayers(names)`
+- Component has no stateManager dependency
+
+❌ FORBIDDEN:
+- UI component with stateManager in constructor
+- UI component calling `stateManager.set()`
+- UI component mixing presentation with state mutations
+
+**Pattern**: Collect → Return → Orchestrator Applies
+
+### 5. App Layer is Pure Coordination
+
+**KaliAppCore wires components and coordinates flow. NO game logic.**
+
+✅ CORRECT:
+- Initialize components
+- Delegate to orchestrator for state changes
+- Announce results to user (TTS)
+- Handle user input routing
+
+❌ FORBIDDEN:
+- App layer implementing game mechanics
+- App layer deciding turn advancement logic
+- App layer managing phase transitions
+- App layer duplicating orchestrator logic
+
+### 6. StateManager is Infrastructure, Not Policy
+
+**StateManager provides storage. Orchestrator provides policy.**
+
+✅ CORRECT:
+- StateManager has public `set()` for flexibility
+- Access control enforced at orchestrator level
+- Only orchestrator calls `set()` during gameplay
+
+❌ FORBIDDEN:
+- Adding orchestrator checks inside StateManager
+- Making StateManager "smart" about game rules
+- Coupling StateManager to game logic
+
+**Rationale**: Keep infrastructure layer simple and reusable.
+
+## Enforcement
+
+### Code Review Checklist
+- [ ] Any `stateManager.set()` call must be in orchestrator or justified
+- [ ] New UI components must not have stateManager dependency
+- [ ] Phase transitions go through `orchestrator.transitionPhase()`
+- [ ] Turn advancement goes through `orchestrator.advanceTurn()`
+- [ ] LLM primitives do NOT include phase or turn control
+
+### Testing Requirements
+- New features that manage state must have orchestrator tests
+- UI components must have tests proving they don't mutate state
+- Integration tests must verify orchestrator authority
+
+### Architectural Violations are Critical Bugs
+If you find code that violates these axioms, it is a **CRITICAL bug** that must be fixed immediately, regardless of whether it "works."
+
 ## Technology Stack
 
 - **Platform**: Progressive Web App (PWA) with screen always on
