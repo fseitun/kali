@@ -6,7 +6,7 @@ This document consolidates all planned improvements and features, ranked by thei
 
 ## 🔥 Critical Priority (High Value / Low-Medium Complexity)
 
-### 1. Error Recovery & Voice Feedback 🔥
+### Error Recovery & Voice Feedback 🔥
 **Value: 10/10 | Complexity: 4/10 | Ratio: 2.5**
 
 **Problem:** All errors (validation failures, LLM network errors, execution errors) are silently logged with no voice feedback. Unacceptable for voice-only interface.
@@ -29,25 +29,7 @@ This document consolidates all planned improvements and features, ranked by thei
 
 ---
 
-### 2. Fix StateManager Documentation 🔥
-**Value: 2/10 | Complexity: 1/10 | Ratio: 2.0**
-
-**Problem:** Documentation incorrectly said StateManager is an "IndexedDB wrapper" but it's just in-memory storage. Documentation mismatch caused confusion.
-
-**Implementation:**
-- Updated all documentation to say "in-memory state manager with path-based operations"
-- Migrated from legacy `.cursorrules` to new Project Rules system (`.cursor/rules/`)
-
-**Files:**
-- `.cursor/rules/` - New modular rule system (10 files)
-- `README.md`
-- `BOUNDARY_ANALYSIS.md`
-
-**Status:** ✅ COMPLETE (2025-10-21) - All documentation updated and migrated to new rule system
-
----
-
-### 3. IndexedDB Persistence for Resume Game 🔥
+### IndexedDB Persistence for Resume Game 🔥
 **Value: 8/10 | Complexity: 5/10 | Ratio: 1.6**
 
 **Note:** This is FUTURE work. StateManager is currently in-memory only (documentation now corrected).
@@ -76,7 +58,7 @@ This document consolidates all planned improvements and features, ranked by thei
 
 ---
 
-### 4. State Manager Batching 🔥
+### State Manager Batching 🔥
 **Value: 8/10 | Complexity: 4/10 | Ratio: 2.0**
 
 **Problem:** Each `stateManager.set()` call triggers full state clone. With IndexedDB persistence, this will become a performance bottleneck.
@@ -92,13 +74,13 @@ This document consolidates all planned improvements and features, ranked by thei
 - `src/state-manager.ts`
 - `src/orchestrator/orchestrator.ts`
 
-**Note:** Should be implemented together with IndexedDB persistence (#3)
+**Note:** Should be implemented together with IndexedDB persistence
 
 ---
 
 ## ⭐ High Value (Significant Impact / Moderate Complexity)
 
-### 5. Type Safety Improvements ⭐
+### Type Safety Improvements ⭐
 **Value: 7/10 | Complexity: 4/10 | Ratio: 1.75**
 
 **Problem:** Multiple type assertions with `as unknown as Record<string, unknown>` in validator, unsafe JSON parsing.
@@ -119,7 +101,7 @@ This document consolidates all planned improvements and features, ranked by thei
 
 ---
 
-### 6. State Corruption Recovery ⭐
+### State Corruption Recovery ⭐
 **Value: 8/10 | Complexity: 5/10 | Ratio: 1.6**
 
 **Problem:** No validation or recovery if IndexedDB state becomes corrupted. Can cause silent failures.
@@ -138,7 +120,7 @@ This document consolidates all planned improvements and features, ranked by thei
 ---
 
 
-### 8. Explicit Save/Load Game Feature ⭐
+### Explicit Save/Load Game Feature ⭐
 **Value: 8/10 | Complexity: 6/10 | Ratio: 1.33**
 
 **Problem:** App always starts fresh on launch. Users can't resume games explicitly.
@@ -160,7 +142,7 @@ This document consolidates all planned improvements and features, ranked by thei
 
 ---
 
-### 9. LLM Narration Rephrasing ⭐
+### LLM Narration Rephrasing ⭐
 **Value: 7/10 | Complexity: 5/10 | Ratio: 1.4**
 
 **Problem:** All system messages and i18n strings spoken as-is, making Kali sound robotic and repetitive.
@@ -180,7 +162,7 @@ This document consolidates all planned improvements and features, ranked by thei
 
 ---
 
-### 10. Background Music & Audio Management System ⭐
+### Background Music & Audio Management System ⭐
 **Value: 7/10 | Complexity: 5/10 | Ratio: 1.4**
 
 **Problem:** No background music or ambient audio. Experience lacks immersion, especially for kids. No audio ducking during voice interaction causes clarity issues.
@@ -248,7 +230,7 @@ This document consolidates all planned improvements and features, ranked by thei
 
 ---
 
-### 11. Runtime Game Selection ⭐
+### Runtime Game Selection ⭐
 **Value: 7/10 | Complexity: 5/10 | Ratio: 1.4**
 
 **Problem:** Currently defaulting to Kalimba game. Need runtime game selection.
@@ -273,7 +255,7 @@ This document consolidates all planned improvements and features, ranked by thei
 
 ## 💎 Strategic (Long-term Value / Higher Complexity)
 
-### 12. Game-Agnostic Orchestrator 💎
+### Game-Agnostic Orchestrator 💎
 **Value: 8/10 | Complexity: 7/10 | Ratio: 1.14**
 
 **Problem:** `checkAndApplyBoardMoves` in orchestrator is game-specific (Snakes & Ladders logic). Violates core architecture principle.
@@ -292,7 +274,7 @@ This document consolidates all planned improvements and features, ranked by thei
 
 ---
 
-### 13. State History & Rollback System 💎
+### State History & Rollback System 💎
 **Value: 7/10 | Complexity: 6/10 | Ratio: 1.17**
 
 **Problem:** Users might make mistakes and need to recover from errors. No undo functionality.
@@ -312,11 +294,11 @@ This document consolidates all planned improvements and features, ranked by thei
 
 **Overhead:** <5ms per snapshot, minimal storage
 
-**Note:** Could leverage state transactions (#13b) for atomic rollback
+**Note:** Could leverage state transactions (see State Manager Transactions) for atomic rollback
 
 ---
 
-### 13b. State Manager Transactions (Optional) 💎
+### State Manager Transactions (Optional) 💎
 **Value: 5/10 | Complexity: 6/10 | Ratio: 0.83**
 
 **Problem:** Each `set()` is independent. No atomic multi-step mutations.
@@ -341,15 +323,15 @@ class StateManager {
 - `src/orchestrator/orchestrator.ts`
 
 **Status:** Low priority - only needed if:
-- Undo/redo feature is implemented (#13)
+- Undo/redo feature is implemented (see State History & Rollback System)
 - Complex multi-step mutations need atomicity
 - Error recovery requires state rollback
 
-**Verdict:** Consider only after #13 State History is implemented
+**Verdict:** Consider only after State History & Rollback System is implemented
 
 ---
 
-### 13c. State Change Listeners (Optional) 💎
+### State Change Listeners (Optional) 💎
 **Value: 4/10 | Complexity: 5/10 | Ratio: 0.8**
 
 **Problem:** No way to observe state changes. Components can't react to mutations.
@@ -380,7 +362,7 @@ class StateManager {
 
 ---
 
-### 14. LLM Request Optimization 💎
+### LLM Request Optimization 💎
 **Value: 7/10 | Complexity: 6/10 | Ratio: 1.17**
 
 **Problem:** Full system prompt + state sent on every request, no caching. Latency and cost implications.
@@ -397,7 +379,7 @@ class StateManager {
 
 ---
 
-### 15. Enhanced Logging & Debug Tools 💎
+### Enhanced Logging & Debug Tools 💎
 **Value: 6/10 | Complexity: 5/10 | Ratio: 1.2**
 
 **Problem:** Logger is basic, no structured logging or filtering. Hard to debug production issues.
@@ -417,7 +399,7 @@ class StateManager {
 
 ## 🔧 Infrastructure (Foundation for Other Work)
 
-### 16. Dependency Injection Container 🔧
+### Dependency Injection Container 🔧
 **Value: 6/10 | Complexity: 6/10 | Ratio: 1.0**
 
 **Problem:** Hard-coded dependencies make coupling tight.
@@ -434,69 +416,35 @@ class StateManager {
 
 ---
 
-### 17. Code Refactoring - Large File Extraction 🔧
-**Value: 7/10 | Complexity: 6/10 | Ratio: 1.17**
+### Code Refactoring - Name Collector Extraction 🔧
+**Value: 6/10 | Complexity: 5/10 | Ratio: 1.2**
 
-**Problem:** Several core files have grown large with multiple responsibilities. Orchestrator (536 lines) contains turn management, board effects, and decision point logic mixed with core orchestration. Name collector (487 lines) has repeated confirmation patterns.
+**Problem:** Name collector (487 lines) has repeated confirmation patterns that could be extracted for reusability.
 
 **Implementation:**
-
-**Phase 1: Orchestrator Extraction (CRITICAL)**
-- Extract TurnManager module (~100 lines)
-  - hasPendingDecisions, autoAdvanceTurn, assertPlayerTurnOwnership
-- Extract BoardEffectsHandler module (~120 lines)
-  - checkAndApplyBoardMoves, checkAndApplySquareEffects
-- Extract DecisionPointEnforcer module (~60 lines)
-  - enforceDecisionPoints
-- Result: Orchestrator reduced from 536 → ~250 lines
-
-**Phase 2: Name Collector Extraction (MEDIUM)**
 - Extract NameConfirmationHandler module (~150 lines)
   - Reusable confirmation flows
 - Extract TimeoutManager utility
   - DRY timeout pattern
-
-**Phase 3: Integration & Documentation**
 - Complete game session validation
 - Performance validation
-- Documentation updates
+
+**Files:**
+- `src/orchestrator/name-confirmation-handler.ts` (new)
+- `src/utils/timeout-manager.ts` (new)
+- `src/orchestrator/name-collector.ts` (refactor)
 
 **Benefits:**
 - Smaller, focused files (easier to understand)
-- Isolated concerns for clarity
-- Clearer architecture (separation of concerns)
+- Reusable confirmation patterns
 - Reduced cognitive load
-- Foundation for game-agnostic orchestrator
+- Foundation for other setup flows
 
-**Files:**
-- `src/orchestrator/turn-manager.ts` (new)
-- `src/orchestrator/board-effects-handler.ts` (new)
-- `src/orchestrator/decision-point-enforcer.ts` (new)
-- `src/orchestrator/name-confirmation-handler.ts` (new)
-- `src/utils/timeout-manager.ts` (new)
-- `src/orchestrator/orchestrator.ts` (refactor)
-- `src/orchestrator/name-collector.ts` (refactor)
-
-**Status:**
-- Full analysis in `discussions/code-refactoring-analysis.md`
-- Orchestrator refactor plan in `discussions/orchestrator-refactor-plan.md`
-- **Phase 1 (Orchestrator): ✅ COMPLETE** (2025-10-20)
-  - Orchestrator: 650 → 395 lines (39% reduction)
-  - Created: TurnManager (182 lines), BoardEffectsHandler (122 lines), DecisionPointEnforcer (89 lines)
-  - Zero lint/type errors
-- Phase 2 (Name Collector): Planned
-- Phase 3 (Integration & Documentation): Planned
-
-**Estimated Effort:** 12-17 hours total
-- **Phase 1 (Orchestrator): ✅ DONE in 2 hours**
-- Phase 2 (Name Collector): 4-6 hours
-- Phase 3 (Integration): 2-3 hours
-
-**Note:** Makes DI implementation much easier
+**Estimated Effort:** 4-6 hours
 
 ---
 
-### 18. Event System 🔧
+### Event System 🔧
 **Value: 6/10 | Complexity: 6/10 | Ratio: 1.0**
 
 **Problem:** Tight coupling between components, no observable state changes.
@@ -513,7 +461,7 @@ class StateManager {
 
 ---
 
-### 19. Modernize Async Patterns 🔧
+### Modernize Async Patterns 🔧
 **Value: 5/10 | Complexity: 5/10 | Ratio: 1.0**
 
 **Problem:** Some Promise constructor anti-patterns, missing proper error boundaries.
@@ -533,7 +481,7 @@ class StateManager {
 
 ## 🎨 Polish (Nice to Have / Lower Priority)
 
-### 20. Graceful Degradation 🎨
+### Graceful Degradation 🎨
 **Value: 7/10 | Complexity: 4/10 | Ratio: 1.75**
 
 **Problem:** Voice-only approach fails if TTS unavailable. No fallback.
@@ -551,7 +499,7 @@ class StateManager {
 
 ---
 
-### 21. Audio Pipeline Optimization 🎨
+### Audio Pipeline Optimization 🎨
 **Value: 5/10 | Complexity: 6/10 | Ratio: 0.83**
 
 **Problem:** No buffer pooling, potential memory pressure from audio chunks.
@@ -570,7 +518,7 @@ class StateManager {
 
 ---
 
-### 22. TTS Voice Selection 🎨
+### TTS Voice Selection 🎨
 **Value: 6/10 | Complexity: 4/10 | Ratio: 1.5**
 
 **Problem:** Uses default browser voice. No customization.
@@ -587,7 +535,7 @@ class StateManager {
 
 ---
 
-### 23. Improve Model Download Error Recovery 🎨
+### Improve Model Download Error Recovery 🎨
 **Value: 5/10 | Complexity: 4/10 | Ratio: 1.25**
 
 **Problem:** If model download fails, app shows error but no retry mechanism.
@@ -603,7 +551,7 @@ class StateManager {
 
 ---
 
-### 24. Sound Effect Management 🎨
+### Sound Effect Management 🎨
 **Value: 4/10 | Complexity: 4/10 | Ratio: 1.0**
 
 **Problem:** All sound effects loaded at startup.
@@ -619,7 +567,7 @@ class StateManager {
 
 ---
 
-### 25. JSDoc Documentation 🎨
+### JSDoc Documentation 🎨
 **Value: 4/10 | Complexity: 3/10 | Ratio: 1.33**
 
 **Problem:** Code is clean but lacks JSDoc comments on some key classes/methods.
@@ -636,7 +584,7 @@ class StateManager {
 
 ---
 
-### 7. User Language Selection at Setup ⭐
+### User Language Selection at Setup ⭐
 **Value: 1/10 | Complexity: 6/10 | Ratio: 0.17**
 
 **Problem:** Currently hardcoded to Spanish (Argentina). Need runtime language selection.

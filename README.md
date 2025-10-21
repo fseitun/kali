@@ -46,97 +46,14 @@ A voice-first game moderator for kids to play board games independently. Uses sp
 
 Kali is an always-available, voice-first game moderator. Its immediate goal is to moderate games like **Snakes and Ladders** and **Kalimba** by understanding spoken player actions. The long-term vision is a **game-agnostic engine** capable of learning new games, including complex ones like Dungeons & Dragons, simply by being fed their rulebooks and state schemas.
 
-### Vision: LLM-Assisted Game Creation
+## Architecture
 
-The long-term goal is a system where:
-- Users feed game rules and context to an LLM service/endpoint
-- LLM generates game definition JSON (rules, state schema, primitives)
-- Human validates and uploads to engine (S3/repo/JSON storage)
-- New games become instantly available to Kali
-- Enables complex games (D&D and beyond) without code changes
+Kali is built on a strict separation between the **LLM** (interprets natural language) and the **Orchestrator** (validates and executes primitive actions). This separation ensures the system remains reliable, testable, and game-agnostic.
 
-## Core Principle: The CPU and the Game Designer
-
-To achieve scalability, Kali is built on a strict separation of duties:
-
-### The LLM (Game Designer)
-- Creative but untrusted component
-- Reads game rules and understands player intent
-- Translates high-level concepts into primitive action sequences
-- All game-specific logic lives in the LLM context
-
-### The Orchestrator (CPU)
-- Deterministic, authoritative, and simple component
-- Knows nothing about game rules
-- Only understands primitive actions: `READ_STATE`, `WRITE_STATE`, `ROLL_DICE`, `NARRATE`
-- Validates and executes instructions from the LLM
-- Guarantees game state integrity
-
-This separation ensures the Orchestrator stays small and universal.
-
-## How It Works
-
-### Architecture Overview
-
-- **LLM (Game Designer)**: Creative component that understands game rules and translates to primitive actions
-- **Orchestrator (CPU)**: Deterministic component that validates and executes primitive actions
-- **Audio Pipeline**: WebAudio + Vosk speech recognition (fully offline!)
-
-### Voice Interaction Flow
-
-1. User says wake word: "Kali"
-2. System responds: "Listening for command..."
-3. User speaks command (5 second window)
-4. System transcribes and processes via LLM
-5. Orchestrator validates and executes primitives
-6. System narrates response via TTS
-7. Returns to listening for wake word
-
-**Example**: "Kali" → "I rolled a six and landed on square twelve"
-
-## Core Architecture
-
-### Primitive Actions
-The orchestrator only understands these primitives:
-- `READ_STATE` - Read from game state
-- `WRITE_STATE` - Write to game state
-- `ROLL_DICE` - Generate random numbers
-- `NARRATE` - Speak to players via TTS
-
-### State Machine
-Audio pipeline follows: idle → listening → processing → speaking
-
-### Voice-Only UX
-- Screen stays on but no visual interaction required
-- All feedback must be audible
-- Users cannot see errors, so voice feedback is critical
-
-### LLM Swappability
-- All LLM clients implement `LLMClient` interface
-- Switching providers is a one-line change
-
-### Processing Lock
-- Prevents overlapping LLM requests
-- Ensures serial processing of voice commands
-
-## Technologies
-
-### Platform & Audio
-- **Platform**: Progressive Web App (PWA) with screen always on
-- **Language**: TypeScript (ES2022, strict mode)
-- **Build Tool**: Vite
-- **Audio Pipeline**: WebAudio API + AudioWorklet
-- **Speech Recognition**: Vosk (fully offline, wake word + STT)
-
-### LLM & State
-- **LLM Clients**: Gemini (fast, recommended) or Ollama (local)
-- **State Storage**: In-memory state management (IndexedDB persistence planned)
-- **TTS**: Browser SpeechSynthesis API
-- **Sound Effects**: WebAudio for preloaded local audio
-
-### Caching & Offline
-- **Model Caching**: Cache API for Vosk model persistence
-- **Service Worker**: Cache API for offline operation
+**For detailed architecture information:**
+- [Core Architecture & Technology Stack](.cursor/rules/architecture.mdc)
+- [Architecture Decisions & Rationale](.cursor/rules/architecture-decisions.mdc)
+- [Guided LLM Pattern Philosophy](.cursor/kali-architecture.md)
 
 ## Features
 
@@ -217,123 +134,10 @@ The immediate priorities are:
 
 See the [roadmap document](./discussions/prioritized-roadmap.md) for detailed implementation plans and sequencing recommendations.
 
-## Key Patterns & Implementation Details
+## Project Structure & Development
 
-### Hybrid Deterministic Rules
-Some game rules are enforced by the orchestrator (e.g., ladder/snake moves in Snakes & Ladders) rather than trusting the LLM. This is done for:
-- 100% reliability
-- Faster execution
-- Cost reduction
-- Silent error correction
-
-See `checkAndApplyBoardMoves` in `orchestrator.ts` for implementation.
-
-### Error Recovery
-- Validation failures should provide voice feedback (voice-only UX)
-- Processing errors should reset to idle state
-- Model download failures need user-friendly recovery
-
-### State Persistence
-- App always starts fresh (SETUP phase) on launch
-- Current session state is in-memory only
-- Future: IndexedDB persistence and save/load game features planned (see roadmap)
-
-## Architecture Decisions
-
-### Why Vosk?
-- Completely free and offline
-- No API limits or costs
-- Both wake word and full STT
-- Ideal for families
-
-### Why LLM Swappability?
-- Gemini: Fast (1-3s), low cost, cloud-based
-- Ollama: Slow (30-50s), free, fully local
-- Users choose based on needs
-
-### Why IndexedDB?
-- Persistent across sessions
-- Async/non-blocking
-- Large storage capacity
-- Standard browser API
-
-### Why Processing Lock?
-- Prevents overlapping LLM requests
-- Ensures deterministic state updates
-- Avoids race conditions
-- Better UX (no confusing parallel responses)
-
-## Important File Locations
-
-### Core Logic
-- `src/orchestrator/` - Core validation and execution logic
-  - `orchestrator.ts` - Main orchestration loop (refactored into subsystems)
-  - `turn-manager.ts` - Turn advancement and ownership validation
-  - `board-effects-handler.ts` - Board moves and square effects
-  - `decision-point-enforcer.ts` - Decision point requirements
-  - `validator.ts` - Primitive action validation
-  - `types.ts` - Type definitions for primitives
-  - `name-collector.ts` - Voice-based player name collection
-- `src/llm/` - LLM clients and system prompts
-  - `LLMClient.ts` - Interface for LLM providers
-  - `GeminiClient.ts` - Google Gemini integration
-  - `OllamaClient.ts` - Local Ollama integration
-  - `system-prompt.ts` - LLM system prompt generator
-
-### Services
-- `src/services/` - Speech and UI services
-  - `speech-service.ts` - TTS and audio playback
-  - `ui-service.ts` - UI service interface
-  - `production-ui-service.ts` - Minimal pulsating orb UI
-  - `debug-ui-service.ts` - Full debug console UI
-
-### Audio Pipeline
-- `src/audio-worklet/` - Audio processing for Vosk
-  - `vosk-processor.js` - AudioWorklet processor
-- `src/wake-word.ts` - Wake word detection state machine
-- `src/model-manager.ts` - Vosk model downloading and caching
-
-### Game System
-- `src/game-loader/` - Game definition loading
-  - `game-loader.ts` - Loads game JSON and sound effects
-  - `types.ts` - Game definition types
-- `public/games/` - Game definitions (JSON files)
-  - Each JSON contains: name, rules, initialState, soundEffects
-
-### State Management
-- `src/state-manager.ts` - In-memory state manager with path-based operations
-
-### Utilities
-- `src/utils/` - Helper functions
-  - `logger.ts` - Logging utility
-  - `profiler.ts` - Performance profiling
-  - `name-helper.ts` - Name transcription error correction
-  - `deep-clone.ts` - Deep cloning utility
-
-### Configuration & Entry Points
-- `src/config.ts` - App configuration (wake word, timeouts, etc.)
-- `src/main.ts` - Production app entry point
-- `src/debug.ts` - Debug interface entry point
-
-## Common Tasks
-
-### Adding New Primitive Actions
-1. Add new action type to `src/orchestrator/types.ts`
-2. Implement validation in `src/orchestrator/validator.ts`
-3. Add execution handler in `src/orchestrator/orchestrator.ts`
-4. Update system prompt in `src/llm/system-prompt.ts`
-
-### Adding New Game Support
-1. Create game definition JSON in `public/games/`
-2. Include: name, rules (plain text), initialState, soundEffects
-3. No code changes needed - game logic lives in LLM context
-
-### Modifying LLM Prompts
-1. Edit `src/llm/system-prompt.ts`
-2. Test with both Gemini and Ollama if possible
-3. Keep prompts concise to reduce latency and cost
-
-### Adjusting Voice Flows
-1. Modify `src/orchestrator/orchestrator.ts` for main flow
-2. Edit `src/orchestrator/name-collector.ts` for name collection
-3. Update `src/wake-word.ts` for state machine changes
+**For detailed information:**
+- [File Structure & Locations](.cursor/rules/file-structure.mdc)
+- [Common Development Tasks](.cursor/rules/common-tasks.mdc)
+- [Development Guidelines](.cursor/rules/development-guidelines.mdc)
+- [Testing Commands & Workflows](.cursor/rules/testing-commands.mdc)

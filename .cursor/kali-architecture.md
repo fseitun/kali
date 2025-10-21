@@ -1,5 +1,9 @@
 # Kali Architecture: The Guided LLM Pattern
 
+> **Note:** This document details the Guided LLM Pattern philosophy and implementation patterns.
+> For general architecture overview, see [.cursor/rules/architecture.mdc](.cursor/rules/architecture.mdc).
+> For architectural decisions and rationale, see [.cursor/rules/architecture-decisions.mdc](.cursor/rules/architecture-decisions.mdc).
+
 ## Core Philosophy
 
 **Kali is a Guided LLM, not a Free-Range LLM.**
