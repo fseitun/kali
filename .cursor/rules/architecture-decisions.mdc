@@ -1,0 +1,95 @@
+---
+description: Why we chose Vosk, LLM swappability, in-memory state, and processing lock
+---
+
+# Architecture Decisions
+
+## Why Vosk?
+
+- Completely free and offline
+- No API limits or costs
+- Both wake word and full STT in one package
+- Ideal for families (no privacy concerns)
+- Works after initial model download (~40MB)
+
+## Why LLM Swappability?
+
+We support multiple LLM providers via `ILLMClient` interface:
+
+**Gemini (Recommended)**
+- Fast response times (1-3s)
+- Low cost per request
+- Cloud-based (requires internet)
+- Best for production use
+
+**Ollama (Alternative)**
+- Slow response times (30-50s)
+- Completely free
+- Fully local (no internet needed)
+- Good for development/testing
+
+Users choose based on their needs (speed vs. privacy/cost).
+
+## Why In-Memory State (for now)?
+
+- Simple and fast
+- No persistence complexity
+- Easier to test and debug
+- Future: IndexedDB persistence planned (see roadmap)
+
+## Why Processing Lock?
+
+The orchestrator uses `isProcessing` flag to serialize LLM requests:
+
+**Benefits:**
+- Prevents overlapping LLM requests
+- Ensures deterministic state updates
+- Avoids race conditions
+- Better UX (no confusing parallel responses)
+
+**How it works:**
+```typescript
+if (this.isProcessing) {
+  return // Reject new requests
+}
+this.isProcessing = true
+try {
+  await this.processTranscript(transcript)
+} finally {
+  this.isProcessing = false
+}
+```
+
+Without this, concurrent voice commands could corrupt game state.
+
+## Known Patterns in Codebase
+
+### Hybrid Deterministic Rules
+
+Some game rules are enforced by the orchestrator (e.g., ladder/snake moves in Snakes & Ladders) rather than trusting the LLM. This is done for:
+- 100% reliability
+- Faster execution
+- Cost reduction
+- Silent error correction
+
+See `BoardEffectsHandler.checkAndApplyBoardMoves()` for implementation.
+
+### Error Recovery
+
+- Validation failures should provide voice feedback (voice-only UX)
+- Processing errors should reset to idle state
+- Model download failures need user-friendly recovery
+
+### State Persistence
+
+- App always starts fresh (SETUP phase) on launch
+- Current session state is in-memory only
+- Future: IndexedDB and save/load features planned
+
+## Future Development
+
+For planned improvements and features, see:
+- **Prioritized Roadmap**: `discussions/prioritized-roadmap.md`
+- **Architecture Plans**: `discussions/` directory
+
+The roadmap is ranked by value/complexity ratio and includes error recovery, IndexedDB persistence, testing improvements, and more.

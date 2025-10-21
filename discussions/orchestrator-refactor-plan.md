@@ -793,7 +793,7 @@ This refactor lays the groundwork for additional improvements:
 
 - **Full Analysis:** `discussions/code-refactoring-analysis.md`
 - **Roadmap:** `discussions/prioritized-roadmap.md` (item #18)
-- **Architecture:** `.cursorrules` (State Management Axioms section)
+- **Architecture:** `.cursor/rules/state-axioms.mdc` (State Management Axioms)
 - **Error Handling Plan:** `discussions/error-recovery-analysis.md`
 - **LLM Rephrasing Plan:** `discussions/llm-narration-rephrasing.md`
 

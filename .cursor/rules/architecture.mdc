@@ -1,0 +1,52 @@
+---
+description: Core architecture concepts and technology stack
+alwaysApply: true
+---
+
+# Kali Architecture
+
+## Project Overview
+
+Kali is a voice-first PWA game moderator for kids to play board games independently. Currently supports Snakes & Ladders and Kalimba with a modular, game-agnostic architecture.
+
+## Core Architecture: The CPU and the Game Designer
+
+The system is built on a strict separation of duties:
+
+### The LLM (Interpreter)
+- Translates natural language to primitive actions
+- Game rules provided in prompt context (doesn't "understand" them)
+- Maps player speech to orchestrator primitives
+- Creative but untrusted - orchestrator validates everything
+
+### The Orchestrator (CPU)
+- Deterministic, authoritative, and simple component
+- Knows nothing about game rules
+- Only understands primitive actions: `READ_STATE`, `WRITE_STATE`, `ROLL_DICE`, `NARRATE`
+- Validates and executes instructions from the LLM
+- Guarantees game state integrity
+
+This separation ensures the Orchestrator stays small and universal.
+
+## Orchestrator Modular Structure
+
+The orchestrator uses specialized subsystems for different concerns:
+- **TurnManager** - Turn advancement, ownership validation, pending decisions
+- **BoardEffectsHandler** - Board moves (snakes/ladders), square effects
+- **DecisionPointEnforcer** - Decision point requirements
+- **Orchestrator** - Core coordination and primitive execution
+
+When working with turn logic, board effects, or decision points, look in the corresponding module rather than the main orchestrator file.
+
+## Technology Stack
+
+- **Platform**: Progressive Web App (PWA) with screen always on
+- **Language**: TypeScript (ES2022, strict mode)
+- **Build Tool**: Vite
+- **Audio Pipeline**: WebAudio API + AudioWorklet
+- **Speech Recognition**: Vosk (fully offline, wake word + STT)
+- **LLM Clients**: Gemini (fast, recommended) or Ollama (local)
+- **State Storage**: In-memory state management
+- **TTS**: Browser SpeechSynthesis API
+- **Sound Effects**: WebAudio for preloaded local audio
+- **Caching**: Service Worker + Cache API for offline operation

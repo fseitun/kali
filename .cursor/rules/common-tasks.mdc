@@ -1,0 +1,41 @@
+---
+description: How to add primitives, games, modify prompts, and adjust voice flows
+---
+
+# Common Tasks
+
+## Adding New Primitive Actions
+
+1. Add new action type to `src/orchestrator/types.ts`
+2. Implement validation in `src/orchestrator/validator.ts`
+3. Add execution handler in `src/orchestrator/orchestrator.ts`
+4. Update system prompt in `src/llm/system-prompt.ts`
+
+## Adding New Game Support
+
+1. Create game definition JSON in `public/games/[game-name]/config.json`
+2. Include: metadata, rules, initialState, board (if applicable), soundEffects
+3. Most game logic lives in LLM context via system prompts
+4. Note: Some mechanics (board moves, square effects) are currently in BoardEffectsHandler - see roadmap item #12 for game-agnostic refactor
+
+## Modifying LLM Prompts
+
+1. Edit `src/llm/system-prompt.ts`
+2. Test with both Gemini and Ollama if possible
+3. Keep prompts concise to reduce latency and cost
+
+## Adjusting Voice Flows
+
+1. Modify `src/orchestrator/orchestrator.ts` for main flow
+2. Edit `src/orchestrator/name-collector.ts` for name collection
+3. Update `src/wake-word.ts` for state machine changes
+
+## Voice Interaction Flow
+
+1. User says wake word: "Zookeeper"
+2. System responds: "Listening for command..."
+3. User speaks command (5 second window)
+4. System transcribes and processes via LLM
+5. Orchestrator validates and executes primitives
+6. System narrates response via TTS
+7. Returns to listening for wake word

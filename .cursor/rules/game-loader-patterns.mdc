@@ -1,0 +1,118 @@
+---
+description: Patterns for game definitions and game loading system
+globs:
+  - src/game-loader/**/*.ts
+  - public/games/**/*.json
+---
+
+# Game Loader Patterns
+
+## Game Definition Structure
+
+Each game lives in `public/games/[game-name]/config.json`:
+
+```json
+{
+  "metadata": {
+    "id": "game-id",
+    "name": "Display Name",
+    "version": "1.0.0",
+    "description": "Brief description",
+    "minPlayers": 2,
+    "maxPlayers": 4
+  },
+  "rules": {
+    "objective": "Win condition",
+    "mechanics": "How to play",
+    "turnStructure": "Turn order",
+    "boardLayout": "Board description",
+    "examples": ["example 1", "example 2"]
+  },
+  "initialState": {
+    "game": {
+      "phase": "SETUP",
+      "turn": null,
+      "winner": null
+    },
+    "players": {}
+  },
+  "board": {
+    "size": 100,
+    "moves": {
+      "5": 15,   // Ladder: 5 → 15
+      "12": 3    // Snake: 12 → 3
+    },
+    "squares": {
+      "10": {
+        "type": "encounter",
+        "name": "Wolf",
+        "power": 3
+      }
+    }
+  },
+  "soundEffects": {
+    "roll": "/games/[game-name]/sounds/roll.mp3",
+    "win": "/games/[game-name]/sounds/win.mp3"
+  },
+  "decisionPoints": [
+    {
+      "position": 0,
+      "requiredField": "pathChoice",
+      "prompt": "Choose path A or B?"
+    }
+  ]
+}
+```
+
+## How Games Are Loaded
+
+1. `GameLoader.loadGame(gameName)` fetches config JSON
+2. Validates structure against `GameModule` interface
+3. Preloads sound effects via WebAudio
+4. Returns game module to orchestrator
+5. Orchestrator initializes state from `initialState`
+
+## LLM Integration
+
+Game rules are passed to LLM via system prompt:
+- `rules` section becomes LLM context
+- LLM understands game mechanics
+- LLM translates player actions to primitives
+- Orchestrator executes primitives deterministically
+
+## Current Limitations
+
+**Board Effects Are Hardcoded:**
+- `BoardEffectsHandler` contains Snakes & Ladders logic
+- Square effects trigger for Kalimba encounters
+- NOT truly game-agnostic yet
+
+**Future (Roadmap #12):**
+- Move board logic to game config
+- Create hook system for game-specific behavior
+- Make orchestrator completely game-agnostic
+
+## Sound Effects
+
+Sound effects are preloaded at game start:
+```typescript
+const soundEffects = await gameLoader.loadSoundEffects(gameModule)
+// Returns Map<string, AudioBuffer>
+```
+
+Used by SpeechService for:
+- Dice rolls
+- Win conditions
+- Special events
+- Ambient sounds (future)
+
+## Adding a New Game
+
+1. Create `public/games/[game-name]/config.json`
+2. Define metadata, rules, initialState
+3. Add board config if applicable
+4. Include sound effect paths
+5. Define decision points if needed
+6. Test via debug interface
+
+Most game logic lives in LLM context via `rules` - no code changes needed for new games (with current limitations noted above).

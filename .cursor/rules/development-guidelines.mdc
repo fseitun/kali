@@ -1,0 +1,64 @@
+---
+description: Code quality standards and development practices
+alwaysApply: true
+---
+
+# Development Guidelines
+
+## Code Quality Standards
+
+- Write clean, canonical, and DRY code
+- Avoid smart hacks, obscure patterns, or clever tricks
+- Add comments ONLY when they add significant value
+- Use strict TypeScript with all compiler warnings enabled
+- Follow ESLint rules for code quality
+- **After making code changes, always run `npm run lint` and `npm run type-check` and fix any issues**
+
+## JSDoc Documentation
+
+Add JSDoc comments to:
+- All public methods and functions
+- All exported interfaces, types, and classes
+- Complex private methods where the logic is non-obvious
+
+JSDoc should include:
+- Brief description of what the method/class does
+- @param tags for all parameters
+- @returns tag for return values
+- @throws tag if the method can throw errors
+
+## Voice-Only UX Requirements
+
+- Screen stays on but no visual interaction required
+- All feedback must be audible
+- Users cannot see errors, so voice feedback is critical
+- Every error condition needs a voice response
+
+## Testing Requirements
+
+Run before committing:
+```bash
+npm run test     # Vitest tests
+npm run lint     # ESLint
+npm run type-check  # TypeScript compiler
+```
+
+## Key Patterns
+
+### Primitive Actions
+The orchestrator only understands these primitives:
+- `READ_STATE` - Read from game state
+- `WRITE_STATE` - Write to game state
+- `ROLL_DICE` - Generate random numbers
+- `NARRATE` - Speak to players via TTS
+
+### State Machine
+Audio pipeline follows: idle → listening → processing → speaking
+
+### LLM Swappability
+- All LLM clients implement `ILLMClient` interface
+- Switching providers is a one-line change
+
+### Processing Lock
+- Prevents overlapping LLM requests
+- Ensures serial processing of voice commands

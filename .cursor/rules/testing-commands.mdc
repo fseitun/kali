@@ -1,0 +1,60 @@
+---
+description: Development commands and testing workflows
+---
+
+# Testing Commands
+
+## Development Commands
+
+```bash
+npm run dev           # Start development server
+npm run build         # Build for production
+npm run preview       # Preview production build
+```
+
+## Quality Commands
+
+```bash
+npm run test          # Run Vitest tests
+npm run lint          # Run ESLint
+npm run lint:fix      # Auto-fix ESLint issues
+npm run type-check    # Check TypeScript types
+```
+
+## Pre-Commit Checklist
+
+Before committing code:
+1. Run `npm run test` - All tests must pass
+2. Run `npm run lint` - Zero linter errors
+3. Run `npm run type-check` - Zero type errors
+
+## Available Interfaces
+
+### Production Interface
+- URL: `http://localhost:5173/`
+- UI: Minimal pulsating orb
+- Use: Normal gameplay
+
+### Debug Interface
+- URL: `http://localhost:5173/debug`
+- UI: Full console with logs
+- Use: Development and debugging
+
+## Testing Patterns
+
+### Unit Tests
+- Located next to source files: `*.test.ts`
+- Framework: Vitest
+- Coverage: Run `npm run test:coverage` (if configured)
+
+### Integration Tests
+- Test orchestrator authority patterns
+- Verify state mutation boundaries
+- Ensure component coordination
+
+### Manual Testing
+1. Start app with `npm run dev`
+2. Grant microphone permissions
+3. Wait for Vosk model download (first time only)
+4. Say "Kali" to wake
+5. Speak commands to test flow

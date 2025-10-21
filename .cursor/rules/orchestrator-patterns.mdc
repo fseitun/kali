@@ -1,0 +1,97 @@
+---
+description: Patterns for working with orchestrator and its subsystems
+globs: src/orchestrator/**/*.ts
+---
+
+# Orchestrator Patterns
+
+## Module Structure
+
+The orchestrator uses modular subsystems:
+
+### TurnManager (182 lines)
+- `hasPendingDecisions()` - Check if current player needs to make a decision
+- `advanceTurn()` - Advance to next player with automatic blocking
+- `assertPlayerTurnOwnership(path)` - Validate mutations target correct player
+
+### BoardEffectsHandler (122 lines)
+- `checkAndApplyBoardMoves(path)` - Auto-apply snakes/ladders after position changes
+- `checkAndApplySquareEffects(path, context)` - Trigger square effects via LLM
+- `isProcessingEffect()` - Check if currently processing a square effect
+
+### DecisionPointEnforcer (89 lines)
+- `enforceDecisionPoints(context)` - Enforce required decisions at special positions
+
+### Orchestrator (395 lines)
+- Core coordination and primitive execution
+- Delegates to subsystems for specialized logic
+- Maintains processing lock to prevent concurrent LLM requests
+
+## Primitive Execution Flow
+
+1. User voice command → transcription
+2. LLM translates to primitive actions
+3. Validator checks each action
+4. Orchestrator executes actions sequentially
+5. Board effects auto-apply after position changes
+6. Decision points enforced before turn advancement
+7. Turn auto-advances when conditions met
+
+## Processing Lock Pattern
+
+The orchestrator uses `isProcessing` flag to prevent overlapping LLM requests:
+
+```typescript
+if (this.isProcessing) {
+  return // Block new requests
+}
+this.isProcessing = true
+try {
+  await this.processTranscript(transcript)
+} finally {
+  this.isProcessing = false
+}
+```
+
+**Why:**
+- Prevents race conditions in state updates
+- Ensures deterministic game flow
+- Avoids confusing parallel TTS responses
+- Users get serial, ordered feedback
+
+## Turn Advancement Blocking
+
+Turns auto-advance, but are blocked when:
+- Current player has pending decisions (pathChoice, etc.)
+- Square effect is being processed
+- Game has a winner
+- Game is not in PLAYING phase
+
+## Board Effects Pattern
+
+After any position change:
+1. Check `board.moves` for snakes/ladders → auto-apply silently
+2. Check `board.squares` for special content → inject LLM prompt
+
+This is deterministic and happens BEFORE turn advancement.
+
+## Decision Point Pattern
+
+If player lands on a position with `decisionPoints` entry:
+- Check if required field (e.g., `pathChoice`) is null
+- If null, inject synthetic LLM transcript to prompt decision
+- Block turn advancement until decision is made
+- Decision stored in player state
+
+## Synthetic Transcript Injection
+
+The orchestrator can inject "fake" user commands to ensure critical steps happen:
+
+```typescript
+await this.processTranscript(
+  `[SYSTEM: Player landed on square 5. Process encounter.]`,
+  context
+)
+```
+
+This guarantees the LLM processes important game events without trusting it to remember.

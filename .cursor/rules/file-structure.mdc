@@ -1,0 +1,82 @@
+---
+description: Project file organization and important file locations
+---
+
+# Important File Locations
+
+## Core Logic
+
+### src/orchestrator/
+Core validation and execution logic:
+- `orchestrator.ts` - Main orchestration loop (refactored into subsystems)
+- `turn-manager.ts` - Turn advancement and ownership validation
+- `board-effects-handler.ts` - Board moves and square effects
+- `decision-point-enforcer.ts` - Decision point requirements
+- `validator.ts` - Primitive action validation
+- `types.ts` - Type definitions for primitives
+- `name-collector.ts` - Voice-based player name collection
+
+### src/llm/
+LLM clients and system prompts:
+- `LLMClient.ts` - Interface for LLM providers
+- `GeminiClient.ts` - Google Gemini integration
+- `OllamaClient.ts` - Local Ollama integration
+- `system-prompt.ts` - LLM system prompt generator
+
+## Services
+
+### src/services/
+Speech and UI services:
+- `speech-service.ts` - TTS and audio playback
+- `ui-service.ts` - UI service interface
+- `production-ui-service.ts` - Minimal pulsating orb UI
+- `debug-ui-service.ts` - Full debug console UI
+
+## Audio Pipeline
+
+### src/audio-worklet/
+Audio processing for Vosk:
+- `vosk-processor.js` - AudioWorklet processor
+
+### Voice Recognition
+- `src/wake-word.ts` - Wake word detection state machine
+- `src/model-manager.ts` - Vosk model downloading and caching
+
+## Game System
+
+### src/game-loader/
+Game definition loading:
+- `game-loader.ts` - Loads game JSON and sound effects
+- `types.ts` - Game definition types
+
+### public/games/
+Game definitions (JSON files):
+- Each game has a directory with `config.json`
+- Contains: metadata, rules, initialState, board (optional), soundEffects
+
+## State Management
+
+- `src/state-manager.ts` - In-memory state manager with path-based operations
+
+## Utilities
+
+### src/utils/
+Helper functions:
+- `logger.ts` - Logging utility
+- `profiler.ts` - Performance profiling
+- `name-helper.ts` - Name transcription error correction
+- `deep-clone.ts` - Deep cloning utility
+
+## Configuration & Entry Points
+
+- `src/config.ts` - App configuration (wake word, timeouts, etc.)
+- `src/main.ts` - Production app entry point
+- `src/debug.ts` - Debug interface entry point
+
+## Documentation
+
+- `.cursor/rules/` - Project rules (you are here)
+- `discussions/prioritized-roadmap.md` - Feature roadmap
+- `discussions/` - Architecture analysis documents
+- `BOUNDARY_ANALYSIS.md` - Component responsibility analysis
+- `.cursor/kali-architecture.md` - Detailed architecture guide
