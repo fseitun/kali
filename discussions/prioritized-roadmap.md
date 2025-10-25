@@ -1,38 +1,35 @@
 # Kali Development Roadmap - Prioritized by Value/Complexity
 
-This document consolidates all planned improvements and features, ranked by their value-to-complexity ratio.
+This document consolidates all planned improvements and features, ranked by their value-to-complexity ratio. Only future work is included - completed features have been removed.
 
 ---
 
 ## 🔥 Critical Priority (High Value / Low-Medium Complexity)
 
-### Error Recovery & Voice Feedback 🔥
-**Value: 10/10 | Complexity: 4/10 | Ratio: 2.5**
+### Advanced Error Recovery & State Rollback 🔥
+**Value: 9/10 | Complexity: 5/10 | Ratio: 1.8**
 
-**Problem:** All errors (validation failures, LLM network errors, execution errors) are silently logged with no voice feedback. Unacceptable for voice-only interface.
+**Problem:** Basic voice feedback exists, but no typed error handling, state rollback, or atomic execution. Execution errors can cause partial state corruption.
 
 **Implementation:**
-- Add voice narration for all error types with specific, helpful messages
-- Validation failures: "I can't do that right now, it's not your turn"
-- LLM failures: "Sorry, I didn't catch that. Can you try again?"
-- Execution errors: "Something went wrong. Let's try that again"
-- Add `ErrorHandler` service with error classification (transient, permanent, critical)
-- Implement automatic retry with exponential backoff for transient errors
+- Add custom error classes (`ValidationError`, `LLMNetworkError`, `LLMParseError`, `ExecutionError`)
+- Implement atomic execution with state rollback on any error
+- Add state snapshotting before action sequences
+- Enhanced voice feedback with specific error context
+- Stop execution on first error (no partial corruption)
 
 **Files:**
-- `src/services/error-handler.ts` (new)
+- `src/orchestrator/errors.ts` (new)
 - `src/orchestrator/orchestrator.ts`
 - `src/llm/GeminiClient.ts`
 - `src/llm/OllamaClient.ts`
 
-**Status:** Analysis complete in `discussions/error-recovery-analysis.md` - ready to implement
+**Status:** Basic voice messages implemented, advanced phases needed
 
 ---
 
 ### IndexedDB Persistence for Resume Game 🔥
-**Value: 8/10 | Complexity: 5/10 | Ratio: 1.6**
-
-**Note:** This is FUTURE work. StateManager is currently in-memory only (documentation now corrected).
+**Value: 8/10 | Complexity: 6/10 | Ratio: 1.33**
 
 **Problem:** State is in-memory only, lost on page reload. No way to resume games after closing the app.
 
@@ -49,32 +46,9 @@ This document consolidates all planned improvements and features, ranked by thei
 - `src/kali-app-core.ts` (initialization)
 
 **Benefits:**
-- Matches original documentation intent
 - Enables "resume game" feature
 - Better user experience (no lost progress)
 - Foundation for multiple save slots later
-
-**Status:** Future enhancement - medium priority
-
----
-
-### State Manager Batching 🔥
-**Value: 8/10 | Complexity: 4/10 | Ratio: 2.0**
-
-**Problem:** Each `stateManager.set()` call triggers full state clone. With IndexedDB persistence, this will become a performance bottleneck.
-
-**Implementation:**
-- Add `beginTransaction()` / `commitTransaction()` methods to batch writes
-- Only clone state once at commit time (not on every `set()`)
-- Debounce IndexedDB writes (e.g., 100ms delay after last mutation)
-- Add in-memory write buffer
-- Target: < 50ms for batched state updates
-
-**Files:**
-- `src/state-manager.ts`
-- `src/orchestrator/orchestrator.ts`
-
-**Note:** Should be implemented together with IndexedDB persistence
 
 ---
 
@@ -119,7 +93,6 @@ This document consolidates all planned improvements and features, ranked by thei
 
 ---
 
-
 ### Explicit Save/Load Game Feature ⭐
 **Value: 8/10 | Complexity: 6/10 | Ratio: 1.33**
 
@@ -138,8 +111,6 @@ This document consolidates all planned improvements and features, ranked by thei
 - `src/orchestrator/orchestrator.ts`
 - `src/orchestrator/types.ts` (new actions)
 
-**Status:** Planned - future enhancement
-
 ---
 
 ### LLM Narration Rephrasing ⭐
@@ -154,9 +125,12 @@ This document consolidates all planned improvements and features, ranked by thei
 - Especially important for kids
 
 **Files:**
-- `src/services/speech-service.ts`
-- `src/llm/GeminiClient.ts` (add rephrasing method)
-- `src/i18n/index.ts`
+- `src/services/narration-rephrasing-service.ts` (new)
+- `src/llm/LLMClient.ts` (add rephraseNarration method)
+- `src/llm/GeminiClient.ts` (implement rephrasing)
+- `src/llm/OllamaClient.ts` (implement rephrasing)
+- `src/services/speech-service.ts` (integrate rephrasing service)
+- `src/config.ts` (add narration config)
 
 **Status:** Planned in `discussions/llm-narration-rephrasing.md` - ready to implement
 
@@ -231,7 +205,7 @@ This document consolidates all planned improvements and features, ranked by thei
 ---
 
 ### Runtime Game Selection ⭐
-**Value: 7/10 | Complexity: 5/10 | Ratio: 1.4**
+**Value: 7/10 | Complexity: 3/10 | Ratio: 2.33**
 
 **Problem:** Currently defaulting to Kalimba game. Need runtime game selection.
 
@@ -249,7 +223,31 @@ This document consolidates all planned improvements and features, ranked by thei
 - `src/config.ts`
 - `src/state-manager.ts`
 
-**Status:** Currently defaulting to Kalimba
+**Status:** GameLoader infrastructure exists, just needs UI flow
+
+---
+
+### User Language Selection at Setup ⭐
+**Value: 6/10 | Complexity: 4/10 | Ratio: 1.5**
+
+**Problem:** Currently hardcoded to Spanish (Argentina). Need runtime language selection.
+
+**Implementation:**
+- Voice-activated language selection on first launch
+- "Choose your language: Spanish or English" / "Elegí tu idioma: Español o Inglés"
+- Store language preference in IndexedDB
+- Update `CONFIG.LOCALE` dynamically
+- Reload i18n translations
+- Update LLM system prompt based on selected language
+- Wake word "Kali" works phonetically in both languages
+
+**Files:**
+- `src/i18n/index.ts`
+- `src/orchestrator/name-collector.ts` (add language selection phase)
+- `src/config.ts`
+- `src/state-manager.ts` (persist language choice)
+
+**Status:** i18n infrastructure exists, just needs UI flow
 
 ---
 
@@ -258,13 +256,14 @@ This document consolidates all planned improvements and features, ranked by thei
 ### Game-Agnostic Orchestrator 💎
 **Value: 8/10 | Complexity: 7/10 | Ratio: 1.14**
 
-**Problem:** `checkAndApplyBoardMoves` in orchestrator is game-specific (Snakes & Ladders logic). Violates core architecture principle.
+**Problem:** `BoardEffectsHandler` contains game-specific logic (Snakes & Ladders). While configurable via JSON, the handler itself is hardcoded in orchestrator.
 
 **Implementation:**
 - Move board move logic to game config via `onStateChange` hooks
 - Create `APPLY_BOARD_EFFECT` primitive action
 - Remove hard-coded Snakes & Ladders logic from orchestrator
 - Enable games to define state transformation hooks in JSON
+- Make BoardEffectsHandler truly generic
 
 **Files:**
 - `src/orchestrator/orchestrator.ts` (remove checkAndApplyBoardMoves)
@@ -293,8 +292,6 @@ This document consolidates all planned improvements and features, ranked by thei
 - `src/orchestrator/orchestrator.ts` (integrate undo)
 
 **Overhead:** <5ms per snapshot, minimal storage
-
-**Note:** Could leverage state transactions (see State Manager Transactions) for atomic rollback
 
 ---
 
@@ -328,37 +325,6 @@ class StateManager {
 - Error recovery requires state rollback
 
 **Verdict:** Consider only after State History & Rollback System is implemented
-
----
-
-### State Change Listeners (Optional) 💎
-**Value: 4/10 | Complexity: 5/10 | Ratio: 0.8**
-
-**Problem:** No way to observe state changes. Components can't react to mutations.
-
-**Potential Enhancement:**
-- Add `subscribe()` / `unsubscribe()` methods
-- UI could reactively update on state changes
-- Better debugging (log all state changes)
-- Enable reactive patterns
-
-**Implementation:**
-```typescript
-class StateManager {
-  subscribe(path: string, callback: (value: unknown) => void): void
-  unsubscribe(path: string, callback: (value: unknown) => void): void
-}
-```
-
-**Files:**
-- `src/state-manager.ts`
-
-**Status:** Very low priority - only needed if:
-- Visual UI is added (currently voice-only)
-- Real-time state visualization for debugging
-- Reactive UI framework integration
-
-**Verdict:** Not needed for voice-only app. Skip unless requirements change.
 
 ---
 
@@ -412,7 +378,6 @@ class StateManager {
 **Files:**
 - `src/di-container.ts` (new)
 - Refactor all services to use DI
-
 
 ---
 
@@ -567,41 +532,31 @@ class StateManager {
 
 ---
 
-### JSDoc Documentation 🎨
-**Value: 4/10 | Complexity: 3/10 | Ratio: 1.33**
+### State Change Listeners (Optional) 🎨
+**Value: 4/10 | Complexity: 5/10 | Ratio: 0.8**
 
-**Problem:** Code is clean but lacks JSDoc comments on some key classes/methods.
+**Problem:** No way to observe state changes. Components can't react to mutations.
 
-**Implementation:**
-- Add JSDoc to public methods in StateManager, Orchestrator, SpeechService, GameLoader
-- Include @param, @returns, @throws tags
-- Improve IDE autocomplete experience
-
-**Files:**
-- Core classes across the codebase
-
-**Status:** Partially complete - some classes already documented
-
----
-
-### User Language Selection at Setup ⭐
-**Value: 1/10 | Complexity: 6/10 | Ratio: 0.17**
-
-**Problem:** Currently hardcoded to Spanish (Argentina). Need runtime language selection.
+**Potential Enhancement:**
+- Add `subscribe()` / `unsubscribe()` methods
+- UI could reactively update on state changes
+- Better debugging (log all state changes)
+- Enable reactive patterns
 
 **Implementation:**
-- Voice-activated language selection on first launch
-- "Choose your language: Spanish or English" / "Elegí tu idioma: Español o Inglés"
-- Store language preference in IndexedDB
-- Update `CONFIG.LOCALE` dynamically
-- Reload i18n translations
-- Update LLM system prompt based on selected language
-- Wake word "Kali" works phonetically in both languages
+```typescript
+class StateManager {
+  subscribe(path: string, callback: (value: unknown) => void): void
+  unsubscribe(path: string, callback: (value: unknown) => void): void
+}
+```
 
 **Files:**
-- `src/i18n/index.ts`
-- `src/orchestrator/name-collector.ts` (add language selection phase)
-- `src/config.ts`
-- `src/state-manager.ts` (persist language choice)
+- `src/state-manager.ts`
 
-**Status:** Currently defaulting to Spanish (Argentina)
+**Status:** Very low priority - only needed if:
+- Visual UI is added (currently voice-only)
+- Real-time state visualization for debugging
+- Reactive UI framework integration
+
+**Verdict:** Not needed for voice-only app. Skip unless requirements change.
