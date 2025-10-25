@@ -3,6 +3,16 @@
 This document consolidates all planned improvements and features, ranked by their value-to-complexity ratio. Only future work is included - completed features have been removed.
 
 ---
+1.8: Advanced Error Recovery & State Rollback
+1.75: Type Safety Improvements
+1.6: State Corruption Recovery
+1.5: User Language Selection at Setup
+1.4: LLM Narration Rephrasing
+1.4: Background Music & Audio Management System
+1.33: IndexedDB Persistence for Resume Game
+1.33: Explicit Save/Load Game Feature
+1.0: Runtime Game Selection
+---
 
 ## 🔥 Critical Priority (High Value / Low-Medium Complexity)
 
@@ -205,7 +215,7 @@ This document consolidates all planned improvements and features, ranked by thei
 ---
 
 ### Runtime Game Selection ⭐
-**Value: 7/10 | Complexity: 3/10 | Ratio: 2.33**
+**Value: 3/10 | Complexity: 3/10 | Ratio: 1.0**
 
 **Problem:** Currently defaulting to Kalimba game. Need runtime game selection.
 
