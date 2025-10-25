@@ -1,28 +1,37 @@
 export const CONFIG = {
-  LLM_PROVIDER: (import.meta.env.VITE_LLM_PROVIDER || 'gemini') as 'ollama' | 'gemini' | 'mock',
+  LLM_PROVIDER: (import.meta.env.VITE_LLM_PROVIDER ?? "gemini") as
+    | "ollama"
+    | "gemini"
+    | "mock",
 
-  MOCK_SCENARIO: (import.meta.env.VITE_MOCK_SCENARIO || 'happy-path') as 'happy-path' | 'invalid-actions' | 'chaos' | 'empty' | 'custom',
+  MOCK_SCENARIO: (import.meta.env.VITE_MOCK_SCENARIO ?? "happy-path") as
+    | "happy-path"
+    | "invalid-actions"
+    | "chaos"
+    | "empty"
+    | "custom",
 
-  LOCALE: (import.meta.env.VITE_LOCALE || 'es-AR') as 'es-AR' | 'en-US',
+  LOCALE: (import.meta.env.VITE_LOCALE ?? "es-AR") as "es-AR" | "en-US",
 
   WAKE_WORD: {
-    TEXT: ['kali', 'cali', 'calli', 'kaly', 'caly'],
+    TEXT: ["kali", "cali", "calli", "kaly", "caly"],
     TRANSCRIPTION_TIMEOUT_MS: 5000,
   },
 
   MODEL: {
-    CACHE_NAME: 'kali-models-v1',
-    URL: '/vosk-model-small-es-0.42.zip',
-    VERSION: '0.42',
+    CACHE_NAME: "kali-models-v1",
+    URL: "/vosk-model-small-es-0.42.zip",
+    VERSION: "0.42",
   },
 
   OLLAMA: {
-    API_URL: 'http://localhost:11434/api/chat',
-    MODEL: 'llama3.2:latest',
+    API_URL: "http://localhost:11434/api/chat",
+    MODEL: "llama3.2:latest",
   },
 
   GEMINI: {
-    API_URL: 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent',
+    API_URL:
+      "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent",
     API_KEY: import.meta.env.VITE_GEMINI_API_KEY,
   },
 
@@ -32,7 +41,7 @@ export const CONFIG = {
     ECHO_CANCELLATION: true,
     NOISE_SUPPRESSION: true,
     WORKLET_BUFFER_SIZE: 2048,
-    WORKLET_PROCESSOR_NAME: 'vosk-audio-processor',
+    WORKLET_PROCESSOR_NAME: "vosk-audio-processor",
   },
 
   UI: {
@@ -42,13 +51,14 @@ export const CONFIG = {
   TTS: {
     RATE: 1.0,
     PITCH: 1.0,
-    VOICE_LANG: 'es-AR',
+    VOICE_LANG: "es-AR",
   },
 
   GAME: {
-    DEFAULT_MODULE: 'kalimba',
-    MODULES_PATH: '/games',
+    DEFAULT_MODULE: "kalimba",
+    MODULES_PATH: "/games",
   },
 
-  MOBILE_DEVICE_PATTERN: /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i,
-} as const
+  MOBILE_DEVICE_PATTERN:
+    /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i,
+} as const;

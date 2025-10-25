@@ -1,48 +1,111 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="Kali - Voice-first game moderator (Debug Mode)">
-  <meta name="theme-color" content="#000000">
-  <title>Kali Debug - Voice Game Moderator</title>
-  <link rel="manifest" href="/manifest.json">
-</head>
-<body>
-  <div id="app">
-    <div class="debug-ui">
-      <h1>Kali <span class="debug-badge">DEBUG</span></h1>
-      <div id="status-indicator"></div>
-      <p id="status"></p>
-      <button id="start-button"></button>
-      <button id="skip-to-playing-button" class="skip-button" style="display:none;">⚡ Skip to Playing</button>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="Kali - Voice-first game moderator (Debug Mode)"
+    />
+    <meta name="theme-color" content="#000000" />
+    <title>Kali Debug - Voice Game Moderator</title>
+    <link rel="manifest" href="/manifest.json" />
+  </head>
+  <body>
+    <div id="app">
+      <div class="debug-ui">
+        <h1>Kali <span class="debug-badge">DEBUG</span></h1>
+        <div id="status-indicator"></div>
+        <p id="status"></p>
+        <button id="start-button"></button>
+        <button
+          id="skip-to-playing-button"
+          class="skip-button"
+          style="display: none"
+        >
+          ⚡ Skip to Playing
+        </button>
 
-      <div class="test-actions-panel">
-        <h3>Test Actions (Direct Execution)</h3>
-        <textarea id="actions-input" placeholder='[{"action":"NARRATE","text":"Hello!"}]' rows="6"></textarea>
-        <button id="execute-actions-button" disabled>Execute Actions</button>
-        <div id="execution-result"></div>
+        <div class="test-actions-panel">
+          <h3>Test Actions (Direct Execution)</h3>
+          <textarea
+            id="actions-input"
+            placeholder='[{"action":"NARRATE","text":"Hello!"}]'
+            rows="6"
+          ></textarea>
+          <button id="execute-actions-button" disabled>Execute Actions</button>
+          <div id="execution-result"></div>
 
-        <details class="examples" open>
-          <summary>📋 Quick Examples (click to use)</summary>
-          <div class="example-grid">
-            <button class="example-btn" data-action='[{"action":"NARRATE","text":"Hello!"}]'>NARRATE</button>
-            <button class="example-btn" data-action='[{"action":"PLAYER_ROLLED","value":5},{"action":"NARRATE","text":"Rolled 5!"}]'>ROLL 5</button>
-            <button class="example-btn" data-action='[{"action":"SET_STATE","path":"players.p1.position","value":10},{"action":"NARRATE","text":"At position 10"}]'>SET Pos</button>
-            <button class="example-btn" data-action='[{"action":"SET_STATE","path":"players.p1.hearts","value":5}]'>SET Hearts</button>
-            <button class="example-btn" data-action='[{"action":"PLAYER_ANSWERED","answer":"A"},{"action":"NARRATE","text":"Path A chosen"}]'>ANSWER A</button>
-            <button class="example-btn" data-action='[{"action":"PLAYER_ANSWERED","answer":"fight"},{"action":"NARRATE","text":"Fighting!"}]'>FIGHT</button>
-            <button class="example-btn" data-action='[{"action":"RESET_GAME","keepPlayerNames":true},{"action":"NARRATE","text":"Game reset!"}]'>RESET</button>
-            <button class="example-btn" data-action='[{"action":"SET_STATE","path":"players.p1.name","value":"Federico"},{"action":"SET_STATE","path":"players.p2.name","value":"Carlos"},{"action":"NARRATE","text":"Names set!"}]'>SET Names</button>
-            <button class="example-btn" data-action='[{"action":"SET_STATE","path":"players.p1.skipTurns","value":1},{"action":"NARRATE","text":"Skip next turn"}]'>SKIP Turn</button>
-            <button class="example-btn" data-action='[{"action":"PLAYER_ROLLED","value":3},{"action":"SET_STATE","path":"players.p1.hearts","value":5},{"action":"NARRATE","text":"Rolled 3, got 5 hearts!"}]'>COMBO</button>
-          </div>
-        </details>
+          <details class="examples" open>
+            <summary>📋 Quick Examples (click to use)</summary>
+            <div class="example-grid">
+              <button
+                class="example-btn"
+                data-action='[{"action":"NARRATE","text":"Hello!"}]'
+              >
+                NARRATE
+              </button>
+              <button
+                class="example-btn"
+                data-action='[{"action":"PLAYER_ROLLED","value":5},{"action":"NARRATE","text":"Rolled 5!"}]'
+              >
+                ROLL 5
+              </button>
+              <button
+                class="example-btn"
+                data-action='[{"action":"SET_STATE","path":"players.p1.position","value":10},{"action":"NARRATE","text":"At position 10"}]'
+              >
+                SET Pos
+              </button>
+              <button
+                class="example-btn"
+                data-action='[{"action":"SET_STATE","path":"players.p1.hearts","value":5}]'
+              >
+                SET Hearts
+              </button>
+              <button
+                class="example-btn"
+                data-action='[{"action":"PLAYER_ANSWERED","answer":"A"},{"action":"NARRATE","text":"Path A chosen"}]'
+              >
+                ANSWER A
+              </button>
+              <button
+                class="example-btn"
+                data-action='[{"action":"PLAYER_ANSWERED","answer":"fight"},{"action":"NARRATE","text":"Fighting!"}]'
+              >
+                FIGHT
+              </button>
+              <button
+                class="example-btn"
+                data-action='[{"action":"RESET_GAME","keepPlayerNames":true},{"action":"NARRATE","text":"Game reset!"}]'
+              >
+                RESET
+              </button>
+              <button
+                class="example-btn"
+                data-action='[{"action":"SET_STATE","path":"players.p1.name","value":"Federico"},{"action":"SET_STATE","path":"players.p2.name","value":"Carlos"},{"action":"NARRATE","text":"Names set!"}]'
+              >
+                SET Names
+              </button>
+              <button
+                class="example-btn"
+                data-action='[{"action":"SET_STATE","path":"players.p1.skipTurns","value":1},{"action":"NARRATE","text":"Skip next turn"}]'
+              >
+                SKIP Turn
+              </button>
+              <button
+                class="example-btn"
+                data-action='[{"action":"PLAYER_ROLLED","value":3},{"action":"SET_STATE","path":"players.p1.hearts","value":5},{"action":"NARRATE","text":"Rolled 3, got 5 hearts!"}]'
+              >
+                COMBO
+              </button>
+            </div>
+          </details>
+        </div>
+
+        <div id="console"></div>
       </div>
-
-      <div id="console"></div>
     </div>
-  </div>
-  <script type="module" src="/src/debug.ts"></script>
-</body>
+    <script type="module" src="/src/debug.ts"></script>
+  </body>
 </html>

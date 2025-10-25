@@ -1,54 +1,57 @@
-import { CONFIG } from '../config'
-import { esAR } from './locales/es-AR'
-import { enUS } from './locales/en-US'
+import { CONFIG } from "../config";
+import { enUS } from "./locales/en-US";
+import { esAR } from "./locales/es-AR";
 
-type TranslationObject = typeof esAR
-type TranslationKey = string
+type TranslationObject = typeof esAR;
+type TranslationKey = string;
 
 const locales: Record<string, TranslationObject> = {
-  'es-AR': esAR,
-  'en-US': enUS,
-}
+  "es-AR": esAR,
+  "en-US": enUS,
+};
 
-let currentLocale: TranslationObject = locales[CONFIG.LOCALE] || esAR
+let currentLocale: TranslationObject = locales[CONFIG.LOCALE] ?? esAR;
 
 export function setLocale(locale: string): void {
-  if (locales[locale]) {
-    currentLocale = locales[locale]
+  if (locale in locales) {
+    currentLocale = locales[locale];
   }
 }
 
-export function t(key: TranslationKey, params?: Record<string, string | number>): string {
-  const keys = key.split('.')
-  let value: unknown = currentLocale
+export function t(
+  key: TranslationKey,
+  params?: Record<string, string | number>,
+): string {
+  const keys = key.split(".");
+  let value: unknown = currentLocale;
 
   for (const k of keys) {
-    if (value && typeof value === 'object' && k in value) {
-      value = (value as Record<string, unknown>)[k]
+    if (value && typeof value === "object" && k in value) {
+      value = (value as Record<string, unknown>)[k];
     } else {
-      return key
+      return key;
     }
   }
 
-  let result = typeof value === 'string' ? value : key
+  let result = typeof value === "string" ? value : key;
 
   if (params) {
     Object.entries(params).forEach(([param, val]) => {
-      result = result.replaceAll(`{${param}}`, String(val))
-    })
+      result = result.replaceAll(`{${param}}`, String(val));
+    });
   }
 
-  return result
+  return result;
 }
 
 export function getNicknames(): string[] {
-  return currentLocale.nicknames || []
+  return currentLocale.nicknames;
 }
 
 export function getNumberWords(): string[] {
-  return currentLocale.numberWords || []
+  return currentLocale.numberWords;
 }
 
 export function getConfirmationWords(): { yes: string[]; no: string[] } {
-  return currentLocale.confirmationWords || { yes: [], no: [] }
+  return currentLocale.confirmationWords;
 }

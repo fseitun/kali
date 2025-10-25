@@ -1,6 +1,6 @@
-import { GameModule } from './types'
-import { SpeechService } from '../services/speech-service'
-import { Logger } from '../utils/logger'
+import type { SpeechService } from "../services/speech-service";
+import { Logger } from "../utils/logger";
+import type { GameModule } from "./types";
 
 /**
  * Handles loading game modules from JSON files and their associated resources.
@@ -15,26 +15,27 @@ export class GameLoader {
    * @throws Error if the module fails to load or validation fails
    */
   async loadGame(gameId: string): Promise<GameModule> {
-    const url = `${this.gamesPath}/${gameId}/config.json`
+    const url = `${this.gamesPath}/${gameId}/config.json`;
 
     try {
-      Logger.info(`Loading game module: ${gameId}`)
-      const response = await fetch(url)
+      Logger.info(`Loading game module: ${gameId}`);
+      const response = await fetch(url);
 
       if (!response.ok) {
-        throw new Error(`Failed to load game module: ${response.statusText}`)
+        throw new Error(`Failed to load game module: ${response.statusText}`);
       }
 
-      const module = await response.json() as GameModule
+      const module = (await response.json()) as GameModule;
 
-      this.validateGameModule(module)
+      this.validateGameModule(module);
 
-      Logger.info(`Game module loaded: ${module.metadata.name} v${module.metadata.version}`)
-      return module
-
+      Logger.info(
+        `Game module loaded: ${module.metadata.name} v${module.metadata.version}`,
+      );
+      return module;
     } catch (error) {
-      Logger.error(`Error loading game module ${gameId}:`, error)
-      throw error
+      Logger.error(`Error loading game module ${gameId}:`, error);
+      throw error;
     }
   }
 
@@ -46,41 +47,43 @@ export class GameLoader {
    */
   async loadSoundEffects(
     module: GameModule,
-    speechService: SpeechService
+    speechService: SpeechService,
   ): Promise<void> {
     if (!module.soundEffects) {
-      Logger.info('No sound effects to load')
-      return
+      Logger.info("No sound effects to load");
+      return;
     }
 
-    Logger.info(`Loading ${Object.keys(module.soundEffects).length} sound effects...`)
+    Logger.info(
+      `Loading ${Object.keys(module.soundEffects).length} sound effects...`,
+    );
 
     const loadPromises = Object.entries(module.soundEffects).map(
       async ([name, url]) => {
         try {
-          await speechService.loadSound(name, url)
+          await speechService.loadSound(name, url);
         } catch (error) {
-          Logger.warn(`Failed to load sound ${name}:`, error)
+          Logger.warn(`Failed to load sound ${name}:`, error);
         }
-      }
-    )
+      },
+    );
 
-    await Promise.all(loadPromises)
+    await Promise.all(loadPromises);
   }
 
   private validateGameModule(module: GameModule): void {
     if (!module.metadata?.id || !module.metadata?.name) {
-      throw new Error('Invalid game module: missing metadata')
+      throw new Error("Invalid game module: missing metadata");
     }
 
     if (!module.initialState) {
-      throw new Error('Invalid game module: missing initialState')
+      throw new Error("Invalid game module: missing initialState");
     }
 
     if (!module.rules?.objective || !module.rules?.mechanics) {
-      throw new Error('Invalid game module: missing rules')
+      throw new Error("Invalid game module: missing rules");
     }
 
-    Logger.info('Game module validation passed')
+    Logger.info("Game module validation passed");
   }
 }

@@ -1,367 +1,405 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import { SpeechService } from './speech-service'
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { SpeechService } from "./speech-service";
 
 // Mock CONFIG
-vi.mock('../config', () => ({
+vi.mock("../config", () => ({
   CONFIG: {
     TTS: {
       RATE: 0.9,
       PITCH: 1.0,
-      VOICE_LANG: 'en-US'
-    }
-  }
-}))
+      VOICE_LANG: "en-US",
+    },
+  },
+}));
 
 // Mock Logger
-vi.mock('../utils/logger', () => ({
+vi.mock("../utils/logger", () => ({
   Logger: {
     info: vi.fn(),
     error: vi.fn(),
     warn: vi.fn(),
     debug: vi.fn(),
-    narration: vi.fn()
-  }
-}))
+    narration: vi.fn(),
+  },
+}));
 
-describe('SpeechService', () => {
-  let speechService: SpeechService
-  let mockSpeechSynthesis: any
-  let mockAudioContext: any
-  let mockFetch: ReturnType<typeof vi.fn>
+describe("SpeechService", () => {
+  let speechService: SpeechService;
+  let mockSpeechSynthesis: any;
+  let mockAudioContext: any;
+  let mockFetch: ReturnType<typeof vi.fn>;
 
   beforeEach(() => {
-    speechService = new SpeechService()
+    speechService = new SpeechService();
 
     // Mock SpeechSynthesis
     mockSpeechSynthesis = {
       cancel: vi.fn(),
-      speak: vi.fn()
-    }
+      speak: vi.fn(),
+    };
 
     globalThis.window = {
-      speechSynthesis: mockSpeechSynthesis
-    } as unknown as Window & typeof globalThis
+      speechSynthesis: mockSpeechSynthesis,
+    } as unknown as Window & typeof globalThis;
 
     // Mock AudioContext
     mockAudioContext = {
       decodeAudioData: vi.fn(),
       createBufferSource: vi.fn(),
-      destination: {}
-    }
+      destination: {},
+    };
 
-    globalThis.AudioContext = vi.fn().mockImplementation(() => mockAudioContext) as unknown as typeof AudioContext
+    globalThis.AudioContext = vi
+      .fn()
+      .mockImplementation(
+        () => mockAudioContext,
+      ) as unknown as typeof AudioContext;
 
     // Mock fetch
-    mockFetch = vi.fn()
-    globalThis.fetch = mockFetch
+    mockFetch = vi.fn();
+    globalThis.fetch = mockFetch;
 
-    vi.clearAllMocks()
-  })
+    vi.clearAllMocks();
+  });
 
   afterEach(() => {
-    vi.restoreAllMocks()
-  })
+    vi.restoreAllMocks();
+  });
 
-  describe('prime', () => {
-    it('should prime speech synthesis', () => {
+  describe("prime", () => {
+    it("should prime speech synthesis", () => {
       const mockUtterance = {
         onend: null,
-        onerror: null
-      }
+        onerror: null,
+      };
 
-      globalThis.SpeechSynthesisUtterance = vi.fn().mockImplementation(() => mockUtterance) as unknown as typeof SpeechSynthesisUtterance
+      globalThis.SpeechSynthesisUtterance = vi
+        .fn()
+        .mockImplementation(
+          () => mockUtterance,
+        ) as unknown as typeof SpeechSynthesisUtterance;
 
-      speechService.prime()
+      speechService.prime();
 
-      expect(mockSpeechSynthesis.cancel).toHaveBeenCalled()
-      expect(mockSpeechSynthesis.speak).toHaveBeenCalledWith(mockUtterance)
-    })
+      expect(mockSpeechSynthesis.cancel).toHaveBeenCalled();
+      expect(mockSpeechSynthesis.speak).toHaveBeenCalledWith(mockUtterance);
+    });
 
-    it('should not prime if speechSynthesis not available', () => {
-      globalThis.window = {} as unknown as Window & typeof globalThis
+    it("should not prime if speechSynthesis not available", () => {
+      globalThis.window = {} as unknown as Window & typeof globalThis;
 
-      speechService.prime()
+      speechService.prime();
 
       // Should not throw
-      expect(true).toBe(true)
-    })
+      expect(true).toBe(true);
+    });
 
-    it('should not prime if already primed', () => {
+    it("should not prime if already primed", () => {
       const mockUtterance = {
         onend: null,
-        onerror: null
-      }
+        onerror: null,
+      };
 
-      globalThis.SpeechSynthesisUtterance = vi.fn().mockImplementation(() => mockUtterance) as unknown as typeof SpeechSynthesisUtterance
+      globalThis.SpeechSynthesisUtterance = vi
+        .fn()
+        .mockImplementation(
+          () => mockUtterance,
+        ) as unknown as typeof SpeechSynthesisUtterance;
 
-      speechService.prime()
-      speechService.prime() // Second call
+      speechService.prime();
+      speechService.prime(); // Second call
 
-      expect(mockSpeechSynthesis.speak).toHaveBeenCalledTimes(1)
-    })
-  })
+      expect(mockSpeechSynthesis.speak).toHaveBeenCalledTimes(1);
+    });
+  });
 
-  describe('speak', () => {
+  describe("speak", () => {
     beforeEach(() => {
       globalThis.SpeechSynthesisUtterance = vi.fn().mockImplementation(() => ({
         onend: null,
         onerror: null,
         rate: 0,
         pitch: 0,
-        lang: ''
-      })) as any
-    })
+        lang: "",
+      })) as any;
+    });
 
-    it('should speak text successfully', async () => {
-      let utterance: any = null
+    it("should speak text successfully", async () => {
+      let utterance: any = null;
 
-      globalThis.SpeechSynthesisUtterance = vi.fn().mockImplementation((text) => {
-        utterance = {
-          text,
-          onend: null,
-          onerror: null,
-          rate: 0,
-          pitch: 0,
-          lang: ''
-        }
-        return utterance
-      }) as any
+      globalThis.SpeechSynthesisUtterance = vi
+        .fn()
+        .mockImplementation((text) => {
+          utterance = {
+            text,
+            onend: null,
+            onerror: null,
+            rate: 0,
+            pitch: 0,
+            lang: "",
+          };
+          return utterance;
+        }) as any;
 
-      const speakPromise = speechService.speak('Hello world')
+      const speakPromise = speechService.speak("Hello world");
 
       // Simulate successful speech
       setTimeout(() => {
-        utterance.onend()
-      }, 0)
+        utterance.onend();
+      }, 0);
 
-      await speakPromise
+      await speakPromise;
 
-      expect(mockSpeechSynthesis.cancel).toHaveBeenCalled()
-      expect(mockSpeechSynthesis.speak).toHaveBeenCalledWith(utterance)
-      expect(utterance.rate).toBe(0.9)
-      expect(utterance.pitch).toBe(1.0)
-      expect(utterance.lang).toBe('en-US')
-    })
+      expect(mockSpeechSynthesis.cancel).toHaveBeenCalled();
+      expect(mockSpeechSynthesis.speak).toHaveBeenCalledWith(utterance);
+      expect(utterance.rate).toBe(0.9);
+      expect(utterance.pitch).toBe(1.0);
+      expect(utterance.lang).toBe("en-US");
+    });
 
-    it('should handle speech synthesis not available', async () => {
-      globalThis.window = {} as unknown as Window & typeof globalThis
+    it("should handle speech synthesis not available", async () => {
+      globalThis.window = {} as unknown as Window & typeof globalThis;
 
-      await speechService.speak('Hello world')
+      await speechService.speak("Hello world");
 
       // Should resolve without error
-      expect(true).toBe(true)
-    })
+      expect(true).toBe(true);
+    });
 
-    it('should handle speech synthesis error', async () => {
-      let utterance: any = null
+    it("should handle speech synthesis error", async () => {
+      let utterance: any = null;
 
-      globalThis.SpeechSynthesisUtterance = vi.fn().mockImplementation((text) => {
-        utterance = {
-          text,
-          onend: null,
-          onerror: null,
-          rate: 0,
-          pitch: 0,
-          lang: ''
-        }
-        return utterance
-      }) as any
+      globalThis.SpeechSynthesisUtterance = vi
+        .fn()
+        .mockImplementation((text) => {
+          utterance = {
+            text,
+            onend: null,
+            onerror: null,
+            rate: 0,
+            pitch: 0,
+            lang: "",
+          };
+          return utterance;
+        }) as any;
 
-      const speakPromise = speechService.speak('Hello world')
+      const speakPromise = speechService.speak("Hello world");
 
       // Simulate speech error
       setTimeout(() => {
-        utterance.onerror({ error: 'network' })
-      }, 0)
+        utterance.onerror({ error: "network" });
+      }, 0);
 
-      await speakPromise
+      await speakPromise;
 
       // Should resolve even on error
-      expect(true).toBe(true)
-    })
+      expect(true).toBe(true);
+    });
 
-    it('should handle interrupted speech', async () => {
-      let utterance: any = null
+    it("should handle interrupted speech", async () => {
+      let utterance: any = null;
 
-      globalThis.SpeechSynthesisUtterance = vi.fn().mockImplementation((text) => {
-        utterance = {
-          text,
-          onend: null,
-          onerror: null,
-          rate: 0,
-          pitch: 0,
-          lang: ''
-        }
-        return utterance
-      }) as any
+      globalThis.SpeechSynthesisUtterance = vi
+        .fn()
+        .mockImplementation((text) => {
+          utterance = {
+            text,
+            onend: null,
+            onerror: null,
+            rate: 0,
+            pitch: 0,
+            lang: "",
+          };
+          return utterance;
+        }) as any;
 
-      const speakPromise = speechService.speak('Hello world')
+      const speakPromise = speechService.speak("Hello world");
 
       // Simulate interrupted speech
       setTimeout(() => {
-        utterance.onerror({ error: 'interrupted' })
-      }, 0)
+        utterance.onerror({ error: "interrupted" });
+      }, 0);
 
-      await speakPromise
+      await speakPromise;
 
       // Should resolve without error
-      expect(true).toBe(true)
-    })
+      expect(true).toBe(true);
+    });
 
-    it('should prime if not already primed', async () => {
-      let utterance: any = null
+    it("should prime if not already primed", async () => {
+      let utterance: any = null;
 
-      globalThis.SpeechSynthesisUtterance = vi.fn().mockImplementation((text) => {
-        utterance = {
-          text,
-          onend: null,
-          onerror: null,
-          rate: 0,
-          pitch: 0,
-          lang: ''
-        }
-        return utterance
-      }) as any
+      globalThis.SpeechSynthesisUtterance = vi
+        .fn()
+        .mockImplementation((text) => {
+          utterance = {
+            text,
+            onend: null,
+            onerror: null,
+            rate: 0,
+            pitch: 0,
+            lang: "",
+          };
+          return utterance;
+        }) as any;
 
-      const speakPromise = speechService.speak('Hello world')
+      const speakPromise = speechService.speak("Hello world");
 
       setTimeout(() => {
-        utterance.onend()
-      }, 0)
+        utterance.onend();
+      }, 0);
 
-      await speakPromise
+      await speakPromise;
 
       // Should have called prime (cancel + speak)
-      expect(mockSpeechSynthesis.cancel).toHaveBeenCalledTimes(2) // Once for prime, once for speak
-    })
-  })
+      expect(mockSpeechSynthesis.cancel).toHaveBeenCalledTimes(2); // Once for prime, once for speak
+    });
+  });
 
-  describe('loadSound', () => {
-    it('should load sound successfully', async () => {
-      const mockArrayBuffer = new ArrayBuffer(1024)
-      const mockAudioBuffer = { duration: 1.0 }
+  describe("loadSound", () => {
+    it("should load sound successfully", async () => {
+      const mockArrayBuffer = new ArrayBuffer(1024);
+      const mockAudioBuffer = { duration: 1.0 };
 
       mockFetch.mockResolvedValueOnce({
-        arrayBuffer: () => Promise.resolve(mockArrayBuffer)
-      })
+        arrayBuffer: () => Promise.resolve(mockArrayBuffer),
+      });
 
-      mockAudioContext.decodeAudioData.mockResolvedValueOnce(mockAudioBuffer)
+      mockAudioContext.decodeAudioData.mockResolvedValueOnce(mockAudioBuffer);
 
-      await speechService.loadSound('test-sound', 'http://example.com/sound.mp3')
+      await speechService.loadSound(
+        "test-sound",
+        "http://example.com/sound.mp3",
+      );
 
-      expect(mockFetch).toHaveBeenCalledWith('http://example.com/sound.mp3')
-      expect(mockAudioContext.decodeAudioData).toHaveBeenCalledWith(mockArrayBuffer)
-    })
+      expect(mockFetch).toHaveBeenCalledWith("http://example.com/sound.mp3");
+      expect(mockAudioContext.decodeAudioData).toHaveBeenCalledWith(
+        mockArrayBuffer,
+      );
+    });
 
-    it('should handle load sound failure', async () => {
-      mockFetch.mockRejectedValueOnce(new Error('Network error'))
+    it("should handle load sound failure", async () => {
+      mockFetch.mockRejectedValueOnce(new Error("Network error"));
 
-      await speechService.loadSound('test-sound', 'http://example.com/sound.mp3')
+      await speechService.loadSound(
+        "test-sound",
+        "http://example.com/sound.mp3",
+      );
 
       // Should not throw
-      expect(true).toBe(true)
-    })
+      expect(true).toBe(true);
+    });
 
-    it('should handle decode audio data failure', async () => {
-      const mockArrayBuffer = new ArrayBuffer(1024)
+    it("should handle decode audio data failure", async () => {
+      const mockArrayBuffer = new ArrayBuffer(1024);
 
       mockFetch.mockResolvedValueOnce({
-        arrayBuffer: () => Promise.resolve(mockArrayBuffer)
-      })
+        arrayBuffer: () => Promise.resolve(mockArrayBuffer),
+      });
 
-      mockAudioContext.decodeAudioData.mockRejectedValueOnce(new Error('Invalid audio data'))
+      mockAudioContext.decodeAudioData.mockRejectedValueOnce(
+        new Error("Invalid audio data"),
+      );
 
-      await speechService.loadSound('test-sound', 'http://example.com/sound.mp3')
+      await speechService.loadSound(
+        "test-sound",
+        "http://example.com/sound.mp3",
+      );
 
       // Should not throw
-      expect(true).toBe(true)
-    })
+      expect(true).toBe(true);
+    });
 
-    it('should create AudioContext if not exists', async () => {
-      const mockArrayBuffer = new ArrayBuffer(1024)
-      const mockAudioBuffer = { duration: 1.0 }
+    it("should create AudioContext if not exists", async () => {
+      const mockArrayBuffer = new ArrayBuffer(1024);
+      const mockAudioBuffer = { duration: 1.0 };
 
       mockFetch.mockResolvedValueOnce({
-        arrayBuffer: () => Promise.resolve(mockArrayBuffer)
-      })
+        arrayBuffer: () => Promise.resolve(mockArrayBuffer),
+      });
 
-      mockAudioContext.decodeAudioData.mockResolvedValueOnce(mockAudioBuffer)
+      mockAudioContext.decodeAudioData.mockResolvedValueOnce(mockAudioBuffer);
 
       // Reset AudioContext to simulate it not being created yet
-      speechService = new SpeechService()
+      speechService = new SpeechService();
 
-      await speechService.loadSound('test-sound', 'http://example.com/sound.mp3')
+      await speechService.loadSound(
+        "test-sound",
+        "http://example.com/sound.mp3",
+      );
 
-      expect(mockAudioContext.decodeAudioData).toHaveBeenCalledWith(mockArrayBuffer)
-    })
-  })
+      expect(mockAudioContext.decodeAudioData).toHaveBeenCalledWith(
+        mockArrayBuffer,
+      );
+    });
+  });
 
-  describe('playSound', () => {
+  describe("playSound", () => {
     beforeEach(() => {
       const mockSource = {
         buffer: null,
         connect: vi.fn(),
-        start: vi.fn()
-      }
+        start: vi.fn(),
+      };
 
-      mockAudioContext.createBufferSource.mockReturnValue(mockSource)
-    })
+      mockAudioContext.createBufferSource.mockReturnValue(mockSource);
+    });
 
-    it('should play loaded sound', () => {
-      const mockBuffer = { duration: 1.0 }
+    it("should play loaded sound", () => {
+      const mockBuffer = { duration: 1.0 };
 
       // Manually add sound to the service's internal map
-      ;(speechService as any).sounds.set('test-sound', mockBuffer)
+      (speechService as any).sounds.set("test-sound", mockBuffer);
 
-      speechService.playSound('test-sound')
+      speechService.playSound("test-sound");
 
-      expect(mockAudioContext.createBufferSource).toHaveBeenCalled()
-    })
+      expect(mockAudioContext.createBufferSource).toHaveBeenCalled();
+    });
 
-    it('should handle missing sound gracefully', () => {
-      speechService.playSound('nonexistent-sound')
+    it("should handle missing sound gracefully", () => {
+      speechService.playSound("nonexistent-sound");
 
       // Should not throw
-      expect(true).toBe(true)
-    })
+      expect(true).toBe(true);
+    });
 
-    it('should create AudioContext if not exists', () => {
-      const mockBuffer = { duration: 1.0 }
+    it("should create AudioContext if not exists", () => {
+      const mockBuffer = { duration: 1.0 };
       const mockSource = {
         buffer: null,
         connect: vi.fn(),
-        start: vi.fn()
-      }
+        start: vi.fn(),
+      };
 
-      mockAudioContext.createBufferSource.mockReturnValue(mockSource)
+      mockAudioContext.createBufferSource.mockReturnValue(mockSource);
 
       // Reset AudioContext to simulate it not being created yet
-      speechService = new SpeechService()
-      ;(speechService as any).sounds.set('test-sound', mockBuffer)
+      speechService = new SpeechService();
+      (speechService as any).sounds.set("test-sound", mockBuffer);
 
-      speechService.playSound('test-sound')
+      speechService.playSound("test-sound");
 
-      expect(mockAudioContext.createBufferSource).toHaveBeenCalled()
-    })
+      expect(mockAudioContext.createBufferSource).toHaveBeenCalled();
+    });
 
-    it('should handle play sound failure', () => {
-      const mockBuffer = { duration: 1.0 }
+    it("should handle play sound failure", () => {
+      const mockBuffer = { duration: 1.0 };
       const mockSource = {
         buffer: null,
         connect: vi.fn(),
         start: vi.fn().mockImplementation(() => {
-          throw new Error('Playback error')
-        })
-      }
+          throw new Error("Playback error");
+        }),
+      };
 
-      mockAudioContext.createBufferSource.mockReturnValue(mockSource)
-      ;(speechService as any).sounds.set('test-sound', mockBuffer)
+      mockAudioContext.createBufferSource.mockReturnValue(mockSource);
+      (speechService as any).sounds.set("test-sound", mockBuffer);
 
-      speechService.playSound('test-sound')
+      speechService.playSound("test-sound");
 
       // Should not throw
-      expect(true).toBe(true)
-    })
-  })
-})
+      expect(true).toBe(true);
+    });
+  });
+});

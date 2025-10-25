@@ -1,132 +1,140 @@
-import { WakeWordDetector } from './wake-word'
-import { Orchestrator } from './orchestrator/orchestrator'
-import { OllamaClient } from './llm/OllamaClient'
-import { GeminiClient } from './llm/GeminiClient'
-import { MockLLMClient } from './llm/MockLLMClient'
-import { LLMClient } from './llm/LLMClient'
-import { StateManager } from './state-manager'
-import { IUIService } from './services/ui-service'
-import { SpeechService } from './services/speech-service'
-import { GameLoader, GameModule } from './game-loader'
-import { NameCollector } from './orchestrator/name-collector'
-import { GamePhase, PrimitiveAction } from './orchestrator/types'
-import { checkBrowserSupport } from './utils/browser-support'
-import { validateConfig } from './utils/config-validator'
-import { CONFIG } from './config'
-import { Logger } from './utils/logger'
-import { t } from './i18n'
+import { CONFIG } from "./config";
+import { GameLoader } from "./game-loader";
+import type { GameModule } from "./game-loader";
+import { t } from "./i18n";
+import { GeminiClient } from "./llm/GeminiClient";
+import type { LLMClient } from "./llm/LLMClient";
+import { MockLLMClient } from "./llm/MockLLMClient";
+import { OllamaClient } from "./llm/OllamaClient";
+import { NameCollector } from "./orchestrator/name-collector";
+import { Orchestrator } from "./orchestrator/orchestrator";
+import { GamePhase, type PrimitiveAction } from "./orchestrator/types";
+import type { SpeechService } from "./services/speech-service";
+import type { IUIService } from "./services/ui-service";
+import { StateManager } from "./state-manager";
+import { checkBrowserSupport } from "./utils/browser-support";
+import { validateConfig } from "./utils/config-validator";
+import { Logger } from "./utils/logger";
+import { WakeWordDetector } from "./wake-word";
 
 export class KaliAppCore {
-  private wakeWordDetector: WakeWordDetector | null = null
-  private orchestrator: Orchestrator | null = null
-  private stateManager: StateManager | null = null
-  private llmClient: LLMClient | null = null
-  private gameModule: GameModule | null = null
-  private initialized = false
-  private currentNameHandler: ((text: string) => void) | null = null
+  private wakeWordDetector: WakeWordDetector | null = null;
+  private orchestrator: Orchestrator | null = null;
+  private stateManager: StateManager | null = null;
+  private llmClient: LLMClient | null = null;
+  private gameModule: GameModule | null = null;
+  private initialized = false;
+  private currentNameHandler: ((text: string) => void) | null = null;
 
   constructor(
     private uiService: IUIService,
-    private speechService: SpeechService
+    private speechService: SpeechService,
   ) {}
 
   async initialize(): Promise<void> {
     try {
-      validateConfig()
+      validateConfig();
 
-      const indicator = this.uiService.getStatusIndicator()
-      indicator.setState('processing')
-      Logger.info('🚀 Initializing Kali...')
+      const indicator = this.uiService.getStatusIndicator();
+      indicator.setState("processing");
+      Logger.info("🚀 Initializing Kali...");
 
-      checkBrowserSupport()
-      await this.initializeOrchestrator()
-      await this.initializeWakeWord()
+      checkBrowserSupport();
+      await this.initializeOrchestrator();
+      await this.initializeWakeWord();
 
-      const shouldStartGame = await this.handleSavedGameOrSetup()
+      const shouldStartGame = await this.handleSavedGameOrSetup();
 
-      this.initialized = true
-      this.uiService.hideButton()
-      indicator.setState('listening')
+      this.initialized = true;
+      this.uiService.hideButton();
+      indicator.setState("listening");
 
       if (shouldStartGame) {
-        this.uiService.updateStatus(t('ui.wakeWordReady', { wakeWord: CONFIG.WAKE_WORD.TEXT[0] }))
-        Logger.info('Kali is ready')
-        await this.proactiveGameStart()
+        this.uiService.updateStatus(
+          t("ui.wakeWordReady", { wakeWord: CONFIG.WAKE_WORD.TEXT[0] }),
+        );
+        Logger.info("Kali is ready");
+        await this.proactiveGameStart();
       } else {
         if (this.stateManager) {
-          const state = this.stateManager.getState()
-          const game = state.game as Record<string, unknown> | undefined
+          const state = this.stateManager.getState();
+          const game = state.game as Record<string, unknown> | undefined;
           if (game?.phase === GamePhase.PLAYING) {
-            const message = t('ui.savedGameDetected', { wakeWord: CONFIG.WAKE_WORD.TEXT[0] })
-            this.uiService.updateStatus(message)
-            await this.speechService.speak(message)
+            const message = t("ui.savedGameDetected", {
+              wakeWord: CONFIG.WAKE_WORD.TEXT[0],
+            });
+            this.uiService.updateStatus(message);
+            await this.speechService.speak(message);
           } else {
-            this.uiService.updateStatus(t('ui.wakeWordReady', { wakeWord: CONFIG.WAKE_WORD.TEXT[0] }))
+            this.uiService.updateStatus(
+              t("ui.wakeWordReady", { wakeWord: CONFIG.WAKE_WORD.TEXT[0] }),
+            );
           }
         } else {
-          this.uiService.updateStatus(t('ui.wakeWordReady', { wakeWord: CONFIG.WAKE_WORD.TEXT[0] }))
+          this.uiService.updateStatus(
+            t("ui.wakeWordReady", { wakeWord: CONFIG.WAKE_WORD.TEXT[0] }),
+          );
         }
-        Logger.info('Kali is ready')
+        Logger.info("Kali is ready");
       }
-
     } catch (error) {
-      this.uiService.setButtonState(t('ui.startKali'), false)
-      this.uiService.updateStatus(t('ui.initializationFailed'))
-      Logger.error(`Error: ${error}`)
-      const indicator = this.uiService.getStatusIndicator()
-      indicator.setState('idle')
+      this.uiService.setButtonState(t("ui.startKali"), false);
+      this.uiService.updateStatus(t("ui.initializationFailed"));
+      Logger.error(`Error: ${error}`);
+      const indicator = this.uiService.getStatusIndicator();
+      indicator.setState("idle");
     }
   }
 
   private async initializeOrchestrator(): Promise<void> {
-    Logger.brain('Initializing orchestrator...')
+    Logger.brain("Initializing orchestrator...");
 
-    Logger.info(`📦 Loading game module: ${CONFIG.GAME.DEFAULT_MODULE}...`)
-    const gameLoader = new GameLoader(CONFIG.GAME.MODULES_PATH)
-    this.gameModule = await gameLoader.loadGame(CONFIG.GAME.DEFAULT_MODULE)
+    Logger.info(`📦 Loading game module: ${CONFIG.GAME.DEFAULT_MODULE}...`);
+    const gameLoader = new GameLoader(CONFIG.GAME.MODULES_PATH);
+    this.gameModule = await gameLoader.loadGame(CONFIG.GAME.DEFAULT_MODULE);
 
-    Logger.info('🎮 Initializing game state...')
-    this.stateManager = new StateManager()
-    this.stateManager.init(this.gameModule.initialState)
+    Logger.info("🎮 Initializing game state...");
+    this.stateManager = new StateManager();
+    this.stateManager.init(this.gameModule.initialState);
 
     if (this.gameModule.stateDisplay) {
-      this.stateManager.set('stateDisplay', this.gameModule.stateDisplay)
+      this.stateManager.set("stateDisplay", this.gameModule.stateDisplay);
     }
 
-    Logger.robot(`Configuring LLM (${CONFIG.LLM_PROVIDER}) with game rules...`)
-    this.llmClient = this.createLLMClient()
-    this.llmClient.setGameRules(this.formatGameRules(this.gameModule))
+    Logger.robot(`Configuring LLM (${CONFIG.LLM_PROVIDER}) with game rules...`);
+    this.llmClient = this.createLLMClient();
+    this.llmClient.setGameRules(this.formatGameRules(this.gameModule));
 
-    const indicator = this.uiService.getStatusIndicator()
+    const indicator = this.uiService.getStatusIndicator();
     this.orchestrator = new Orchestrator(
       this.llmClient,
       this.stateManager,
       this.speechService,
       indicator,
-      this.gameModule.initialState
-    )
+      this.gameModule.initialState,
+    );
 
-    Logger.info('🔊 Loading sound effects...')
-    await gameLoader.loadSoundEffects(this.gameModule, this.speechService)
+    Logger.info("🔊 Loading sound effects...");
+    await gameLoader.loadSoundEffects(this.gameModule, this.speechService);
 
-    Logger.info('Orchestrator ready')
+    Logger.info("Orchestrator ready");
   }
 
   private createLLMClient(): LLMClient {
     switch (CONFIG.LLM_PROVIDER) {
-      case 'gemini':
-        return new GeminiClient()
-      case 'ollama':
-        return new OllamaClient()
-      case 'mock':
-        return new MockLLMClient(CONFIG.MOCK_SCENARIO)
+      case "gemini":
+        return new GeminiClient();
+      case "ollama":
+        return new OllamaClient();
+      case "mock":
+        return new MockLLMClient(CONFIG.MOCK_SCENARIO);
       default:
-        throw new Error(`Unknown LLM provider: ${CONFIG.LLM_PROVIDER}`)
+        throw new Error(`Unknown LLM provider: ${CONFIG.LLM_PROVIDER}`);
     }
   }
 
   private formatGameRules(gameModule: GameModule): string {
-    const { rules, metadata } = gameModule
+    const { rules, metadata } = gameModule;
 
     return `
 ## ${metadata.name} Rules
@@ -144,128 +152,148 @@ ${rules.turnStructure}
 ${rules.boardLayout}
 
 **Example Sequences:**
-${rules.examples.map((ex, i) => `${i + 1}. ${ex}`).join('\n')}
-`
+${rules.examples.map((ex: string, i: number) => `${i + 1}. ${ex}`).join("\n")}
+`;
   }
 
   private async initializeWakeWord(): Promise<void> {
-    Logger.mic('Initializing speech recognition...')
-    const indicator = this.uiService.getStatusIndicator()
+    Logger.mic("Initializing speech recognition...");
+    const indicator = this.uiService.getStatusIndicator();
 
     this.wakeWordDetector = new WakeWordDetector(
       () => this.handleWakeWord(),
       (text) => this.handleTranscription(text),
-      (raw, processed, wakeWordDetected) => this.uiService.addTranscription(raw, processed, wakeWordDetected)
-    )
+      (raw, processed, wakeWordDetected) =>
+        this.uiService.addTranscription(raw, processed, wakeWordDetected),
+    );
 
     await this.wakeWordDetector.initialize((percent) => {
-      this.uiService.updateStatus(`Downloading model... ${percent}%`)
-    })
+      this.uiService.updateStatus(`Downloading model... ${percent}%`);
+    });
 
-    await this.wakeWordDetector.startListening()
-    indicator.setState('listening')
+    await this.wakeWordDetector.startListening();
+    indicator.setState("listening");
   }
 
   private async handleSavedGameOrSetup(): Promise<boolean> {
     if (!this.stateManager || !this.gameModule || !this.orchestrator) {
-      throw new Error('Cannot handle saved game: components not initialized')
+      throw new Error("Cannot handle saved game: components not initialized");
     }
 
     try {
-      const state = this.stateManager.getState()
-      const game = state.game as Record<string, unknown> | undefined
+      const state = this.stateManager.getState();
+      const game = state.game as Record<string, unknown> | undefined;
 
-      Logger.info(`🎮 Startup phase check - phase: ${game?.phase}`)
+      Logger.info(`🎮 Startup phase check - phase: ${game?.phase}`);
 
       if (game?.phase === GamePhase.PLAYING) {
-        Logger.info('📂 Saved game detected - waiting for user command')
-        return false
+        Logger.info("📂 Saved game detected - waiting for user command");
+        return false;
       } else if (game?.phase === GamePhase.SETUP) {
-        Logger.info('👋 Starting name collection...')
-        await this.runNameCollection()
-        return true
+        Logger.info("👋 Starting name collection...");
+        await this.runNameCollection();
+        return true;
       }
 
-      Logger.info('⏭️ No action needed')
-      return false
+      Logger.info("⏭️ No action needed");
+      return false;
     } catch (error) {
-      Logger.error(`Error handling saved game: ${error}. Starting fresh.`)
-      await this.stateManager.resetState(this.gameModule.initialState)
-      await this.runNameCollection()
-      return true
+      Logger.error(`Error handling saved game: ${error}. Starting fresh.`);
+      this.stateManager.resetState(this.gameModule.initialState);
+      await this.runNameCollection();
+      return true;
     }
   }
 
   private async proactiveGameStart(): Promise<void> {
     if (!this.orchestrator) {
-      Logger.error('Cannot start game proactively: orchestrator not initialized')
-      return
+      Logger.error(
+        "Cannot start game proactively: orchestrator not initialized",
+      );
+      return;
     }
 
-    Logger.info('🎮 Starting game proactively')
-    const success = await this.orchestrator.handleTranscript('Start the game and explain the current situation')
+    Logger.info("🎮 Starting game proactively");
+    const success = await this.orchestrator.handleTranscript(
+      "Start the game and explain the current situation",
+    );
 
     if (success) {
-      await this.checkAndAdvanceTurn()
+      await this.checkAndAdvanceTurn();
     }
   }
 
   private async runNameCollection(): Promise<void> {
-    if (!this.stateManager || !this.wakeWordDetector || !this.gameModule || !this.orchestrator) {
-      throw new Error('Cannot run name collection: components not initialized')
+    if (
+      !this.stateManager ||
+      !this.wakeWordDetector ||
+      !this.gameModule ||
+      !this.orchestrator
+    ) {
+      throw new Error("Cannot run name collection: components not initialized");
     }
 
     try {
-      const state = this.stateManager.getState()
-      const game = state.game as Record<string, unknown> | undefined
+      const state = this.stateManager.getState();
+      const game = state.game as Record<string, unknown> | undefined;
 
-      Logger.info(`🎮 Name collection check - phase: ${game?.phase} (expected: ${GamePhase.SETUP})`)
+      Logger.info(
+        `🎮 Name collection check - phase: ${game?.phase} (expected: ${GamePhase.SETUP})`,
+      );
 
       if (game?.phase !== GamePhase.SETUP) {
-        Logger.info('⏭️ Skipping name collection - not in SETUP phase')
-        return
+        Logger.info("⏭️ Skipping name collection - not in SETUP phase");
+        return;
       }
 
-      this.uiService.updateStatus(t('ui.wakeWordInstruction', { wakeWord: CONFIG.WAKE_WORD.TEXT[0] }))
-      const gameName = (game.name as string) || 'the game'
+      this.uiService.updateStatus(
+        t("ui.wakeWordInstruction", { wakeWord: CONFIG.WAKE_WORD.TEXT[0] }),
+      );
+      const gameName = (game.name as string) || "the game";
+      if (!this.llmClient) {
+        throw new Error("LLM client not initialized");
+      }
+
       const nameCollector = new NameCollector(
         this.speechService,
         gameName,
-        () => this.wakeWordDetector!.enableDirectTranscription(),
-        this.llmClient!,
-        this.gameModule.metadata
-      )
+        () => this.wakeWordDetector?.enableDirectTranscription(),
+        this.llmClient,
+        this.gameModule.metadata,
+      );
 
       const playerNames = await nameCollector.collectNames((handler) => {
-        this.currentNameHandler = handler
-      })
+        this.currentNameHandler = handler;
+      });
 
-      this.currentNameHandler = null
-      this.wakeWordDetector.disableDirectTranscription()
+      this.currentNameHandler = null;
+      this.wakeWordDetector.disableDirectTranscription();
 
       // Let orchestrator handle state mutations
-      this.orchestrator.setupPlayers(playerNames)
-      this.orchestrator.transitionPhase(GamePhase.PLAYING)
+      this.orchestrator.setupPlayers(playerNames);
+      this.orchestrator.transitionPhase(GamePhase.PLAYING);
 
-      Logger.info('Name collection complete')
+      Logger.info("Name collection complete");
     } catch (error) {
-      Logger.error(`Name collection failed: ${error}`)
-      this.currentNameHandler = null
+      Logger.error(`Name collection failed: ${error}`);
+      this.currentNameHandler = null;
       if (this.wakeWordDetector) {
-        this.wakeWordDetector.disableDirectTranscription()
+        this.wakeWordDetector.disableDirectTranscription();
       }
-      throw error
+      throw error;
     }
   }
 
   private handleWakeWord(): void {
-    const indicator = this.uiService.getStatusIndicator()
-    indicator.setState('active')
+    const indicator = this.uiService.getStatusIndicator();
+    indicator.setState("active");
 
     if (this.currentNameHandler) {
-      this.uiService.updateStatus(t('ui.wakeWordInstruction', { wakeWord: CONFIG.WAKE_WORD.TEXT[0] }))
+      this.uiService.updateStatus(
+        t("ui.wakeWordInstruction", { wakeWord: CONFIG.WAKE_WORD.TEXT[0] }),
+      );
     } else {
-      this.uiService.updateStatus(t('ui.listeningForCommand'))
+      this.uiService.updateStatus(t("ui.listeningForCommand"));
     }
   }
 
@@ -275,60 +303,64 @@ ${rules.examples.map((ex, i) => `${i + 1}. ${ex}`).join('\n')}
    */
   private async checkAndAdvanceTurn(): Promise<void> {
     if (!this.orchestrator) {
-      return
+      return;
     }
 
-    const nextPlayer = await this.orchestrator.advanceTurn()
+    const nextPlayer = await this.orchestrator.advanceTurn();
 
     if (nextPlayer) {
-      const message = `${nextPlayer.name}, it's your turn. You're at position ${nextPlayer.position}. Tell me what you rolled, or where you landed.`
-      Logger.info(`🎯 Turn start sanity check: ${nextPlayer.name} at ${nextPlayer.position}`)
-      await this.speechService.speak(message)
+      const message = `${nextPlayer.name}, it's your turn. You're at position ${nextPlayer.position}. Tell me what you rolled, or where you landed.`;
+      Logger.info(
+        `🎯 Turn start sanity check: ${nextPlayer.name} at ${nextPlayer.position}`,
+      );
+      await this.speechService.speak(message);
     }
   }
 
   private async handleTranscription(text: string): Promise<void> {
-    Logger.info(`You said: "${text}"`)
+    Logger.info(`You said: "${text}"`);
 
-    const indicator = this.uiService.getStatusIndicator()
-    indicator.setState('listening')
+    const indicator = this.uiService.getStatusIndicator();
+    indicator.setState("listening");
 
     if (this.currentNameHandler) {
-      this.currentNameHandler(text)
-      return
+      this.currentNameHandler(text);
+      return;
     }
 
     if (this.orchestrator) {
-      const success = await this.orchestrator.handleTranscript(text)
+      const success = await this.orchestrator.handleTranscript(text);
 
       if (success) {
-        await this.checkAndAdvanceTurn()
+        await this.checkAndAdvanceTurn();
       }
     }
 
-    this.uiService.updateStatus(t('ui.wakeWordReady', { wakeWord: CONFIG.WAKE_WORD.TEXT[0] }))
+    this.uiService.updateStatus(
+      t("ui.wakeWordReady", { wakeWord: CONFIG.WAKE_WORD.TEXT[0] }),
+    );
   }
 
   async dispose(): Promise<void> {
     if (this.wakeWordDetector) {
-      await this.wakeWordDetector.destroy()
-      this.wakeWordDetector = null
+      await this.wakeWordDetector.destroy();
+      this.wakeWordDetector = null;
     }
 
-    this.orchestrator = null
-    this.stateManager = null
+    this.orchestrator = null;
+    this.stateManager = null;
 
-    this.initialized = false
-    this.uiService.setButtonState(t('ui.startKali'), false)
-    this.uiService.showButton()
-    this.uiService.updateStatus(t('ui.clickToStart'))
-    const indicator = this.uiService.getStatusIndicator()
-    indicator.setState('idle')
-    this.uiService.clearConsole()
+    this.initialized = false;
+    this.uiService.setButtonState(t("ui.startKali"), false);
+    this.uiService.showButton();
+    this.uiService.updateStatus(t("ui.clickToStart"));
+    const indicator = this.uiService.getStatusIndicator();
+    indicator.setState("idle");
+    this.uiService.clearConsole();
   }
 
   isInitialized(): boolean {
-    return this.initialized
+    return this.initialized;
   }
 
   /**
@@ -339,16 +371,16 @@ ${rules.examples.map((ex, i) => `${i + 1}. ${ex}`).join('\n')}
    */
   async testExecuteActions(actions: PrimitiveAction[]): Promise<boolean> {
     if (!this.orchestrator) {
-      throw new Error('Orchestrator not initialized')
+      throw new Error("Orchestrator not initialized");
     }
 
-    const success = await this.orchestrator.testExecuteActions(actions)
+    const success = await this.orchestrator.testExecuteActions(actions);
 
     if (success) {
-      await this.checkAndAdvanceTurn()
+      await this.checkAndAdvanceTurn();
     }
 
-    return success
+    return success;
   }
 
   /**
@@ -357,16 +389,18 @@ ${rules.examples.map((ex, i) => `${i + 1}. ${ex}`).join('\n')}
    */
   async skipToPlaying(): Promise<void> {
     if (!this.orchestrator || !this.gameModule) {
-      throw new Error('Cannot skip to playing: core components not initialized')
+      throw new Error(
+        "Cannot skip to playing: core components not initialized",
+      );
     }
 
-    Logger.info('🚀 Skipping to PLAYING phase with default players')
+    Logger.info("🚀 Skipping to PLAYING phase with default players");
 
     // Let orchestrator handle state setup
-    this.orchestrator.setupPlayers(['Player 1', 'Player 2'])
-    this.orchestrator.transitionPhase(GamePhase.PLAYING)
+    this.orchestrator.setupPlayers(["Player 1", "Player 2"]);
+    this.orchestrator.transitionPhase(GamePhase.PLAYING);
 
-    Logger.info('✅ Skipped to PLAYING phase')
-    await this.speechService.speak('Ready to play!')
+    Logger.info("✅ Skipped to PLAYING phase");
+    await this.speechService.speak("Ready to play!");
   }
 }

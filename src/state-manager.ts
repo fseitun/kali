@@ -1,6 +1,6 @@
-import { GameState } from './orchestrator/types'
-import { deepClone } from './utils/deep-clone'
-import { Logger } from './utils/logger'
+import type { GameState } from "./orchestrator/types";
+import { deepClone } from "./utils/deep-clone";
+import { Logger } from "./utils/logger";
 
 /**
  * Manages game state in memory with dot-notation path access.
@@ -19,7 +19,7 @@ import { Logger } from './utils/logger'
  * - Orchestrator's internal methods (setupPlayers, transitionPhase, advanceTurn)
  */
 export class StateManager {
-  private state: GameState = {}
+  private state: GameState = {} as GameState;
 
   /**
    * Initializes the state manager with initial state.
@@ -27,8 +27,8 @@ export class StateManager {
    * @throws Error if no initial state provided
    */
   init(initialState: GameState): void {
-    this.state = deepClone(initialState)
-    Logger.info('Initialized game state:', initialState)
+    this.state = deepClone(initialState);
+    Logger.info("Initialized game state:", initialState);
   }
 
   /**
@@ -36,7 +36,7 @@ export class StateManager {
    * @returns The complete game state object
    */
   getState(): GameState {
-    return this.state
+    return this.state;
   }
 
   /**
@@ -44,7 +44,7 @@ export class StateManager {
    * @param state - The new state
    */
   setState(state: GameState): void {
-    this.state = state
+    this.state = state;
   }
 
   /**
@@ -52,8 +52,8 @@ export class StateManager {
    * @param initialState - The state to reset to
    */
   resetState(initialState: GameState): void {
-    this.state = deepClone(initialState)
-    Logger.info('Game state reset')
+    this.state = deepClone(initialState);
+    Logger.info("Game state reset");
   }
 
   /**
@@ -62,7 +62,7 @@ export class StateManager {
    * @returns The value at the specified path
    */
   get(path: string): unknown {
-    return this.getByPath(this.state, path)
+    return this.getByPath(this.state, path);
   }
 
   /**
@@ -71,7 +71,7 @@ export class StateManager {
    * @param value - The value to set
    */
   set(path: string, value: unknown): void {
-    this.state = this.setByPath(this.state, path, value)
+    this.state = this.setByPath(this.state, path, value);
   }
 
   /**
@@ -82,10 +82,10 @@ export class StateManager {
    */
   pathExists(state: GameState, path: string): boolean {
     try {
-      const value = this.getByPath(state, path)
-      return value !== undefined
+      const value = this.getByPath(state, path);
+      return value !== undefined;
     } catch {
-      return false
+      return false;
     }
   }
 
@@ -96,38 +96,38 @@ export class StateManager {
    * @returns The value at the path, or undefined if not found
    */
   getByPath(obj: GameState, path: string): unknown {
-    const parts = path.split('.')
-    let current: unknown = obj
+    const parts = path.split(".");
+    let current: unknown = obj;
 
     for (const part of parts) {
       if (current === null || current === undefined) {
-        return undefined
+        return undefined;
       }
-      if (typeof current !== 'object') {
-        return undefined
+      if (typeof current !== "object") {
+        return undefined;
       }
-      current = (current as Record<string, unknown>)[part]
+      current = (current as Record<string, unknown>)[part];
     }
 
-    return current
+    return current;
   }
 
   private setByPath(obj: GameState, path: string, value: unknown): GameState {
-    const parts = path.split('.')
-    const newState = deepClone(obj)
+    const parts = path.split(".");
+    const newState = deepClone(obj);
 
-    let current: Record<string, unknown> = newState
+    let current: Record<string, unknown> = newState as Record<string, unknown>;
 
     for (let i = 0; i < parts.length - 1; i++) {
-      const part = parts[i]
-      if (!(part in current) || typeof current[part] !== 'object') {
-        current[part] = {}
+      const part = parts[i];
+      if (!(part in current) || typeof current[part] !== "object") {
+        current[part] = {};
       }
-      current = current[part] as Record<string, unknown>
+      current = current[part] as Record<string, unknown>;
     }
 
-    current[parts[parts.length - 1]] = value
+    current[parts[parts.length - 1]] = value;
 
-    return newState
+    return newState;
   }
 }

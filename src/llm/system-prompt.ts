@@ -1,56 +1,59 @@
-import { CONFIG } from '../config'
+import { CONFIG } from "../config";
 
 const LANGUAGE_INSTRUCTIONS: Record<string, string> = {
-  'es-AR': 'Spanish (Argentina - Rioplatense dialect). Use "vos" forms (e.g., "vos sos", "tenés", "moviste") and natural Argentine expressions (e.g., "dale", "bárbaro", "genial")',
-  'en-US': 'English (United States). Use natural, conversational American English',
-}
+  "es-AR":
+    'Spanish (Argentina - Rioplatense dialect). Use "vos" forms (e.g., "vos sos", "tenés", "moviste") and natural Argentine expressions (e.g., "dale", "bárbaro", "genial")',
+  "en-US":
+    "English (United States). Use natural, conversational American English",
+};
 
 function getLanguageInstruction(): string {
-  return LANGUAGE_INSTRUCTIONS[CONFIG.LOCALE] || LANGUAGE_INSTRUCTIONS['en-US']
+  return LANGUAGE_INSTRUCTIONS[CONFIG.LOCALE] ?? LANGUAGE_INSTRUCTIONS["en-US"];
 }
 
-const NARRATION_EXAMPLES: Record<string, { good: string[], bad: string[] }> = {
-  'es-AR': {
+const NARRATION_EXAMPLES: Record<string, { good: string[]; bad: string[] }> = {
+  "es-AR": {
     good: [
-      'Estás en la 15, Sara en la 20. Te toca.',
-      'Alicia se movió a la 8 y subió una escalera hasta la 14. ¡Turno de Roberto!',
-      'Roberto está en la 25, Alicia en la 30. ¡Tu turno, Roberto!',
+      "Estás en la 15, Sara en la 20. Te toca.",
+      "Alicia se movió a la 8 y subió una escalera hasta la 14. ¡Turno de Roberto!",
+      "Roberto está en la 25, Alicia en la 30. ¡Tu turno, Roberto!",
     ],
     bad: [
-      'game.name is Snakes and Ladders, game.turn is p1...',
-      'Player 1 moves to position 8. There is a ladder...',
-    ]
+      "game.name is Snakes and Ladders, game.turn is p1...",
+      "Player 1 moves to position 8. There is a ladder...",
+    ],
   },
-  'en-US': {
+  "en-US": {
     good: [
       "You're at 15, Sarah at 20. Your turn.",
-      'Alice moved to 8 and climbed a ladder to 14! Bob\'s turn.',
+      "Alice moved to 8 and climbed a ladder to 14! Bob's turn.",
       "Bob's at 25, Alice at 30. Your turn, Bob!",
     ],
     bad: [
-      'game.name is Snakes and Ladders, game.turn is p1...',
-      'Player 1 moves to position 8. There is a ladder...',
-    ]
-  }
-}
+      "game.name is Snakes and Ladders, game.turn is p1...",
+      "Player 1 moves to position 8. There is a ladder...",
+    ],
+  },
+};
 
 function getNarrationExamples(): string {
-  const examples = NARRATION_EXAMPLES[CONFIG.LOCALE] || NARRATION_EXAMPLES['en-US']
+  const examples =
+    NARRATION_EXAMPLES[CONFIG.LOCALE] ?? NARRATION_EXAMPLES["en-US"];
   return `- Examples:
   * GOOD: "${examples.good[0]}"
   * BAD: "${examples.bad[0]}"
   * GOOD: "${examples.good[1]}"
   * BAD: "${examples.bad[1]}"
-  * GOOD: "${examples.good[2]}"`
+  * GOOD: "${examples.good[2]}"`;
 }
 
 const EXAMPLE_NARRATION: Record<string, string> = {
-  'es-AR': '¡Te moviste a la 7!',
-  'en-US': 'You moved to 7!',
-}
+  "es-AR": "¡Te moviste a la 7!",
+  "en-US": "You moved to 7!",
+};
 
 function getExampleNarration(): string {
-  return EXAMPLE_NARRATION[CONFIG.LOCALE] || EXAMPLE_NARRATION['en-US']
+  return EXAMPLE_NARRATION[CONFIG.LOCALE] ?? EXAMPLE_NARRATION["en-US"];
 }
 
 function getBasePrimitivesDocs(): string {
@@ -233,7 +236,7 @@ ${getNarrationExamples()}
   { "action": "PLAYER_ROLLED", "value": 3 },
   { "action": "NARRATE", "text": "${getExampleNarration()}" }
 ]
-`
+`;
 }
 
 /**
@@ -244,76 +247,94 @@ ${getNarrationExamples()}
 export function buildSystemPrompt(gameRules: string): string {
   return `${getBasePrimitivesDocs()}
 
-${gameRules}`
+${gameRules}`;
 }
 
 interface StateDisplayConfig {
-  primary?: string[]
-  secondary?: string[]
-  hidden?: string[]
+  primary?: string[];
+  secondary?: string[];
+  hidden?: string[];
 }
 
 interface StateDisplayMetadata {
-  game?: StateDisplayConfig
-  players?: StateDisplayConfig
-  board?: StateDisplayConfig
+  game?: StateDisplayConfig;
+  players?: StateDisplayConfig;
+  board?: StateDisplayConfig;
 }
 
 function formatFieldValue(value: unknown): string {
-  if (value === null || value === undefined) return 'null'
+  if (value === null || value === undefined) return "null";
   if (Array.isArray(value)) {
-    return value.length > 0 ? `[${value.join(',')}]` : '[]'
+    return value.length > 0 ? `[${value.join(",")}]` : "[]";
   }
-  if (typeof value === 'object') return '{...}'
-  return String(value)
+  if (typeof value === "object") return "{...}";
+  return String(value);
 }
 
 function formatObjectFields(
   obj: Record<string, unknown>,
-  config?: StateDisplayConfig
+  config?: StateDisplayConfig,
 ): string[] {
-  const fields: string[] = []
-  const processed = new Set<string>()
+  const fields: string[] = [];
+  const processed = new Set<string>();
 
   if (config) {
-    const { primary = [], secondary = [], hidden = [] } = config
-    const hiddenSet = new Set(hidden)
+    const { primary = [], secondary = [], hidden = [] } = config;
+    const hiddenSet = new Set(hidden);
 
     for (const key of primary) {
-      if (hiddenSet.has(key)) continue
-      processed.add(key)
-      const value = obj[key]
-      fields.push(`${key}=${formatFieldValue(value)}`)
+      if (hiddenSet.has(key)) continue;
+      processed.add(key);
+      const value = obj[key];
+      fields.push(`${key}=${formatFieldValue(value)}`);
     }
 
     for (const key of secondary) {
-      if (hiddenSet.has(key) || processed.has(key)) continue
-      processed.add(key)
-      const value = obj[key]
-      if (value !== null && value !== undefined && value !== 0 && value !== false && value !== '') {
-        if (Array.isArray(value) && value.length === 0) continue
-        fields.push(`${key}=${formatFieldValue(value)}`)
+      if (hiddenSet.has(key) || processed.has(key)) continue;
+      processed.add(key);
+      const value = obj[key];
+      if (
+        value !== null &&
+        value !== undefined &&
+        value !== 0 &&
+        value !== false &&
+        value !== ""
+      ) {
+        if (Array.isArray(value) && value.length === 0) continue;
+        fields.push(`${key}=${formatFieldValue(value)}`);
       }
     }
 
     for (const key of Object.keys(obj)) {
-      if (hiddenSet.has(key) || processed.has(key)) continue
-      const value = obj[key]
-      if (value !== null && value !== undefined && value !== 0 && value !== false && value !== '') {
-        if (Array.isArray(value) && value.length === 0) continue
-        fields.push(`${key}=${formatFieldValue(value)}`)
+      if (hiddenSet.has(key) || processed.has(key)) continue;
+      const value = obj[key];
+      if (
+        value !== null &&
+        value !== undefined &&
+        value !== 0 &&
+        value !== false &&
+        value !== ""
+      ) {
+        if (Array.isArray(value) && value.length === 0) continue;
+        fields.push(`${key}=${formatFieldValue(value)}`);
       }
     }
   } else {
     for (const [key, value] of Object.entries(obj)) {
-      if (value !== null && value !== undefined && value !== 0 && value !== false && value !== '') {
-        if (Array.isArray(value) && value.length === 0) continue
-        fields.push(`${key}=${formatFieldValue(value)}`)
+      if (
+        value !== null &&
+        value !== undefined &&
+        value !== 0 &&
+        value !== false &&
+        value !== ""
+      ) {
+        if (Array.isArray(value) && value.length === 0) continue;
+        fields.push(`${key}=${formatFieldValue(value)}`);
       }
     }
   }
 
-  return fields
+  return fields;
 }
 
 /**
@@ -323,92 +344,102 @@ function formatObjectFields(
  * @returns Formatted state string
  */
 export function formatStateContext(state: Record<string, unknown>): string {
-  const lines: string[] = []
-  const displayConfig = state.stateDisplay as StateDisplayMetadata | undefined
+  const lines: string[] = [];
+  const displayConfig = state.stateDisplay as StateDisplayMetadata | undefined;
 
-  const game = state.game as Record<string, unknown> | undefined
+  const game = state.game as Record<string, unknown> | undefined;
   if (game) {
-    lines.push('Game:')
-    const fields = formatObjectFields(game, displayConfig?.game)
-    lines.push(`  ${fields.join(', ')}`)
+    lines.push("Game:");
+    const fields = formatObjectFields(game, displayConfig?.game);
+    lines.push(`  ${fields.join(", ")}`);
   }
 
-  const players = state.players as Record<string, Record<string, unknown>> | undefined
+  const players = state.players as
+    | Record<string, Record<string, unknown>>
+    | undefined;
   if (players) {
-    lines.push('\nPlayers:')
+    lines.push("\nPlayers:");
     Object.entries(players).forEach(([id, player]) => {
-      const fields = formatObjectFields(player, displayConfig?.players)
-      lines.push(`  ${id}: ${fields.join(', ')}`)
-    })
+      const fields = formatObjectFields(player, displayConfig?.players);
+      lines.push(`  ${id}: ${fields.join(", ")}`);
+    });
   }
 
-  const board = state.board as Record<string, unknown> | undefined
+  const board = state.board as Record<string, unknown> | undefined;
   if (board) {
-    lines.push('\nBoard:')
-    const fields = formatObjectFields(board, displayConfig?.board)
+    lines.push("\nBoard:");
+    const fields = formatObjectFields(board, displayConfig?.board);
     if (fields.length > 0) {
-      lines.push(`  ${fields.join(', ')}`)
+      lines.push(`  ${fields.join(", ")}`);
     }
   }
 
-  const decisionContext = formatDecisionPointContext(state)
+  const decisionContext = formatDecisionPointContext(state);
   if (decisionContext) {
-    lines.push('\n' + decisionContext)
+    lines.push("\n" + decisionContext);
   }
 
-  return lines.join('\n')
+  return lines.join("\n");
 }
 
 function formatDecisionPointContext(state: Record<string, unknown>): string {
-  const decisionPoints = state.decisionPoints as Array<{
-    position: number
-    requiredField: string
-    prompt: string
-  }> | undefined
+  const decisionPoints = state.decisionPoints as
+    | Array<{
+        position: number;
+        requiredField: string;
+        prompt: string;
+      }>
+    | undefined;
 
   if (!decisionPoints || decisionPoints.length === 0) {
-    return ''
+    return "";
   }
 
-  const players = state.players as Record<string, Record<string, unknown>> | undefined
-  const game = state.game as Record<string, unknown> | undefined
-  const currentTurn = game?.turn as string | undefined
+  const players = state.players as
+    | Record<string, Record<string, unknown>>
+    | undefined;
+  const game = state.game as Record<string, unknown> | undefined;
+  const currentTurn = game?.turn as string | undefined;
 
   if (!players || !currentTurn) {
-    return ''
+    return "";
   }
 
-  const lines: string[] = []
+  const lines: string[] = [];
 
   Object.entries(players).forEach(([id, player]) => {
-    const position = player.position as number | undefined
-    if (typeof position !== 'number') return
+    const position = player.position as number | undefined;
+    if (typeof position !== "number") return;
 
-    const decisionPoint = decisionPoints.find(dp => dp.position === position)
-    if (!decisionPoint) return
+    const decisionPoint = decisionPoints.find((dp) => dp.position === position);
+    if (!decisionPoint) return;
 
-    const fieldValue = player[decisionPoint.requiredField]
+    const fieldValue = player[decisionPoint.requiredField];
     if (fieldValue === null || fieldValue === undefined) {
-      const playerId = player.id as string || id
-      const playerName = player.name as string || playerId
-      const isCurrent = currentTurn === playerId
+      const playerId = (player.id as string) || id;
+      const playerName = (player.name as string) || playerId;
+      const isCurrent = currentTurn === playerId;
 
-      lines.push(`⚠️ DECISION REQUIRED for ${playerName} (${playerId}):`)
-      lines.push(`  Field: ${decisionPoint.requiredField} (currently null)`)
-      lines.push(`  Prompt: "${decisionPoint.prompt}"`)
+      lines.push(`⚠️ DECISION REQUIRED for ${playerName} (${playerId}):`);
+      lines.push(`  Field: ${decisionPoint.requiredField} (currently null)`);
+      lines.push(`  Prompt: "${decisionPoint.prompt}"`);
       if (isCurrent) {
-        lines.push(`  This is the CURRENT player - INFORMATIONAL (orchestrator will enforce if needed).`)
+        lines.push(
+          `  This is the CURRENT player - INFORMATIONAL (orchestrator will enforce if needed).`,
+        );
       } else {
-        lines.push(`  INFORMATIONAL: Orchestrator will prevent turn advancement until this choice is made.`)
+        lines.push(
+          `  INFORMATIONAL: Orchestrator will prevent turn advancement until this choice is made.`,
+        );
       }
     }
-  })
+  });
 
   if (lines.length > 0) {
-    return lines.join('\n')
+    return lines.join("\n");
   }
 
-  return ''
+  return "";
 }
 
-export const SYSTEM_PROMPT = getBasePrimitivesDocs()
+export const SYSTEM_PROMPT = getBasePrimitivesDocs();

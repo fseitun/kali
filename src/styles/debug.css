@@ -26,7 +26,7 @@
   height: 300px;
   overflow-y: auto;
   text-align: left;
-  font-family: 'Courier New', monospace;
+  font-family: "Courier New", monospace;
   font-size: 0.9rem;
   line-height: 1.4;
 }
@@ -87,7 +87,7 @@
   border-radius: 4px;
   padding: 0.5rem;
   color: var(--text-color);
-  font-family: 'Courier New', monospace;
+  font-family: "Courier New", monospace;
   font-size: 0.9rem;
   resize: vertical;
   margin-bottom: 0.5rem;
@@ -100,7 +100,7 @@
   padding: 0.5rem 1rem;
   border-radius: 4px;
   cursor: pointer;
-  font-family: 'Courier New', monospace;
+  font-family: "Courier New", monospace;
   transition: all 0.3s ease;
 }
 
@@ -118,7 +118,7 @@
   margin-top: 0.5rem;
   padding: 0.5rem;
   border-radius: 4px;
-  font-family: 'Courier New', monospace;
+  font-family: "Courier New", monospace;
   font-size: 0.85rem;
 }
 
@@ -166,7 +166,7 @@
   padding: 0.5rem;
   border-radius: 4px;
   cursor: pointer;
-  font-family: 'Courier New', monospace;
+  font-family: "Courier New", monospace;
   font-size: 0.75rem;
   transition: all 0.2s ease;
   white-space: nowrap;
@@ -188,7 +188,7 @@
   padding: 0.75rem 1.5rem;
   border-radius: 8px;
   cursor: pointer;
-  font-family: 'Courier New', monospace;
+  font-family: "Courier New", monospace;
   font-size: 1rem;
   font-weight: bold;
   margin-top: 0.5rem;

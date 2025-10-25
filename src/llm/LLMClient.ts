@@ -1,4 +1,4 @@
-import { GameState, PrimitiveAction } from '../orchestrator/types'
+import type { GameState, PrimitiveAction } from "../orchestrator/types";
 
 /**
  * Interface for LLM clients that translate voice commands into primitive actions.
@@ -8,7 +8,7 @@ export interface LLMClient {
    * Sets the game rules that will be included in the LLM system prompt.
    * @param rules - The game rules as formatted text
    */
-  setGameRules(rules: string): void
+  setGameRules(rules: string): void;
 
   /**
    * Sends a transcript and current state to the LLM and returns primitive actions.
@@ -16,7 +16,7 @@ export interface LLMClient {
    * @param state - The current game state
    * @returns Array of primitive actions to execute
    */
-  getActions(transcript: string, state: GameState): Promise<PrimitiveAction[]>
+  getActions(transcript: string, state: GameState): Promise<PrimitiveAction[]>;
 
   /**
    * Extracts a person's name from conversational text.
@@ -24,7 +24,7 @@ export interface LLMClient {
    * @param transcript - The transcribed user input
    * @returns The extracted name, or null if no valid name found
    */
-  extractName(transcript: string): Promise<string | null>
+  extractName(transcript: string): Promise<string | null>;
 
   /**
    * Analyzes if a user's response is on-topic for the expected context.
@@ -33,19 +33,22 @@ export interface LLMClient {
    * @param expectedContext - Description of what response is expected
    * @returns Analysis result with on-topic flag and optional urgent message
    */
-  analyzeResponse(transcript: string, expectedContext: string): Promise<{isOnTopic: boolean, urgentMessage?: string}>
+  analyzeResponse(
+    transcript: string,
+    expectedContext: string,
+  ): Promise<{ isOnTopic: boolean; urgentMessage?: string }>;
 
   /**
    * Optional callback invoked when a retry attempt is made.
    * @param attempt - Current attempt number (1-indexed)
    * @param maxAttempts - Maximum number of attempts
    */
-  onRetry?: (attempt: number, maxAttempts: number) => void
+  onRetry?: (attempt: number, maxAttempts: number) => void;
 
   /**
    * Optional callback invoked when an error occurs.
    * @param error - The error that occurred
    * @param willRetry - Whether another retry attempt will be made
    */
-  onError?: (error: Error, willRetry: boolean) => void
+  onError?: (error: Error, willRetry: boolean) => void;
 }

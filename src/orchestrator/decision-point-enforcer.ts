@@ -1,6 +1,6 @@
-import { StateManager } from '../state-manager'
-import { ExecutionContext } from './types'
-import { Logger } from '../utils/logger'
+import type { StateManager } from "../state-manager";
+import { Logger } from "../utils/logger";
+import type { ExecutionContext } from "./types";
 
 /**
  * Enforces decision point requirements in game flow.
@@ -13,7 +13,10 @@ import { Logger } from '../utils/logger'
 export class DecisionPointEnforcer {
   constructor(
     private stateManager: StateManager,
-    private processTranscriptFn: (transcript: string, context: ExecutionContext) => Promise<boolean>
+    private processTranscriptFn: (
+      transcript: string,
+      context: ExecutionContext,
+    ) => Promise<boolean>,
   ) {}
 
   /**
@@ -25,65 +28,72 @@ export class DecisionPointEnforcer {
    */
   async enforceDecisionPoints(context: ExecutionContext): Promise<void> {
     if (context.depth >= context.maxDepth - 1) {
-      Logger.warn('Skipping decision point check: max depth approaching')
-      return
+      Logger.warn("Skipping decision point check: max depth approaching");
+      return;
     }
 
-    const state = this.stateManager.getState()
-    const game = state.game as Record<string, unknown> | undefined
-    const currentTurn = game?.turn as string | undefined
+    const state = this.stateManager.getState();
+    const game = state.game as Record<string, unknown> | undefined;
+    const currentTurn = game?.turn as string | undefined;
 
     if (!currentTurn) {
-      return
+      return;
     }
 
-    const decisionPoints = state.decisionPoints as Array<{
-      position: number
-      requiredField: string
-      prompt: string
-    }> | undefined
+    const decisionPoints = state.decisionPoints as
+      | Array<{
+          position: number;
+          requiredField: string;
+          prompt: string;
+        }>
+      | undefined;
 
     if (!decisionPoints || decisionPoints.length === 0) {
-      return
+      return;
     }
 
     try {
-      const players = state.players as Record<string, Record<string, unknown>> | undefined
-      const currentPlayer = players?.[currentTurn]
+      const players = state.players as
+        | Record<string, Record<string, unknown>>
+        | undefined;
+      const currentPlayer = players?.[currentTurn];
 
       if (!currentPlayer) {
-        return
+        return;
       }
 
-      const playerName = currentPlayer.name as string || currentTurn
-      const position = currentPlayer.position as number | undefined
+      const playerName = (currentPlayer.name as string) || currentTurn;
+      const position = currentPlayer.position as number | undefined;
 
-      if (typeof position !== 'number') {
-        return
+      if (typeof position !== "number") {
+        return;
       }
 
-      const decisionPoint = decisionPoints.find(dp => dp.position === position)
+      const decisionPoint = decisionPoints.find(
+        (dp) => dp.position === position,
+      );
       if (!decisionPoint) {
-        return
+        return;
       }
 
-      const fieldValue = currentPlayer[decisionPoint.requiredField]
+      const fieldValue = currentPlayer[decisionPoint.requiredField];
       if (fieldValue === null || fieldValue === undefined) {
-        Logger.info(`⚠️ Orchestrator enforcing decision point for ${playerName} at position ${position}: ${decisionPoint.requiredField}`)
+        Logger.info(
+          `⚠️ Orchestrator enforcing decision point for ${playerName} at position ${position}: ${decisionPoint.requiredField}`,
+        );
 
         const newContext: ExecutionContext = {
           depth: context.depth + 1,
-          maxDepth: context.maxDepth
-        }
+          maxDepth: context.maxDepth,
+        };
 
         await this.processTranscriptFn(
           `[SYSTEM: ${playerName} (${currentTurn}) is at position ${position} and MUST choose '${decisionPoint.requiredField}' before proceeding. Ask them: "${decisionPoint.prompt}"]`,
-          newContext
-        )
+          newContext,
+        );
       }
     } catch (error) {
-      Logger.error('Error enforcing decision points:', error)
+      Logger.error("Error enforcing decision points:", error);
     }
   }
 }
-

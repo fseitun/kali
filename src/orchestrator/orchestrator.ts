@@ -1,17 +1,23 @@
-import { LLMClient } from '../llm/LLMClient'
-import { StateManager } from '../state-manager'
-import { SpeechService } from '../services/speech-service'
-import { StatusIndicator } from '../components/status-indicator'
-import { validateActions } from './validator'
-import { PrimitiveAction, ExecutionContext, ActionHandler, GameState, GamePhase } from './types'
-import { Logger } from '../utils/logger'
-import { Profiler } from '../utils/profiler'
-import { formatStateContext } from '../llm/system-prompt'
-import { t } from '../i18n'
-import { deepClone } from '../utils/deep-clone'
-import { TurnManager } from './turn-manager'
-import { BoardEffectsHandler } from './board-effects-handler'
-import { DecisionPointEnforcer } from './decision-point-enforcer'
+import type { StatusIndicator } from "../components/status-indicator";
+import { t } from "../i18n";
+import type { LLMClient } from "../llm/LLMClient";
+import { formatStateContext } from "../llm/system-prompt";
+import type { SpeechService } from "../services/speech-service";
+import type { StateManager } from "../state-manager";
+import { deepClone } from "../utils/deep-clone";
+import { Logger } from "../utils/logger";
+import { Profiler } from "../utils/profiler";
+import { BoardEffectsHandler } from "./board-effects-handler";
+import { DecisionPointEnforcer } from "./decision-point-enforcer";
+import { TurnManager } from "./turn-manager";
+import {
+  type PrimitiveAction,
+  type ExecutionContext,
+  type ActionHandler,
+  type GameState,
+} from "./types";
+import type { GamePhase } from "./types";
+import { validateActions } from "./validator";
 
 /**
  * Core orchestrator that processes voice transcripts through LLM,
@@ -24,32 +30,32 @@ import { DecisionPointEnforcer } from './decision-point-enforcer'
  * - Board mechanics
  */
 export class Orchestrator {
-  private turnManager: TurnManager
-  private boardEffectsHandler: BoardEffectsHandler
-  private decisionPointEnforcer: DecisionPointEnforcer
-  private actionHandlers: Map<string, ActionHandler> = new Map()
-  private isProcessing = false
-  private initialState: GameState
+  private turnManager: TurnManager;
+  private boardEffectsHandler: BoardEffectsHandler;
+  private decisionPointEnforcer: DecisionPointEnforcer;
+  private actionHandlers: Map<string, ActionHandler> = new Map();
+  private isProcessing = false;
+  private initialState: GameState;
 
   constructor(
     private llmClient: LLMClient,
     private stateManager: StateManager,
     private speechService: SpeechService,
     private statusIndicator: StatusIndicator,
-    initialState: GameState
+    initialState: GameState,
   ) {
-    this.initialState = initialState
+    this.initialState = initialState;
 
     // Instantiate subsystems
-    this.turnManager = new TurnManager(stateManager)
+    this.turnManager = new TurnManager(stateManager);
     this.boardEffectsHandler = new BoardEffectsHandler(
       stateManager,
-      this.processTranscript.bind(this)
-    )
+      this.processTranscript.bind(this),
+    );
     this.decisionPointEnforcer = new DecisionPointEnforcer(
       stateManager,
-      this.processTranscript.bind(this)
-    )
+      this.processTranscript.bind(this),
+    );
   }
 
   /**
@@ -57,7 +63,7 @@ export class Orchestrator {
    * @returns true if processing, false otherwise
    */
   isLocked(): boolean {
-    return this.isProcessing
+    return this.isProcessing;
   }
 
   /**
@@ -66,7 +72,7 @@ export class Orchestrator {
    * @returns true if processing square effect, false otherwise
    */
   isProcessingEffect(): boolean {
-    return this.boardEffectsHandler.isProcessingEffect()
+    return this.boardEffectsHandler.isProcessingEffect();
   }
 
   /**
@@ -75,7 +81,7 @@ export class Orchestrator {
    * @param handler - Function to execute when action is encountered
    */
   registerActionHandler(actionType: string, handler: ActionHandler): void {
-    this.actionHandlers.set(actionType, handler)
+    this.actionHandlers.set(actionType, handler);
   }
 
   /**
@@ -86,24 +92,24 @@ export class Orchestrator {
    */
   async handleTranscript(transcript: string): Promise<boolean> {
     if (this.isProcessing) {
-      Logger.warn('⏸️ Orchestrator busy, ignoring new request')
-      return false
+      Logger.warn("⏸️ Orchestrator busy, ignoring new request");
+      return false;
     }
 
-    this.isProcessing = true
-    this.statusIndicator.setState('processing')
-    Profiler.start('orchestrator.total')
+    this.isProcessing = true;
+    this.statusIndicator.setState("processing");
+    Profiler.start("orchestrator.total");
 
-    let executionSucceeded = false
+    let executionSucceeded = false;
 
     try {
-      const context: ExecutionContext = { depth: 0, maxDepth: 5 }
-      executionSucceeded = await this.processTranscript(transcript, context)
-      return executionSucceeded
+      const context: ExecutionContext = { depth: 0, maxDepth: 5 };
+      executionSucceeded = await this.processTranscript(transcript, context);
+      return executionSucceeded;
     } finally {
-      this.isProcessing = false
-      Profiler.end('orchestrator.total')
-      this.statusIndicator.setState('listening')
+      this.isProcessing = false;
+      Profiler.end("orchestrator.total");
+      this.statusIndicator.setState("listening");
     }
   }
 
@@ -115,44 +121,52 @@ export class Orchestrator {
    */
   async testExecuteActions(actions: PrimitiveAction[]): Promise<boolean> {
     if (this.isProcessing) {
-      Logger.warn('⏸️ Orchestrator busy, ignoring test request')
-      return false
+      Logger.warn("⏸️ Orchestrator busy, ignoring test request");
+      return false;
     }
 
-    this.isProcessing = true
-    this.statusIndicator.setState('processing')
-    Profiler.start('orchestrator.test')
+    this.isProcessing = true;
+    this.statusIndicator.setState("processing");
+    Profiler.start("orchestrator.test");
 
     try {
-      Logger.info('🧪 Test mode: Executing actions directly')
-      const state = this.stateManager.getState()
-      Logger.state('Current state:\n' + formatStateContext(state))
+      Logger.info("🧪 Test mode: Executing actions directly");
+      const state = this.stateManager.getState();
+      Logger.state(
+        "Current state:\n" +
+          formatStateContext(state as Record<string, unknown>),
+      );
 
-      Profiler.start('orchestrator.test.validation')
-      const validation = validateActions(actions, state, this.stateManager, this)
-      Profiler.end('orchestrator.test.validation')
+      Profiler.start("orchestrator.test.validation");
+      const validation = validateActions(
+        actions,
+        state,
+        this.stateManager,
+        this,
+      );
+      Profiler.end("orchestrator.test.validation");
 
       if (!validation.valid) {
-        Logger.error('❌ Test validation failed:', validation.error)
-        await this.speechService.speak('Invalid actions')
-        return false
+        Logger.error("❌ Test validation failed:", validation.error);
+        await this.speechService.speak("Invalid actions");
+        return false;
       }
 
-      Logger.info('✅ Test validation passed, executing...')
-      const context: ExecutionContext = { depth: 0, maxDepth: 5 }
-      Profiler.start('orchestrator.test.execution')
-      await this.executeActions(actions, context)
-      Profiler.end('orchestrator.test.execution')
-      Logger.info('✅ Test actions executed successfully')
+      Logger.info("✅ Test validation passed, executing...");
+      const context: ExecutionContext = { depth: 0, maxDepth: 5 };
+      Profiler.start("orchestrator.test.execution");
+      await this.executeActions(actions, context);
+      Profiler.end("orchestrator.test.execution");
+      Logger.info("✅ Test actions executed successfully");
 
-      return true
+      return true;
     } catch (error) {
-      Logger.error('❌ Test execution error:', error)
-      return false
+      Logger.error("❌ Test execution error:", error);
+      return false;
     } finally {
-      this.isProcessing = false
-      Profiler.end('orchestrator.test')
-      this.statusIndicator.setState('listening')
+      this.isProcessing = false;
+      Profiler.end("orchestrator.test");
+      this.statusIndicator.setState("listening");
     }
   }
 
@@ -162,33 +176,35 @@ export class Orchestrator {
    * @param playerNames - Array of player names in turn order
    */
   setupPlayers(playerNames: string[]): void {
-    const currentState = this.stateManager.getState()
-    const playersArray = Object.values(currentState.players as Record<string, Record<string, unknown>>)
-    const playerTemplate = playersArray[0]
+    const currentState = this.stateManager.getState();
+    const playersArray = Object.values(
+      currentState.players as Record<string, Record<string, unknown>>,
+    );
+    const playerTemplate = playersArray[0];
 
-    const players: Record<string, Record<string, unknown>> = {}
-    const playerOrder: string[] = []
+    const players: Record<string, Record<string, unknown>> = {};
+    const playerOrder: string[] = [];
 
     playerNames.forEach((name, index) => {
-      const playerId = `p${index + 1}`
-      const player = deepClone(playerTemplate)
-      player.id = playerId
-      player.name = name
-      player.position = 0
-      players[playerId] = player
-      playerOrder.push(playerId)
-    })
+      const playerId = `p${index + 1}`;
+      const player = deepClone(playerTemplate);
+      player.id = playerId;
+      player.name = name;
+      player.position = 0;
+      players[playerId] = player;
+      playerOrder.push(playerId);
+    });
 
-    this.stateManager.set('players', players)
-    this.stateManager.set('game.playerOrder', playerOrder)
+    this.stateManager.set("players", players);
+    this.stateManager.set("game.playerOrder", playerOrder);
 
     // Set first player's turn
     if (playerOrder.length > 0) {
-      this.stateManager.set('game.turn', playerOrder[0])
+      this.stateManager.set("game.turn", playerOrder[0]);
     }
 
-    Logger.info('Players created:', players)
-    Logger.info('Player order:', playerOrder)
+    Logger.info("Players created:", players);
+    Logger.info("Player order:", playerOrder);
   }
 
   /**
@@ -197,8 +213,10 @@ export class Orchestrator {
    * @param phase - The phase to transition to
    */
   transitionPhase(phase: GamePhase): void {
-    Logger.info(`🎮 Phase transition: ${this.stateManager.get('game.phase')} → ${phase}`)
-    this.stateManager.set('game.phase', phase)
+    Logger.info(
+      `🎮 Phase transition: ${this.stateManager.get("game.phase")} → ${phase}`,
+    );
+    this.stateManager.set("game.phase", phase);
   }
 
   /**
@@ -206,7 +224,7 @@ export class Orchestrator {
    * @returns true if there are unresolved decisions, false otherwise
    */
   hasPendingDecisions(): boolean {
-    return this.turnManager.hasPendingDecisions()
+    return this.turnManager.hasPendingDecisions();
   }
 
   /**
@@ -214,181 +232,220 @@ export class Orchestrator {
    * AUTHORITY: Only the orchestrator can advance turns.
    * @returns The next player's ID and details, or null if unable to advance
    */
-  async advanceTurn(): Promise<{ playerId: string; name: string; position: number } | null> {
-    return await this.turnManager.advanceTurn(this.boardEffectsHandler.isProcessingEffect())
+  async advanceTurn(): Promise<{
+    playerId: string;
+    name: string;
+    position: number;
+  } | null> {
+    return await this.turnManager.advanceTurn(
+      this.boardEffectsHandler.isProcessingEffect(),
+    );
   }
 
   private async processTranscript(
     transcript: string,
-    context: ExecutionContext
+    context: ExecutionContext,
   ): Promise<boolean> {
     try {
-      Logger.brain(`Orchestrator processing: ${transcript} (depth: ${context.depth})`)
+      Logger.brain(
+        `Orchestrator processing: ${transcript} (depth: ${context.depth})`,
+      );
 
-      const state = this.stateManager.getState()
-      Logger.state('Current state:\n' + formatStateContext(state))
+      const state = this.stateManager.getState();
+      Logger.state(
+        "Current state:\n" +
+          formatStateContext(state as Record<string, unknown>),
+      );
 
-      Profiler.start(`orchestrator.llm.${context.depth}`)
-      const actions = await this.llmClient.getActions(transcript, state)
-      Profiler.end(`orchestrator.llm.${context.depth}`)
+      Profiler.start(`orchestrator.llm.${context.depth}`);
+      const actions = await this.llmClient.getActions(transcript, state);
+      Profiler.end(`orchestrator.llm.${context.depth}`);
 
-      Logger.robot('LLM returned actions:', actions)
+      Logger.robot("LLM returned actions:", actions);
 
       if (actions.length === 0) {
-        Logger.warn('No actions returned from LLM')
-        await this.speechService.speak(t('llm.allRetriesFailed'))
-        return false
+        Logger.warn("No actions returned from LLM");
+        await this.speechService.speak(t("llm.allRetriesFailed"));
+        return false;
       }
 
-      Profiler.start(`orchestrator.validation.${context.depth}`)
-      const validation = validateActions(actions, state, this.stateManager, this)
-      Profiler.end(`orchestrator.validation.${context.depth}`)
+      Profiler.start(`orchestrator.validation.${context.depth}`);
+      const validation = validateActions(
+        actions,
+        state,
+        this.stateManager,
+        this,
+      );
+      Profiler.end(`orchestrator.validation.${context.depth}`);
 
       if (!validation.valid) {
-        Logger.error('Validation failed:', validation.error)
-        await this.speechService.speak(t('errors.validationFailed'))
-        return false
+        Logger.error("Validation failed:", validation.error);
+        await this.speechService.speak(t("errors.validationFailed"));
+        return false;
       }
 
-      Logger.info('Actions validated, executing...')
-      Profiler.start(`orchestrator.execution.${context.depth}`)
-      await this.executeActions(actions, context)
-      Profiler.end(`orchestrator.execution.${context.depth}`)
+      Logger.info("Actions validated, executing...");
+      Profiler.start(`orchestrator.execution.${context.depth}`);
+      await this.executeActions(actions, context);
+      Profiler.end(`orchestrator.execution.${context.depth}`);
       if (context.depth === 0) {
-        Logger.info('Actions executed successfully')
+        Logger.info("Actions executed successfully");
       }
 
-      await this.decisionPointEnforcer.enforceDecisionPoints(context)
+      await this.decisionPointEnforcer.enforceDecisionPoints(context);
 
-      return true
+      return true;
     } catch (error) {
-      Logger.error('Orchestrator error:', error)
-      return false
+      Logger.error("Orchestrator error:", error);
+      return false;
     }
   }
 
   private async executeActions(
     actions: PrimitiveAction[],
-    context: ExecutionContext
+    context: ExecutionContext,
   ): Promise<void> {
     if (context.depth >= context.maxDepth) {
-      Logger.warn(`Max execution depth (${context.maxDepth}) reached, stopping`)
-      return
+      Logger.warn(
+        `Max execution depth (${context.maxDepth}) reached, stopping`,
+      );
+      return;
     }
 
     for (const action of actions) {
       try {
-        await this.executeAction(action, context)
+        await this.executeAction(action, context);
       } catch (error) {
-        Logger.error('Failed to execute action:', action, error)
+        Logger.error("Failed to execute action:", action, error);
       }
     }
   }
 
-
   private async executeAction(
     primitive: PrimitiveAction,
-    context: ExecutionContext
+    context: ExecutionContext,
   ): Promise<void> {
-    const customHandler = this.actionHandlers.get(primitive.action)
+    const customHandler = this.actionHandlers.get(primitive.action);
     if (customHandler) {
-      await customHandler(primitive, context)
-      return
+      await customHandler(primitive, context);
+      return;
     }
 
     switch (primitive.action) {
-      case 'NARRATE': {
-        this.statusIndicator.setState('speaking')
+      case "NARRATE": {
+        this.statusIndicator.setState("speaking");
         if (primitive.soundEffect) {
-          this.speechService.playSound(primitive.soundEffect)
+          this.speechService.playSound(primitive.soundEffect);
         }
-        await this.speechService.speak(primitive.text)
-        break
+        await this.speechService.speak(primitive.text);
+        break;
       }
 
-      case 'SET_STATE': {
-        await this.turnManager.assertPlayerTurnOwnership(primitive.path)
-        Logger.write(`Setting state: ${primitive.path} = ${JSON.stringify(primitive.value)}`)
-        this.stateManager.set(primitive.path, primitive.value)
-        await this.boardEffectsHandler.checkAndApplyBoardMoves(primitive.path)
-        await this.boardEffectsHandler.checkAndApplySquareEffects(primitive.path, context)
-        break
+      case "SET_STATE": {
+        await this.turnManager.assertPlayerTurnOwnership(primitive.path);
+        Logger.write(
+          `Setting state: ${primitive.path} = ${JSON.stringify(primitive.value)}`,
+        );
+        this.stateManager.set(primitive.path, primitive.value);
+        await this.boardEffectsHandler.checkAndApplyBoardMoves(primitive.path);
+        await this.boardEffectsHandler.checkAndApplySquareEffects(
+          primitive.path,
+          context,
+        );
+        break;
       }
 
-      case 'PLAYER_ROLLED': {
-        const state = this.stateManager.getState()
-        const game = state.game as Record<string, unknown> | undefined
-        const currentTurn = game?.turn as string | undefined
+      case "PLAYER_ROLLED": {
+        const state = this.stateManager.getState();
+        const game = state.game as Record<string, unknown> | undefined;
+        const currentTurn = game?.turn as string | undefined;
 
         if (!currentTurn) {
-          throw new Error('Cannot process PLAYER_ROLLED: No current turn set')
+          throw new Error("Cannot process PLAYER_ROLLED: No current turn set");
         }
 
-        const path = `players.${currentTurn}.position`
-        const currentPosition = this.stateManager.get(path) as number
+        const path = `players.${currentTurn}.position`;
+        const currentPosition = this.stateManager.get(path) as number;
 
-        if (typeof currentPosition !== 'number') {
-          throw new Error(`Cannot process PLAYER_ROLLED: ${path} is not a number`)
+        if (typeof currentPosition !== "number") {
+          throw new Error(
+            `Cannot process PLAYER_ROLLED: ${path} is not a number`,
+          );
         }
 
-        const newPosition = currentPosition + primitive.value
-        Logger.write(`Player rolled ${primitive.value}: ${path} (${currentPosition} + ${primitive.value} = ${newPosition})`)
+        const newPosition = currentPosition + primitive.value;
+        Logger.write(
+          `Player rolled ${primitive.value}: ${path} (${currentPosition} + ${primitive.value} = ${newPosition})`,
+        );
 
-        this.stateManager.set(path, newPosition)
-        this.stateManager.set('game.lastRoll', primitive.value)
-        await this.boardEffectsHandler.checkAndApplyBoardMoves(path)
-        await this.boardEffectsHandler.checkAndApplySquareEffects(path, context)
-        break
+        this.stateManager.set(path, newPosition);
+        this.stateManager.set("game.lastRoll", primitive.value);
+        await this.boardEffectsHandler.checkAndApplyBoardMoves(path);
+        await this.boardEffectsHandler.checkAndApplySquareEffects(
+          path,
+          context,
+        );
+        break;
       }
 
-      case 'PLAYER_ANSWERED': {
-        Logger.info(`Player answered: "${primitive.answer}"`)
+      case "PLAYER_ANSWERED": {
+        Logger.info(`Player answered: "${primitive.answer}"`);
         // Store answer in temporary state for orchestrator to process
-        this.stateManager.set('game.lastAnswer', primitive.answer)
-        break
+        this.stateManager.set("game.lastAnswer", primitive.answer);
+        break;
       }
 
-      case 'RESET_GAME': {
-        Logger.info(`🔄 Resetting game state (keepPlayerNames: ${primitive.keepPlayerNames})`)
+      case "RESET_GAME": {
+        Logger.info(
+          `🔄 Resetting game state (keepPlayerNames: ${primitive.keepPlayerNames})`,
+        );
 
-        const playerNames: Map<string, string> = new Map()
+        const playerNames: Map<string, string> = new Map();
         if (primitive.keepPlayerNames) {
-          const currentState = this.stateManager.getState()
-          const players = currentState.players as Record<string, { name: string }> | undefined
+          const currentState = this.stateManager.getState();
+          const players = currentState.players as
+            | Record<string, { name: string }>
+            | undefined;
           if (players) {
             for (const [id, player] of Object.entries(players)) {
-              playerNames.set(id, player.name)
+              playerNames.set(id, player.name);
             }
-            Logger.info(`Extracted ${playerNames.size} player names: [${Array.from(playerNames.values()).join(', ')}]`)
+            Logger.info(
+              `Extracted ${playerNames.size} player names: [${Array.from(playerNames.values()).join(", ")}]`,
+            );
           } else {
-            Logger.warn('keepPlayerNames=true but no players found in current state')
+            Logger.warn(
+              "keepPlayerNames=true but no players found in current state",
+            );
           }
         }
 
-        this.stateManager.resetState(this.initialState)
-        Logger.info('State reset to initial state')
+        this.stateManager.resetState(this.initialState);
+        Logger.info("State reset to initial state");
 
         if (primitive.keepPlayerNames && playerNames.size > 0) {
-          const state = this.stateManager.getState()
-          const game = state.game as Record<string, unknown> | undefined
-          const playerOrder = game?.playerOrder as string[] | undefined
+          const state = this.stateManager.getState();
+          const game = state.game as Record<string, unknown> | undefined;
+          const playerOrder = game?.playerOrder as string[] | undefined;
 
           if (playerOrder && playerOrder.length > 0) {
-            Logger.info(`Restoring ${playerNames.size} player names`)
+            Logger.info(`Restoring ${playerNames.size} player names`);
             for (const playerId of playerOrder) {
-              const savedName = playerNames.get(playerId)
+              const savedName = playerNames.get(playerId);
               if (savedName) {
-                this.stateManager.set(`players.${playerId}.name`, savedName)
-                Logger.info(`Restored player ${playerId}: "${savedName}"`)
+                this.stateManager.set(`players.${playerId}.name`, savedName);
+                Logger.info(`Restored player ${playerId}: "${savedName}"`);
               }
             }
           } else {
-            Logger.warn('keepPlayerNames=true but no playerOrder found after reset')
+            Logger.warn(
+              "keepPlayerNames=true but no playerOrder found after reset",
+            );
           }
         }
 
-        Logger.info('Game state reset complete')
-        break
+        Logger.info("Game state reset complete");
+        break;
       }
     }
   }

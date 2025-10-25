@@ -1,26 +1,26 @@
-import { Logger } from '../utils/logger'
-import { CONFIG } from '../config'
+import { CONFIG } from "../config";
+import { Logger } from "../utils/logger";
 
 /**
  * Manages text-to-speech narration and sound effect playback for voice-only interaction.
  */
 export class SpeechService {
-  private audioContext?: AudioContext
-  private sounds: Map<string, AudioBuffer> = new Map()
-  private primed = false
+  private audioContext?: AudioContext;
+  private sounds: Map<string, AudioBuffer> = new Map();
+  private primed = false;
 
   /**
    * Primes the speech synthesis API for immediate use.
    * Required on some browsers to avoid delays on first TTS call.
    */
   prime(): void {
-    if (!window.speechSynthesis || this.primed) return
+    if (!window.speechSynthesis || this.primed) return;
 
-    window.speechSynthesis.cancel()
-    const utterance = new SpeechSynthesisUtterance('')
-    window.speechSynthesis.speak(utterance)
-    this.primed = true
-    Logger.info('Speech synthesis primed')
+    window.speechSynthesis.cancel();
+    const utterance = new SpeechSynthesisUtterance("");
+    window.speechSynthesis.speak(utterance);
+    this.primed = true;
+    Logger.info("Speech synthesis primed");
   }
 
   /**
@@ -32,43 +32,45 @@ export class SpeechService {
   speak(text: string): Promise<void> {
     return new Promise((resolve) => {
       if (!window.speechSynthesis) {
-        Logger.error('TTS not supported')
-        resolve()
-        return
+        Logger.error("TTS not supported");
+        resolve();
+        return;
       }
 
       if (!this.primed) {
-        this.prime()
+        this.prime();
       }
 
-      window.speechSynthesis.cancel()
+      window.speechSynthesis.cancel();
 
-      const utterance = new SpeechSynthesisUtterance(text)
-      utterance.rate = CONFIG.TTS.RATE
-      utterance.pitch = CONFIG.TTS.PITCH
-      utterance.lang = CONFIG.TTS.VOICE_LANG
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.rate = CONFIG.TTS.RATE;
+      utterance.pitch = CONFIG.TTS.PITCH;
+      utterance.lang = CONFIG.TTS.VOICE_LANG;
 
       utterance.onend = () => {
-        resolve()
-      }
+        resolve();
+      };
 
       utterance.onerror = (event) => {
-        if (event.error === 'interrupted') {
-          Logger.debug('Speech synthesis interrupted (expected when wake word detected)')
+        if (event.error === "interrupted") {
+          Logger.debug(
+            "Speech synthesis interrupted (expected when wake word detected)",
+          );
         } else {
-          Logger.error('Speech synthesis error:', {
+          Logger.error("Speech synthesis error:", {
             error: event.error,
             type: event.type,
             charIndex: event.charIndex,
-            elapsedTime: event.elapsedTime
-          })
+            elapsedTime: event.elapsedTime,
+          });
         }
-        resolve()
-      }
+        resolve();
+      };
 
-      window.speechSynthesis.speak(utterance)
-      Logger.narration(`Kali: "${text}"`)
-    })
+      window.speechSynthesis.speak(utterance);
+      Logger.narration(`Kali: "${text}"`);
+    });
   }
 
   /**
@@ -77,18 +79,16 @@ export class SpeechService {
    * @param url - URL to fetch the sound file from
    */
   async loadSound(name: string, url: string): Promise<void> {
-    if (!this.audioContext) {
-      this.audioContext = new AudioContext()
-    }
+    this.audioContext ??= new AudioContext();
 
     try {
-      const response = await fetch(url)
-      const arrayBuffer = await response.arrayBuffer()
-      const audioBuffer = await this.audioContext.decodeAudioData(arrayBuffer)
-      this.sounds.set(name, audioBuffer)
-      Logger.info(`Loaded sound: ${name}`)
+      const response = await fetch(url);
+      const arrayBuffer = await response.arrayBuffer();
+      const audioBuffer = await this.audioContext.decodeAudioData(arrayBuffer);
+      this.sounds.set(name, audioBuffer);
+      Logger.info(`Loaded sound: ${name}`);
     } catch (error) {
-      Logger.warn(`Failed to load sound ${name} from ${url}:`, error)
+      Logger.warn(`Failed to load sound ${name} from ${url}:`, error);
     }
   }
 
@@ -99,23 +99,25 @@ export class SpeechService {
    */
   playSound(name: string): void {
     if (!this.sounds.has(name)) {
-      Logger.warn(`Sound effect "${name}" not found, continuing without sound`)
-      return
+      Logger.warn(`Sound effect "${name}" not found, continuing without sound`);
+      return;
     }
 
-    if (!this.audioContext) {
-      this.audioContext = new AudioContext()
-    }
+    this.audioContext ??= new AudioContext();
 
     try {
-      const buffer = this.sounds.get(name)!
-      const source = this.audioContext.createBufferSource()
-      source.buffer = buffer
-      source.connect(this.audioContext.destination)
-      source.start(0)
-      Logger.info(`Playing sound: ${name}`)
+      const buffer = this.sounds.get(name);
+      if (!buffer) {
+        Logger.warn(`Sound not found: ${name}`);
+        return;
+      }
+      const source = this.audioContext.createBufferSource();
+      source.buffer = buffer;
+      source.connect(this.audioContext.destination);
+      source.start(0);
+      Logger.info(`Playing sound: ${name}`);
     } catch (error) {
-      Logger.warn(`Failed to play sound ${name}:`, error)
+      Logger.warn(`Failed to play sound ${name}:`, error);
     }
   }
 }

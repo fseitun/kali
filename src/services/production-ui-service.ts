@@ -1,41 +1,39 @@
-import { StatusIndicator } from '../components/status-indicator'
-import { IUIService } from './ui-service'
+import { StatusIndicator } from "../components/status-indicator";
+import type { IUIService } from "./ui-service";
 
 export class ProductionUIService implements IUIService {
-  private statusIndicator: StatusIndicator
+  private statusIndicator: StatusIndicator;
 
-  constructor(
-    private startButton: HTMLButtonElement
-  ) {
-    this.statusIndicator = new StatusIndicator('status-indicator')
+  constructor(private startButton: HTMLButtonElement) {
+    this.statusIndicator = new StatusIndicator("status-indicator");
   }
 
   getStatusIndicator(): StatusIndicator {
-    return this.statusIndicator
+    return this.statusIndicator;
   }
 
-  updateStatus(_status: string): void {
-  }
+  updateStatus(_status: string): void {}
 
-  log(_message: string): void {
-  }
+  log(_message: string): void {}
 
-  addTranscription(_raw: string, _processed: string, _wakeWordDetected: boolean): void {
-  }
+  addTranscription(
+    _raw: string,
+    _processed: string,
+    _wakeWordDetected: boolean,
+  ): void {}
 
-  clearConsole(): void {
-  }
+  clearConsole(): void {}
 
   setButtonState(text: string, disabled: boolean): void {
-    this.startButton.textContent = text
-    this.startButton.disabled = disabled
+    this.startButton.textContent = text;
+    this.startButton.disabled = disabled;
   }
 
   hideButton(): void {
-    this.startButton.style.display = 'none'
+    this.startButton.style.display = "none";
   }
 
   showButton(): void {
-    this.startButton.style.display = ''
+    this.startButton.style.display = "";
   }
 }
