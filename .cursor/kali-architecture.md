@@ -119,6 +119,26 @@ newPosition = currentPosition + rollValue;
 newScore = currentScore + points;
 ```
 
+### The Primitive Box Contract
+
+All interpreters – LLM clients, debug tools, or any future non-LLM input paths – communicate with the orchestrator **only** by emitting a `PrimitiveAction[]` request. This is the **Primitive Box** contract:
+
+- The only allowed primitives are `NARRATE`, `RESET_GAME`, `SET_STATE`, `PLAYER_ROLLED`, `PLAYER_ANSWERED`.
+- Interpreters:
+  - **Report events and corrections** through these primitives.
+  - **Never manipulate turns, phases, or winners directly.**
+  - **Never perform game math or board logic.**
+- The orchestrator and its subsystems:
+  - Validate every primitive via `validator.ts`.
+  - Apply state changes via `StateManager`.
+  - Manage turn advancement, phase transitions, decision points, and board effects.
+
+If a new kind of event is needed, it must be introduced as a new primitive with:
+
+- Validation rules in `validator.ts`.
+- Execution logic in `orchestrator.ts`.
+- Updated guidance in `system-prompt.ts` so LLMs can emit it.
+
 ### Why This Matters
 
 **Before (LLM calculates):**
@@ -275,3 +295,13 @@ When in doubt:
 - Need to calculate state? → Orchestrator owns all math
 
 This keeps Kali maintainable, reliable, testable, and game-agnostic.
+
+### Guardrails Checklist for New Features
+
+When adding or reviewing features:
+
+- All `stateManager.set()` calls must live in the orchestrator or its subsystems.
+- No component, UI, or LLM client may directly modify `game.turn`, `game.phase`, or `game.winner`.
+- New behaviors must either:
+  - Be expressed in terms of existing primitives plus game config and prompts, or
+  - Introduce a new primitive with validator + orchestrator handling and updated prompt documentation.

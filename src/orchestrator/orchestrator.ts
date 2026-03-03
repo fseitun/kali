@@ -36,6 +36,7 @@ export class Orchestrator {
   private actionHandlers: Map<string, ActionHandler> = new Map();
   private isProcessing = false;
   private initialState: GameState;
+  private readonly defaultContext: ExecutionContext = { depth: 0, maxDepth: 5 };
 
   constructor(
     private llmClient: LLMClient,
@@ -103,7 +104,7 @@ export class Orchestrator {
     let executionSucceeded = false;
 
     try {
-      const context: ExecutionContext = { depth: 0, maxDepth: 5 };
+      const context: ExecutionContext = { ...this.defaultContext };
       executionSucceeded = await this.processTranscript(transcript, context);
       return executionSucceeded;
     } finally {
@@ -131,41 +132,56 @@ export class Orchestrator {
 
     try {
       Logger.info("🧪 Test mode: Executing actions directly");
-      const state = this.stateManager.getState();
-      Logger.state(
-        "Current state:\n" +
-          formatStateContext(state as Record<string, unknown>),
-      );
-
-      Profiler.start("orchestrator.test.validation");
-      const validation = validateActions(
+      const context: ExecutionContext = { ...this.defaultContext };
+      Profiler.start("orchestrator.test.run");
+      const succeeded = await this.runValidatedActions(
         actions,
-        state,
-        this.stateManager,
-        this,
+        context,
+        "orchestrator.test",
       );
-      Profiler.end("orchestrator.test.validation");
-
-      if (!validation.valid) {
-        Logger.error("❌ Test validation failed:", validation.error);
-        await this.speechService.speak("Invalid actions");
-        return false;
+      Profiler.end("orchestrator.test.run");
+      if (succeeded) {
+        Logger.info("✅ Test actions executed successfully");
       }
-
-      Logger.info("✅ Test validation passed, executing...");
-      const context: ExecutionContext = { depth: 0, maxDepth: 5 };
-      Profiler.start("orchestrator.test.execution");
-      await this.executeActions(actions, context);
-      Profiler.end("orchestrator.test.execution");
-      Logger.info("✅ Test actions executed successfully");
-
-      return true;
+      return succeeded;
     } catch (error) {
       Logger.error("❌ Test execution error:", error);
       return false;
     } finally {
       this.isProcessing = false;
       Profiler.end("orchestrator.test");
+      this.statusIndicator.setState("listening");
+    }
+  }
+
+  /**
+   * Public entry point for executing primitive actions without LLM interpretation.
+   * Intended for non-LLM interpreters (debug tools, alternate UIs) that already
+   * produced a validated PrimitiveAction[] request.
+   * @param actions - Array of primitive actions to validate and execute
+   * @returns true if execution succeeded, false otherwise
+   */
+  async executePrimitiveActions(actions: PrimitiveAction[]): Promise<boolean> {
+    if (this.isProcessing) {
+      Logger.warn("⏸️ Orchestrator busy, ignoring primitive execution request");
+      return false;
+    }
+
+    this.isProcessing = true;
+    this.statusIndicator.setState("processing");
+    Profiler.start("orchestrator.primitives.total");
+
+    try {
+      const context: ExecutionContext = { ...this.defaultContext };
+      const succeeded = await this.runValidatedActions(
+        actions,
+        context,
+        "orchestrator.primitives",
+      );
+      return succeeded;
+    } finally {
+      this.isProcessing = false;
+      Profiler.end("orchestrator.primitives.total");
       this.statusIndicator.setState("listening");
     }
   }
@@ -256,7 +272,6 @@ export class Orchestrator {
         "Current state:\n" +
           formatStateContext(state as Record<string, unknown>),
       );
-
       Profiler.start(`orchestrator.llm.${context.depth}`);
       const actions = await this.llmClient.getActions(transcript, state);
       Profiler.end(`orchestrator.llm.${context.depth}`);
@@ -268,37 +283,55 @@ export class Orchestrator {
         await this.speechService.speak(t("llm.allRetriesFailed"));
         return false;
       }
-
-      Profiler.start(`orchestrator.validation.${context.depth}`);
-      const validation = validateActions(
+      const succeeded = await this.runValidatedActions(
         actions,
-        state,
-        this.stateManager,
-        this,
+        context,
+        "orchestrator",
       );
-      Profiler.end(`orchestrator.validation.${context.depth}`);
-
-      if (!validation.valid) {
-        Logger.error("Validation failed:", validation.error);
-        await this.speechService.speak(t("errors.validationFailed"));
-        return false;
-      }
-
-      Logger.info("Actions validated, executing...");
-      Profiler.start(`orchestrator.execution.${context.depth}`);
-      await this.executeActions(actions, context);
-      Profiler.end(`orchestrator.execution.${context.depth}`);
-      if (context.depth === 0) {
-        Logger.info("Actions executed successfully");
-      }
-
-      await this.decisionPointEnforcer.enforceDecisionPoints(context);
-
-      return true;
+      return succeeded;
     } catch (error) {
       Logger.error("Orchestrator error:", error);
       return false;
     }
+  }
+
+  private async runValidatedActions(
+    actions: PrimitiveAction[],
+    context: ExecutionContext,
+    profilerPrefix: string,
+  ): Promise<boolean> {
+    const state = this.stateManager.getState();
+    Logger.state(
+      "Current state:\n" +
+        formatStateContext(state as Record<string, unknown>),
+    );
+
+    Profiler.start(`${profilerPrefix}.validation.${context.depth}`);
+    const validation = validateActions(
+      actions,
+      state,
+      this.stateManager,
+      this,
+    );
+    Profiler.end(`${profilerPrefix}.validation.${context.depth}`);
+
+    if (!validation.valid) {
+      Logger.error("Validation failed:", validation.error);
+      await this.speechService.speak(t("errors.validationFailed"));
+      return false;
+    }
+
+    Logger.info("Actions validated, executing...");
+    Profiler.start(`${profilerPrefix}.execution.${context.depth}`);
+    await this.executeActions(actions, context);
+    Profiler.end(`${profilerPrefix}.execution.${context.depth}`);
+    if (context.depth === 0) {
+      Logger.info("Actions executed successfully");
+    }
+
+    await this.decisionPointEnforcer.enforceDecisionPoints(context);
+
+    return true;
   }
 
   private async executeActions(
