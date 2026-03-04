@@ -289,32 +289,32 @@ describe("Orchestrator - New Action Handlers", () => {
   });
 
   describe("handleTranscript - Return Value and Separation of Concerns", () => {
-    it("returns true when transcript processed successfully", async () => {
+    it("returns success true when transcript processed successfully", async () => {
       mockLLM.getActions = vi.fn(async () => [
         { action: "NARRATE", text: "Hello" },
       ]);
 
-      const success = await orchestrator.handleTranscript("test command");
+      const { success } = await orchestrator.handleTranscript("test command");
 
       expect(success).toBe(true);
     });
 
-    it("returns false when transcript processing fails", async () => {
+    it("returns success false when transcript processing fails", async () => {
       mockLLM.getActions = vi.fn(async () => {
         throw new Error("LLM error");
       });
 
-      const success = await orchestrator.handleTranscript("test command");
+      const { success } = await orchestrator.handleTranscript("test command");
 
       expect(success).toBe(false);
     });
 
-    it("returns false when validation fails", async () => {
+    it("returns success false when validation fails", async () => {
       mockLLM.getActions = vi.fn(async () => [
         { action: "SET_STATE", path: "players.p2.position", value: 99 },
       ]);
 
-      const success = await orchestrator.handleTranscript("cheat command");
+      const { success } = await orchestrator.handleTranscript("cheat command");
 
       expect(success).toBe(false);
     });
@@ -343,6 +343,29 @@ describe("Orchestrator - New Action Handlers", () => {
       await orchestrator.testExecuteActions(actions);
 
       expect(mockStateManager.set).not.toHaveBeenCalledWith("game.turn", "p2");
+    });
+
+    it("NARRATE-only returns shouldAdvanceTurn false (State Query fix)", async () => {
+      mockLLM.getActions = vi.fn(async () => [
+        { action: "NARRATE", text: "Fico is ahead at position 45" },
+      ]);
+
+      const result = await orchestrator.handleTranscript("Who is winning?");
+
+      expect(result.success).toBe(true);
+      expect(result.shouldAdvanceTurn).toBe(false);
+    });
+
+    it("PLAYER_ROLLED plus NARRATE returns shouldAdvanceTurn true", async () => {
+      mockLLM.getActions = vi.fn(async () => [
+        { action: "PLAYER_ROLLED", value: 4 },
+        { action: "NARRATE", text: "Moving 4 spaces!" },
+      ]);
+
+      const result = await orchestrator.handleTranscript("I rolled a 4");
+
+      expect(result.success).toBe(true);
+      expect(result.shouldAdvanceTurn).toBe(true);
     });
   });
 

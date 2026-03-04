@@ -91,8 +91,9 @@ Each action must be one of these 5 primitives:
 
 3. SET_STATE - Set a value in game state (USER CORRECTIONS ONLY)
    { "action": "SET_STATE", "path": "players.p1.position", "value": 50 }
-   **ONLY use when user explicitly corrects state:** "We're both at position 50", "My name is Federico"
-   **NEVER use for calculated changes** (use PLAYER_ROLLED for dice rolls)
+   **ONLY use when user explicitly corrects or overrides state:** "We're both at position 50", "My name is Federico", "I'm at 10"
+   **NEVER use for calculated changes** – dice results always use PLAYER_ROLLED so the orchestrator does the math
+   **NEVER derive values** – you translate what the user said, you don't compute from game logic
 
 4. PLAYER_ROLLED - User reports what they rolled on physical dice
    { "action": "PLAYER_ROLLED", "value": 5 }

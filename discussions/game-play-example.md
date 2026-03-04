@@ -100,5 +100,4 @@ By laying out this flow, three critical architectural gaps emerge that your curr
 **3. The "State Query" Macro**
 
 - **Scenario:** Cami asks, "Kali, who is winning?" or "How many spaces am I from the finish line?"
-- **The Gap:** The LLM can technically answer this by reading the injected state context and emitting a `NARRATE` action. However, because `handleTranscript` seems to automatically trigger `checkAndAdvanceTurn()` in `kali-app-core.ts` (if `success` is true), simply answering a question might accidentally advance the turn.
-- **Next Step:** Ensure that a `NARRATE`-only primitive array does _not_ trigger a turn advancement in the Orchestrator. Turn advancement should only fire on state-mutating primitives.
+- **Solution:** `handleTranscript` and `executePrimitiveActions` now return `{ success, shouldAdvanceTurn }`. The app layer only calls `checkAndAdvanceTurn()` when `shouldAdvanceTurn` is true. NARRATE-only action sequences set `shouldAdvanceTurn: false`, so answering a question no longer advances the turn.

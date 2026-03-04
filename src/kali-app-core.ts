@@ -214,11 +214,12 @@ ${rules.examples.map((ex: string, i: number) => `${i + 1}. ${ex}`).join("\n")}
     }
 
     Logger.info("🎮 Starting game proactively");
-    const success = await this.orchestrator.handleTranscript(
-      "Start the game and explain the current situation",
-    );
+    const { success, shouldAdvanceTurn } =
+      await this.orchestrator.handleTranscript(
+        "Start the game and explain the current situation",
+      );
 
-    if (success) {
+    if (success && shouldAdvanceTurn) {
       await this.checkAndAdvanceTurn();
     }
   }
@@ -329,9 +330,10 @@ ${rules.examples.map((ex: string, i: number) => `${i + 1}. ${ex}`).join("\n")}
     }
 
     if (this.orchestrator) {
-      const success = await this.orchestrator.handleTranscript(text);
+      const { success, shouldAdvanceTurn } =
+        await this.orchestrator.handleTranscript(text);
 
-      if (success) {
+      if (success && shouldAdvanceTurn) {
         await this.checkAndAdvanceTurn();
       }
     }
@@ -369,18 +371,20 @@ ${rules.examples.map((ex: string, i: number) => `${i + 1}. ${ex}`).join("\n")}
    * @param actions - Array of primitive actions to validate and execute
    * @returns true if execution succeeded, false otherwise
    */
-  async testExecuteActions(actions: PrimitiveAction[]): Promise<boolean> {
+  async testExecuteActions(
+    actions: PrimitiveAction[],
+  ): Promise<{ success: boolean; shouldAdvanceTurn: boolean }> {
     if (!this.orchestrator) {
       throw new Error("Orchestrator not initialized");
     }
 
-    const success = await this.orchestrator.testExecuteActions(actions);
+    const result = await this.orchestrator.testExecuteActions(actions);
 
-    if (success) {
+    if (result.success && result.shouldAdvanceTurn) {
       await this.checkAndAdvanceTurn();
     }
 
-    return success;
+    return result;
   }
 
   /**

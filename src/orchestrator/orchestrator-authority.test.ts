@@ -299,7 +299,7 @@ describe("Orchestrator Authority - LLM Adversarial Tests", () => {
         { action: "PLAYER_ROLLED", value: 5 },
       ];
 
-      const success = await orchestrator.testExecuteActions(actions);
+      const { success } = await orchestrator.testExecuteActions(actions);
 
       expect(success).toBe(true);
       expect(mockStateManager.set).toHaveBeenCalledWith(
@@ -320,7 +320,7 @@ describe("Orchestrator Authority - LLM Adversarial Tests", () => {
         { action: "SET_STATE", path: "players.p1.hearts", value: 3 },
       ];
 
-      const success = await orchestrator.testExecuteActions(actions);
+      const { success } = await orchestrator.testExecuteActions(actions);
 
       expect(success).toBe(true);
       expect(mockStateManager.set).toHaveBeenCalledWith("players.p1.hearts", 5);
@@ -355,7 +355,7 @@ describe("Orchestrator Authority - LLM Adversarial Tests", () => {
           value: i,
         }));
 
-      const success = await orchestrator.testExecuteActions(actions);
+      const { success } = await orchestrator.testExecuteActions(actions);
 
       expect(success).toBe(true);
       expect(mockStateManager.set).toHaveBeenCalled();
@@ -439,7 +439,7 @@ describe("Orchestrator Authority - LLM Adversarial Tests", () => {
 
       const actions: PrimitiveAction[] = [{ action: "NARRATE", text: "Done" }];
 
-      const success = await orchestrator.testExecuteActions(actions);
+      const { success } = await orchestrator.testExecuteActions(actions);
 
       expect(success).toBe(true);
       expect(mockStateManager.set).not.toHaveBeenCalledWith("game.turn", "p2");
@@ -450,7 +450,7 @@ describe("Orchestrator Authority - LLM Adversarial Tests", () => {
 
       const actions: PrimitiveAction[] = [{ action: "NARRATE", text: "Done" }];
 
-      const success = await orchestrator.testExecuteActions(actions);
+      const { success } = await orchestrator.testExecuteActions(actions);
 
       expect(success).toBe(true);
       expect(mockStateManager.set).not.toHaveBeenCalledWith("game.turn", "p2");
@@ -535,7 +535,7 @@ describe("Orchestrator Authority - LLM Adversarial Tests", () => {
         { action: "PLAYER_ROLLED", value: 5 },
       ];
 
-      const success = await orchestrator.testExecuteActions(actions);
+      const { success } = await orchestrator.testExecuteActions(actions);
 
       expect(success).toBe(true);
       expect(mockSpeech.speak).toHaveBeenCalledWith("You fell into a trap!");
@@ -581,7 +581,7 @@ describe("Orchestrator Authority - LLM Adversarial Tests", () => {
         { action: "PLAYER_ROLLED", value: 3 },
       ];
 
-      const success = await orchestrator.testExecuteActions(actions);
+      const { success } = await orchestrator.testExecuteActions(actions);
 
       expect(success).toBe(true);
       expect(mockStateManager.set).toHaveBeenCalledWith("players.p1.points", 3);
@@ -594,7 +594,7 @@ describe("Orchestrator Authority - LLM Adversarial Tests", () => {
         { action: "SET_STATE", path: "players.p2.hearts", value: 10 },
       ];
 
-      const success = await orchestrator.testExecuteActions(actions);
+      const { success } = await orchestrator.testExecuteActions(actions);
 
       expect(success).toBe(false);
       expect(mockStateManager.set).not.toHaveBeenCalledWith(
@@ -631,7 +631,7 @@ describe("Orchestrator Authority - LLM Adversarial Tests", () => {
         { action: "SET_STATE", path: "players.p1.position", value: 20 },
       ];
 
-      const success = await orchestrator.testExecuteActions(actions);
+      const { success } = await orchestrator.testExecuteActions(actions);
 
       expect(success).toBe(false);
     });

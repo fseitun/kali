@@ -51,11 +51,11 @@ export class Orchestrator {
     this.turnManager = new TurnManager(stateManager);
     this.boardEffectsHandler = new BoardEffectsHandler(
       stateManager,
-      this.processTranscript.bind(this),
+      this.processTranscriptAsBool.bind(this),
     );
     this.decisionPointEnforcer = new DecisionPointEnforcer(
       stateManager,
-      this.processTranscript.bind(this),
+      this.processTranscriptAsBool.bind(this),
     );
   }
 
@@ -89,24 +89,24 @@ export class Orchestrator {
    * Processes a voice transcript by sending to LLM and executing returned actions.
    * This is the main entry point for handling user voice commands.
    * @param transcript - The transcribed user command
-   * @returns true if execution succeeded, false otherwise
+   * @returns Object with success flag and shouldAdvanceTurn; advance turn only when state was mutated
    */
-  async handleTranscript(transcript: string): Promise<boolean> {
+  async handleTranscript(
+    transcript: string,
+  ): Promise<{ success: boolean; shouldAdvanceTurn: boolean }> {
     if (this.isProcessing) {
       Logger.warn("⏸️ Orchestrator busy, ignoring new request");
-      return false;
+      return { success: false, shouldAdvanceTurn: false };
     }
 
     this.isProcessing = true;
     this.statusIndicator.setState("processing");
     Profiler.start("orchestrator.total");
 
-    let executionSucceeded = false;
-
     try {
       const context: ExecutionContext = { ...this.defaultContext };
-      executionSucceeded = await this.processTranscript(transcript, context);
-      return executionSucceeded;
+      const result = await this.processTranscript(transcript, context);
+      return result;
     } finally {
       this.isProcessing = false;
       Profiler.end("orchestrator.total");
@@ -118,12 +118,14 @@ export class Orchestrator {
    * Test-only: Execute actions directly without LLM interpretation.
    * Bypasses LLM for testing orchestrator validation and execution logic.
    * @param actions - Array of primitive actions to validate and execute
-   * @returns true if execution succeeded, false otherwise
+   * @returns Object with success and shouldAdvanceTurn
    */
-  async testExecuteActions(actions: PrimitiveAction[]): Promise<boolean> {
+  async testExecuteActions(
+    actions: PrimitiveAction[],
+  ): Promise<{ success: boolean; shouldAdvanceTurn: boolean }> {
     if (this.isProcessing) {
       Logger.warn("⏸️ Orchestrator busy, ignoring test request");
-      return false;
+      return { success: false, shouldAdvanceTurn: false };
     }
 
     this.isProcessing = true;
@@ -134,19 +136,19 @@ export class Orchestrator {
       Logger.info("🧪 Test mode: Executing actions directly");
       const context: ExecutionContext = { ...this.defaultContext };
       Profiler.start("orchestrator.test.run");
-      const succeeded = await this.runValidatedActions(
+      const result = await this.runValidatedActions(
         actions,
         context,
         "orchestrator.test",
       );
       Profiler.end("orchestrator.test.run");
-      if (succeeded) {
+      if (result.success) {
         Logger.info("✅ Test actions executed successfully");
       }
-      return succeeded;
+      return result;
     } catch (error) {
       Logger.error("❌ Test execution error:", error);
-      return false;
+      return { success: false, shouldAdvanceTurn: false };
     } finally {
       this.isProcessing = false;
       Profiler.end("orchestrator.test");
@@ -159,12 +161,14 @@ export class Orchestrator {
    * Intended for non-LLM interpreters (debug tools, alternate UIs) that already
    * produced a validated PrimitiveAction[] request.
    * @param actions - Array of primitive actions to validate and execute
-   * @returns true if execution succeeded, false otherwise
+   * @returns Object with success and shouldAdvanceTurn
    */
-  async executePrimitiveActions(actions: PrimitiveAction[]): Promise<boolean> {
+  async executePrimitiveActions(
+    actions: PrimitiveAction[],
+  ): Promise<{ success: boolean; shouldAdvanceTurn: boolean }> {
     if (this.isProcessing) {
       Logger.warn("⏸️ Orchestrator busy, ignoring primitive execution request");
-      return false;
+      return { success: false, shouldAdvanceTurn: false };
     }
 
     this.isProcessing = true;
@@ -173,12 +177,11 @@ export class Orchestrator {
 
     try {
       const context: ExecutionContext = { ...this.defaultContext };
-      const succeeded = await this.runValidatedActions(
+      return await this.runValidatedActions(
         actions,
         context,
         "orchestrator.primitives",
       );
-      return succeeded;
     } finally {
       this.isProcessing = false;
       Profiler.end("orchestrator.primitives.total");
@@ -258,10 +261,17 @@ export class Orchestrator {
     );
   }
 
-  private async processTranscript(
+  private processTranscriptAsBool(
     transcript: string,
     context: ExecutionContext,
   ): Promise<boolean> {
+    return this.processTranscript(transcript, context).then((r) => r.success);
+  }
+
+  private async processTranscript(
+    transcript: string,
+    context: ExecutionContext,
+  ): Promise<{ success: boolean; shouldAdvanceTurn: boolean }> {
     try {
       Logger.brain(
         `Orchestrator processing: ${transcript} (depth: ${context.depth})`,
@@ -281,17 +291,16 @@ export class Orchestrator {
       if (actions.length === 0) {
         Logger.warn("No actions returned from LLM");
         await this.speechService.speak(t("llm.allRetriesFailed"));
-        return false;
+        return { success: false, shouldAdvanceTurn: false };
       }
-      const succeeded = await this.runValidatedActions(
+      return await this.runValidatedActions(
         actions,
         context,
         "orchestrator",
       );
-      return succeeded;
     } catch (error) {
       Logger.error("Orchestrator error:", error);
-      return false;
+      return { success: false, shouldAdvanceTurn: false };
     }
   }
 
@@ -299,7 +308,7 @@ export class Orchestrator {
     actions: PrimitiveAction[],
     context: ExecutionContext,
     profilerPrefix: string,
-  ): Promise<boolean> {
+  ): Promise<{ success: boolean; shouldAdvanceTurn: boolean }> {
     const state = this.stateManager.getState();
     Logger.state(
       "Current state:\n" +
@@ -318,8 +327,16 @@ export class Orchestrator {
     if (!validation.valid) {
       Logger.error("Validation failed:", validation.error);
       await this.speechService.speak(t("errors.validationFailed"));
-      return false;
+      return { success: false, shouldAdvanceTurn: false };
     }
+
+    const shouldAdvanceTurn = actions.some(
+      (a) =>
+        a.action === "PLAYER_ROLLED" ||
+        a.action === "SET_STATE" ||
+        a.action === "PLAYER_ANSWERED" ||
+        a.action === "RESET_GAME",
+    );
 
     Logger.info("Actions validated, executing...");
     Profiler.start(`${profilerPrefix}.execution.${context.depth}`);
@@ -331,7 +348,7 @@ export class Orchestrator {
 
     await this.decisionPointEnforcer.enforceDecisionPoints(context);
 
-    return true;
+    return { success: true, shouldAdvanceTurn };
   }
 
   private async executeActions(

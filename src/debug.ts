@@ -166,9 +166,9 @@ class KaliDebugApp {
         resultDiv.className = "";
         resultDiv.textContent = "Executing...";
 
-        const success = await this.core.testExecuteActions(actions);
+        const result = await this.core.testExecuteActions(actions);
 
-        if (success) {
+        if (result.success) {
           resultDiv.className = "success";
           resultDiv.textContent = "✅ Actions executed successfully";
         } else {
