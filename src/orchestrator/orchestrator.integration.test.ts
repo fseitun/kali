@@ -227,7 +227,6 @@ describe("Orchestrator Integration Tests", () => {
             path: "players.p1.bonusDiceNextTurn",
             value: true,
           },
-          { action: "SET_STATE", path: "players.p1.points", value: 4 },
           {
             action: "NARRATE",
             text: "You passed the power check and riddle! +4 points and bonus dice!",
@@ -852,7 +851,6 @@ describe("Orchestrator Integration Tests", () => {
         ],
         [
           { action: "SET_STATE", path: "players.p1.instruments", value: [] },
-          { action: "SET_STATE", path: "players.p1.points", value: 3 },
           {
             action: "NARRATE",
             text: "You used the drum of the forest! The bear sleeps. +3 points.",

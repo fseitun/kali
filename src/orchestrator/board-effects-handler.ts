@@ -7,7 +7,8 @@ import type { ExecutionContext } from "./types";
  *
  * Responsibilities:
  * - Auto-apply board moves (snakes, ladders, portals)
- * - Trigger square-specific effects via LLM processing
+ * - Apply deterministic square effects from config (points, hearts, skipTurn, item, instrument)
+ * - Trigger LLM for narration only (no game-rule state from LLM)
  *
  * Note: Currently contains game-specific logic for Snakes & Ladders and Kalimba.
  * Future work will move this to game config hooks for true game-agnostic orchestrator.
@@ -69,8 +70,76 @@ export class BoardEffectsHandler {
   }
 
   /**
-   * Triggers square-specific effects when player lands on special squares.
-   * Reads board.squares config and injects LLM processing for effects.
+   * Applies deterministic square effects from config (points, heart, skipTurn, item, instrument).
+   * Mutates state for the current player only. Used before asking LLM to narrate.
+   *
+   * @param path - State path that was mutated (e.g. players.p1.position)
+   * @param squareData - Square config from board.squares[position]
+   * @returns Summary of applied effects for narration prompt
+   */
+  private applyDeterministicSquareEffects(
+    path: string,
+    squareData: Record<string, unknown>,
+  ): string[] {
+    const match = path.match(/^players\.([^.]+)\.position$/);
+    const playerId = match?.[1];
+    if (!playerId) {
+      return [];
+    }
+
+    const applied: string[] = [];
+
+    const points = squareData.points as number | undefined;
+    if (typeof points === "number" && points > 0) {
+      const current =
+        (this.stateManager.get(`players.${playerId}.points`) as number) ?? 0;
+      const next = current + points;
+      this.stateManager.set(`players.${playerId}.points`, next);
+      applied.push(`+${points} points`);
+    }
+
+    if (squareData.heart === true) {
+      const current =
+        (this.stateManager.get(`players.${playerId}.hearts`) as number) ?? 0;
+      this.stateManager.set(`players.${playerId}.hearts`, current + 1);
+      applied.push("+1 heart");
+    }
+
+    if (squareData.effect === "skipTurn") {
+      const current =
+        (this.stateManager.get(`players.${playerId}.skipTurns`) as number) ?? 0;
+      this.stateManager.set(`players.${playerId}.skipTurns`, current + 1);
+      applied.push("skip next turn");
+    }
+
+    const item = squareData.item as string | undefined;
+    if (typeof item === "string" && item.length > 0) {
+      const current = (this.stateManager.get(
+        `players.${playerId}.items`,
+      ) as unknown[]) ?? [];
+      const next = Array.isArray(current) ? [...current, item] : [item];
+      this.stateManager.set(`players.${playerId}.items`, next);
+      applied.push(`item: ${item}`);
+    }
+
+    const instrument = squareData.instrument as string | undefined;
+    if (typeof instrument === "string" && instrument.length > 0) {
+      const current = (this.stateManager.get(
+        `players.${playerId}.instruments`,
+      ) as unknown[]) ?? [];
+      const next = Array.isArray(current)
+        ? [...current, instrument]
+        : [instrument];
+      this.stateManager.set(`players.${playerId}.instruments`, next);
+      applied.push(`instrument: ${instrument}`);
+    }
+
+    return applied;
+  }
+
+  /**
+   * Applies deterministic square effects from config, then triggers LLM for narration only.
+   * Reads board.squares config; orchestrator owns all state mutations for game rules.
    *
    * @param path - State path that was mutated
    * @param context - Execution context for depth tracking
@@ -113,19 +182,26 @@ export class BoardEffectsHandler {
         `🎯 Orchestrator enforcing square effect at position ${position}: ${squareType} (${squareName})`,
       );
 
+      const applied = this.applyDeterministicSquareEffects(path, squareData);
+      const appliedText =
+        applied.length > 0
+          ? ` Orchestrator applied: ${applied.join(", ")}.`
+          : "";
+
       const newContext: ExecutionContext = {
         depth: context.depth + 1,
         maxDepth: context.maxDepth,
       };
 
       const squareInfo = JSON.stringify(squareData);
+      const transcript =
+        applied.length > 0
+          ? `[SYSTEM: Current player just landed on square ${position} (${squareName}).${appliedText} Narrate this encounter. Square data for flavour: ${squareInfo}]`
+          : `[SYSTEM: Current player just landed on square ${position}. Square data: ${squareInfo}. You MUST process this square's effect now according to game rules.]`;
 
       this.isProcessingSquareEffect = true;
       try {
-        await this.processTranscriptFn(
-          `[SYSTEM: Current player just landed on square ${position}. Square data: ${squareInfo}. You MUST process this square's effect now according to game rules.]`,
-          newContext,
-        );
+        await this.processTranscriptFn(transcript, newContext);
       } finally {
         this.isProcessingSquareEffect = false;
       }

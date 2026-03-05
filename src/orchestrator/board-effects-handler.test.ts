@@ -307,6 +307,103 @@ describe("BoardEffectsHandler", () => {
       );
     });
 
+    it("should apply points from square config and request narration only", async () => {
+      stateManager.set("board.squares", {
+        "5": { type: "animal", name: "Halcón", power: 3, points: 3 },
+      });
+      stateManager.set("players.p1.position", 5);
+      stateManager.set("players.p1.points", 0);
+
+      await boardEffectsHandler.checkAndApplySquareEffects(
+        "players.p1.position",
+        baseContext,
+      );
+
+      expect(stateManager.get("players.p1.points")).toBe(3);
+      expect(mockProcessTranscript).toHaveBeenCalledWith(
+        expect.stringContaining("Orchestrator applied: +3 points"),
+        expect.anything(),
+      );
+      expect(mockProcessTranscript).toHaveBeenCalledWith(
+        expect.stringContaining("Narrate this encounter"),
+        expect.anything(),
+      );
+    });
+
+    it("should apply heart from square config", async () => {
+      stateManager.set("board.squares", {
+        "10": { type: "animal", name: "Fox", heart: true, points: 1 },
+      });
+      stateManager.set("players.p2.position", 10);
+      stateManager.set("players.p2.hearts", 2);
+
+      await boardEffectsHandler.checkAndApplySquareEffects(
+        "players.p2.position",
+        baseContext,
+      );
+
+      expect(stateManager.get("players.p2.hearts")).toBe(3);
+      expect(stateManager.get("players.p2.points")).toBe(1);
+    });
+
+    it("should apply skipTurn effect from square config", async () => {
+      stateManager.set("board.squares", {
+        "11": {
+          type: "hazard",
+          name: "Arenas movedizas",
+          effect: "skipTurn",
+        },
+      });
+      stateManager.set("players.p1.position", 11);
+      stateManager.set("players.p1.skipTurns", 0);
+
+      await boardEffectsHandler.checkAndApplySquareEffects(
+        "players.p1.position",
+        baseContext,
+      );
+
+      expect(stateManager.get("players.p1.skipTurns")).toBe(1);
+    });
+
+    it("should add item to player items array", async () => {
+      stateManager.set("board.squares", {
+        "63": { type: "item", name: "Traje anti-avispas", item: "anti-wasp" },
+      });
+      stateManager.set("players.p1.position", 63);
+      stateManager.set("players.p1.items", []);
+
+      await boardEffectsHandler.checkAndApplySquareEffects(
+        "players.p1.position",
+        baseContext,
+      );
+
+      expect(stateManager.get("players.p1.items")).toEqual(["anti-wasp"]);
+    });
+
+    it("should add instrument to player instruments array", async () => {
+      stateManager.set("board.squares", {
+        "7": {
+          type: "special",
+          name: "Águila",
+          instrument: "flauta del desierto",
+          points: 3,
+        },
+      });
+      stateManager.set("players.p1.position", 7);
+      stateManager.set("players.p1.instruments", []);
+      stateManager.set("players.p1.points", 0);
+
+      await boardEffectsHandler.checkAndApplySquareEffects(
+        "players.p1.position",
+        baseContext,
+      );
+
+      expect(stateManager.get("players.p1.instruments")).toEqual([
+        "flauta del desierto",
+      ]);
+      expect(stateManager.get("players.p1.points")).toBe(3);
+    });
+
     it("should handle position value that is not a number", async () => {
       stateManager.set("board.squares", { "5": { type: "encounter" } });
       stateManager.set("players.p1.position", "invalid" as unknown as number);

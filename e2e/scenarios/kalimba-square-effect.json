@@ -30,10 +30,7 @@
     }
   },
   "llmScript": [
-    [
-      { "action": "SET_STATE", "path": "players.p1.points", "value": 3 },
-      { "action": "NARRATE", "text": "Halcón encounter! +3 points." }
-    ]
+    [{ "action": "NARRATE", "text": "Halcón encounter! +3 points." }]
   ],
   "steps": [
     { "roll": 2, "expect": { "players.p1.position": 2, "players.p1.points": 3 } }
