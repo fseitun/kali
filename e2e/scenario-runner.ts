@@ -119,7 +119,9 @@ export async function runScenario(scenario: Scenario): Promise<void> {
     setState: vi.fn(),
   } as unknown as StatusIndicator;
 
-  const llmScript = scenario.llmScript ?? [];
+  const llmScript = scenario.steps.some((s) => (s.llmResponses?.length ?? 0) > 0)
+    ? scenario.steps.flatMap((s) => s.llmResponses ?? [])
+    : (scenario.llmScript ?? []);
   const mockLLM = new MockLLMClient("scripted", [], llmScript);
 
   const orchestrator = new Orchestrator(

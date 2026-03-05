@@ -15,8 +15,22 @@ export interface ScenarioStep {
    */
   roll?: number;
 
+  /**
+   * Scripted LLM response(s) for this step. When this step triggers an LLM call
+   * (e.g. landing on a square effect or decision point), the mock returns these
+   * in order. Prefer this over top-level llmScript so cause and effect stay
+   * colocated. One array entry per LLM call this step may trigger.
+   */
+  llmResponses?: PrimitiveAction[][];
+
   /** Path -> expected value assertions. Omitted paths are not checked. */
   expect?: Record<string, unknown>;
+
+  /**
+   * Human-readable description of the step (e.g. "p1 lands on Halcón").
+   * Ignored by the runner; use for documentation and AI-agent readability.
+   */
+  description?: string;
 }
 
 /**
@@ -34,9 +48,8 @@ export interface Scenario {
   players?: number;
 
   /**
-   * Scripted LLM responses for decision points and square effects.
-   * Consumed in order when DecisionPointEnforcer or BoardEffectsHandler inject transcripts.
-   * Required for games like Kalimba that trigger LLM during play.
+   * Scripted LLM responses (one array per call). Used when no step has llmResponses.
+   * Prefer per-step llmResponses so the mock response is colocated with the step that triggers it.
    */
   llmScript?: PrimitiveAction[][];
 

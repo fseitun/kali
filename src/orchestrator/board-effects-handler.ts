@@ -178,7 +178,7 @@ export class BoardEffectsHandler {
       const transcript =
         applied.length > 0
           ? `[SYSTEM: Current player just landed on square ${position} (${squareName}).${appliedText} Narrate this encounter. Square data for flavour: ${squareInfo}]`
-          : `[SYSTEM: Current player just landed on square ${position}. Square data: ${squareInfo}. You MUST process this square's effect now according to game rules.]`;
+          : `[SYSTEM: Current player just landed on square ${position} (${squareName}). Narrate this encounter. Do not change game state. Square data for flavour: ${squareInfo}]`;
 
       this.isProcessingSquareEffect = true;
       try {

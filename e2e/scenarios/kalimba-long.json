@@ -14,46 +14,16 @@
       { "action": "SET_STATE", "path": "players.p1.pathChoice", "value": "A" },
       { "action": "NARRATE", "text": "Path A it is!" }
     ],
-    [
-      { "action": "SET_STATE", "path": "players.p2.points", "value": 3 },
-      { "action": "NARRATE", "text": "Halcón encounter! +3 points." }
-    ],
-    [
-      { "action": "SET_STATE", "path": "players.p2.points", "value": 7 },
-      { "action": "NARRATE", "text": "Cobra! +4 points." }
-    ],
-    [
-      { "action": "SET_STATE", "path": "players.p1.points", "value": 3 },
-      { "action": "NARRATE", "text": "Águila encounter! +3 points." }
-    ],
-    [
-      { "action": "SET_STATE", "path": "players.p3.points", "value": 3 },
-      { "action": "NARRATE", "text": "Águila! +3 points." }
-    ],
-    [
-      { "action": "SET_STATE", "path": "players.p1.skipTurns", "value": 1 },
-      { "action": "NARRATE", "text": "Arenas movedizas! Skip next turn." }
-    ],
-    [
-      { "action": "SET_STATE", "path": "players.p2.skipTurns", "value": 1 },
-      { "action": "NARRATE", "text": "Arenas! Skip next turn." }
-    ],
-    [
-      { "action": "SET_STATE", "path": "players.p3.skipTurns", "value": 1 },
-      { "action": "NARRATE", "text": "Arenas! Skip next turn." }
-    ],
-    [
-      { "action": "SET_STATE", "path": "players.p1.points", "value": 7 },
-      { "action": "NARRATE", "text": "Escorpión! +4 points." }
-    ],
-    [
-      { "action": "SET_STATE", "path": "players.p2.points", "value": 11 },
-      { "action": "NARRATE", "text": "Escorpión! +4 points." }
-    ],
-    [
-      { "action": "SET_STATE", "path": "players.p3.points", "value": 7 },
-      { "action": "NARRATE", "text": "Escorpión! +4 points." }
-    ]
+    [{ "action": "NARRATE", "text": "Halcón encounter! +3 points." }],
+    [{ "action": "NARRATE", "text": "Cobra! +4 points." }],
+    [{ "action": "NARRATE", "text": "Águila encounter! +3 points." }],
+    [{ "action": "NARRATE", "text": "Águila! +3 points." }],
+    [{ "action": "NARRATE", "text": "Arenas movedizas! Skip next turn." }],
+    [{ "action": "NARRATE", "text": "Arenas! Skip next turn." }],
+    [{ "action": "NARRATE", "text": "Arenas! Skip next turn." }],
+    [{ "action": "NARRATE", "text": "Escorpión! +4 points." }],
+    [{ "action": "NARRATE", "text": "Escorpión! +4 points." }],
+    [{ "action": "NARRATE", "text": "Escorpión! +4 points." }]
   ],
   "steps": [
     {

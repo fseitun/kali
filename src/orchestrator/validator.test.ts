@@ -518,12 +518,13 @@ describe("Validator - New Primitives", () => {
       expect(result.valid).toBe(true);
     });
 
-    it("allows SET_STATE during square effect processing", () => {
+    it("allows SET_STATE for pathChoice during square effect processing", () => {
       const mockOrchestrator = {
         isProcessingEffect: () => true,
       } as any;
+      (mockState.players as Record<string, Record<string, unknown>>).p1.pathChoice = null;
 
-      const actions = [{ action: "SET_STATE", path: "players.p1.hearts", value: 5 }];
+      const actions = [{ action: "SET_STATE", path: "players.p1.pathChoice", value: "A" }];
       const result = validateActions(
         actions,
         mockState,
@@ -532,6 +533,41 @@ describe("Validator - New Primitives", () => {
       );
 
       expect(result.valid).toBe(true);
+    });
+
+    it("rejects SET_STATE for points during square effect processing", () => {
+      const mockOrchestrator = {
+        isProcessingEffect: () => true,
+      } as any;
+
+      const actions = [{ action: "SET_STATE", path: "players.p1.points", value: 3 }];
+      const result = validateActions(
+        actions,
+        mockState,
+        mockStateManager as unknown as StateManager,
+        mockOrchestrator,
+      );
+
+      expect(result.valid).toBe(false);
+      expect(result.error).toContain("during square effect processing");
+      expect(result.error).toContain("orchestrator applies");
+    });
+
+    it("rejects SET_STATE for skipTurns during square effect processing", () => {
+      const mockOrchestrator = {
+        isProcessingEffect: () => true,
+      } as any;
+
+      const actions = [{ action: "SET_STATE", path: "players.p1.skipTurns", value: 1 }];
+      const result = validateActions(
+        actions,
+        mockState,
+        mockStateManager as unknown as StateManager,
+        mockOrchestrator,
+      );
+
+      expect(result.valid).toBe(false);
+      expect(result.error).toContain("during square effect processing");
     });
   });
 

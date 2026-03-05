@@ -136,7 +136,7 @@ function validateAction(
     case "RESET_GAME":
       return validateResetGame(primitive, index);
     case "SET_STATE":
-      return validateSetState(primitive, state, stateManager, index);
+      return validateSetState(primitive, state, stateManager, index, orchestrator);
     case "PLAYER_ROLLED":
       return validatePlayerRolled(primitive, index, orchestrator);
     case "PLAYER_ANSWERED":
@@ -267,11 +267,27 @@ function validateDecisionBeforeMove(
   return { valid: true };
 }
 
+/** Player state keys that are orchestrator-owned during square effects; LLM must not SET_STATE these. */
+const SQUARE_EFFECT_FORBIDDEN_PLAYER_KEYS = new Set(["points", "hearts", "skipTurns", "position"]);
+
+/**
+ * Player state keys that may be SET_STATE during square effect: explicit user choices (pathChoice)
+ * or game-designed non-deterministic outcomes (bonusDiceNextTurn, inverseMode, clearing items/instruments after use).
+ */
+const SQUARE_EFFECT_ALLOWED_PLAYER_KEYS = new Set([
+  "pathChoice",
+  "items",
+  "instruments",
+  "bonusDiceNextTurn",
+  "inverseMode",
+]);
+
 function validateSetState(
   action: PrimitiveAction,
   state: GameState,
   stateManager: StateManager,
   index: number,
+  orchestrator?: Orchestrator,
 ): ValidationResult {
   const actionRecord = action as unknown as Record<string, unknown>;
   const pathValidation = validateField(actionRecord, "path", "string", "SET_STATE", index);
@@ -285,6 +301,25 @@ function validateSetState(
   }
 
   if ("path" in action && typeof action.path === "string") {
+    if (orchestrator?.isProcessingEffect()) {
+      const playerMatch = action.path.match(/^players\.([^.]+)\.(.+)$/);
+      if (playerMatch) {
+        const key = playerMatch[2];
+        if (SQUARE_EFFECT_FORBIDDEN_PLAYER_KEYS.has(key)) {
+          return {
+            valid: false,
+            error: `SET_STATE at index ${index}: Cannot set players.*.${key} during square effect processing. The orchestrator applies game-rule state; use NARRATE only.`,
+          };
+        }
+        if (!SQUARE_EFFECT_ALLOWED_PLAYER_KEYS.has(key)) {
+          return {
+            valid: false,
+            error: `SET_STATE at index ${index}: Path "${action.path}" is not allowed during square effect processing. Only explicit user-choice fields (e.g. pathChoice) are permitted.`,
+          };
+        }
+      }
+    }
+
     if (action.path === "game.turn") {
       const game = state.game;
       const currentPhase = game.phase;
