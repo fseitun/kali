@@ -1,3 +1,4 @@
+/// <reference types="vitest/config" />
 import { defineConfig } from "vite";
 import { VitePWA } from "vite-plugin-pwa";
 
@@ -65,6 +66,16 @@ export default defineConfig({
   server: {
     hmr: {
       overlay: true,
+    },
+  },
+  test: {
+    globals: true,
+    include: ["src/**/*.test.ts", "e2e/**/*.test.ts"],
+    coverage: {
+      provider: "v8",
+      reporter: ["text", "text-summary"],
+      include: ["src/**/*.ts"],
+      exclude: ["src/**/*.test.ts", "src/**/*.d.ts", "src/audio-worklet/**"],
     },
   },
 });

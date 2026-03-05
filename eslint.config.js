@@ -8,13 +8,7 @@ export default tseslint.config(
   ...tseslint.configs.recommended,
   prettierConfig,
   {
-    ignores: [
-      "dist/**",
-      "e2e/**",
-      "node_modules/**",
-      "public/**",
-      "eslint.config.js",
-    ],
+    ignores: ["dist/**", "e2e/**", "node_modules/**", "public/**", "eslint.config.js"],
   },
   {
     files: ["src/audio-worklet/*.js"],
@@ -39,10 +33,7 @@ export default tseslint.config(
       },
     },
     rules: {
-      "@typescript-eslint/no-unused-vars": [
-        "error",
-        { argsIgnorePattern: "^_" },
-      ],
+      "@typescript-eslint/no-unused-vars": ["error", { argsIgnorePattern: "^_" }],
       "@typescript-eslint/no-explicit-any": "error",
       "@typescript-eslint/no-unnecessary-type-assertion": "error",
       "prefer-const": "error",
@@ -56,14 +47,7 @@ export default tseslint.config(
       "import-x/order": [
         "error",
         {
-          groups: [
-            "builtin",
-            "external",
-            "internal",
-            "parent",
-            "sibling",
-            "index",
-          ],
+          groups: ["builtin", "external", "internal", "parent", "sibling", "index"],
           alphabetize: {
             order: "asc",
             caseInsensitive: true,
