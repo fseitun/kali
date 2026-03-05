@@ -2,6 +2,8 @@
 
 This document consolidates all planned improvements and features, ranked by their value-to-complexity ratio. Only future work is included - completed features have been removed.
 
+Ranked by value-to-complexity ratio.
+
 ---
 
 1.8: Advanced Error Recovery & State Rollback
@@ -12,6 +14,8 @@ This document consolidates all planned improvements and features, ranked by thei
 1.33: Explicit Save/Load Game Feature
 1.0: Runtime Game Selection
 1.0: User Language Selection at Setup
+
+_(Value/Complexity ratio; higher = better ROI)_
 
 ---
 

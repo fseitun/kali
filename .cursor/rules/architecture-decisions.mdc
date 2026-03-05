@@ -1,5 +1,11 @@
 ---
 description: Why we chose Vosk, LLM swappability, in-memory state, and processing lock
+globs:
+  - src/llm/**/*.ts
+  - src/state-manager.ts
+  - src/audio-worklet/**
+  - src/wake-word.ts
+  - src/model-manager.ts
 ---
 
 # Architecture Decisions

@@ -1,5 +1,7 @@
 ### Primitive Box Contract
 
+**Canonical definitions:** `src/orchestrator/types.ts`
+
 Kali treats the LLM (and any future interpreter) as a **swappable box** whose only job is to translate inputs into **primitive actions** that the orchestrator can validate and execute.
 
 At the core of this seam is the `PrimitiveAction[]` contract defined in `src/orchestrator/types.ts`. Any interpreter – LLM clients, debug tools, or future non-LLM paths – must:
@@ -22,4 +24,3 @@ When adding new features, treat this primitive box boundary as the north star:
   - Updated guidance in the LLM system prompt.
 
 This keeps the interpreter thin and swappable, and the orchestrator authoritative and testable.
-

@@ -1,5 +1,6 @@
 ---
 description: Development commands and testing workflows
+globs: "**/*.test.ts"
 ---
 
 # Testing Commands
