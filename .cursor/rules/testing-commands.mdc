@@ -1,6 +1,6 @@
 ---
 description: Development commands and testing workflows
-globs: "**/*.test.ts"
+globs: "**/*.test.ts", "e2e/**"
 ---
 
 # Testing Commands
@@ -16,7 +16,8 @@ npm run preview       # Preview production build
 ## Quality Commands
 
 ```bash
-npm run test          # Run Vitest tests
+npm run test          # Run all Vitest tests (unit + integration + e2e)
+npm run test:e2e      # Run e2e scenarios only (fast regression check)
 npm run lint          # Run ESLint
 npm run lint:fix      # Auto-fix ESLint issues
 npm run type-check    # Check TypeScript types
@@ -52,6 +53,38 @@ Before committing code:
 - Test orchestrator authority patterns
 - Verify state mutation boundaries
 - Ensure component coordination
+
+### E2E Scenario Tests (TDD Guide)
+
+**Purpose:** Fast, deterministic regression tests. No browser, no LLM, no TTS.
+The real orchestrator runs with mock services; state assertions catch regressions.
+
+**Location:** `e2e/scenarios/*.json` + `e2e/scenarios.test.ts`
+
+**How to add a scenario (TDD flow):**
+1. Create `e2e/scenarios/your-scenario.json`
+2. Define: `game`, `players`, optional `initialState`, `steps` array
+3. Each step: `actions` (primitive array) OR `roll` (shorthand), optional `expect` (path → value)
+4. Run: `npm run test:e2e` (or `npm run test`)
+
+**Scenario format:**
+```json
+{
+  "game": "snakes-and-ladders",
+  "players": 3,
+  "initialState": { "game": { "phase": "PLAYING", "turn": "p1", ... } },
+  "steps": [
+    { "roll": 4, "expect": { "players.p1.position": 14, "game.turn": "p2" } },
+    { "roll": 3 },
+    { "actions": [{ "action": "NARRATE", "text": "Hi" }] }
+  ]
+}
+```
+
+**Rules:**
+- `roll` expands to `PLAYER_ROLLED` + `NARRATE` for current player
+- Use `expect` sparingly; omit for steps where you only need execution
+- Long multi-turn scenarios (30+ steps) validate the full engine without per-step asserts
 
 ### Manual Testing
 1. Start app with `npm run dev`
