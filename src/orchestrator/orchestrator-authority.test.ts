@@ -2,6 +2,7 @@
 // @ts-nocheck - Adversarial tests intentionally use malformed data
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import type { StatusIndicator } from "../components/status-indicator";
+import { setLocale } from "../i18n";
 import type { LLMClient } from "../llm/LLMClient";
 import type { SpeechService } from "../services/speech-service";
 import type { StateManager } from "../state-manager";
@@ -17,6 +18,7 @@ describe("Orchestrator Authority - LLM Adversarial Tests", () => {
   let testState: GameState;
 
   beforeEach(() => {
+    setLocale("en-US");
     testState = {
       game: {
         turn: "p1",

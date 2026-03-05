@@ -417,8 +417,8 @@ describe("Orchestrator - New Action Handlers", () => {
       const results = await Promise.all([promise1, promise2]);
 
       expect(callCount).toBe(1);
-      expect(results[0]).toBe(true);
-      expect(results[1]).toBe(false);
+      expect(results[0]).toEqual({ success: true, shouldAdvanceTurn: false });
+      expect(results[1]).toEqual({ success: false, shouldAdvanceTurn: false });
     });
 
     it("releases lock after successful execution", async () => {
