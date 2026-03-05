@@ -33,6 +33,13 @@ export interface Scenario {
   /** Number of players. Used to call setupPlayers() with default names if initialState doesn't define them. */
   players?: number;
 
+  /**
+   * Scripted LLM responses for decision points and square effects.
+   * Consumed in order when DecisionPointEnforcer or BoardEffectsHandler inject transcripts.
+   * Required for games like Kalimba that trigger LLM during play.
+   */
+  llmScript?: PrimitiveAction[][];
+
   /** Sequence of steps. Order matters. */
   steps: ScenarioStep[];
 }

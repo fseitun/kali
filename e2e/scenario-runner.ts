@@ -15,10 +15,13 @@ import type { Scenario, ScenarioStep } from "./scenario-types";
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const PROJECT_ROOT = path.resolve(__dirname, "..");
 
+/** Game config may have top-level decisionPoints (e.g. Kalimba) not in initialState. */
+type GameConfig = GameModule & { decisionPoints?: unknown; stateDisplay?: unknown };
+
 /**
  * Loads a game config from public/games/{gameId}/config.json.
  */
-function loadGameConfig(gameId: string): GameModule {
+function loadGameConfig(gameId: string): GameConfig {
   const configPath = path.join(
     PROJECT_ROOT,
     "public",
@@ -27,31 +30,39 @@ function loadGameConfig(gameId: string): GameModule {
     "config.json",
   );
   const raw = fs.readFileSync(configPath, "utf-8");
-  return JSON.parse(raw) as GameModule;
+  return JSON.parse(raw) as GameConfig;
 }
 
 /**
  * Builds initial state by merging scenario overrides onto the game's initialState.
  * Nested objects (game, players, board) are merged so partial overrides work.
+ * Top-level decisionPoints and stateDisplay (e.g. Kalimba) are merged from config.
  */
 function buildInitialState(
-  game: GameModule,
+  game: GameConfig,
   scenario: Scenario,
 ): GameState {
   const base = game.initialState as Record<string, unknown>;
-  const overrides = (scenario.initialState ?? {});
+  const overrides = (scenario.initialState ?? {}) as Record<string, unknown>;
 
   const merged: Record<string, unknown> = { ...base };
 
-  if (overrides.game && typeof overrides.game === "object") {
+  const hasGameOverride = overrides.game && typeof overrides.game === "object";
+  if (hasGameOverride) {
     merged.game = { ...(base.game as object), ...overrides.game };
   }
-  if (overrides.players !== undefined) {
-    merged.players = overrides.players;
-  }
-  if (overrides.board !== undefined) {
-    merged.board = overrides.board;
-  }
+
+  const hasPlayersOverride = overrides.players !== undefined;
+  if (hasPlayersOverride) merged.players = overrides.players;
+
+  const hasBoardOverride = overrides.board !== undefined;
+  if (hasBoardOverride) merged.board = overrides.board;
+
+  const decisionPoints = overrides.decisionPoints ?? game.decisionPoints;
+  if (decisionPoints !== undefined) merged.decisionPoints = decisionPoints;
+
+  const hasStateDisplay = game.stateDisplay !== undefined;
+  if (hasStateDisplay) merged.stateDisplay = game.stateDisplay;
 
   return merged as GameState;
 }
@@ -117,7 +128,8 @@ export async function runScenario(scenario: Scenario): Promise<void> {
     setState: vi.fn(),
   } as unknown as StatusIndicator;
 
-  const mockLLM = new MockLLMClient("scripted", [], []);
+  const llmScript = scenario.llmScript ?? [];
+  const mockLLM = new MockLLMClient("scripted", [], llmScript);
 
   const orchestrator = new Orchestrator(
     mockLLM,

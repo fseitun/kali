@@ -63,7 +63,7 @@ The real orchestrator runs with mock services; state assertions catch regression
 
 **How to add a scenario (TDD flow):**
 1. Create `e2e/scenarios/your-scenario.json`
-2. Define: `game`, `players`, optional `initialState`, `steps` array
+2. Define: `game`, `players`, optional `initialState`, optional `llmScript`, `steps` array
 3. Each step: `actions` (primitive array) OR `roll` (shorthand), optional `expect` (path → value)
 4. Run: `npm run test:e2e` (or `npm run test`)
 
@@ -81,9 +81,23 @@ The real orchestrator runs with mock services; state assertions catch regression
 }
 ```
 
+**llmScript (games with decision points or square effects):**
+For Kalimba and similar games, `DecisionPointEnforcer` and `BoardEffectsHandler` inject transcripts that call the LLM. Use `llmScript` to provide scripted responses, consumed in order:
+
+```json
+{
+  "game": "kalimba",
+  "llmScript": [
+    [{ "action": "SET_STATE", "path": "players.p1.points", "value": 3 }, { "action": "NARRATE", "text": "Encounter!" }]
+  ],
+  "steps": [{ "roll": 2 }]
+}
+```
+
 **Rules:**
 - `roll` expands to `PLAYER_ROLLED` + `NARRATE` for current player
 - Use `expect` sparingly; omit for steps where you only need execution
+- `llmScript` required when steps land on squares with effects or trigger decision points
 - Long multi-turn scenarios (30+ steps) validate the full engine without per-step asserts
 
 ### Manual Testing

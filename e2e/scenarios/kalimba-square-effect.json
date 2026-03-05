@@ -1,0 +1,41 @@
+{
+  "game": "kalimba",
+  "players": 2,
+  "initialState": {
+    "game": {
+      "phase": "PLAYING",
+      "turn": "p1",
+      "playerOrder": ["p1", "p2"],
+      "winner": null
+    },
+    "players": {
+      "p1": {
+        "id": "p1",
+        "name": "Player 1",
+        "position": 0,
+        "hearts": 0,
+        "points": 0,
+        "pathChoice": "A",
+        "skipTurns": 0
+      },
+      "p2": {
+        "id": "p2",
+        "name": "Player 2",
+        "position": 0,
+        "hearts": 0,
+        "points": 0,
+        "pathChoice": "A",
+        "skipTurns": 0
+      }
+    }
+  },
+  "llmScript": [
+    [
+      { "action": "SET_STATE", "path": "players.p1.points", "value": 3 },
+      { "action": "NARRATE", "text": "Halcón encounter! +3 points." }
+    ]
+  ],
+  "steps": [
+    { "roll": 2, "expect": { "players.p1.position": 2, "players.p1.points": 3 } }
+  ]
+}

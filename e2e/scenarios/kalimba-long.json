@@ -1,0 +1,85 @@
+{
+  "game": "kalimba",
+  "players": 3,
+  "initialState": {
+    "game": {
+      "phase": "PLAYING",
+      "turn": "p1",
+      "playerOrder": ["p1", "p2", "p3"],
+      "winner": null
+    }
+  },
+  "llmScript": [
+    [
+      { "action": "SET_STATE", "path": "players.p1.pathChoice", "value": "A" },
+      { "action": "NARRATE", "text": "Path A it is!" }
+    ],
+    [
+      { "action": "SET_STATE", "path": "players.p2.points", "value": 3 },
+      { "action": "NARRATE", "text": "Halcón encounter! +3 points." }
+    ],
+    [
+      { "action": "SET_STATE", "path": "players.p2.points", "value": 7 },
+      { "action": "NARRATE", "text": "Cobra! +4 points." }
+    ],
+    [
+      { "action": "SET_STATE", "path": "players.p1.points", "value": 3 },
+      { "action": "NARRATE", "text": "Águila encounter! +3 points." }
+    ],
+    [
+      { "action": "SET_STATE", "path": "players.p3.points", "value": 3 },
+      { "action": "NARRATE", "text": "Águila! +3 points." }
+    ],
+    [
+      { "action": "SET_STATE", "path": "players.p1.skipTurns", "value": 1 },
+      { "action": "NARRATE", "text": "Arenas movedizas! Skip next turn." }
+    ],
+    [
+      { "action": "SET_STATE", "path": "players.p2.skipTurns", "value": 1 },
+      { "action": "NARRATE", "text": "Arenas! Skip next turn." }
+    ],
+    [
+      { "action": "SET_STATE", "path": "players.p3.skipTurns", "value": 1 },
+      { "action": "NARRATE", "text": "Arenas! Skip next turn." }
+    ],
+    [
+      { "action": "SET_STATE", "path": "players.p1.points", "value": 7 },
+      { "action": "NARRATE", "text": "Escorpión! +4 points." }
+    ],
+    [
+      { "action": "SET_STATE", "path": "players.p2.points", "value": 11 },
+      { "action": "NARRATE", "text": "Escorpión! +4 points." }
+    ],
+    [
+      { "action": "SET_STATE", "path": "players.p3.points", "value": 7 },
+      { "action": "NARRATE", "text": "Escorpión! +4 points." }
+    ]
+  ],
+  "steps": [
+    {
+      "actions": [{ "action": "NARRATE", "text": "Let's begin!" }],
+      "expect": { "players.p1.pathChoice": "A" }
+    },
+    { "roll": 1 },
+    { "roll": 2 },
+    { "roll": 1 },
+    { "roll": 2 },
+    { "roll": 3 },
+    { "roll": 2 },
+    { "roll": 4 },
+    { "roll": 4 },
+    { "roll": 4 },
+    { "roll": 4 },
+    { "roll": 2 },
+    { "roll": 3 },
+    { "roll": 1 },
+    { "roll": 2 },
+    { "roll": 1 },
+    { "roll": 2, "expect": { "players.p1.position": 36 } },
+    { "roll": 1, "expect": { "players.p2.position": 36 } },
+    { "roll": 3, "expect": { "players.p3.position": 36 } },
+    { "roll": 2 },
+    { "roll": 2 },
+    { "roll": 2 }
+  ]
+}
