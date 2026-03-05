@@ -9,47 +9,82 @@
       "winner": null
     }
   },
-  "llmScript": [
-    [
-      { "action": "SET_STATE", "path": "players.p1.pathChoice", "value": "A" },
-      { "action": "NARRATE", "text": "Path A it is!" }
-    ],
-    [{ "action": "NARRATE", "text": "Halcón encounter! +3 points." }],
-    [{ "action": "NARRATE", "text": "Cobra! +4 points." }],
-    [{ "action": "NARRATE", "text": "Águila encounter! +3 points." }],
-    [{ "action": "NARRATE", "text": "Águila! +3 points." }],
-    [{ "action": "NARRATE", "text": "Arenas movedizas! Skip next turn." }],
-    [{ "action": "NARRATE", "text": "Arenas! Skip next turn." }],
-    [{ "action": "NARRATE", "text": "Arenas! Skip next turn." }],
-    [{ "action": "NARRATE", "text": "Escorpión! +4 points." }],
-    [{ "action": "NARRATE", "text": "Escorpión! +4 points." }],
-    [{ "action": "NARRATE", "text": "Escorpión! +4 points." }]
-  ],
   "steps": [
     {
+      "description": "Intro; decision point triggers path choice (Path A)",
       "actions": [{ "action": "NARRATE", "text": "Let's begin!" }],
+      "llmResponses": [
+        [
+          { "action": "SET_STATE", "path": "players.p1.pathChoice", "value": "A" },
+          { "action": "NARRATE", "text": "Path A it is!" }
+        ]
+      ],
       "expect": { "players.p1.pathChoice": "A" }
     },
     { "roll": 1 },
-    { "roll": 2 },
+    {
+      "description": "p2 lands on Halcón (+3 points)",
+      "roll": 2,
+      "llmResponses": [[{ "action": "NARRATE", "text": "Halcón encounter! +3 points." }]]
+    },
     { "roll": 1 },
     { "roll": 2 },
-    { "roll": 3 },
+    {
+      "description": "p2 lands on Cobra (+4 points)",
+      "roll": 3,
+      "llmResponses": [[{ "action": "NARRATE", "text": "Cobra! +4 points." }]]
+    },
     { "roll": 2 },
+    {
+      "description": "p1 lands on Águila (+3 points)",
+      "roll": 4,
+      "llmResponses": [[{ "action": "NARRATE", "text": "Águila encounter! +3 points." }]]
+    },
     { "roll": 4 },
-    { "roll": 4 },
-    { "roll": 4 },
-    { "roll": 4 },
-    { "roll": 2 },
-    { "roll": 3 },
+    {
+      "description": "p3 lands on Águila (+3 points)",
+      "roll": 4,
+      "llmResponses": [[{ "action": "NARRATE", "text": "Águila! +3 points." }]]
+    },
+    {
+      "description": "p1 lands on Arenas movedizas (skip next turn)",
+      "roll": 4,
+      "llmResponses": [[{ "action": "NARRATE", "text": "Arenas movedizas! Skip next turn." }]]
+    },
+    {
+      "description": "p2 lands on Arenas (skip next turn)",
+      "roll": 2,
+      "llmResponses": [[{ "action": "NARRATE", "text": "Arenas! Skip next turn." }]]
+    },
+    {
+      "description": "p3 lands on Arenas (skip next turn)",
+      "roll": 3,
+      "llmResponses": [[{ "action": "NARRATE", "text": "Arenas! Skip next turn." }]]
+    },
     { "roll": 1 },
     { "roll": 2 },
-    { "roll": 1 },
+    {
+      "description": "Land on Arenas (skip next turn)",
+      "roll": 1,
+      "llmResponses": [[{ "action": "NARRATE", "text": "Arenas! Skip next turn." }]]
+    },
     { "roll": 2, "expect": { "players.p1.position": 36 } },
     { "roll": 1, "expect": { "players.p2.position": 36 } },
     { "roll": 3, "expect": { "players.p3.position": 36 } },
-    { "roll": 2 },
-    { "roll": 2 },
-    { "roll": 2 }
+    {
+      "description": "Land on Escorpión (+4 points)",
+      "roll": 2,
+      "llmResponses": [[{ "action": "NARRATE", "text": "Escorpión! +4 points." }]]
+    },
+    {
+      "description": "Land on Escorpión (+4 points)",
+      "roll": 2,
+      "llmResponses": [[{ "action": "NARRATE", "text": "Escorpión! +4 points." }]]
+    },
+    {
+      "description": "Land on Escorpión (+4 points)",
+      "roll": 2,
+      "llmResponses": [[{ "action": "NARRATE", "text": "Escorpión! +4 points." }]]
+    }
   ]
 }
