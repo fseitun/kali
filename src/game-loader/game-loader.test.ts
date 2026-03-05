@@ -28,7 +28,7 @@ describe("GameLoader", () => {
   beforeEach(() => {
     gameLoader = new GameLoader("/test/games");
     mockFetch = vi.fn();
-    globalThis.fetch = mockFetch;
+    globalThis.fetch = mockFetch as unknown as typeof fetch;
     vi.clearAllMocks();
   });
 

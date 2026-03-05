@@ -197,9 +197,12 @@ JSON:`;
       if (error instanceof SyntaxError) {
         throw new Error(
           `Invalid JSON: ${error.message}. Make sure to return PURE JSON array with no markdown or code blocks.`,
+          { cause: error },
         );
       }
-      throw error;
+      throw new Error(error instanceof Error ? error.message : String(error), {
+        cause: error,
+      });
     }
   }
 

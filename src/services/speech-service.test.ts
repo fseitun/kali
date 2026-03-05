@@ -50,15 +50,15 @@ describe("SpeechService", () => {
       destination: {},
     };
 
-    globalThis.AudioContext = vi
-      .fn()
-      .mockImplementation(
-        () => mockAudioContext,
-      ) as unknown as typeof AudioContext;
+    globalThis.AudioContext = class {
+      constructor() {
+        return mockAudioContext;
+      }
+    } as unknown as typeof AudioContext;
 
     // Mock fetch
     mockFetch = vi.fn();
-    globalThis.fetch = mockFetch;
+    globalThis.fetch = mockFetch as unknown as typeof fetch;
 
     vi.clearAllMocks();
   });
@@ -69,21 +69,18 @@ describe("SpeechService", () => {
 
   describe("prime", () => {
     it("should prime speech synthesis", () => {
-      const mockUtterance = {
-        onend: null,
-        onerror: null,
-      };
-
-      globalThis.SpeechSynthesisUtterance = vi
-        .fn()
-        .mockImplementation(
-          () => mockUtterance,
-        ) as unknown as typeof SpeechSynthesisUtterance;
+      globalThis.SpeechSynthesisUtterance = class {
+        onend = null;
+        onerror = null;
+      } as unknown as typeof SpeechSynthesisUtterance;
 
       speechService.prime();
 
       expect(mockSpeechSynthesis.cancel).toHaveBeenCalled();
-      expect(mockSpeechSynthesis.speak).toHaveBeenCalledWith(mockUtterance);
+      expect(mockSpeechSynthesis.speak).toHaveBeenCalled();
+      const utterance = mockSpeechSynthesis.speak.mock.calls[0][0];
+      expect(utterance.onend).toBeNull();
+      expect(utterance.onerror).toBeNull();
     });
 
     it("should not prime if speechSynthesis not available", () => {
@@ -96,16 +93,10 @@ describe("SpeechService", () => {
     });
 
     it("should not prime if already primed", () => {
-      const mockUtterance = {
-        onend: null,
-        onerror: null,
-      };
-
-      globalThis.SpeechSynthesisUtterance = vi
-        .fn()
-        .mockImplementation(
-          () => mockUtterance,
-        ) as unknown as typeof SpeechSynthesisUtterance;
+      globalThis.SpeechSynthesisUtterance = class {
+        onend = null;
+        onerror = null;
+      } as unknown as typeof SpeechSynthesisUtterance;
 
       speechService.prime();
       speechService.prime(); // Second call
@@ -116,43 +107,39 @@ describe("SpeechService", () => {
 
   describe("speak", () => {
     beforeEach(() => {
-      globalThis.SpeechSynthesisUtterance = vi.fn().mockImplementation(() => ({
-        onend: null,
-        onerror: null,
-        rate: 0,
-        pitch: 0,
-        lang: "",
-      })) as any;
+      globalThis.SpeechSynthesisUtterance = class {
+        onend = null;
+        onerror = null;
+        rate = 0;
+        pitch = 0;
+        lang = "";
+        constructor(public text = "") {}
+      } as unknown as typeof SpeechSynthesisUtterance;
     });
 
     it("should speak text successfully", async () => {
-      let utterance: any = null;
-
-      globalThis.SpeechSynthesisUtterance = vi
-        .fn()
-        .mockImplementation((text) => {
-          utterance = {
-            text,
-            onend: null,
-            onerror: null,
-            rate: 0,
-            pitch: 0,
-            lang: "",
-          };
-          return utterance;
-        }) as any;
+      globalThis.SpeechSynthesisUtterance = class {
+        onend = null;
+        onerror = null;
+        rate = 0;
+        pitch = 0;
+        lang = "";
+        constructor(public text = "") {}
+      } as unknown as typeof SpeechSynthesisUtterance;
 
       const speakPromise = speechService.speak("Hello world");
+      // First call from prime(), second from actual speak
+      const utterance = mockSpeechSynthesis.speak.mock.calls[1]?.[0];
 
       // Simulate successful speech
       setTimeout(() => {
-        utterance.onend();
+        utterance?.onend?.();
       }, 0);
 
       await speakPromise;
 
       expect(mockSpeechSynthesis.cancel).toHaveBeenCalled();
-      expect(mockSpeechSynthesis.speak).toHaveBeenCalledWith(utterance);
+      expect(mockSpeechSynthesis.speak).toHaveBeenCalled();
       expect(utterance.rate).toBe(0.9);
       expect(utterance.pitch).toBe(1.0);
       expect(utterance.lang).toBe("en-US");
@@ -168,27 +155,23 @@ describe("SpeechService", () => {
     });
 
     it("should handle speech synthesis error", async () => {
-      let utterance: any = null;
-
-      globalThis.SpeechSynthesisUtterance = vi
-        .fn()
-        .mockImplementation((text) => {
-          utterance = {
-            text,
-            onend: null,
-            onerror: null,
-            rate: 0,
-            pitch: 0,
-            lang: "",
-          };
-          return utterance;
-        }) as any;
+      globalThis.SpeechSynthesisUtterance = class {
+        onend = null;
+        onerror = null;
+        rate = 0;
+        pitch = 0;
+        lang = "";
+        constructor(public text = "") {}
+      } as unknown as typeof SpeechSynthesisUtterance;
 
       const speakPromise = speechService.speak("Hello world");
+      const utterance = mockSpeechSynthesis.speak.mock.calls[1]?.[0];
 
       // Simulate speech error
       setTimeout(() => {
-        utterance.onerror({ error: "network" });
+        if (typeof utterance?.onerror === "function") {
+          utterance.onerror({ error: "network" } as SpeechSynthesisErrorEvent);
+        }
       }, 0);
 
       await speakPromise;
@@ -198,27 +181,25 @@ describe("SpeechService", () => {
     });
 
     it("should handle interrupted speech", async () => {
-      let utterance: any = null;
-
-      globalThis.SpeechSynthesisUtterance = vi
-        .fn()
-        .mockImplementation((text) => {
-          utterance = {
-            text,
-            onend: null,
-            onerror: null,
-            rate: 0,
-            pitch: 0,
-            lang: "",
-          };
-          return utterance;
-        }) as any;
+      globalThis.SpeechSynthesisUtterance = class {
+        onend = null;
+        onerror = null;
+        rate = 0;
+        pitch = 0;
+        lang = "";
+        constructor(public text = "") {}
+      } as unknown as typeof SpeechSynthesisUtterance;
 
       const speakPromise = speechService.speak("Hello world");
+      const utterance = mockSpeechSynthesis.speak.mock.calls[1]?.[0];
 
       // Simulate interrupted speech
       setTimeout(() => {
-        utterance.onerror({ error: "interrupted" });
+        if (typeof utterance?.onerror === "function") {
+          utterance.onerror({
+            error: "interrupted",
+          } as SpeechSynthesisErrorEvent);
+        }
       }, 0);
 
       await speakPromise;
@@ -228,26 +209,20 @@ describe("SpeechService", () => {
     });
 
     it("should prime if not already primed", async () => {
-      let utterance: any = null;
-
-      globalThis.SpeechSynthesisUtterance = vi
-        .fn()
-        .mockImplementation((text) => {
-          utterance = {
-            text,
-            onend: null,
-            onerror: null,
-            rate: 0,
-            pitch: 0,
-            lang: "",
-          };
-          return utterance;
-        }) as any;
+      globalThis.SpeechSynthesisUtterance = class {
+        onend = null;
+        onerror = null;
+        rate = 0;
+        pitch = 0;
+        lang = "";
+        constructor(public text = "") {}
+      } as unknown as typeof SpeechSynthesisUtterance;
 
       const speakPromise = speechService.speak("Hello world");
+      const utterance = mockSpeechSynthesis.speak.mock.calls[1]?.[0];
 
       setTimeout(() => {
-        utterance.onend();
+        utterance?.onend?.();
       }, 0);
 
       await speakPromise;

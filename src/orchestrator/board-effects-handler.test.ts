@@ -34,7 +34,10 @@ describe("BoardEffectsHandler", () => {
     mockProcessTranscript = vi.fn().mockResolvedValue(true);
     boardEffectsHandler = new BoardEffectsHandler(
       stateManager,
-      mockProcessTranscript,
+      mockProcessTranscript as unknown as (
+        transcript: string,
+        context: ExecutionContext,
+      ) => Promise<boolean>,
     );
   });
 

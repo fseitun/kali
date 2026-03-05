@@ -1,6 +1,6 @@
 import js from "@eslint/js";
 import tseslint from "typescript-eslint";
-import importPlugin from "eslint-plugin-import";
+import importPlugin from "eslint-plugin-import-x";
 import prettierConfig from "eslint-config-prettier";
 
 export default tseslint.config(
@@ -30,7 +30,7 @@ export default tseslint.config(
   {
     files: ["**/*.ts", "**/*.tsx"],
     plugins: {
-      import: importPlugin,
+      "import-x": importPlugin,
     },
     languageOptions: {
       parserOptions: {
@@ -53,7 +53,7 @@ export default tseslint.config(
           prefer: "type-imports",
         },
       ],
-      "import/order": [
+      "import-x/order": [
         "error",
         {
           groups: [

@@ -44,7 +44,7 @@ describe("ModelManager", () => {
 
     // Mock fetch
     mockFetch = vi.fn();
-    globalThis.fetch = mockFetch;
+    globalThis.fetch = mockFetch as unknown as typeof fetch;
 
     // Mock URL.createObjectURL
     globalThis.URL = {

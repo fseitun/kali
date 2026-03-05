@@ -34,7 +34,10 @@ describe("DecisionPointEnforcer", () => {
     mockProcessTranscript = vi.fn().mockResolvedValue(true);
     decisionPointEnforcer = new DecisionPointEnforcer(
       stateManager,
-      mockProcessTranscript,
+      mockProcessTranscript as unknown as (
+        transcript: string,
+        context: ExecutionContext,
+      ) => Promise<boolean>,
     );
   });
 
