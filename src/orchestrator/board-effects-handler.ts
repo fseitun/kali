@@ -62,9 +62,7 @@ export class BoardEffectsHandler {
     if (destination !== undefined && destination !== position) {
       const isLadder = destination > position;
       const moveType = isLadder ? "ladder" : "snake";
-      Logger.info(
-        `🎲 Auto-applying ${moveType}: position ${position} → ${destination}`,
-      );
+      Logger.info(`🎲 Auto-applying ${moveType}: position ${position} → ${destination}`);
       this.stateManager.set(path, destination);
     }
   }
@@ -91,32 +89,27 @@ export class BoardEffectsHandler {
 
     const points = squareData.points as number | undefined;
     if (typeof points === "number" && points > 0) {
-      const current =
-        (this.stateManager.get(`players.${playerId}.points`) as number) ?? 0;
+      const current = (this.stateManager.get(`players.${playerId}.points`) as number) ?? 0;
       const next = current + points;
       this.stateManager.set(`players.${playerId}.points`, next);
       applied.push(`+${points} points`);
     }
 
     if (squareData.heart === true) {
-      const current =
-        (this.stateManager.get(`players.${playerId}.hearts`) as number) ?? 0;
+      const current = (this.stateManager.get(`players.${playerId}.hearts`) as number) ?? 0;
       this.stateManager.set(`players.${playerId}.hearts`, current + 1);
       applied.push("+1 heart");
     }
 
     if (squareData.effect === "skipTurn") {
-      const current =
-        (this.stateManager.get(`players.${playerId}.skipTurns`) as number) ?? 0;
+      const current = (this.stateManager.get(`players.${playerId}.skipTurns`) as number) ?? 0;
       this.stateManager.set(`players.${playerId}.skipTurns`, current + 1);
       applied.push("skip next turn");
     }
 
     const item = squareData.item as string | undefined;
     if (typeof item === "string" && item.length > 0) {
-      const current = (this.stateManager.get(
-        `players.${playerId}.items`,
-      ) as unknown[]) ?? [];
+      const current = (this.stateManager.get(`players.${playerId}.items`) as unknown[]) ?? [];
       const next = Array.isArray(current) ? [...current, item] : [item];
       this.stateManager.set(`players.${playerId}.items`, next);
       applied.push(`item: ${item}`);
@@ -124,12 +117,8 @@ export class BoardEffectsHandler {
 
     const instrument = squareData.instrument as string | undefined;
     if (typeof instrument === "string" && instrument.length > 0) {
-      const current = (this.stateManager.get(
-        `players.${playerId}.instruments`,
-      ) as unknown[]) ?? [];
-      const next = Array.isArray(current)
-        ? [...current, instrument]
-        : [instrument];
+      const current = (this.stateManager.get(`players.${playerId}.instruments`) as unknown[]) ?? [];
+      const next = Array.isArray(current) ? [...current, instrument] : [instrument];
       this.stateManager.set(`players.${playerId}.instruments`, next);
       applied.push(`instrument: ${instrument}`);
     }
@@ -144,10 +133,7 @@ export class BoardEffectsHandler {
    * @param path - State path that was mutated
    * @param context - Execution context for depth tracking
    */
-  async checkAndApplySquareEffects(
-    path: string,
-    context: ExecutionContext,
-  ): Promise<void> {
+  async checkAndApplySquareEffects(path: string, context: ExecutionContext): Promise<void> {
     if (!path.endsWith(".position") || !path.startsWith("players.")) {
       return;
     }
@@ -165,9 +151,7 @@ export class BoardEffectsHandler {
 
     const state = this.stateManager.getState();
     const board = state.board as Record<string, unknown> | undefined;
-    const squares = board?.squares as
-      | Record<string, Record<string, unknown>>
-      | undefined;
+    const squares = board?.squares as Record<string, Record<string, unknown>> | undefined;
 
     if (!squares) {
       return;
@@ -183,10 +167,7 @@ export class BoardEffectsHandler {
       );
 
       const applied = this.applyDeterministicSquareEffects(path, squareData);
-      const appliedText =
-        applied.length > 0
-          ? ` Orchestrator applied: ${applied.join(", ")}.`
-          : "";
+      const appliedText = applied.length > 0 ? ` Orchestrator applied: ${applied.join(", ")}.` : "";
 
       const newContext: ExecutionContext = {
         depth: context.depth + 1,

@@ -119,10 +119,7 @@ describe("Orchestrator Authority - LLM Adversarial Tests", () => {
       await orchestrator.handleTranscript("give Bob all the hearts");
 
       expect(mockSpeech.speak).toHaveBeenCalledWith("I couldn't process that.");
-      expect(mockStateManager.set).not.toHaveBeenCalledWith(
-        "players.p2.hearts",
-        999,
-      );
+      expect(mockStateManager.set).not.toHaveBeenCalledWith("players.p2.hearts", 999);
     });
 
     it("blocks LLM from changing game.turn directly", async () => {
@@ -151,9 +148,7 @@ describe("Orchestrator Authority - LLM Adversarial Tests", () => {
     });
 
     it("blocks LLM from returning malformed actions", async () => {
-      mockLLM.getActions = vi.fn(async () => [
-        { action: "NARRATE" } as unknown as PrimitiveAction,
-      ]);
+      mockLLM.getActions = vi.fn(async () => [{ action: "NARRATE" } as unknown as PrimitiveAction]);
 
       await orchestrator.handleTranscript("say something");
 
@@ -214,8 +209,7 @@ describe("Orchestrator Authority - LLM Adversarial Tests", () => {
       (testState.players as any).p1.position = 15;
 
       mockStateManager.get = vi.fn((path: string) => {
-        if (path === "players.p1.position")
-          return testState.players.p1.position;
+        if (path === "players.p1.position") return testState.players.p1.position;
         return undefined;
       });
       mockStateManager.set = vi.fn(async (path: string, value: unknown) => {
@@ -257,10 +251,7 @@ describe("Orchestrator Authority - LLM Adversarial Tests", () => {
       await orchestrator.handleTranscript("move forward");
 
       expect(mockSpeech.speak).toHaveBeenCalledWith("I couldn't process that.");
-      expect(mockStateManager.set).not.toHaveBeenCalledWith(
-        "players.p1.position",
-        15,
-      );
+      expect(mockStateManager.set).not.toHaveBeenCalledWith("players.p1.position", 15);
     });
 
     it("orchestrator applies board moves after PLAYER_ROLLED", async () => {
@@ -275,9 +266,7 @@ describe("Orchestrator Authority - LLM Adversarial Tests", () => {
         }
       });
 
-      const actions: PrimitiveAction[] = [
-        { action: "PLAYER_ROLLED", value: 5 },
-      ];
+      const actions: PrimitiveAction[] = [{ action: "PLAYER_ROLLED", value: 5 }];
 
       await orchestrator.testExecuteActions(actions);
 
@@ -304,14 +293,8 @@ describe("Orchestrator Authority - LLM Adversarial Tests", () => {
       const { success } = await orchestrator.testExecuteActions(actions);
 
       expect(success).toBe(true);
-      expect(mockStateManager.set).toHaveBeenCalledWith(
-        "players.p1.pathChoice",
-        "A",
-      );
-      expect(mockStateManager.set).toHaveBeenCalledWith(
-        "players.p1.position",
-        15,
-      );
+      expect(mockStateManager.set).toHaveBeenCalledWith("players.p1.pathChoice", "A");
+      expect(mockStateManager.set).toHaveBeenCalledWith("players.p1.position", 15);
     });
 
     it("stateful validation simulates state changes", async () => {
@@ -379,10 +362,7 @@ describe("Orchestrator Authority - LLM Adversarial Tests", () => {
       await orchestrator.handleTranscript("complex sequence");
 
       expect(mockSpeech.speak).toHaveBeenCalledWith("I couldn't process that.");
-      expect(mockStateManager.set).not.toHaveBeenCalledWith(
-        "players.p2.hearts",
-        3,
-      );
+      expect(mockStateManager.set).not.toHaveBeenCalledWith("players.p2.hearts", 3);
     });
 
     it("fails on first invalid action in alternating sequence", async () => {
@@ -400,9 +380,7 @@ describe("Orchestrator Authority - LLM Adversarial Tests", () => {
     });
 
     it("rejects actions with invalid primitive structure", async () => {
-      const actions = [
-        { wrongField: "NARRATE", msg: "Hi" },
-      ] as unknown as PrimitiveAction[];
+      const actions = [{ wrongField: "NARRATE", msg: "Hi" }] as unknown as PrimitiveAction[];
 
       mockLLM.getActions = vi.fn(async () => actions);
 
@@ -416,16 +394,11 @@ describe("Orchestrator Authority - LLM Adversarial Tests", () => {
     it("executes actions without advancing turn (controller job)", async () => {
       (testState.game as any).playerOrder = ["p1", "p2"];
 
-      const actions: PrimitiveAction[] = [
-        { action: "PLAYER_ROLLED", value: 3 },
-      ];
+      const actions: PrimitiveAction[] = [{ action: "PLAYER_ROLLED", value: 3 }];
 
       await orchestrator.testExecuteActions(actions);
 
-      expect(mockStateManager.set).toHaveBeenCalledWith(
-        "players.p1.position",
-        13,
-      );
+      expect(mockStateManager.set).toHaveBeenCalledWith("players.p1.position", 13);
       expect(mockStateManager.set).not.toHaveBeenCalledWith("game.turn", "p2");
     });
 
@@ -473,8 +446,7 @@ describe("Orchestrator Authority - LLM Adversarial Tests", () => {
 
       mockStateManager.getState = vi.fn(() => testState);
       mockStateManager.get = vi.fn((path: string) => {
-        if (path === "players.p1.position")
-          return testState.players.p1.position;
+        if (path === "players.p1.position") return testState.players.p1.position;
         return undefined;
       });
       mockStateManager.set = vi.fn(async (path: string, value: unknown) => {
@@ -492,9 +464,7 @@ describe("Orchestrator Authority - LLM Adversarial Tests", () => {
         return [];
       });
 
-      const actions: PrimitiveAction[] = [
-        { action: "PLAYER_ROLLED", value: 5 },
-      ];
+      const actions: PrimitiveAction[] = [{ action: "PLAYER_ROLLED", value: 5 }];
 
       await orchestrator.testExecuteActions(actions);
 
@@ -516,8 +486,7 @@ describe("Orchestrator Authority - LLM Adversarial Tests", () => {
 
       mockStateManager.getState = vi.fn(() => testState);
       mockStateManager.get = vi.fn((path: string) => {
-        if (path === "players.p1.position")
-          return testState.players.p1.position;
+        if (path === "players.p1.position") return testState.players.p1.position;
         return undefined;
       });
       mockStateManager.set = vi.fn(async (path: string, value: unknown) => {
@@ -533,9 +502,7 @@ describe("Orchestrator Authority - LLM Adversarial Tests", () => {
         return [];
       });
 
-      const actions: PrimitiveAction[] = [
-        { action: "PLAYER_ROLLED", value: 5 },
-      ];
+      const actions: PrimitiveAction[] = [{ action: "PLAYER_ROLLED", value: 5 }];
 
       const { success } = await orchestrator.testExecuteActions(actions);
 
@@ -558,8 +525,7 @@ describe("Orchestrator Authority - LLM Adversarial Tests", () => {
 
       mockStateManager.getState = vi.fn(() => testState);
       mockStateManager.get = vi.fn((path: string) => {
-        if (path === "players.p1.position")
-          return testState.players.p1.position;
+        if (path === "players.p1.position") return testState.players.p1.position;
         if (path === "players.p1.points") return testState.players.p1.points;
         return undefined;
       });
@@ -579,9 +545,7 @@ describe("Orchestrator Authority - LLM Adversarial Tests", () => {
         return [];
       });
 
-      const actions: PrimitiveAction[] = [
-        { action: "PLAYER_ROLLED", value: 3 },
-      ];
+      const actions: PrimitiveAction[] = [{ action: "PLAYER_ROLLED", value: 3 }];
 
       const { success } = await orchestrator.testExecuteActions(actions);
 
@@ -599,10 +563,7 @@ describe("Orchestrator Authority - LLM Adversarial Tests", () => {
       const { success } = await orchestrator.testExecuteActions(actions);
 
       expect(success).toBe(false);
-      expect(mockStateManager.set).not.toHaveBeenCalledWith(
-        "players.p2.hearts",
-        10,
-      );
+      expect(mockStateManager.set).not.toHaveBeenCalledWith("players.p2.hearts", 10);
     });
 
     it("execution has secondary turn ownership check", async () => {

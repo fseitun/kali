@@ -68,9 +68,7 @@ export class ModelManager {
     }
   }
 
-  private async downloadAndCacheModel(
-    onProgress?: (percent: number) => void,
-  ): Promise<string> {
+  private async downloadAndCacheModel(onProgress?: (percent: number) => void): Promise<string> {
     try {
       const response = await fetch(CONFIG.MODEL.URL);
 

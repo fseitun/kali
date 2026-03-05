@@ -50,9 +50,7 @@ export class KaliAppCore {
       indicator.setState("listening");
 
       if (shouldStartGame) {
-        this.uiService.updateStatus(
-          t("ui.wakeWordReady", { wakeWord: CONFIG.WAKE_WORD.TEXT[0] }),
-        );
+        this.uiService.updateStatus(t("ui.wakeWordReady", { wakeWord: CONFIG.WAKE_WORD.TEXT[0] }));
         Logger.info("Kali is ready");
         await this.proactiveGameStart();
       } else {
@@ -207,17 +205,14 @@ ${rules.examples.map((ex: string, i: number) => `${i + 1}. ${ex}`).join("\n")}
 
   private async proactiveGameStart(): Promise<void> {
     if (!this.orchestrator) {
-      Logger.error(
-        "Cannot start game proactively: orchestrator not initialized",
-      );
+      Logger.error("Cannot start game proactively: orchestrator not initialized");
       return;
     }
 
     Logger.info("🎮 Starting game proactively");
-    const { success, shouldAdvanceTurn } =
-      await this.orchestrator.handleTranscript(
-        "Start the game and explain the current situation",
-      );
+    const { success, shouldAdvanceTurn } = await this.orchestrator.handleTranscript(
+      "Start the game and explain the current situation",
+    );
 
     if (success && shouldAdvanceTurn) {
       await this.checkAndAdvanceTurn();
@@ -225,12 +220,7 @@ ${rules.examples.map((ex: string, i: number) => `${i + 1}. ${ex}`).join("\n")}
   }
 
   private async runNameCollection(): Promise<void> {
-    if (
-      !this.stateManager ||
-      !this.wakeWordDetector ||
-      !this.gameModule ||
-      !this.orchestrator
-    ) {
+    if (!this.stateManager || !this.wakeWordDetector || !this.gameModule || !this.orchestrator) {
       throw new Error("Cannot run name collection: components not initialized");
     }
 
@@ -311,9 +301,7 @@ ${rules.examples.map((ex: string, i: number) => `${i + 1}. ${ex}`).join("\n")}
 
     if (nextPlayer) {
       const message = `${nextPlayer.name}, it's your turn. You're at position ${nextPlayer.position}. Tell me what you rolled, or where you landed.`;
-      Logger.info(
-        `🎯 Turn start sanity check: ${nextPlayer.name} at ${nextPlayer.position}`,
-      );
+      Logger.info(`🎯 Turn start sanity check: ${nextPlayer.name} at ${nextPlayer.position}`);
       await this.speechService.speak(message);
     }
   }
@@ -330,17 +318,14 @@ ${rules.examples.map((ex: string, i: number) => `${i + 1}. ${ex}`).join("\n")}
     }
 
     if (this.orchestrator) {
-      const { success, shouldAdvanceTurn } =
-        await this.orchestrator.handleTranscript(text);
+      const { success, shouldAdvanceTurn } = await this.orchestrator.handleTranscript(text);
 
       if (success && shouldAdvanceTurn) {
         await this.checkAndAdvanceTurn();
       }
     }
 
-    this.uiService.updateStatus(
-      t("ui.wakeWordReady", { wakeWord: CONFIG.WAKE_WORD.TEXT[0] }),
-    );
+    this.uiService.updateStatus(t("ui.wakeWordReady", { wakeWord: CONFIG.WAKE_WORD.TEXT[0] }));
   }
 
   async dispose(): Promise<void> {
@@ -393,9 +378,7 @@ ${rules.examples.map((ex: string, i: number) => `${i + 1}. ${ex}`).join("\n")}
    */
   async skipToPlaying(): Promise<void> {
     if (!this.orchestrator || !this.gameModule) {
-      throw new Error(
-        "Cannot skip to playing: core components not initialized",
-      );
+      throw new Error("Cannot skip to playing: core components not initialized");
     }
 
     Logger.info("🚀 Skipping to PLAYING phase with default players");

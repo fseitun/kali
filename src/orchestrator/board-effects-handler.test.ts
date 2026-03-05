@@ -129,10 +129,7 @@ describe("BoardEffectsHandler", () => {
         "5": { type: "encounter", name: "Bear" },
       });
 
-      await boardEffectsHandler.checkAndApplySquareEffects(
-        "players.p1.hearts",
-        baseContext,
-      );
+      await boardEffectsHandler.checkAndApplySquareEffects("players.p1.hearts", baseContext);
 
       expect(mockProcessTranscript).not.toHaveBeenCalled();
     });
@@ -142,10 +139,7 @@ describe("BoardEffectsHandler", () => {
         "5": { type: "encounter", name: "Bear" },
       });
 
-      await boardEffectsHandler.checkAndApplySquareEffects(
-        "game.lastRoll",
-        baseContext,
-      );
+      await boardEffectsHandler.checkAndApplySquareEffects("game.lastRoll", baseContext);
 
       expect(mockProcessTranscript).not.toHaveBeenCalled();
     });
@@ -153,10 +147,7 @@ describe("BoardEffectsHandler", () => {
     it("should do nothing when no board.squares config exists", async () => {
       stateManager.set("players.p1.position", 5);
 
-      await boardEffectsHandler.checkAndApplySquareEffects(
-        "players.p1.position",
-        baseContext,
-      );
+      await boardEffectsHandler.checkAndApplySquareEffects("players.p1.position", baseContext);
 
       expect(mockProcessTranscript).not.toHaveBeenCalled();
     });
@@ -165,10 +156,7 @@ describe("BoardEffectsHandler", () => {
       stateManager.set("board.squares", {});
       stateManager.set("players.p1.position", 5);
 
-      await boardEffectsHandler.checkAndApplySquareEffects(
-        "players.p1.position",
-        baseContext,
-      );
+      await boardEffectsHandler.checkAndApplySquareEffects("players.p1.position", baseContext);
 
       expect(mockProcessTranscript).not.toHaveBeenCalled();
     });
@@ -177,10 +165,7 @@ describe("BoardEffectsHandler", () => {
       stateManager.set("board.squares", { "5": {} });
       stateManager.set("players.p1.position", 5);
 
-      await boardEffectsHandler.checkAndApplySquareEffects(
-        "players.p1.position",
-        baseContext,
-      );
+      await boardEffectsHandler.checkAndApplySquareEffects("players.p1.position", baseContext);
 
       expect(mockProcessTranscript).not.toHaveBeenCalled();
     });
@@ -194,10 +179,7 @@ describe("BoardEffectsHandler", () => {
       stateManager.set("board.squares", { "10": squareData });
       stateManager.set("players.p1.position", 10);
 
-      await boardEffectsHandler.checkAndApplySquareEffects(
-        "players.p1.position",
-        baseContext,
-      );
+      await boardEffectsHandler.checkAndApplySquareEffects("players.p1.position", baseContext);
 
       expect(mockProcessTranscript).toHaveBeenCalledTimes(1);
     });
@@ -213,10 +195,7 @@ describe("BoardEffectsHandler", () => {
         return true;
       });
 
-      await boardEffectsHandler.checkAndApplySquareEffects(
-        "players.p1.position",
-        baseContext,
-      );
+      await boardEffectsHandler.checkAndApplySquareEffects("players.p1.position", baseContext);
 
       expect(flagDuringProcessing).toBe(true);
     });
@@ -226,10 +205,7 @@ describe("BoardEffectsHandler", () => {
       stateManager.set("board.squares", { "5": squareData });
       stateManager.set("players.p1.position", 5);
 
-      await boardEffectsHandler.checkAndApplySquareEffects(
-        "players.p1.position",
-        baseContext,
-      );
+      await boardEffectsHandler.checkAndApplySquareEffects("players.p1.position", baseContext);
 
       expect(boardEffectsHandler.isProcessingEffect()).toBe(false);
     });
@@ -242,10 +218,7 @@ describe("BoardEffectsHandler", () => {
       mockProcessTranscript.mockRejectedValue(new Error("Test error"));
 
       await expect(
-        boardEffectsHandler.checkAndApplySquareEffects(
-          "players.p1.position",
-          baseContext,
-        ),
+        boardEffectsHandler.checkAndApplySquareEffects("players.p1.position", baseContext),
       ).rejects.toThrow("Test error");
 
       // Flag should still be cleared
@@ -257,15 +230,13 @@ describe("BoardEffectsHandler", () => {
       stateManager.set("board.squares", { "5": squareData });
       stateManager.set("players.p1.position", 5);
 
-      await boardEffectsHandler.checkAndApplySquareEffects(
-        "players.p1.position",
-        { depth: 2, maxDepth: 5 },
-      );
+      await boardEffectsHandler.checkAndApplySquareEffects("players.p1.position", {
+        depth: 2,
+        maxDepth: 5,
+      });
 
       expect(mockProcessTranscript).toHaveBeenCalledWith(
-        expect.stringContaining(
-          "[SYSTEM: Current player just landed on square 5",
-        ),
+        expect.stringContaining("[SYSTEM: Current player just landed on square 5"),
         { depth: 3, maxDepth: 5 },
       );
     });
@@ -275,10 +246,10 @@ describe("BoardEffectsHandler", () => {
       stateManager.set("board.squares", { "5": squareData });
       stateManager.set("players.p1.position", 5);
 
-      await boardEffectsHandler.checkAndApplySquareEffects(
-        "players.p1.position",
-        { depth: 4, maxDepth: 5 },
-      );
+      await boardEffectsHandler.checkAndApplySquareEffects("players.p1.position", {
+        depth: 4,
+        maxDepth: 5,
+      });
 
       expect(mockProcessTranscript).not.toHaveBeenCalled();
     });
@@ -292,10 +263,7 @@ describe("BoardEffectsHandler", () => {
       stateManager.set("board.squares", { "8": squareData });
       stateManager.set("players.p1.position", 8);
 
-      await boardEffectsHandler.checkAndApplySquareEffects(
-        "players.p1.position",
-        baseContext,
-      );
+      await boardEffectsHandler.checkAndApplySquareEffects("players.p1.position", baseContext);
 
       expect(mockProcessTranscript).toHaveBeenCalledWith(
         expect.stringContaining("square 8"),
@@ -314,10 +282,7 @@ describe("BoardEffectsHandler", () => {
       stateManager.set("players.p1.position", 5);
       stateManager.set("players.p1.points", 0);
 
-      await boardEffectsHandler.checkAndApplySquareEffects(
-        "players.p1.position",
-        baseContext,
-      );
+      await boardEffectsHandler.checkAndApplySquareEffects("players.p1.position", baseContext);
 
       expect(stateManager.get("players.p1.points")).toBe(3);
       expect(mockProcessTranscript).toHaveBeenCalledWith(
@@ -337,10 +302,7 @@ describe("BoardEffectsHandler", () => {
       stateManager.set("players.p2.position", 10);
       stateManager.set("players.p2.hearts", 2);
 
-      await boardEffectsHandler.checkAndApplySquareEffects(
-        "players.p2.position",
-        baseContext,
-      );
+      await boardEffectsHandler.checkAndApplySquareEffects("players.p2.position", baseContext);
 
       expect(stateManager.get("players.p2.hearts")).toBe(3);
       expect(stateManager.get("players.p2.points")).toBe(1);
@@ -357,10 +319,7 @@ describe("BoardEffectsHandler", () => {
       stateManager.set("players.p1.position", 11);
       stateManager.set("players.p1.skipTurns", 0);
 
-      await boardEffectsHandler.checkAndApplySquareEffects(
-        "players.p1.position",
-        baseContext,
-      );
+      await boardEffectsHandler.checkAndApplySquareEffects("players.p1.position", baseContext);
 
       expect(stateManager.get("players.p1.skipTurns")).toBe(1);
     });
@@ -372,10 +331,7 @@ describe("BoardEffectsHandler", () => {
       stateManager.set("players.p1.position", 63);
       stateManager.set("players.p1.items", []);
 
-      await boardEffectsHandler.checkAndApplySquareEffects(
-        "players.p1.position",
-        baseContext,
-      );
+      await boardEffectsHandler.checkAndApplySquareEffects("players.p1.position", baseContext);
 
       expect(stateManager.get("players.p1.items")).toEqual(["anti-wasp"]);
     });
@@ -393,14 +349,9 @@ describe("BoardEffectsHandler", () => {
       stateManager.set("players.p1.instruments", []);
       stateManager.set("players.p1.points", 0);
 
-      await boardEffectsHandler.checkAndApplySquareEffects(
-        "players.p1.position",
-        baseContext,
-      );
+      await boardEffectsHandler.checkAndApplySquareEffects("players.p1.position", baseContext);
 
-      expect(stateManager.get("players.p1.instruments")).toEqual([
-        "flauta del desierto",
-      ]);
+      expect(stateManager.get("players.p1.instruments")).toEqual(["flauta del desierto"]);
       expect(stateManager.get("players.p1.points")).toBe(3);
     });
 
@@ -408,10 +359,7 @@ describe("BoardEffectsHandler", () => {
       stateManager.set("board.squares", { "5": { type: "encounter" } });
       stateManager.set("players.p1.position", "invalid" as unknown as number);
 
-      await boardEffectsHandler.checkAndApplySquareEffects(
-        "players.p1.position",
-        baseContext,
-      );
+      await boardEffectsHandler.checkAndApplySquareEffects("players.p1.position", baseContext);
 
       expect(mockProcessTranscript).not.toHaveBeenCalled();
     });
@@ -433,10 +381,10 @@ describe("BoardEffectsHandler", () => {
         return true;
       });
 
-      await boardEffectsHandler.checkAndApplySquareEffects(
-        "players.p1.position",
-        { depth: 0, maxDepth: 5 },
-      );
+      await boardEffectsHandler.checkAndApplySquareEffects("players.p1.position", {
+        depth: 0,
+        maxDepth: 5,
+      });
 
       expect(statusDuringProcessing).toBe(true);
     });
@@ -446,10 +394,10 @@ describe("BoardEffectsHandler", () => {
       stateManager.set("board.squares", { "5": squareData });
       stateManager.set("players.p1.position", 5);
 
-      await boardEffectsHandler.checkAndApplySquareEffects(
-        "players.p1.position",
-        { depth: 0, maxDepth: 5 },
-      );
+      await boardEffectsHandler.checkAndApplySquareEffects("players.p1.position", {
+        depth: 0,
+        maxDepth: 5,
+      });
 
       expect(boardEffectsHandler.isProcessingEffect()).toBe(false);
     });

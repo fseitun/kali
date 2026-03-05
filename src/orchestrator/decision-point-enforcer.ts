@@ -53,9 +53,7 @@ export class DecisionPointEnforcer {
     }
 
     try {
-      const players = state.players as
-        | Record<string, Record<string, unknown>>
-        | undefined;
+      const players = state.players as Record<string, Record<string, unknown>> | undefined;
       const currentPlayer = players?.[currentTurn];
 
       if (!currentPlayer) {
@@ -69,9 +67,7 @@ export class DecisionPointEnforcer {
         return;
       }
 
-      const decisionPoint = decisionPoints.find(
-        (dp) => dp.position === position,
-      );
+      const decisionPoint = decisionPoints.find((dp) => dp.position === position);
       if (!decisionPoint) {
         return;
       }

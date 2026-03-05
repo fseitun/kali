@@ -67,11 +67,7 @@ export class DebugUIService implements IUIService {
     this.consoleElement.scrollTop = this.consoleElement.scrollHeight;
   }
 
-  addTranscription(
-    _raw: string,
-    _processed: string,
-    _wakeWordDetected: boolean,
-  ): void {}
+  addTranscription(_raw: string, _processed: string, _wakeWordDetected: boolean): void {}
 
   clearConsole(): void {
     this.consoleElement.innerHTML = "";

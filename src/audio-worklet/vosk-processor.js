@@ -43,10 +43,7 @@ class VoskAudioProcessor extends AudioWorkletProcessor {
 
       if (this.resampleCounter >= this.resampleRatio) {
         this.resampleCounter -= this.resampleRatio;
-        const sample = Math.max(
-          -INT16_MAX,
-          Math.min(INT16_MAX - 1, channelData[i] * INT16_MAX),
-        );
+        const sample = Math.max(-INT16_MAX, Math.min(INT16_MAX - 1, channelData[i] * INT16_MAX));
         this.buffer.push(sample);
       }
     }

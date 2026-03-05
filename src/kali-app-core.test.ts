@@ -22,9 +22,7 @@ describe("KaliAppCore Architecture - Pure Coordination", () => {
     it("always delegates player setup to orchestrator.setupPlayers()", () => {
       const code = KaliAppCore.toString();
 
-      const hasOrchestratorSetupPlayers = code.includes(
-        "orchestrator.setupPlayers(",
-      );
+      const hasOrchestratorSetupPlayers = code.includes("orchestrator.setupPlayers(");
       const hasDirectStateManagerSetForPlayers =
         code.match(/stateManager\.set\(['"`]players\./g) !== null;
 
@@ -35,11 +33,8 @@ describe("KaliAppCore Architecture - Pure Coordination", () => {
     it("always delegates phase transitions to orchestrator.transitionPhase()", () => {
       const code = KaliAppCore.toString();
 
-      const hasOrchestratorTransitionPhase = code.includes(
-        "orchestrator.transitionPhase(",
-      );
-      const hasDirectPhaseSet =
-        code.match(/stateManager\.set\(['"`]game\.phase/g) !== null;
+      const hasOrchestratorTransitionPhase = code.includes("orchestrator.transitionPhase(");
+      const hasDirectPhaseSet = code.match(/stateManager\.set\(['"`]game\.phase/g) !== null;
 
       expect(hasOrchestratorTransitionPhase).toBe(true);
       expect(hasDirectPhaseSet).toBe(false);
@@ -48,11 +43,8 @@ describe("KaliAppCore Architecture - Pure Coordination", () => {
     it("always delegates turn advancement to orchestrator.advanceTurn()", () => {
       const code = KaliAppCore.toString();
 
-      const hasOrchestratorAdvanceTurn = code.includes(
-        "orchestrator.advanceTurn(",
-      );
-      const hasDirectTurnSet =
-        code.match(/stateManager\.set\(['"`]game\.turn/g) !== null;
+      const hasOrchestratorAdvanceTurn = code.includes("orchestrator.advanceTurn(");
+      const hasDirectTurnSet = code.match(/stateManager\.set\(['"`]game\.turn/g) !== null;
 
       expect(hasOrchestratorAdvanceTurn).toBe(true);
       expect(hasDirectTurnSet).toBe(false);
@@ -77,9 +69,7 @@ describe("KaliAppCore Architecture - Pure Coordination", () => {
 
       const hasHandleTranscript = code.includes("handleTranscript");
       const hasCheckAndAdvanceTurn = code.includes("checkAndAdvanceTurn");
-      const callsOrchestratorHandleTranscript = code.includes(
-        "orchestrator.handleTranscript(",
-      );
+      const callsOrchestratorHandleTranscript = code.includes("orchestrator.handleTranscript(");
 
       expect(hasHandleTranscript).toBe(true);
       expect(hasCheckAndAdvanceTurn).toBe(true);
@@ -91,8 +81,7 @@ describe("KaliAppCore Architecture - Pure Coordination", () => {
 
       const hasAdvanceTurnCall = code.includes("orchestrator.advanceTurn()");
       const doesNotCalculateNextPlayer =
-        !code.match(/playerOrder\[.*\+.*1.*\]/g) &&
-        !code.match(/nextPlayer\s*=\s*playerOrder/g);
+        !code.match(/playerOrder\[.*\+.*1.*\]/g) && !code.match(/nextPlayer\s*=\s*playerOrder/g);
 
       expect(hasAdvanceTurnCall).toBe(true);
       expect(doesNotCalculateNextPlayer).toBe(true);
@@ -103,9 +92,7 @@ describe("KaliAppCore Architecture - Pure Coordination", () => {
     it("does not implement game mechanics", () => {
       const code = KaliAppCore.toString();
 
-      const hasNoPositionCalculation = !code.match(
-        /position\s*[+\-*/]=\s*\d+/g,
-      );
+      const hasNoPositionCalculation = !code.match(/position\s*[+\-*/]=\s*\d+/g);
       const hasNoBoardMoveLogic = !code.match(/board\.moves\[/g);
       const hasNoSquareEffectLogic = !code.match(/board\.squares\[/g);
 
@@ -118,9 +105,7 @@ describe("KaliAppCore Architecture - Pure Coordination", () => {
       const code = KaliAppCore.toString();
 
       const hasNoDiceRollLogic = !code.match(/Math\.random\(\)\s*\*\s*\d+/g);
-      const hasNoWinConditionLogic = !code.match(
-        /position\s*>=\s*winPosition/g,
-      );
+      const hasNoWinConditionLogic = !code.match(/position\s*>=\s*winPosition/g);
 
       expect(hasNoDiceRollLogic).toBe(true);
       expect(hasNoWinConditionLogic).toBe(true);
@@ -140,9 +125,7 @@ describe("KaliAppCore Architecture - Pure Coordination", () => {
       const code = KaliAppCore.toString();
 
       const hasNoPhaseConditions =
-        !code.match(
-          /if\s*\(.*phase\s*===\s*['"`]SETUP['"`]\)\s*{\s*phase\s*=/g,
-        ) &&
+        !code.match(/if\s*\(.*phase\s*===\s*['"`]SETUP['"`]\)\s*{\s*phase\s*=/g) &&
         !code.match(/phase\s*=\s*GamePhase\./g) &&
         code.includes("orchestrator.transitionPhase(");
 
@@ -154,8 +137,7 @@ describe("KaliAppCore Architecture - Pure Coordination", () => {
     it("name collection returns data, orchestrator applies it", () => {
       const code = KaliAppCore.toString();
 
-      const pattern =
-        /(?:const\s+)?playerNames\s*=\s*await\s+nameCollector\.collectNames/;
+      const pattern = /(?:const\s+)?playerNames\s*=\s*await\s+nameCollector\.collectNames/;
       const hasNameCollectionReturn = pattern.test(code);
 
       const hasOrchestratorSetup =

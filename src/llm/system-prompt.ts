@@ -3,8 +3,7 @@ import { CONFIG } from "../config";
 const LANGUAGE_INSTRUCTIONS: Record<string, string> = {
   "es-AR":
     'Spanish (Argentina - Rioplatense dialect). Use "vos" forms (e.g., "vos sos", "tenés", "moviste") and natural Argentine expressions (e.g., "dale", "bárbaro", "genial")',
-  "en-US":
-    "English (United States). Use natural, conversational American English",
+  "en-US": "English (United States). Use natural, conversational American English",
 };
 
 function getLanguageInstruction(): string {
@@ -37,8 +36,7 @@ const NARRATION_EXAMPLES: Record<string, { good: string[]; bad: string[] }> = {
 };
 
 function getNarrationExamples(): string {
-  const examples =
-    NARRATION_EXAMPLES[CONFIG.LOCALE] ?? NARRATION_EXAMPLES["en-US"];
+  const examples = NARRATION_EXAMPLES[CONFIG.LOCALE] ?? NARRATION_EXAMPLES["en-US"];
   return `- Examples:
   * GOOD: "${examples.good[0]}"
   * BAD: "${examples.bad[0]}"
@@ -272,10 +270,7 @@ function formatFieldValue(value: unknown): string {
   return String(value);
 }
 
-function formatObjectFields(
-  obj: Record<string, unknown>,
-  config?: StateDisplayConfig,
-): string[] {
+function formatObjectFields(obj: Record<string, unknown>, config?: StateDisplayConfig): string[] {
   const fields: string[] = [];
   const processed = new Set<string>();
 
@@ -294,13 +289,7 @@ function formatObjectFields(
       if (hiddenSet.has(key) || processed.has(key)) continue;
       processed.add(key);
       const value = obj[key];
-      if (
-        value !== null &&
-        value !== undefined &&
-        value !== 0 &&
-        value !== false &&
-        value !== ""
-      ) {
+      if (value !== null && value !== undefined && value !== 0 && value !== false && value !== "") {
         if (Array.isArray(value) && value.length === 0) continue;
         fields.push(`${key}=${formatFieldValue(value)}`);
       }
@@ -309,26 +298,14 @@ function formatObjectFields(
     for (const key of Object.keys(obj)) {
       if (hiddenSet.has(key) || processed.has(key)) continue;
       const value = obj[key];
-      if (
-        value !== null &&
-        value !== undefined &&
-        value !== 0 &&
-        value !== false &&
-        value !== ""
-      ) {
+      if (value !== null && value !== undefined && value !== 0 && value !== false && value !== "") {
         if (Array.isArray(value) && value.length === 0) continue;
         fields.push(`${key}=${formatFieldValue(value)}`);
       }
     }
   } else {
     for (const [key, value] of Object.entries(obj)) {
-      if (
-        value !== null &&
-        value !== undefined &&
-        value !== 0 &&
-        value !== false &&
-        value !== ""
-      ) {
+      if (value !== null && value !== undefined && value !== 0 && value !== false && value !== "") {
         if (Array.isArray(value) && value.length === 0) continue;
         fields.push(`${key}=${formatFieldValue(value)}`);
       }
@@ -355,9 +332,7 @@ export function formatStateContext(state: Record<string, unknown>): string {
     lines.push(`  ${fields.join(", ")}`);
   }
 
-  const players = state.players as
-    | Record<string, Record<string, unknown>>
-    | undefined;
+  const players = state.players as Record<string, Record<string, unknown>> | undefined;
   if (players) {
     lines.push("\nPlayers:");
     Object.entries(players).forEach(([id, player]) => {
@@ -396,9 +371,7 @@ function formatDecisionPointContext(state: Record<string, unknown>): string {
     return "";
   }
 
-  const players = state.players as
-    | Record<string, Record<string, unknown>>
-    | undefined;
+  const players = state.players as Record<string, Record<string, unknown>> | undefined;
   const game = state.game as Record<string, unknown> | undefined;
   const currentTurn = game?.turn as string | undefined;
 

@@ -12,20 +12,14 @@ export abstract class BaseLLMClient implements LLMClient {
   private lastTranscriptTime: number = 0;
   private readonly deduplicationWindowMs = 2000;
 
-  abstract makeApiCall(
-    prompt: string,
-    options: ApiCallOptions,
-  ): Promise<ApiCallResult>;
+  abstract makeApiCall(prompt: string, options: ApiCallOptions): Promise<ApiCallResult>;
 
   setGameRules(rules: string): void {
     this.systemPrompt = buildSystemPrompt(rules);
     Logger.info("System prompt updated with game rules");
   }
 
-  async getActions(
-    transcript: string,
-    state: GameState,
-  ): Promise<PrimitiveAction[]> {
+  async getActions(transcript: string, state: GameState): Promise<PrimitiveAction[]> {
     if (!this.systemPrompt) {
       throw new Error("Game rules not set. Call setGameRules() first.");
     }
@@ -52,8 +46,7 @@ export abstract class BaseLLMClient implements LLMClient {
       Logger.info("Retrying with error feedback...");
 
       try {
-        const errorMessage =
-          error instanceof Error ? error.message : String(error);
+        const errorMessage = error instanceof Error ? error.message : String(error);
         const retryTranscript = `[RETRY: Previous response failed - ${errorMessage}] Original command: "${transcript}"`;
 
         const actions = await this.attemptLLMCall(retryTranscript, state);
@@ -73,10 +66,7 @@ export abstract class BaseLLMClient implements LLMClient {
     }
   }
 
-  private async attemptLLMCall(
-    transcript: string,
-    state: GameState,
-  ): Promise<PrimitiveAction[]> {
+  private async attemptLLMCall(transcript: string, state: GameState): Promise<PrimitiveAction[]> {
     const stateContext = formatStateContext(state as Record<string, unknown>);
     const userMessage = `${stateContext}\n\nUser Command: "${transcript}"`;
     const fullPrompt = `${this.systemPrompt}\n\n${userMessage}`;
@@ -155,9 +145,7 @@ JSON:`;
       const content = apiResult.content;
 
       const markdownMatch = content.match(/```(?:json)?\s*\n?([\s\S]*?)\n?```/);
-      const jsonString = markdownMatch
-        ? markdownMatch[1].trim()
-        : content.trim();
+      const jsonString = markdownMatch ? markdownMatch[1].trim() : content.trim();
 
       const parseResult = safeParse(jsonString);
       if (!parseResult.success) {

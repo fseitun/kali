@@ -150,9 +150,7 @@ describe("Validator - New Primitives", () => {
 
   describe("Old Primitives Rejection", () => {
     it("rejects ADD_STATE", () => {
-      const actions = [
-        { action: "ADD_STATE", path: "players.p1.position", value: 5 },
-      ];
+      const actions = [{ action: "ADD_STATE", path: "players.p1.position", value: 5 }];
       const result = validateActions(
         actions,
         mockState,
@@ -163,9 +161,7 @@ describe("Validator - New Primitives", () => {
     });
 
     it("rejects SUBTRACT_STATE", () => {
-      const actions = [
-        { action: "SUBTRACT_STATE", path: "players.p1.hearts", value: 1 },
-      ];
+      const actions = [{ action: "SUBTRACT_STATE", path: "players.p1.hearts", value: 1 }];
       const result = validateActions(
         actions,
         mockState,
@@ -200,9 +196,7 @@ describe("Validator - New Primitives", () => {
 
   describe("SET_STATE", () => {
     it("validates path and value", () => {
-      const actions = [
-        { action: "SET_STATE", path: "players.p1.hearts", value: 5 },
-      ];
+      const actions = [{ action: "SET_STATE", path: "players.p1.hearts", value: 5 }];
       const result = validateActions(
         actions,
         mockState,
@@ -212,24 +206,18 @@ describe("Validator - New Primitives", () => {
     });
 
     it("rejects wrong player turn", () => {
-      const actions = [
-        { action: "SET_STATE", path: "players.p2.position", value: 1 },
-      ];
+      const actions = [{ action: "SET_STATE", path: "players.p2.position", value: 1 }];
       const result = validateActions(
         actions,
         mockState,
         mockStateManager as unknown as StateManager,
       );
       expect(result.valid).toBe(false);
-      expect(result.error).toContain(
-        "Cannot modify players.p2 when it's p1's turn",
-      );
+      expect(result.error).toContain("Cannot modify players.p2 when it's p1's turn");
     });
 
     it("validates game-level paths (except phase, winner, turn)", () => {
-      const actions = [
-        { action: "SET_STATE", path: "game.lastRoll", value: 5 },
-      ];
+      const actions = [{ action: "SET_STATE", path: "game.lastRoll", value: 5 }];
       const result = validateActions(
         actions,
         mockState,
@@ -241,24 +229,18 @@ describe("Validator - New Primitives", () => {
 
   describe("Turn Ownership - Orchestrator Authority", () => {
     it("blocks LLM from modifying p2 data when p1 turn", () => {
-      const actions = [
-        { action: "SET_STATE", path: "players.p2.hearts", value: 10 },
-      ];
+      const actions = [{ action: "SET_STATE", path: "players.p2.hearts", value: 10 }];
       const result = validateActions(
         actions,
         mockState,
         mockStateManager as unknown as StateManager,
       );
       expect(result.valid).toBe(false);
-      expect(result.error).toContain(
-        "Cannot modify players.p2 when it's p1's turn",
-      );
+      expect(result.error).toContain("Cannot modify players.p2 when it's p1's turn");
     });
 
     it("allows current player to modify their own data", () => {
-      const actions = [
-        { action: "SET_STATE", path: "players.p1.hearts", value: 3 },
-      ];
+      const actions = [{ action: "SET_STATE", path: "players.p1.hearts", value: 3 }];
       const result = validateActions(
         actions,
         mockState,
@@ -276,9 +258,7 @@ describe("Validator - New Primitives", () => {
       );
       expect(result.valid).toBe(false);
       expect(result.error).toContain("Cannot manually change game.turn");
-      expect(result.error).toContain(
-        "orchestrator automatically advances turns",
-      );
+      expect(result.error).toContain("orchestrator automatically advances turns");
     });
 
     it("allows game.turn changes during SETUP phase", () => {
@@ -293,9 +273,7 @@ describe("Validator - New Primitives", () => {
     });
 
     it("blocks game.phase changes", () => {
-      const actions = [
-        { action: "SET_STATE", path: "game.phase", value: "FINISHED" },
-      ];
+      const actions = [{ action: "SET_STATE", path: "game.phase", value: "FINISHED" }];
       const result = validateActions(
         actions,
         mockState,
@@ -307,9 +285,7 @@ describe("Validator - New Primitives", () => {
     });
 
     it("blocks game.winner changes", () => {
-      const actions = [
-        { action: "SET_STATE", path: "game.winner", value: "p1" },
-      ];
+      const actions = [{ action: "SET_STATE", path: "game.winner", value: "p1" }];
       const result = validateActions(
         actions,
         mockState,
@@ -332,9 +308,7 @@ describe("Validator - New Primitives", () => {
         mockStateManager as unknown as StateManager,
       );
       expect(result.valid).toBe(false);
-      expect(result.error).toContain(
-        "Cannot modify players.p2 when it's p1's turn",
-      );
+      expect(result.error).toContain("Cannot modify players.p2 when it's p1's turn");
     });
 
     it("validates nested player paths for turn ownership", () => {
@@ -367,15 +341,11 @@ describe("Validator - New Primitives", () => {
           prompt: "Choose your path: A or B?",
         },
       ];
-      (
-        mockState.players as Record<string, Record<string, unknown>>
-      ).p1.pathChoice = null;
+      (mockState.players as Record<string, Record<string, unknown>>).p1.pathChoice = null;
     });
 
     it("blocks position changes when decision pending", () => {
-      const actions = [
-        { action: "SET_STATE", path: "players.p1.position", value: 10 },
-      ];
+      const actions = [{ action: "SET_STATE", path: "players.p1.position", value: 10 }];
       const result = validateActions(
         actions,
         mockState,
@@ -387,12 +357,8 @@ describe("Validator - New Primitives", () => {
     });
 
     it("allows position changes after decision is made", () => {
-      (
-        mockState.players as Record<string, Record<string, unknown>>
-      ).p1.pathChoice = "A";
-      const actions = [
-        { action: "SET_STATE", path: "players.p1.position", value: 10 },
-      ];
+      (mockState.players as Record<string, Record<string, unknown>>).p1.pathChoice = "A";
+      const actions = [{ action: "SET_STATE", path: "players.p1.position", value: 10 }];
       const result = validateActions(
         actions,
         mockState,
@@ -402,19 +368,12 @@ describe("Validator - New Primitives", () => {
     });
 
     it("validates correct requiredField (field-specific)", () => {
-      (
-        mockState.players as Record<string, Record<string, unknown>>
-      ).p1.pathChoice = "A";
-      (
-        mockState.decisionPoints as unknown as Record<string, unknown>[]
-      )[0].requiredField = "otherChoice";
-      (
-        mockState.players as Record<string, Record<string, unknown>>
-      ).p1.otherChoice = null;
+      (mockState.players as Record<string, Record<string, unknown>>).p1.pathChoice = "A";
+      (mockState.decisionPoints as unknown as Record<string, unknown>[])[0].requiredField =
+        "otherChoice";
+      (mockState.players as Record<string, Record<string, unknown>>).p1.otherChoice = null;
 
-      const actions = [
-        { action: "SET_STATE", path: "players.p1.position", value: 10 },
-      ];
+      const actions = [{ action: "SET_STATE", path: "players.p1.position", value: 10 }];
       const result = validateActions(
         actions,
         mockState,
@@ -438,12 +397,8 @@ describe("Validator - New Primitives", () => {
     });
 
     it("allows moves when no decision point at position", () => {
-      (
-        mockState.players as Record<string, Record<string, unknown>>
-      ).p1.position = 3;
-      const actions = [
-        { action: "SET_STATE", path: "players.p1.position", value: 7 },
-      ];
+      (mockState.players as Record<string, Record<string, unknown>>).p1.position = 3;
+      const actions = [{ action: "SET_STATE", path: "players.p1.position", value: 7 }];
       const result = validateActions(
         actions,
         mockState,
@@ -454,9 +409,7 @@ describe("Validator - New Primitives", () => {
 
     it("allows moves when no decision points exist", () => {
       mockState.decisionPoints = [];
-      const actions = [
-        { action: "SET_STATE", path: "players.p1.position", value: 10 },
-      ];
+      const actions = [{ action: "SET_STATE", path: "players.p1.position", value: 10 }];
       const result = validateActions(
         actions,
         mockState,
@@ -468,9 +421,7 @@ describe("Validator - New Primitives", () => {
 
   describe("Path Validation", () => {
     it("rejects non-existent paths", () => {
-      const actions = [
-        { action: "SET_STATE", path: "players.p1.nonExistent", value: 123 },
-      ];
+      const actions = [{ action: "SET_STATE", path: "players.p1.nonExistent", value: 123 }];
       const result = validateActions(
         actions,
         mockState,
@@ -481,12 +432,10 @@ describe("Validator - New Primitives", () => {
     });
 
     it("validates deeply nested existing paths", () => {
-      (
-        mockState.players as Record<string, Record<string, unknown>>
-      ).p1.inventory = { items: { sword: { damage: 10 } } };
-      const actions = [
-        { action: "SET_STATE", path: "players.p1.inventory", value: {} },
-      ];
+      (mockState.players as Record<string, Record<string, unknown>>).p1.inventory = {
+        items: { sword: { damage: 10 } },
+      };
+      const actions = [{ action: "SET_STATE", path: "players.p1.inventory", value: {} }];
       const result = validateActions(
         actions,
         mockState,
@@ -497,9 +446,7 @@ describe("Validator - New Primitives", () => {
 
     it("uses StateManager.pathExists correctly", () => {
       mockStateManager.pathExists = () => false;
-      const actions = [
-        { action: "SET_STATE", path: "players.p1.position", value: 10 },
-      ];
+      const actions = [{ action: "SET_STATE", path: "players.p1.position", value: 10 }];
       const result = validateActions(
         actions,
         mockState,
@@ -576,9 +523,7 @@ describe("Validator - New Primitives", () => {
         isProcessingEffect: () => true,
       } as any;
 
-      const actions = [
-        { action: "SET_STATE", path: "players.p1.hearts", value: 5 },
-      ];
+      const actions = [{ action: "SET_STATE", path: "players.p1.hearts", value: 5 }];
       const result = validateActions(
         actions,
         mockState,

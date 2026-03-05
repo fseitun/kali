@@ -8,9 +8,5 @@ export interface IUIService {
   updateStatus(status: string): void;
   clearConsole(): void;
   log(message: string): void;
-  addTranscription(
-    raw: string,
-    processed: string,
-    wakeWordDetected: boolean,
-  ): void;
+  addTranscription(raw: string, processed: string, wakeWordDetected: boolean): void;
 }

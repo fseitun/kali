@@ -21,15 +21,9 @@ class KaliDebugApp {
 
     const statusElement = document.getElementById("status") as HTMLElement;
     const consoleElement = document.getElementById("console") as HTMLElement;
-    const startButton = document.getElementById(
-      "start-button",
-    ) as HTMLButtonElement;
+    const startButton = document.getElementById("start-button") as HTMLButtonElement;
 
-    this.uiService = new DebugUIService(
-      statusElement,
-      consoleElement,
-      startButton,
-    );
+    this.uiService = new DebugUIService(statusElement, consoleElement, startButton);
     this.speechService = new SpeechService();
 
     Logger.setUIService(this.uiService);
@@ -52,9 +46,7 @@ class KaliDebugApp {
       this.uiService.setButtonState(t("ui.status.initializing"), true);
 
       // Show skip button as soon as initialization starts
-      const skipButton = document.getElementById(
-        "skip-to-playing-button",
-      ) as HTMLButtonElement;
+      const skipButton = document.getElementById("skip-to-playing-button") as HTMLButtonElement;
       skipButton.style.display = "block";
 
       await this.core.initialize();
@@ -62,17 +54,13 @@ class KaliDebugApp {
       // Hide skip button after initialization completes
       skipButton.style.display = "none";
 
-      const executeButton = document.getElementById(
-        "execute-actions-button",
-      ) as HTMLButtonElement;
+      const executeButton = document.getElementById("execute-actions-button") as HTMLButtonElement;
       executeButton.disabled = false;
     });
   }
 
   private setupSkipToPlayingButton(): void {
-    const skipButton = document.getElementById(
-      "skip-to-playing-button",
-    ) as HTMLButtonElement;
+    const skipButton = document.getElementById("skip-to-playing-button") as HTMLButtonElement;
 
     if (!skipButton) {
       Logger.warn("Skip to playing button not found");
@@ -105,15 +93,9 @@ class KaliDebugApp {
   }
 
   private setupExecuteActionsButton(): void {
-    const executeButton = document.getElementById(
-      "execute-actions-button",
-    ) as HTMLButtonElement;
-    const actionsInput = document.getElementById(
-      "actions-input",
-    ) as HTMLTextAreaElement;
-    const resultDiv = document.getElementById(
-      "execution-result",
-    ) as HTMLElement;
+    const executeButton = document.getElementById("execute-actions-button") as HTMLButtonElement;
+    const actionsInput = document.getElementById("actions-input") as HTMLTextAreaElement;
+    const resultDiv = document.getElementById("execution-result") as HTMLElement;
 
     if (!executeButton || !actionsInput || !resultDiv) {
       Logger.warn("Test actions panel elements not found");
@@ -173,8 +155,7 @@ class KaliDebugApp {
           resultDiv.textContent = "✅ Actions executed successfully";
         } else {
           resultDiv.className = "error";
-          resultDiv.textContent =
-            "❌ Execution failed (check console for details)";
+          resultDiv.textContent = "❌ Execution failed (check console for details)";
         }
       } catch (error) {
         resultDiv.className = "error";

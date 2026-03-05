@@ -16,11 +16,7 @@ export class ProductionUIService implements IUIService {
 
   log(_message: string): void {}
 
-  addTranscription(
-    _raw: string,
-    _processed: string,
-    _wakeWordDetected: boolean,
-  ): void {}
+  addTranscription(_raw: string, _processed: string, _wakeWordDetected: boolean): void {}
 
   clearConsole(): void {}
 

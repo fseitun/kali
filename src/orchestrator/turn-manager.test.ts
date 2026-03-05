@@ -130,9 +130,7 @@ describe("TurnManager", () => {
         name: "Alice",
         position: 0,
       });
-      expect(
-        (stateManager.getState().game as Record<string, unknown>).turn,
-      ).toBe("p1");
+      expect((stateManager.getState().game as Record<string, unknown>).turn).toBe("p1");
     });
 
     it("should return null when game has winner", async () => {
@@ -142,9 +140,7 @@ describe("TurnManager", () => {
 
       expect(result).toBeNull();
       // Turn should not have changed
-      expect(
-        (stateManager.getState().game as Record<string, unknown>).turn,
-      ).toBe("p1");
+      expect((stateManager.getState().game as Record<string, unknown>).turn).toBe("p1");
     });
 
     it("should return null when not in PLAYING phase", async () => {
@@ -184,9 +180,7 @@ describe("TurnManager", () => {
 
       expect(result).toBeNull();
       // Turn should not have changed
-      expect(
-        (stateManager.getState().game as Record<string, unknown>).turn,
-      ).toBe("p1");
+      expect((stateManager.getState().game as Record<string, unknown>).turn).toBe("p1");
     });
 
     it("should block when current player has pending decisions", async () => {
@@ -200,9 +194,7 @@ describe("TurnManager", () => {
 
       expect(result).toBeNull();
       // Turn should not have changed
-      expect(
-        (stateManager.getState().game as Record<string, unknown>).turn,
-      ).toBe("p1");
+      expect((stateManager.getState().game as Record<string, unknown>).turn).toBe("p1");
     });
 
     it("should allow advancement when decision is resolved", async () => {
@@ -249,31 +241,23 @@ describe("TurnManager", () => {
     });
 
     it("should throw error when path targets different player", async () => {
-      await expect(
-        turnManager.assertPlayerTurnOwnership("players.p2.position"),
-      ).rejects.toThrow(/Turn ownership violation/);
+      await expect(turnManager.assertPlayerTurnOwnership("players.p2.position")).rejects.toThrow(
+        /Turn ownership violation/,
+      );
     });
 
     it("should allow non-player paths", async () => {
-      await expect(
-        turnManager.assertPlayerTurnOwnership("game.lastRoll"),
-      ).resolves.not.toThrow();
+      await expect(turnManager.assertPlayerTurnOwnership("game.lastRoll")).resolves.not.toThrow();
 
-      await expect(
-        turnManager.assertPlayerTurnOwnership("board.moves"),
-      ).resolves.not.toThrow();
+      await expect(turnManager.assertPlayerTurnOwnership("board.moves")).resolves.not.toThrow();
     });
 
     it("should handle malformed paths gracefully", async () => {
       // Path too short
-      await expect(
-        turnManager.assertPlayerTurnOwnership("players"),
-      ).resolves.not.toThrow();
+      await expect(turnManager.assertPlayerTurnOwnership("players")).resolves.not.toThrow();
 
       // Empty path
-      await expect(
-        turnManager.assertPlayerTurnOwnership(""),
-      ).resolves.not.toThrow();
+      await expect(turnManager.assertPlayerTurnOwnership("")).resolves.not.toThrow();
     });
 
     it("should allow when no current turn set", async () => {

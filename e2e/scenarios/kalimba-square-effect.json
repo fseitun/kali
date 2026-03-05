@@ -29,10 +29,6 @@
       }
     }
   },
-  "llmScript": [
-    [{ "action": "NARRATE", "text": "Halcón encounter! +3 points." }]
-  ],
-  "steps": [
-    { "roll": 2, "expect": { "players.p1.position": 2, "players.p1.points": 3 } }
-  ]
+  "llmScript": [[{ "action": "NARRATE", "text": "Halcón encounter! +3 points." }]],
+  "steps": [{ "roll": 2, "expect": { "players.p1.position": 2, "players.p1.points": 3 } }]
 }

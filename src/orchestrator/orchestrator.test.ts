@@ -75,38 +75,26 @@ describe("Orchestrator - New Action Handlers", () => {
 
   describe("PLAYER_ROLLED", () => {
     it("infers playerId from game.turn", async () => {
-      const actions: PrimitiveAction[] = [
-        { action: "PLAYER_ROLLED", value: 3 },
-      ];
+      const actions: PrimitiveAction[] = [{ action: "PLAYER_ROLLED", value: 3 }];
 
       await orchestrator.testExecuteActions(actions);
 
-      expect(mockStateManager.set).toHaveBeenCalledWith(
-        "players.p1.position",
-        8,
-      );
+      expect(mockStateManager.set).toHaveBeenCalledWith("players.p1.position", 8);
       expect(mockStateManager.set).toHaveBeenCalledWith("game.lastRoll", 3);
     });
 
     it("calculates new position correctly", async () => {
-      const actions: PrimitiveAction[] = [
-        { action: "PLAYER_ROLLED", value: 10 },
-      ];
+      const actions: PrimitiveAction[] = [{ action: "PLAYER_ROLLED", value: 10 }];
 
       await orchestrator.testExecuteActions(actions);
 
-      expect(mockStateManager.set).toHaveBeenCalledWith(
-        "players.p1.position",
-        15,
-      );
+      expect(mockStateManager.set).toHaveBeenCalledWith("players.p1.position", 15);
     });
   });
 
   describe("PLAYER_ANSWERED", () => {
     it("stores answer in game.lastAnswer", async () => {
-      const actions: PrimitiveAction[] = [
-        { action: "PLAYER_ANSWERED", answer: "A" },
-      ];
+      const actions: PrimitiveAction[] = [{ action: "PLAYER_ANSWERED", answer: "A" }];
 
       await orchestrator.testExecuteActions(actions);
 
@@ -120,10 +108,7 @@ describe("Orchestrator - New Action Handlers", () => {
 
       await orchestrator.testExecuteActions(actions);
 
-      expect(mockStateManager.set).toHaveBeenCalledWith(
-        "game.lastAnswer",
-        "fight the dragon",
-      );
+      expect(mockStateManager.set).toHaveBeenCalledWith("game.lastAnswer", "fight the dragon");
     });
   });
 
@@ -138,8 +123,7 @@ describe("Orchestrator - New Action Handlers", () => {
 
       mockStateManager.getState = vi.fn(() => testState);
       mockStateManager.get = vi.fn((path: string) => {
-        if (path === "players.p1.position")
-          return testState.players.p1.position;
+        if (path === "players.p1.position") return testState.players.p1.position;
         return undefined;
       });
       mockStateManager.set = vi.fn((path: string, value: unknown) => {
@@ -148,9 +132,7 @@ describe("Orchestrator - New Action Handlers", () => {
         }
       });
 
-      const actions: PrimitiveAction[] = [
-        { action: "PLAYER_ROLLED", value: 5 },
-      ];
+      const actions: PrimitiveAction[] = [{ action: "PLAYER_ROLLED", value: 5 }];
 
       await orchestrator.testExecuteActions(actions);
 
@@ -167,8 +149,7 @@ describe("Orchestrator - New Action Handlers", () => {
 
       mockStateManager.getState = vi.fn(() => testState);
       mockStateManager.get = vi.fn((path: string) => {
-        if (path === "players.p1.position")
-          return testState.players.p1.position;
+        if (path === "players.p1.position") return testState.players.p1.position;
         return undefined;
       });
       mockStateManager.set = vi.fn((path: string, value: unknown) => {
@@ -177,9 +158,7 @@ describe("Orchestrator - New Action Handlers", () => {
         }
       });
 
-      const actions: PrimitiveAction[] = [
-        { action: "PLAYER_ROLLED", value: 5 },
-      ];
+      const actions: PrimitiveAction[] = [{ action: "PLAYER_ROLLED", value: 5 }];
 
       await orchestrator.testExecuteActions(actions);
 
@@ -196,8 +175,7 @@ describe("Orchestrator - New Action Handlers", () => {
 
       mockStateManager.getState = vi.fn(() => testState);
       mockStateManager.get = vi.fn((path: string) => {
-        if (path === "players.p1.position")
-          return testState.players.p1.position;
+        if (path === "players.p1.position") return testState.players.p1.position;
         return undefined;
       });
       mockStateManager.set = vi.fn(async (path: string, value: unknown) => {
@@ -206,9 +184,7 @@ describe("Orchestrator - New Action Handlers", () => {
         }
       });
 
-      const actions: PrimitiveAction[] = [
-        { action: "PLAYER_ROLLED", value: 2 },
-      ];
+      const actions: PrimitiveAction[] = [{ action: "PLAYER_ROLLED", value: 2 }];
 
       await orchestrator.testExecuteActions(actions);
 
@@ -225,8 +201,7 @@ describe("Orchestrator - New Action Handlers", () => {
 
       mockStateManager.getState = vi.fn(() => testState);
       mockStateManager.get = vi.fn((path: string) => {
-        if (path === "players.p1.position")
-          return testState.players.p1.position;
+        if (path === "players.p1.position") return testState.players.p1.position;
         return undefined;
       });
       mockStateManager.set = vi.fn((path: string, value: unknown) => {
@@ -235,9 +210,7 @@ describe("Orchestrator - New Action Handlers", () => {
         }
       });
 
-      const actions: PrimitiveAction[] = [
-        { action: "PLAYER_ROLLED", value: 5 },
-      ];
+      const actions: PrimitiveAction[] = [{ action: "PLAYER_ROLLED", value: 5 }];
 
       await orchestrator.testExecuteActions(actions);
 
@@ -262,8 +235,7 @@ describe("Orchestrator - New Action Handlers", () => {
 
       mockStateManager.getState = vi.fn(() => testState);
       mockStateManager.get = vi.fn((path: string) => {
-        if (path === "players.p1.position")
-          return testState.players.p1.position;
+        if (path === "players.p1.position") return testState.players.p1.position;
         return undefined;
       });
       mockStateManager.set = vi.fn((path: string, value: unknown) => {
@@ -278,9 +250,7 @@ describe("Orchestrator - New Action Handlers", () => {
         return [{ action: "NARRATE", text: "Square effect!" }];
       });
 
-      const actions: PrimitiveAction[] = [
-        { action: "PLAYER_ROLLED", value: 5 },
-      ];
+      const actions: PrimitiveAction[] = [{ action: "PLAYER_ROLLED", value: 5 }];
 
       await orchestrator.testExecuteActions(actions);
 
@@ -290,9 +260,7 @@ describe("Orchestrator - New Action Handlers", () => {
 
   describe("handleTranscript - Return Value and Separation of Concerns", () => {
     it("returns success true when transcript processed successfully", async () => {
-      mockLLM.getActions = vi.fn(async () => [
-        { action: "NARRATE", text: "Hello" },
-      ]);
+      mockLLM.getActions = vi.fn(async () => [{ action: "NARRATE", text: "Hello" }]);
 
       const { success } = await orchestrator.handleTranscript("test command");
 
@@ -323,9 +291,7 @@ describe("Orchestrator - New Action Handlers", () => {
       (testState.game as any).turn = "p1";
       (testState.game as any).playerOrder = ["p1", "p2"];
 
-      mockLLM.getActions = vi.fn(async () => [
-        { action: "PLAYER_ROLLED", value: 5 },
-      ]) as any;
+      mockLLM.getActions = vi.fn(async () => [{ action: "PLAYER_ROLLED", value: 5 }]) as any;
 
       await orchestrator.handleTranscript("I rolled 5");
 
@@ -336,9 +302,7 @@ describe("Orchestrator - New Action Handlers", () => {
       (testState.game as any).turn = "p1";
       (testState.game as any).playerOrder = ["p1", "p2"];
 
-      const actions: PrimitiveAction[] = [
-        { action: "PLAYER_ROLLED", value: 3 },
-      ];
+      const actions: PrimitiveAction[] = [{ action: "PLAYER_ROLLED", value: 3 }];
 
       await orchestrator.testExecuteActions(actions);
 
@@ -473,39 +437,23 @@ describe("Orchestrator - New Action Handlers", () => {
     });
 
     it("resets with keepPlayerNames true", async () => {
-      const actions: PrimitiveAction[] = [
-        { action: "RESET_GAME", keepPlayerNames: true },
-      ];
+      const actions: PrimitiveAction[] = [{ action: "RESET_GAME", keepPlayerNames: true }];
 
       await orchestrator.testExecuteActions(actions);
 
       expect(mockStateManager.resetState).toHaveBeenCalled();
-      expect(mockStateManager.set).toHaveBeenCalledWith(
-        "players.p1.name",
-        "Alice",
-      );
-      expect(mockStateManager.set).toHaveBeenCalledWith(
-        "players.p2.name",
-        "Bob",
-      );
+      expect(mockStateManager.set).toHaveBeenCalledWith("players.p1.name", "Alice");
+      expect(mockStateManager.set).toHaveBeenCalledWith("players.p2.name", "Bob");
     });
 
     it("resets with keepPlayerNames false", async () => {
-      const actions: PrimitiveAction[] = [
-        { action: "RESET_GAME", keepPlayerNames: false },
-      ];
+      const actions: PrimitiveAction[] = [{ action: "RESET_GAME", keepPlayerNames: false }];
 
       await orchestrator.testExecuteActions(actions);
 
       expect(mockStateManager.resetState).toHaveBeenCalled();
-      expect(mockStateManager.set).not.toHaveBeenCalledWith(
-        "players.p1.name",
-        "Alice",
-      );
-      expect(mockStateManager.set).not.toHaveBeenCalledWith(
-        "players.p2.name",
-        "Bob",
-      );
+      expect(mockStateManager.set).not.toHaveBeenCalledWith("players.p1.name", "Alice");
+      expect(mockStateManager.set).not.toHaveBeenCalledWith("players.p2.name", "Bob");
     });
   });
 });

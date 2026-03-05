@@ -136,11 +136,7 @@ export class Orchestrator {
       Logger.info("🧪 Test mode: Executing actions directly");
       const context: ExecutionContext = { ...this.defaultContext };
       Profiler.start("orchestrator.test.run");
-      const result = await this.runValidatedActions(
-        actions,
-        context,
-        "orchestrator.test",
-      );
+      const result = await this.runValidatedActions(actions, context, "orchestrator.test");
       Profiler.end("orchestrator.test.run");
       if (result.success) {
         Logger.info("✅ Test actions executed successfully");
@@ -177,11 +173,7 @@ export class Orchestrator {
 
     try {
       const context: ExecutionContext = { ...this.defaultContext };
-      return await this.runValidatedActions(
-        actions,
-        context,
-        "orchestrator.primitives",
-      );
+      return await this.runValidatedActions(actions, context, "orchestrator.primitives");
     } finally {
       this.isProcessing = false;
       Profiler.end("orchestrator.primitives.total");
@@ -232,9 +224,7 @@ export class Orchestrator {
    * @param phase - The phase to transition to
    */
   transitionPhase(phase: GamePhase): void {
-    Logger.info(
-      `🎮 Phase transition: ${this.stateManager.get("game.phase")} → ${phase}`,
-    );
+    Logger.info(`🎮 Phase transition: ${this.stateManager.get("game.phase")} → ${phase}`);
     this.stateManager.set("game.phase", phase);
   }
 
@@ -256,15 +246,10 @@ export class Orchestrator {
     name: string;
     position: number;
   } | null> {
-    return await this.turnManager.advanceTurn(
-      this.boardEffectsHandler.isProcessingEffect(),
-    );
+    return await this.turnManager.advanceTurn(this.boardEffectsHandler.isProcessingEffect());
   }
 
-  private processTranscriptAsBool(
-    transcript: string,
-    context: ExecutionContext,
-  ): Promise<boolean> {
+  private processTranscriptAsBool(transcript: string, context: ExecutionContext): Promise<boolean> {
     return this.processTranscript(transcript, context).then((r) => r.success);
   }
 
@@ -273,15 +258,10 @@ export class Orchestrator {
     context: ExecutionContext,
   ): Promise<{ success: boolean; shouldAdvanceTurn: boolean }> {
     try {
-      Logger.brain(
-        `Orchestrator processing: ${transcript} (depth: ${context.depth})`,
-      );
+      Logger.brain(`Orchestrator processing: ${transcript} (depth: ${context.depth})`);
 
       const state = this.stateManager.getState();
-      Logger.state(
-        "Current state:\n" +
-          formatStateContext(state as Record<string, unknown>),
-      );
+      Logger.state("Current state:\n" + formatStateContext(state as Record<string, unknown>));
       Profiler.start(`orchestrator.llm.${context.depth}`);
       const actions = await this.llmClient.getActions(transcript, state);
       Profiler.end(`orchestrator.llm.${context.depth}`);
@@ -293,11 +273,7 @@ export class Orchestrator {
         await this.speechService.speak(t("llm.allRetriesFailed"));
         return { success: false, shouldAdvanceTurn: false };
       }
-      return await this.runValidatedActions(
-        actions,
-        context,
-        "orchestrator",
-      );
+      return await this.runValidatedActions(actions, context, "orchestrator");
     } catch (error) {
       Logger.error("Orchestrator error:", error);
       return { success: false, shouldAdvanceTurn: false };
@@ -310,18 +286,10 @@ export class Orchestrator {
     profilerPrefix: string,
   ): Promise<{ success: boolean; shouldAdvanceTurn: boolean }> {
     const state = this.stateManager.getState();
-    Logger.state(
-      "Current state:\n" +
-        formatStateContext(state as Record<string, unknown>),
-    );
+    Logger.state("Current state:\n" + formatStateContext(state as Record<string, unknown>));
 
     Profiler.start(`${profilerPrefix}.validation.${context.depth}`);
-    const validation = validateActions(
-      actions,
-      state,
-      this.stateManager,
-      this,
-    );
+    const validation = validateActions(actions, state, this.stateManager, this);
     Profiler.end(`${profilerPrefix}.validation.${context.depth}`);
 
     if (!validation.valid) {
@@ -356,9 +324,7 @@ export class Orchestrator {
     context: ExecutionContext,
   ): Promise<void> {
     if (context.depth >= context.maxDepth) {
-      Logger.warn(
-        `Max execution depth (${context.maxDepth}) reached, stopping`,
-      );
+      Logger.warn(`Max execution depth (${context.maxDepth}) reached, stopping`);
       return;
     }
 
@@ -393,15 +359,10 @@ export class Orchestrator {
 
       case "SET_STATE": {
         await this.turnManager.assertPlayerTurnOwnership(primitive.path);
-        Logger.write(
-          `Setting state: ${primitive.path} = ${JSON.stringify(primitive.value)}`,
-        );
+        Logger.write(`Setting state: ${primitive.path} = ${JSON.stringify(primitive.value)}`);
         this.stateManager.set(primitive.path, primitive.value);
         await this.boardEffectsHandler.checkAndApplyBoardMoves(primitive.path);
-        await this.boardEffectsHandler.checkAndApplySquareEffects(
-          primitive.path,
-          context,
-        );
+        await this.boardEffectsHandler.checkAndApplySquareEffects(primitive.path, context);
         break;
       }
 
@@ -418,9 +379,7 @@ export class Orchestrator {
         const currentPosition = this.stateManager.get(path) as number;
 
         if (typeof currentPosition !== "number") {
-          throw new Error(
-            `Cannot process PLAYER_ROLLED: ${path} is not a number`,
-          );
+          throw new Error(`Cannot process PLAYER_ROLLED: ${path} is not a number`);
         }
 
         const newPosition = currentPosition + primitive.value;
@@ -431,10 +390,7 @@ export class Orchestrator {
         this.stateManager.set(path, newPosition);
         this.stateManager.set("game.lastRoll", primitive.value);
         await this.boardEffectsHandler.checkAndApplyBoardMoves(path);
-        await this.boardEffectsHandler.checkAndApplySquareEffects(
-          path,
-          context,
-        );
+        await this.boardEffectsHandler.checkAndApplySquareEffects(path, context);
         break;
       }
 
@@ -446,16 +402,12 @@ export class Orchestrator {
       }
 
       case "RESET_GAME": {
-        Logger.info(
-          `🔄 Resetting game state (keepPlayerNames: ${primitive.keepPlayerNames})`,
-        );
+        Logger.info(`🔄 Resetting game state (keepPlayerNames: ${primitive.keepPlayerNames})`);
 
         const playerNames: Map<string, string> = new Map();
         if (primitive.keepPlayerNames) {
           const currentState = this.stateManager.getState();
-          const players = currentState.players as
-            | Record<string, { name: string }>
-            | undefined;
+          const players = currentState.players as Record<string, { name: string }> | undefined;
           if (players) {
             for (const [id, player] of Object.entries(players)) {
               playerNames.set(id, player.name);
@@ -464,9 +416,7 @@ export class Orchestrator {
               `Extracted ${playerNames.size} player names: [${Array.from(playerNames.values()).join(", ")}]`,
             );
           } else {
-            Logger.warn(
-              "keepPlayerNames=true but no players found in current state",
-            );
+            Logger.warn("keepPlayerNames=true but no players found in current state");
           }
         }
 
@@ -488,9 +438,7 @@ export class Orchestrator {
               }
             }
           } else {
-            Logger.warn(
-              "keepPlayerNames=true but no playerOrder found after reset",
-            );
+            Logger.warn("keepPlayerNames=true but no playerOrder found after reset");
           }
         }
 

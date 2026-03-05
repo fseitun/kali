@@ -35,8 +35,7 @@ export const enUS = {
     listeningForCommand: "Listening for command...",
     wakeWordInstruction: 'Say "{wakeWord}" before speaking',
     wakeWordReady: 'Say "{wakeWord}" to wake me up',
-    savedGameDetected:
-      'Saved game detected. Say "{wakeWord}, continue" or "{wakeWord}, new game"',
+    savedGameDetected: 'Saved game detected. Say "{wakeWord}, continue" or "{wakeWord}, new game"',
     copyLogs: "📋 Copy Logs",
     copied: "✅ Copied!",
     copyFailed: "❌ Failed",

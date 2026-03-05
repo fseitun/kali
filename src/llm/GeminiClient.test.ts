@@ -5,8 +5,7 @@ import { GeminiClient } from "./GeminiClient";
 vi.mock("../config", () => ({
   CONFIG: {
     GEMINI: {
-      API_URL:
-        "https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent",
+      API_URL: "https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent",
       API_KEY: "test-api-key",
     },
   },
@@ -141,9 +140,7 @@ describe("GeminiClient", () => {
     it("should handle network errors", async () => {
       mockFetch.mockRejectedValueOnce(new Error("Network error"));
 
-      await expect(client.makeApiCall("Test prompt", {})).rejects.toThrow(
-        "Network error",
-      );
+      await expect(client.makeApiCall("Test prompt", {})).rejects.toThrow("Network error");
     });
 
     it("should handle empty response content", async () => {

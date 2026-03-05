@@ -18,15 +18,11 @@ const SCENARIOS_DIR = path.join(__dirname, "scenarios");
  * Run: npm run test:e2e
  */
 describe("E2E Scenarios", () => {
-  const scenarioFiles = fs
-    .readdirSync(SCENARIOS_DIR)
-    .filter((f) => f.endsWith(".json"));
+  const scenarioFiles = fs.readdirSync(SCENARIOS_DIR).filter((f) => f.endsWith(".json"));
 
   for (const file of scenarioFiles) {
     const scenarioPath = path.join(SCENARIOS_DIR, file);
-    const scenario: Scenario = JSON.parse(
-      fs.readFileSync(scenarioPath, "utf-8"),
-    ) as Scenario;
+    const scenario: Scenario = JSON.parse(fs.readFileSync(scenarioPath, "utf-8")) as Scenario;
 
     it(`runs scenario: ${file}`, async () => {
       await expect(runScenario(scenario)).resolves.not.toThrow();

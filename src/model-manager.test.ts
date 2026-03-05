@@ -81,9 +81,7 @@ describe("ModelManager", () => {
 
       const result = await modelManager.getModel();
 
-      expect(mockCaches.match).toHaveBeenCalledWith(
-        "/vosk-model-small-es-0.42.zip",
-      );
+      expect(mockCaches.match).toHaveBeenCalledWith("/vosk-model-small-es-0.42.zip");
       expect(result).toBe("blob:mock-url");
       expect(mockFetch).not.toHaveBeenCalled(); // Should not download
     });
@@ -151,9 +149,7 @@ describe("ModelManager", () => {
 
       const result = await modelManager.getModel();
 
-      expect(mockCaches.delete).toHaveBeenCalledWith(
-        "/vosk-model-small-es-0.42.zip",
-      );
+      expect(mockCaches.delete).toHaveBeenCalledWith("/vosk-model-small-es-0.42.zip");
       expect(mockFetch).toHaveBeenCalledWith("/vosk-model-small-es-0.42.zip");
       expect(result).toBe("blob:mock-url");
     });
@@ -193,9 +189,7 @@ describe("ModelManager", () => {
         statusText: "Not Found",
       });
 
-      await expect(modelManager.getModel()).rejects.toThrow(
-        "Failed to download model: Not Found",
-      );
+      await expect(modelManager.getModel()).rejects.toThrow("Failed to download model: Not Found");
     });
 
     it("should handle network error during download", async () => {
@@ -246,9 +240,7 @@ describe("ModelManager", () => {
 
       mockFetch.mockResolvedValueOnce(mockResponse);
 
-      await expect(modelManager.getModel()).rejects.toThrow(
-        "Response body is not readable",
-      );
+      await expect(modelManager.getModel()).rejects.toThrow("Response body is not readable");
     });
 
     it("should call progress callback during download", async () => {
@@ -309,9 +301,7 @@ describe("ModelManager", () => {
         throw new Error("Blob creation failed");
       }) as unknown as typeof Blob;
 
-      await expect(modelManager.getModel()).rejects.toThrow(
-        "Blob creation failed",
-      );
+      await expect(modelManager.getModel()).rejects.toThrow("Blob creation failed");
     });
   });
 });

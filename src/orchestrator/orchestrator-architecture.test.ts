@@ -67,13 +67,7 @@ describe("Orchestrator Architecture - Authority Model", () => {
       setState: vi.fn(),
     } as unknown as StatusIndicator;
 
-    orchestrator = new Orchestrator(
-      mockLLM,
-      stateManager,
-      mockSpeech,
-      mockIndicator,
-      initialState,
-    );
+    orchestrator = new Orchestrator(mockLLM, stateManager, mockSpeech, mockIndicator, initialState);
   });
 
   describe("1. Orchestrator Authority - Player Setup", () => {

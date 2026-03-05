@@ -3,8 +3,7 @@ export const esAR = {
     welcome: "¡Bienvenidos a {game}! Arranquemos.",
     playerCount: "¿Cuántos jugadores? El máximo es {max}.",
     playerCountInvalid: "Por favor, decí un número del {min} al {max}.",
-    playerCountTimeout:
-      "Nadie contestó. Por defecto, van a ser {count} jugadores.",
+    playerCountTimeout: "Nadie contestó. Por defecto, van a ser {count} jugadores.",
     playerName: "Jugador {number}, ¿cómo te llamás?",
     nameInvalid: "Perdón, no te escuché bien. ¿Cómo te llamás?",
     nameTimeout: "¡No hay problema! Te voy a llamar {name}.",
@@ -36,8 +35,7 @@ export const esAR = {
     listeningForCommand: "Esperando comando...",
     wakeWordInstruction: 'Decí "{wakeWord}" antes de hablar',
     wakeWordReady: 'Decí "{wakeWord}" para despertarme',
-    savedGameDetected:
-      'Partida guardada. Decí "{wakeWord}, seguir" o "{wakeWord}, juego nuevo"',
+    savedGameDetected: 'Partida guardada. Decí "{wakeWord}, seguir" o "{wakeWord}, juego nuevo"',
     copyLogs: "📋 Copiar Registros",
     copied: "✅ ¡Copiado!",
     copyFailed: "❌ Error",
@@ -59,8 +57,7 @@ export const esAR = {
   },
   llm: {
     retrying: "Dejame intentar de nuevo...",
-    allRetriesFailed:
-      "Disculpá, no te pude entender. ¿Podés intentar otra vez?",
+    allRetriesFailed: "Disculpá, no te pude entender. ¿Podés intentar otra vez?",
     networkError: "Tengo problemas de conexión. Intentalo de nuevo.",
   },
   nicknames: [

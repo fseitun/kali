@@ -65,11 +65,7 @@ function levenshteinDistance(str1: string, str2: string): number {
       if (str1[i - 1] === str2[j - 1]) {
         dp[i][j] = dp[i - 1][j - 1];
       } else {
-        dp[i][j] = Math.min(
-          dp[i - 1][j] + 1,
-          dp[i][j - 1] + 1,
-          dp[i - 1][j - 1] + 1,
-        );
+        dp[i][j] = Math.min(dp[i - 1][j] + 1, dp[i][j - 1] + 1, dp[i - 1][j - 1] + 1);
       }
     }
   }
@@ -103,10 +99,7 @@ export function areNamesSimilar(name1: string, name2: string): boolean {
  * @param usedNicknames - Already used nicknames to avoid duplicates
  * @returns A unique nickname
  */
-export function generateNickname(
-  baseName: string,
-  usedNicknames: string[],
-): string {
+export function generateNickname(baseName: string, usedNicknames: string[]): string {
   const nicknames = getNicknames();
   const availableNicknames = nicknames.filter(
     (suffix) => !usedNicknames.includes(`${baseName} ${suffix}`),

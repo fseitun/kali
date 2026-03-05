@@ -42,9 +42,7 @@ export class TurnManager {
     }
 
     try {
-      const players = state.players as
-        | Record<string, Record<string, unknown>>
-        | undefined;
+      const players = state.players as Record<string, Record<string, unknown>> | undefined;
       const currentPlayer = players?.[currentTurn];
 
       if (!currentPlayer) {
@@ -57,9 +55,7 @@ export class TurnManager {
         return false;
       }
 
-      const decisionPoint = decisionPoints.find(
-        (dp) => dp.position === position,
-      );
+      const decisionPoint = decisionPoints.find((dp) => dp.position === position);
       if (!decisionPoint) {
         return false;
       }
@@ -91,9 +87,7 @@ export class TurnManager {
   ): Promise<{ playerId: string; name: string; position: number } | null> {
     const state = this.stateManager.getState();
     const game = state.game as Record<string, unknown> | undefined;
-    const players = state.players as
-      | Record<string, Record<string, unknown>>
-      | undefined;
+    const players = state.players as Record<string, Record<string, unknown>> | undefined;
 
     if (!game || !players) {
       return null;
@@ -129,9 +123,7 @@ export class TurnManager {
     }
 
     if (this.hasPendingDecisions()) {
-      Logger.info(
-        "⏸️ Turn advancement blocked: current player has pending decisions",
-      );
+      Logger.info("⏸️ Turn advancement blocked: current player has pending decisions");
       return null;
     }
 

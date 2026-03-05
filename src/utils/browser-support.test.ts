@@ -4,8 +4,7 @@ import { checkBrowserSupport, isMobileDevice } from "./browser-support";
 // Mock CONFIG
 vi.mock("../config", () => ({
   CONFIG: {
-    MOBILE_DEVICE_PATTERN:
-      /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i,
+    MOBILE_DEVICE_PATTERN: /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i,
   },
 }));
 
@@ -40,9 +39,7 @@ describe("browser-support", () => {
         mediaDevices: {},
       } as unknown as Navigator);
 
-      expect(() => checkBrowserSupport()).toThrow(
-        "AudioContext API not supported",
-      );
+      expect(() => checkBrowserSupport()).toThrow("AudioContext API not supported");
     });
 
     it("should pass when webkitAudioContext is available", () => {
@@ -68,9 +65,7 @@ describe("browser-support", () => {
 
       vi.stubGlobal("navigator", {} as unknown as Navigator);
 
-      expect(() => checkBrowserSupport()).toThrow(
-        "MediaDevices API not supported",
-      );
+      expect(() => checkBrowserSupport()).toThrow("MediaDevices API not supported");
     });
 
     it("should throw error when WebAssembly is missing", () => {
@@ -83,9 +78,7 @@ describe("browser-support", () => {
         mediaDevices: {},
       } as unknown as Navigator);
 
-      expect(() => checkBrowserSupport()).toThrow(
-        "WebAssembly API not supported",
-      );
+      expect(() => checkBrowserSupport()).toThrow("WebAssembly API not supported");
     });
 
     it("should throw error when IndexedDB is missing", () => {
@@ -98,26 +91,21 @@ describe("browser-support", () => {
         mediaDevices: {},
       } as unknown as Navigator);
 
-      expect(() => checkBrowserSupport()).toThrow(
-        "IndexedDB API not supported",
-      );
+      expect(() => checkBrowserSupport()).toThrow("IndexedDB API not supported");
     });
 
     it("should throw error for first missing API", () => {
       vi.stubGlobal("window", {} as unknown as Window & typeof globalThis);
       vi.stubGlobal("navigator", {} as unknown as Navigator);
 
-      expect(() => checkBrowserSupport()).toThrow(
-        "AudioContext API not supported",
-      );
+      expect(() => checkBrowserSupport()).toThrow("AudioContext API not supported");
     });
   });
 
   describe("isMobileDevice", () => {
     it("should detect Android devices", () => {
       vi.stubGlobal("navigator", {
-        userAgent:
-          "Mozilla/5.0 (Linux; Android 10; SM-G975F) AppleWebKit/537.36",
+        userAgent: "Mozilla/5.0 (Linux; Android 10; SM-G975F) AppleWebKit/537.36",
       } as unknown as Navigator);
 
       expect(isMobileDevice()).toBe(true);
@@ -125,8 +113,7 @@ describe("browser-support", () => {
 
     it("should detect iPhone", () => {
       vi.stubGlobal("navigator", {
-        userAgent:
-          "Mozilla/5.0 (iPhone; CPU iPhone OS 14_0 like Mac OS X) AppleWebKit/605.1.15",
+        userAgent: "Mozilla/5.0 (iPhone; CPU iPhone OS 14_0 like Mac OS X) AppleWebKit/605.1.15",
       } as unknown as Navigator);
 
       expect(isMobileDevice()).toBe(true);
@@ -134,8 +121,7 @@ describe("browser-support", () => {
 
     it("should detect iPad", () => {
       vi.stubGlobal("navigator", {
-        userAgent:
-          "Mozilla/5.0 (iPad; CPU OS 14_0 like Mac OS X) AppleWebKit/605.1.15",
+        userAgent: "Mozilla/5.0 (iPad; CPU OS 14_0 like Mac OS X) AppleWebKit/605.1.15",
       } as unknown as Navigator);
 
       expect(isMobileDevice()).toBe(true);
@@ -143,8 +129,7 @@ describe("browser-support", () => {
 
     it("should detect BlackBerry", () => {
       vi.stubGlobal("navigator", {
-        userAgent:
-          "Mozilla/5.0 (BlackBerry; U; BlackBerry 9800; en) AppleWebKit/534.1+",
+        userAgent: "Mozilla/5.0 (BlackBerry; U; BlackBerry 9800; en) AppleWebKit/534.1+",
       } as unknown as Navigator);
 
       expect(isMobileDevice()).toBe(true);

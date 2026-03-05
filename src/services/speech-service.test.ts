@@ -243,24 +243,16 @@ describe("SpeechService", () => {
 
       mockAudioContext.decodeAudioData.mockResolvedValueOnce(mockAudioBuffer);
 
-      await speechService.loadSound(
-        "test-sound",
-        "http://example.com/sound.mp3",
-      );
+      await speechService.loadSound("test-sound", "http://example.com/sound.mp3");
 
       expect(mockFetch).toHaveBeenCalledWith("http://example.com/sound.mp3");
-      expect(mockAudioContext.decodeAudioData).toHaveBeenCalledWith(
-        mockArrayBuffer,
-      );
+      expect(mockAudioContext.decodeAudioData).toHaveBeenCalledWith(mockArrayBuffer);
     });
 
     it("should handle load sound failure", async () => {
       mockFetch.mockRejectedValueOnce(new Error("Network error"));
 
-      await speechService.loadSound(
-        "test-sound",
-        "http://example.com/sound.mp3",
-      );
+      await speechService.loadSound("test-sound", "http://example.com/sound.mp3");
 
       // Should not throw
       expect(true).toBe(true);
@@ -273,14 +265,9 @@ describe("SpeechService", () => {
         arrayBuffer: () => Promise.resolve(mockArrayBuffer),
       });
 
-      mockAudioContext.decodeAudioData.mockRejectedValueOnce(
-        new Error("Invalid audio data"),
-      );
+      mockAudioContext.decodeAudioData.mockRejectedValueOnce(new Error("Invalid audio data"));
 
-      await speechService.loadSound(
-        "test-sound",
-        "http://example.com/sound.mp3",
-      );
+      await speechService.loadSound("test-sound", "http://example.com/sound.mp3");
 
       // Should not throw
       expect(true).toBe(true);
@@ -299,14 +286,9 @@ describe("SpeechService", () => {
       // Reset AudioContext to simulate it not being created yet
       speechService = new SpeechService();
 
-      await speechService.loadSound(
-        "test-sound",
-        "http://example.com/sound.mp3",
-      );
+      await speechService.loadSound("test-sound", "http://example.com/sound.mp3");
 
-      expect(mockAudioContext.decodeAudioData).toHaveBeenCalledWith(
-        mockArrayBuffer,
-      );
+      expect(mockAudioContext.decodeAudioData).toHaveBeenCalledWith(mockArrayBuffer);
     });
   });
 

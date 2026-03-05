@@ -18,10 +18,7 @@ export function setLocale(locale: string): void {
   }
 }
 
-export function t(
-  key: TranslationKey,
-  params?: Record<string, string | number>,
-): string {
+export function t(key: TranslationKey, params?: Record<string, string | number>): string {
   const keys = key.split(".");
   let value: unknown = currentLocale;
 

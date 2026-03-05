@@ -4,10 +4,7 @@ import { BaseLLMClient } from "./BaseLLMClient";
 import type { ApiCallOptions, ApiCallResult } from "./types";
 
 export class GeminiClient extends BaseLLMClient {
-  async makeApiCall(
-    prompt: string,
-    options: ApiCallOptions,
-  ): Promise<ApiCallResult> {
+  async makeApiCall(prompt: string, options: ApiCallOptions): Promise<ApiCallResult> {
     const response = await fetch(CONFIG.GEMINI.API_URL, {
       method: "POST",
       headers: {
@@ -33,9 +30,7 @@ export class GeminiClient extends BaseLLMClient {
 
     if (!response.ok) {
       const errorText = await response.text();
-      throw new Error(
-        `Gemini API error: ${response.status} ${response.statusText}\n${errorText}`,
-      );
+      throw new Error(`Gemini API error: ${response.status} ${response.statusText}\n${errorText}`);
     }
 
     const data = await response.json();

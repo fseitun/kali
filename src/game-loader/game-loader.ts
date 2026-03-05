@@ -29,9 +29,7 @@ export class GameLoader {
 
       this.validateGameModule(module);
 
-      Logger.info(
-        `Game module loaded: ${module.metadata.name} v${module.metadata.version}`,
-      );
+      Logger.info(`Game module loaded: ${module.metadata.name} v${module.metadata.version}`);
       return module;
     } catch (error) {
       Logger.error(`Error loading game module ${gameId}:`, error);
@@ -45,28 +43,21 @@ export class GameLoader {
    * @param module - The game module containing sound effect definitions
    * @param speechService - Service to load the sounds into
    */
-  async loadSoundEffects(
-    module: GameModule,
-    speechService: SpeechService,
-  ): Promise<void> {
+  async loadSoundEffects(module: GameModule, speechService: SpeechService): Promise<void> {
     if (!module.soundEffects) {
       Logger.info("No sound effects to load");
       return;
     }
 
-    Logger.info(
-      `Loading ${Object.keys(module.soundEffects).length} sound effects...`,
-    );
+    Logger.info(`Loading ${Object.keys(module.soundEffects).length} sound effects...`);
 
-    const loadPromises = Object.entries(module.soundEffects).map(
-      async ([name, url]) => {
-        try {
-          await speechService.loadSound(name, url);
-        } catch (error) {
-          Logger.warn(`Failed to load sound ${name}:`, error);
-        }
-      },
-    );
+    const loadPromises = Object.entries(module.soundEffects).map(async ([name, url]) => {
+      try {
+        await speechService.loadSound(name, url);
+      } catch (error) {
+        Logger.warn(`Failed to load sound ${name}:`, error);
+      }
+    });
 
     await Promise.all(loadPromises);
   }

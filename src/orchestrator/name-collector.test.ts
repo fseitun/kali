@@ -44,12 +44,10 @@ describe("NameCollector - State Isolation (Rule #4)", () => {
       );
 
       const constructorParams =
-        NameCollector.toString().match(/constructor\s*\(([\s\S]*?)\)/)?.[1] ??
-        "";
+        NameCollector.toString().match(/constructor\s*\(([\s\S]*?)\)/)?.[1] ?? "";
 
       const hasStateManager =
-        constructorParams.includes("stateManager") ||
-        constructorParams.includes("StateManager");
+        constructorParams.includes("stateManager") || constructorParams.includes("StateManager");
 
       expect(hasStateManager).toBe(false);
       expect(nameCollector).toBeDefined();
@@ -86,14 +84,10 @@ describe("NameCollector - State Isolation (Rule #4)", () => {
     it("does not mutate game state directly", () => {
       const code = NameCollector.toString();
 
-      const hasNoStateManagerImport = !code.match(
-        /import.*StateManager.*from/g,
-      );
+      const hasNoStateManagerImport = !code.match(/import.*StateManager.*from/g);
       const hasNoStateManagerUsage = !code.includes("stateManager");
       const hasNoGameStateMutation =
-        !code.includes("game.turn") &&
-        !code.includes("game.phase") &&
-        !code.includes("players.p1");
+        !code.includes("game.turn") && !code.includes("game.phase") && !code.includes("players.p1");
 
       expect(hasNoStateManagerImport).toBe(true);
       expect(hasNoStateManagerUsage).toBe(true);
@@ -104,9 +98,7 @@ describe("NameCollector - State Isolation (Rule #4)", () => {
       const code = NameCollector.toString();
 
       const hasNoPlayerIdCreation = !code.match(/id:\s*['"`]p\d+['"`]/g);
-      const hasNoPlayerObjectCreation = !code.match(
-        /{\s*id:.*name:.*position:/g,
-      );
+      const hasNoPlayerObjectCreation = !code.match(/{\s*id:.*name:.*position:/g);
 
       expect(hasNoPlayerIdCreation).toBe(true);
       expect(hasNoPlayerObjectCreation).toBe(true);
@@ -163,8 +155,7 @@ describe("NameCollector - State Isolation (Rule #4)", () => {
     it("validates and corrects names using LLM", () => {
       const code = NameCollector.toString();
 
-      const usesLLMForValidation =
-        code.includes("analyzeResponse") || code.includes("extractName");
+      const usesLLMForValidation = code.includes("analyzeResponse") || code.includes("extractName");
 
       expect(usesLLMForValidation).toBe(true);
     });
@@ -185,8 +176,7 @@ describe("NameCollector - State Isolation (Rule #4)", () => {
     it("only manages name collection flow", () => {
       const code = NameCollector.toString();
 
-      const managesNameCollection =
-        code.includes("collectedNames") && code.includes("playerCount");
+      const managesNameCollection = code.includes("collectedNames") && code.includes("playerCount");
 
       const doesNotManageGameState =
         !code.includes("game.turn") &&
@@ -201,8 +191,7 @@ describe("NameCollector - State Isolation (Rule #4)", () => {
       const code = NameCollector.toString();
 
       const hasPresentationConcerns =
-        code.includes("speak(") &&
-        (code.includes("askPlayer") || code.includes("collectNames"));
+        code.includes("speak(") && (code.includes("askPlayer") || code.includes("collectNames"));
 
       const hasNoStateConcerns =
         !code.includes("stateManager.set") && !code.includes("game.turn =");
@@ -216,8 +205,7 @@ describe("NameCollector - State Isolation (Rule #4)", () => {
     it("demonstrates correct usage pattern in comments", () => {
       const code = NameCollector.toString();
 
-      const hasDocumentation =
-        code.includes("collectNames") && code.includes("@returns");
+      const hasDocumentation = code.includes("collectNames") && code.includes("@returns");
 
       expect(hasDocumentation).toBe(true);
     });
@@ -242,9 +230,7 @@ describe("NameCollector - State Isolation (Rule #4)", () => {
         await nameCollector.collectNames(handler)
       `;
 
-      const violatesPattern = !incorrectCode.includes(
-        "orchestrator.setupPlayers",
-      );
+      const violatesPattern = !incorrectCode.includes("orchestrator.setupPlayers");
 
       expect(violatesPattern).toBe(true);
     });

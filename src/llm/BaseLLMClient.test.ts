@@ -62,8 +62,7 @@ describe("LLM - Pure JSON Parsing", () => {
     });
 
     it("parses multiple actions", () => {
-      const json =
-        '[{"action":"PLAYER_ROLLED","value":5},{"action":"NARRATE","text":"Moved!"}]';
+      const json = '[{"action":"PLAYER_ROLLED","value":5},{"action":"NARRATE","text":"Moved!"}]';
       const actions = client.testExtractActions(json);
 
       expect(actions).toHaveLength(2);
@@ -86,9 +85,7 @@ describe("LLM - Pure JSON Parsing", () => {
     it("rejects non-array response", () => {
       const notArray = '{"action":"NARRATE","text":"Hi"}';
 
-      expect(() => client.testExtractActions(notArray)).toThrow(
-        "Expected array, got object",
-      );
+      expect(() => client.testExtractActions(notArray)).toThrow("Expected array, got object");
     });
   });
 
@@ -103,10 +100,7 @@ describe("LLM - Pure JSON Parsing", () => {
     });
 
     it("retries once on parse error", async () => {
-      client.responseQueue = [
-        "invalid json{",
-        '[{"action":"NARRATE","text":"Retry success"}]',
-      ];
+      client.responseQueue = ["invalid json{", '[{"action":"NARRATE","text":"Retry success"}]'];
 
       const actions = await client.getActions("test", mockState);
 
@@ -166,10 +160,7 @@ describe("LLM - Pure JSON Parsing", () => {
     it("retry logic uses same state (no mutation)", async () => {
       const originalState = { ...mockState };
 
-      client.responseQueue = [
-        "invalid",
-        '[{"action":"NARRATE","text":"Retry"}]',
-      ];
+      client.responseQueue = ["invalid", '[{"action":"NARRATE","text":"Retry"}]'];
 
       await client.getActions("test", mockState);
 
@@ -191,9 +182,7 @@ describe("LLM - Pure JSON Parsing", () => {
     it("does not validate turn ownership (orchestrator job)", async () => {
       (mockState.game as Record<string, unknown>).turn = "p1";
 
-      client.responseQueue = [
-        '[{"action":"SET_STATE","path":"players.p2.position","value":99}]',
-      ];
+      client.responseQueue = ['[{"action":"SET_STATE","path":"players.p2.position","value":99}]'];
 
       const actions = await client.getActions("modify wrong player", mockState);
 
@@ -206,9 +195,7 @@ describe("LLM - Pure JSON Parsing", () => {
     });
 
     it("does not validate paths (orchestrator job)", async () => {
-      client.responseQueue = [
-        '[{"action":"SET_STATE","path":"nonexistent.path","value":1}]',
-      ];
+      client.responseQueue = ['[{"action":"SET_STATE","path":"nonexistent.path","value":1}]'];
 
       const actions = await client.getActions("invalid path", mockState);
 
@@ -221,9 +208,7 @@ describe("LLM - Pure JSON Parsing", () => {
     });
 
     it("does not validate action field types (orchestrator job)", async () => {
-      client.responseQueue = [
-        '[{"action":"PLAYER_ROLLED","value":"not a number"}]',
-      ];
+      client.responseQueue = ['[{"action":"PLAYER_ROLLED","value":"not a number"}]'];
 
       const actions = await client.getActions("invalid type", mockState);
 
@@ -274,8 +259,7 @@ describe("LLM - Pure JSON Parsing", () => {
     });
 
     it("parses actions with optional fields", () => {
-      const json =
-        '[{"action":"NARRATE","text":"Hi","soundEffect":"chime.mp3"}]';
+      const json = '[{"action":"NARRATE","text":"Hi","soundEffect":"chime.mp3"}]';
       const actions = client.testExtractActions(json);
 
       expect(actions).toHaveLength(1);
@@ -306,15 +290,13 @@ describe("LLM - Pure JSON Parsing", () => {
     });
 
     it("rejects explanatory text before JSON", () => {
-      const withText =
-        'Here are the actions:\n[{"action":"NARRATE","text":"Hi"}]';
+      const withText = 'Here are the actions:\n[{"action":"NARRATE","text":"Hi"}]';
 
       expect(() => client.testExtractActions(withText)).toThrow("Invalid JSON");
     });
 
     it("rejects explanatory text after JSON", () => {
-      const withText =
-        '[{"action":"NARRATE","text":"Hi"}]\nThose are the actions';
+      const withText = '[{"action":"NARRATE","text":"Hi"}]\nThose are the actions';
 
       expect(() => client.testExtractActions(withText)).toThrow("Invalid JSON");
     });

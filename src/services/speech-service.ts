@@ -54,9 +54,7 @@ export class SpeechService {
 
       utterance.onerror = (event) => {
         if (event.error === "interrupted") {
-          Logger.debug(
-            "Speech synthesis interrupted (expected when wake word detected)",
-          );
+          Logger.debug("Speech synthesis interrupted (expected when wake word detected)");
         } else {
           Logger.error("Speech synthesis error:", {
             error: event.error,

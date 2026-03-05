@@ -83,10 +83,7 @@ export interface ExecutionContext {
   maxDepth: number;
 }
 
-export type ActionHandler = (
-  action: PrimitiveAction,
-  context: ExecutionContext,
-) => Promise<void>;
+export type ActionHandler = (action: PrimitiveAction, context: ExecutionContext) => Promise<void>;
 
 /**
  * Union type of all primitive actions that the orchestrator can execute.

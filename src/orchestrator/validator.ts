@@ -16,18 +16,11 @@ export interface ValidationResult {
  * @param stateManager - State manager for path operations
  * @returns Updated mock state
  */
-function applyActionToMockState(
-  state: GameState,
-  primitive: PrimitiveAction,
-): GameState {
+function applyActionToMockState(state: GameState, primitive: PrimitiveAction): GameState {
   const mockState = deepClone(state);
 
   try {
-    if (
-      primitive.action === "SET_STATE" &&
-      "path" in primitive &&
-      "value" in primitive
-    ) {
+    if (primitive.action === "SET_STATE" && "path" in primitive && "value" in primitive) {
       const parts = primitive.path.split(".");
       let current: Record<string, unknown> = mockState;
 
@@ -256,9 +249,7 @@ function validateDecisionBeforeMove(
     return { valid: true };
   }
 
-  const decisionPoint = decisionPoints.find(
-    (dp) => dp.position === currentPosition,
-  );
+  const decisionPoint = decisionPoints.find((dp) => dp.position === currentPosition);
 
   if (!decisionPoint) {
     return { valid: true };
@@ -283,13 +274,7 @@ function validateSetState(
   index: number,
 ): ValidationResult {
   const actionRecord = action as unknown as Record<string, unknown>;
-  const pathValidation = validateField(
-    actionRecord,
-    "path",
-    "string",
-    "SET_STATE",
-    index,
-  );
+  const pathValidation = validateField(actionRecord, "path", "string", "SET_STATE", index);
   if (!pathValidation.valid) return pathValidation;
 
   if (!("value" in action)) {
@@ -326,12 +311,7 @@ function validateSetState(
       };
     }
 
-    const turnValidation = validateTurnOwnership(
-      action.path,
-      state,
-      "SET_STATE",
-      index,
-    );
+    const turnValidation = validateTurnOwnership(action.path, state, "SET_STATE", index);
     if (!turnValidation.valid) return turnValidation;
 
     const decisionMoveValidation = validateDecisionBeforeMove(
@@ -359,13 +339,7 @@ function validatePlayerRolled(
   orchestrator?: Orchestrator,
 ): ValidationResult {
   const actionRecord = action as unknown as Record<string, unknown>;
-  const valueValidation = validateField(
-    actionRecord,
-    "value",
-    "number",
-    "PLAYER_ROLLED",
-    index,
-  );
+  const valueValidation = validateField(actionRecord, "value", "number", "PLAYER_ROLLED", index);
   if (!valueValidation.valid) return valueValidation;
 
   // Value must be positive
@@ -388,10 +362,7 @@ function validatePlayerRolled(
   return { valid: true };
 }
 
-function validatePlayerAnswered(
-  action: PrimitiveAction,
-  index: number,
-): ValidationResult {
+function validatePlayerAnswered(action: PrimitiveAction, index: number): ValidationResult {
   const actionRecord = action as unknown as Record<string, unknown>;
   const answerValidation = validateField(
     actionRecord,
@@ -415,18 +386,9 @@ function validatePlayerAnswered(
   return { valid: true };
 }
 
-function validateNarrate(
-  action: PrimitiveAction,
-  index: number,
-): ValidationResult {
+function validateNarrate(action: PrimitiveAction, index: number): ValidationResult {
   const actionRecord = action as unknown as Record<string, unknown>;
-  const textValidation = validateField(
-    actionRecord,
-    "text",
-    "string",
-    "NARRATE",
-    index,
-  );
+  const textValidation = validateField(actionRecord, "text", "string", "NARRATE", index);
   if (!textValidation.valid) return textValidation;
 
   if (
@@ -434,29 +396,13 @@ function validateNarrate(
     actionRecord.soundEffect !== null &&
     actionRecord.soundEffect !== undefined
   ) {
-    return validateField(
-      actionRecord,
-      "soundEffect",
-      "string",
-      "NARRATE",
-      index,
-      false,
-    );
+    return validateField(actionRecord, "soundEffect", "string", "NARRATE", index, false);
   }
 
   return { valid: true };
 }
 
-function validateResetGame(
-  action: PrimitiveAction,
-  index: number,
-): ValidationResult {
+function validateResetGame(action: PrimitiveAction, index: number): ValidationResult {
   const actionRecord = action as unknown as Record<string, unknown>;
-  return validateField(
-    actionRecord,
-    "keepPlayerNames",
-    "boolean",
-    "RESET_GAME",
-    index,
-  );
+  return validateField(actionRecord, "keepPlayerNames", "boolean", "RESET_GAME", index);
 }

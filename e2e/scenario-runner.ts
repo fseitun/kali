@@ -22,13 +22,7 @@ type GameConfig = GameModule & { decisionPoints?: unknown; stateDisplay?: unknow
  * Loads a game config from public/games/{gameId}/config.json.
  */
 function loadGameConfig(gameId: string): GameConfig {
-  const configPath = path.join(
-    PROJECT_ROOT,
-    "public",
-    "games",
-    gameId,
-    "config.json",
-  );
+  const configPath = path.join(PROJECT_ROOT, "public", "games", gameId, "config.json");
   const raw = fs.readFileSync(configPath, "utf-8");
   return JSON.parse(raw) as GameConfig;
 }
@@ -38,10 +32,7 @@ function loadGameConfig(gameId: string): GameConfig {
  * Nested objects (game, players, board) are merged so partial overrides work.
  * Top-level decisionPoints and stateDisplay (e.g. Kalimba) are merged from config.
  */
-function buildInitialState(
-  game: GameConfig,
-  scenario: Scenario,
-): GameState {
+function buildInitialState(game: GameConfig, scenario: Scenario): GameState {
   const base = game.initialState as Record<string, unknown>;
   const overrides = (scenario.initialState ?? {}) as Record<string, unknown>;
 
@@ -140,10 +131,7 @@ export async function runScenario(scenario: Scenario): Promise<void> {
   );
 
   if (scenario.players !== undefined) {
-    const names = Array.from(
-      { length: scenario.players },
-      (_, i) => `Player ${i + 1}`,
-    );
+    const names = Array.from({ length: scenario.players }, (_, i) => `Player ${i + 1}`);
     orchestrator.setupPlayers(names);
   }
   orchestrator.transitionPhase(GamePhase.PLAYING);
@@ -154,9 +142,7 @@ export async function runScenario(scenario: Scenario): Promise<void> {
 
     const result = await orchestrator.testExecuteActions(actions);
     if (!result.success) {
-      throw new Error(
-        `E2E step ${i} failed: testExecuteActions returned success=false`,
-      );
+      throw new Error(`E2E step ${i} failed: testExecuteActions returned success=false`);
     }
     if (result.shouldAdvanceTurn) {
       await orchestrator.advanceTurn();

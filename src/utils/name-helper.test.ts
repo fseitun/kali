@@ -1,21 +1,10 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { describe, it, expect, vi } from "vitest";
-import {
-  validateName,
-  findNameConflicts,
-  generateNickname,
-  areNamesSimilar,
-} from "./name-helper";
+import { validateName, findNameConflicts, generateNickname, areNamesSimilar } from "./name-helper";
 
 // Mock i18n getNicknames function
 vi.mock("../i18n", () => ({
-  getNicknames: () => [
-    "the Great",
-    "the Wise",
-    "the Brave",
-    "the Kind",
-    "the Swift",
-  ],
+  getNicknames: () => ["the Great", "the Wise", "the Brave", "the Kind", "the Swift"],
 }));
 
 describe("name-helper", () => {

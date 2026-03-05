@@ -75,9 +75,7 @@ describe("GameLoader", () => {
 
       const result = await gameLoader.loadGame("test-game");
 
-      expect(mockFetch).toHaveBeenCalledWith(
-        "/test/games/test-game/config.json",
-      );
+      expect(mockFetch).toHaveBeenCalledWith("/test/games/test-game/config.json");
       expect(result).toEqual(mockGameModule);
     });
 
@@ -95,9 +93,7 @@ describe("GameLoader", () => {
     it("should throw error for network failure", async () => {
       mockFetch.mockRejectedValueOnce(new Error("Network error"));
 
-      await expect(gameLoader.loadGame("test-game")).rejects.toThrow(
-        "Network error",
-      );
+      await expect(gameLoader.loadGame("test-game")).rejects.toThrow("Network error");
     });
 
     it("should validate game module metadata", async () => {
@@ -247,24 +243,12 @@ describe("GameLoader", () => {
 
       mockSpeechService.loadSound.mockResolvedValue(undefined);
 
-      await gameLoader.loadSoundEffects(
-        gameModule,
-        mockSpeechService as unknown as never,
-      );
+      await gameLoader.loadSoundEffects(gameModule, mockSpeechService as unknown as never);
 
       expect(mockSpeechService.loadSound).toHaveBeenCalledTimes(3);
-      expect(mockSpeechService.loadSound).toHaveBeenCalledWith(
-        "ladder_up",
-        "/sounds/ladder.mp3",
-      );
-      expect(mockSpeechService.loadSound).toHaveBeenCalledWith(
-        "snake_down",
-        "/sounds/snake.mp3",
-      );
-      expect(mockSpeechService.loadSound).toHaveBeenCalledWith(
-        "dice_roll",
-        "/sounds/dice.mp3",
-      );
+      expect(mockSpeechService.loadSound).toHaveBeenCalledWith("ladder_up", "/sounds/ladder.mp3");
+      expect(mockSpeechService.loadSound).toHaveBeenCalledWith("snake_down", "/sounds/snake.mp3");
+      expect(mockSpeechService.loadSound).toHaveBeenCalledWith("dice_roll", "/sounds/dice.mp3");
     });
 
     it("should handle missing sound effects", async () => {
@@ -296,10 +280,7 @@ describe("GameLoader", () => {
         },
       };
 
-      await gameLoader.loadSoundEffects(
-        gameModule,
-        mockSpeechService as unknown as never,
-      );
+      await gameLoader.loadSoundEffects(gameModule, mockSpeechService as unknown as never);
 
       expect(mockSpeechService.loadSound).not.toHaveBeenCalled();
     });
@@ -343,10 +324,7 @@ describe("GameLoader", () => {
 
       // Should not throw even if some sounds fail
       await expect(
-        gameLoader.loadSoundEffects(
-          gameModule,
-          mockSpeechService as unknown as never,
-        ),
+        gameLoader.loadSoundEffects(gameModule, mockSpeechService as unknown as never),
       ).resolves.not.toThrow();
 
       expect(mockSpeechService.loadSound).toHaveBeenCalledTimes(2);
@@ -382,10 +360,7 @@ describe("GameLoader", () => {
         soundEffects: {},
       };
 
-      await gameLoader.loadSoundEffects(
-        gameModule,
-        mockSpeechService as unknown as never,
-      );
+      await gameLoader.loadSoundEffects(gameModule, mockSpeechService as unknown as never);
 
       expect(mockSpeechService.loadSound).not.toHaveBeenCalled();
     });

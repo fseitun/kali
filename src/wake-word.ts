@@ -58,8 +58,7 @@ export class WakeWordDetector {
 
       const AudioContextClass =
         window.AudioContext ||
-        (window as typeof window & { webkitAudioContext: typeof AudioContext })
-          .webkitAudioContext;
+        (window as typeof window & { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
       this.audioContext = new AudioContextClass();
 
       await this.audioContext.audioWorklet.addModule(
@@ -73,21 +72,16 @@ export class WakeWordDetector {
       this.model = await createModel(modelUrl);
       Logger.info("Vosk model loaded");
 
-      this.recognizer = new this.model.KaldiRecognizer(
-        CONFIG.AUDIO.SAMPLE_RATE,
-      );
+      this.recognizer = new this.model.KaldiRecognizer(CONFIG.AUDIO.SAMPLE_RATE);
       this.recognizer.setWords(true);
 
       this.recognizer.on("result", (message: VoskResultMessage) => {
         this.handleResult(message.result, false);
       });
 
-      this.recognizer.on(
-        "partialresult",
-        (message: VoskPartialResultMessage) => {
-          this.handleResult(message.result, true);
-        },
-      );
+      this.recognizer.on("partialresult", (message: VoskPartialResultMessage) => {
+        this.handleResult(message.result, true);
+      });
 
       this.recognizer.on("error", (error: Error) => {
         Logger.error("Recognition error:", error);
@@ -137,9 +131,7 @@ export class WakeWordDetector {
         }
       };
 
-      const source = this.audioContext.createMediaStreamSource(
-        this.mediaStream,
-      );
+      const source = this.audioContext.createMediaStreamSource(this.mediaStream);
       source.connect(this.workletNode);
 
       this.workletNode.port.postMessage({ type: "start" });
@@ -203,16 +195,10 @@ export class WakeWordDetector {
     const lowerText = text.toLowerCase();
 
     if (this.state === DetectorState.LISTENING_FOR_WAKE_WORD) {
-      const wakeWordDetected = CONFIG.WAKE_WORD.TEXT.some((word) =>
-        lowerText.includes(word),
-      );
+      const wakeWordDetected = CONFIG.WAKE_WORD.TEXT.some((word) => lowerText.includes(word));
 
       if (this.onRawTranscription) {
-        this.onRawTranscription(
-          text,
-          wakeWordDetected ? text : "...",
-          wakeWordDetected,
-        );
+        this.onRawTranscription(text, wakeWordDetected ? text : "...", wakeWordDetected);
       }
 
       if (wakeWordDetected) {
@@ -257,9 +243,7 @@ export class WakeWordDetector {
       this.transcriptionTimeout = null;
     }
     this.state = DetectorState.LISTENING_FOR_WAKE_WORD;
-    Logger.listening(
-      `Listening for wake word "${CONFIG.WAKE_WORD.TEXT[0]}"...`,
-    );
+    Logger.listening(`Listening for wake word "${CONFIG.WAKE_WORD.TEXT[0]}"...`);
   }
 
   async stopListening(): Promise<void> {

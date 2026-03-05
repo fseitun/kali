@@ -6,10 +6,7 @@ import type { ApiCallOptions, ApiCallResult } from "./types";
  * Ollama LLM client implementation that communicates with a local Ollama instance.
  */
 export class OllamaClient extends BaseLLMClient {
-  async makeApiCall(
-    prompt: string,
-    options: ApiCallOptions,
-  ): Promise<ApiCallResult> {
+  async makeApiCall(prompt: string, options: ApiCallOptions): Promise<ApiCallResult> {
     const response = await fetch(CONFIG.OLLAMA.API_URL, {
       method: "POST",
       headers: {
@@ -27,9 +24,7 @@ export class OllamaClient extends BaseLLMClient {
     });
 
     if (!response.ok) {
-      throw new Error(
-        `Ollama API error: ${response.status} ${response.statusText}`,
-      );
+      throw new Error(`Ollama API error: ${response.status} ${response.statusText}`);
     }
 
     const data = await response.json();

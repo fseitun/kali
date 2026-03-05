@@ -19,9 +19,7 @@ class KaliApp {
     }
     KaliApp.instance = this;
 
-    const startButton = document.getElementById(
-      "start-button",
-    ) as HTMLButtonElement;
+    const startButton = document.getElementById("start-button") as HTMLButtonElement;
 
     this.uiService = new ProductionUIService(startButton);
     this.speechService = new SpeechService();

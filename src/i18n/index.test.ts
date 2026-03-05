@@ -1,11 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import {
-  setLocale,
-  t,
-  getNicknames,
-  getNumberWords,
-  getConfirmationWords,
-} from "./index";
+import { setLocale, t, getNicknames, getNumberWords, getConfirmationWords } from "./index";
 
 // Mock CONFIG
 vi.mock("../config", () => ({
@@ -43,9 +37,7 @@ describe("i18n", () => {
     });
 
     it("should handle numeric parameters", () => {
-      expect(t("game.position", { position: 15 })).toBe(
-        "You're at position 15.",
-      );
+      expect(t("game.position", { position: 15 })).toBe("You're at position 15.");
     });
 
     it("should return key when translation missing", () => {
@@ -58,16 +50,12 @@ describe("i18n", () => {
     });
 
     it("should handle empty parameters", () => {
-      expect(t("setup.welcome", {})).toBe(
-        "Welcome to {game}! Let's get started.",
-      );
+      expect(t("setup.welcome", {})).toBe("Welcome to {game}! Let's get started.");
       expect(t("setup.welcome")).toBe("Welcome to {game}! Let's get started.");
     });
 
     it("should handle partial parameter replacement", () => {
-      expect(t("setup.welcome", { game: "Chess" })).toBe(
-        "Welcome to Chess! Let's get started.",
-      );
+      expect(t("setup.welcome", { game: "Chess" })).toBe("Welcome to Chess! Let's get started.");
     });
 
     it("should handle complex nested translations", () => {
@@ -204,9 +192,7 @@ describe("i18n", () => {
     });
 
     it("should handle very deep nesting", () => {
-      expect(t("ui.status.ready.nonexistent")).toBe(
-        "ui.status.ready.nonexistent",
-      );
+      expect(t("ui.status.ready.nonexistent")).toBe("ui.status.ready.nonexistent");
     });
 
     it("should handle null/undefined parameters", () => {

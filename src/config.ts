@@ -1,8 +1,5 @@
 export const CONFIG = {
-  LLM_PROVIDER: (import.meta.env.VITE_LLM_PROVIDER ?? "gemini") as
-    | "ollama"
-    | "gemini"
-    | "mock",
+  LLM_PROVIDER: (import.meta.env.VITE_LLM_PROVIDER ?? "gemini") as "ollama" | "gemini" | "mock",
 
   MOCK_SCENARIO: (import.meta.env.VITE_MOCK_SCENARIO ?? "happy-path") as
     | "happy-path"
@@ -59,6 +56,5 @@ export const CONFIG = {
     MODULES_PATH: "/games",
   },
 
-  MOBILE_DEVICE_PATTERN:
-    /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i,
+  MOBILE_DEVICE_PATTERN: /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i,
 } as const;

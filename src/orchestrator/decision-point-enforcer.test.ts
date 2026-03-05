@@ -138,9 +138,7 @@ describe("DecisionPointEnforcer", () => {
 
     it("should include correct prompt in synthetic transcript", async () => {
       const prompt = "Choose your path: Desert or Forest?";
-      stateManager.set("decisionPoints", [
-        { position: 5, requiredField: "pathChoice", prompt },
-      ]);
+      stateManager.set("decisionPoints", [{ position: 5, requiredField: "pathChoice", prompt }]);
       stateManager.set("players.p1.position", 5);
       stateManager.set("players.p1.pathChoice", null);
 
@@ -366,9 +364,7 @@ describe("DecisionPointEnforcer", () => {
       mockProcessTranscript.mockRejectedValue(new Error("Test error"));
 
       // Should not throw, errors are caught internally
-      await expect(
-        decisionPointEnforcer.enforceDecisionPoints(baseContext),
-      ).resolves.not.toThrow();
+      await expect(decisionPointEnforcer.enforceDecisionPoints(baseContext)).resolves.not.toThrow();
     });
   });
 });

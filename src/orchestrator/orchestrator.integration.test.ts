@@ -39,13 +39,7 @@ describe("Orchestrator Integration Tests", () => {
     stateManager = new StateManager();
     stateManager.init(initialState);
 
-    orchestrator = new Orchestrator(
-      mockLLM,
-      stateManager,
-      mockSpeech,
-      mockIndicator,
-      initialState,
-    );
+    orchestrator = new Orchestrator(mockLLM, stateManager, mockSpeech, mockIndicator, initialState);
   }
 
   beforeEach(() => {

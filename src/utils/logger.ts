@@ -10,9 +10,7 @@ export class Logger {
   private static log(message: string, ...args: unknown[]): void {
     if (Logger.uiService) {
       const formatted =
-        args.length > 0
-          ? `${message} ${args.map((a) => JSON.stringify(a)).join(" ")}`
-          : message;
+        args.length > 0 ? `${message} ${args.map((a) => JSON.stringify(a)).join(" ")}` : message;
       Logger.uiService.log(formatted);
     }
   }

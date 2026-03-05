@@ -43,24 +43,21 @@ describe("OllamaClient", () => {
         maxTokens: 1000,
       });
 
-      expect(mockFetch).toHaveBeenCalledWith(
-        "http://localhost:11434/api/generate",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            model: "llama2",
-            messages: [{ role: "user", content: "Test prompt" }],
-            stream: false,
-            options: {
-              temperature: 0.7,
-              num_predict: 1000,
-            },
-          }),
+      expect(mockFetch).toHaveBeenCalledWith("http://localhost:11434/api/generate", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
         },
-      );
+        body: JSON.stringify({
+          model: "llama2",
+          messages: [{ role: "user", content: "Test prompt" }],
+          stream: false,
+          options: {
+            temperature: 0.7,
+            num_predict: 1000,
+          },
+        }),
+      });
 
       expect(result).toEqual({ content: "Test response from Ollama" });
     });
@@ -110,9 +107,7 @@ describe("OllamaClient", () => {
     it("should handle network errors", async () => {
       mockFetch.mockRejectedValueOnce(new Error("Connection refused"));
 
-      await expect(client.makeApiCall("Test prompt", {})).rejects.toThrow(
-        "Connection refused",
-      );
+      await expect(client.makeApiCall("Test prompt", {})).rejects.toThrow("Connection refused");
     });
 
     it("should handle empty response content", async () => {
@@ -196,9 +191,7 @@ describe("OllamaClient", () => {
     it("should handle timeout errors", async () => {
       mockFetch.mockRejectedValueOnce(new Error("Request timeout"));
 
-      await expect(client.makeApiCall("Test prompt", {})).rejects.toThrow(
-        "Request timeout",
-      );
+      await expect(client.makeApiCall("Test prompt", {})).rejects.toThrow("Request timeout");
     });
 
     it("should handle JSON parsing errors", async () => {
@@ -207,9 +200,7 @@ describe("OllamaClient", () => {
         json: () => Promise.reject(new Error("Invalid JSON")),
       });
 
-      await expect(client.makeApiCall("Test prompt", {})).rejects.toThrow(
-        "Invalid JSON",
-      );
+      await expect(client.makeApiCall("Test prompt", {})).rejects.toThrow("Invalid JSON");
     });
 
     it("should handle server unavailable", async () => {

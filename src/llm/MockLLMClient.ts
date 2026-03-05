@@ -41,10 +41,7 @@ export class MockLLMClient implements LLMClient {
     Logger.info("MockLLMClient: Game rules set (ignored)");
   }
 
-  async getActions(
-    transcript: string,
-    state: GameState,
-  ): Promise<PrimitiveAction[]> {
+  async getActions(transcript: string, state: GameState): Promise<PrimitiveAction[]> {
     this.callCount++;
     Logger.info(`MockLLMClient call #${this.callCount}: "${transcript}"`);
     Logger.debug("Current state:", state);
@@ -85,22 +82,11 @@ export class MockLLMClient implements LLMClient {
     transcript: string,
     expectedContext: string,
   ): Promise<{ isOnTopic: boolean; urgentMessage?: string }> {
-    Logger.info(
-      `MockLLMClient.analyzeResponse: "${transcript}" (context: ${expectedContext})`,
-    );
+    Logger.info(`MockLLMClient.analyzeResponse: "${transcript}" (context: ${expectedContext})`);
 
     // Simple heuristic: if transcript mentions help, emergency, hurt, etc., flag it
-    const urgentKeywords = [
-      "help",
-      "emergency",
-      "hurt",
-      "injured",
-      "stop",
-      "quit",
-    ];
-    const isUrgent = urgentKeywords.some((keyword) =>
-      transcript.toLowerCase().includes(keyword),
-    );
+    const urgentKeywords = ["help", "emergency", "hurt", "injured", "stop", "quit"];
+    const isUrgent = urgentKeywords.some((keyword) => transcript.toLowerCase().includes(keyword));
 
     if (isUrgent) {
       return {
@@ -140,16 +126,11 @@ export class MockLLMClient implements LLMClient {
 
   private getScriptedResponse(): PrimitiveAction[] {
     if (this.scriptedResponses.length === 0) {
-      Logger.warn(
-        "Scripted scenario selected but no scripted responses provided",
-      );
+      Logger.warn("Scripted scenario selected but no scripted responses provided");
       return [];
     }
 
-    const index = Math.min(
-      this.callCount - 1,
-      this.scriptedResponses.length - 1,
-    );
+    const index = Math.min(this.callCount - 1, this.scriptedResponses.length - 1);
     return this.scriptedResponses[index];
   }
 
