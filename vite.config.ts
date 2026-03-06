@@ -54,7 +54,7 @@ export default defineConfig({
     rollupOptions: {
       input: {
         main: "./index.html",
-        debug: "./debug.html",
+        debug: "./debug/index.html",
       },
       output: {
         manualChunks: {

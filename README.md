@@ -31,7 +31,7 @@ A voice-first game moderator for kids to play board games independently. Uses sp
 
 4. Choose your interface:
    - **Production**: `http://localhost:5173/` (minimal pulsating orb)
-   - **Debug**: `http://localhost:5173/debug.html` (full console & logs)
+   - **Debug**: `http://localhost:5173/debug` (full console & logs)
 
 5. Click "Start Kali" and grant microphone permissions
 6. On first load, Vosk model downloads automatically (~40MB, cached for offline use)
