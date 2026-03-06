@@ -9,7 +9,7 @@ const TTS_LANG_MAP: Record<SupportedLocale, string> = {
   "en-US": "en-US",
 };
 
-let runtimeLocale: SupportedLocale = loadStoredLocale();
+const runtimeLocale: SupportedLocale = loadStoredLocale();
 
 function loadStoredLocale(): SupportedLocale {
   try {
@@ -24,8 +24,7 @@ function loadStoredLocale(): SupportedLocale {
 }
 
 /**
- * Returns the current runtime locale. Use this instead of CONFIG.LOCALE
- * when the value can change at runtime (e.g. after user changes language).
+ * Returns the current runtime locale, determined at startup from localStorage or CONFIG.LOCALE.
  */
 export function getLocale(): SupportedLocale {
   return runtimeLocale;
@@ -36,25 +35,4 @@ export function getLocale(): SupportedLocale {
  */
 export function getTtsLang(): string {
   return TTS_LANG_MAP[runtimeLocale] ?? "es-AR";
-}
-
-/**
- * Sets the runtime locale and persists to localStorage.
- * Callers must also update i18n, SpeechService expectations, and LLM system prompt.
- */
-export function setLocale(locale: string): boolean {
-  if (!SUPPORTED_LOCALES.includes(locale as SupportedLocale)) {
-    return false;
-  }
-  runtimeLocale = locale as SupportedLocale;
-  try {
-    localStorage.setItem(STORAGE_KEY, runtimeLocale);
-  } catch {
-    // localStorage unavailable
-  }
-  return true;
-}
-
-export function getSupportedLocales(): SupportedLocale[] {
-  return [...SUPPORTED_LOCALES];
 }
