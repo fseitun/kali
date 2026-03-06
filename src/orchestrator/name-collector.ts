@@ -168,8 +168,10 @@ export class NameCollector {
 
         const extractedName = await this.llmClient.extractName(text);
 
-        if (extractedName) {
-          const validation = validateName(extractedName);
+        // Fallback: if LLM failed but transcript looks like a simple valid name, use it
+        const nameToTry = extractedName ?? text.trim();
+        if (nameToTry) {
+          const validation = validateName(nameToTry);
           if (validation.valid) {
             await this.confirmName(validation.cleaned, onTranscript, playerNumber, resolve);
             return;

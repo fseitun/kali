@@ -7,10 +7,19 @@ export class Logger {
     Logger.uiService = service;
   }
 
+  private static serializeArg(arg: unknown): string {
+    if (arg instanceof Error) {
+      return arg.stack ?? `${arg.name}: ${arg.message}`;
+    }
+    return JSON.stringify(arg);
+  }
+
   private static log(message: string, ...args: unknown[]): void {
     if (Logger.uiService) {
       const formatted =
-        args.length > 0 ? `${message} ${args.map((a) => JSON.stringify(a)).join(" ")}` : message;
+        args.length > 0
+          ? `${message} ${args.map((a) => Logger.serializeArg(a)).join(" ")}`
+          : message;
       Logger.uiService.log(formatted);
     }
   }
