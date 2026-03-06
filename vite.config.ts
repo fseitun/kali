@@ -4,10 +4,22 @@ import { VitePWA } from "vite-plugin-pwa";
 
 export default defineConfig({
   plugins: [
+    {
+      name: "debug-route-rewrite",
+      configureServer(server) {
+        server.middlewares.use((req: { url?: string }, _res, next) => {
+          if (req.url === "/debug") {
+            req.url = "/debug/";
+          }
+          next();
+        });
+      },
+    },
     VitePWA({
       registerType: "autoUpdate",
       workbox: {
         globPatterns: ["**/*.{js,css,html,ico,png,svg}"],
+        navigateFallback: null,
         maximumFileSizeToCacheInBytes: 10 * 1024 * 1024,
         runtimeCaching: [
           {
