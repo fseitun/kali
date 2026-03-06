@@ -15,6 +15,8 @@ Ranked by value-to-complexity ratio.
 1.0: Runtime Game Selection
 1.0: User Language Selection at Setup
 
+- **TODO:** Voice-based language setting (spoken command e.g. "Kali, speak English" / "Kali, cambiar a español") — no UI, change language anytime via spoken words
+
 _(Value/Complexity ratio; higher = better ROI)_
 
 ---
