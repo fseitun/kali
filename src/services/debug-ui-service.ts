@@ -9,6 +9,7 @@ export class DebugUIService implements IUIService {
     private statusElement: HTMLElement,
     private consoleElement: HTMLElement,
     private startButton: HTMLButtonElement,
+    private submitTranscriptButton?: HTMLButtonElement,
   ) {
     this.statusIndicator = new StatusIndicator("status-indicator");
     this.setupCopyLogsButton();
@@ -84,5 +85,11 @@ export class DebugUIService implements IUIService {
 
   showButton(): void {
     this.startButton.style.display = "";
+  }
+
+  setTranscriptInputEnabled(enabled: boolean): void {
+    if (this.submitTranscriptButton) {
+      this.submitTranscriptButton.disabled = !enabled;
+    }
   }
 }

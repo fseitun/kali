@@ -9,4 +9,5 @@ export interface IUIService {
   clearConsole(): void;
   log(message: string): void;
   addTranscription(raw: string, processed: string, wakeWordDetected: boolean): void;
+  setTranscriptInputEnabled?(enabled: boolean): void;
 }

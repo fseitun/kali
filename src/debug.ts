@@ -23,8 +23,16 @@ class KaliDebugApp {
     const statusElement = document.getElementById("status") as HTMLElement;
     const consoleElement = document.getElementById("console") as HTMLElement;
     const startButton = document.getElementById("start-button") as HTMLButtonElement;
+    const submitTranscriptButton = document.getElementById(
+      "submit-transcript-button",
+    ) as HTMLButtonElement | null;
 
-    this.uiService = new DebugUIService(statusElement, consoleElement, startButton);
+    this.uiService = new DebugUIService(
+      statusElement,
+      consoleElement,
+      startButton,
+      submitTranscriptButton ?? undefined,
+    );
     this.speechService = new NoOpSpeechService();
 
     Logger.setUIService(this.uiService);

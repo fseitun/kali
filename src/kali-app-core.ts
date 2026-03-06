@@ -254,12 +254,15 @@ ${rules.examples.map((ex: string, i: number) => `${i + 1}. ${ex}`).join("\n")}
         this.gameModule.metadata,
       );
 
+      this.uiService.setTranscriptInputEnabled?.(true);
+
       const playerNames = await nameCollector.collectNames((handler) => {
         this.currentNameHandler = handler;
       });
 
       this.currentNameHandler = null;
       this.wakeWordDetector.disableDirectTranscription();
+      this.uiService.setTranscriptInputEnabled?.(false);
 
       // Let orchestrator handle state mutations
       this.orchestrator.setupPlayers(playerNames);
@@ -269,6 +272,7 @@ ${rules.examples.map((ex: string, i: number) => `${i + 1}. ${ex}`).join("\n")}
     } catch (error) {
       Logger.error(`Name collection failed: ${error}`);
       this.currentNameHandler = null;
+      this.uiService.setTranscriptInputEnabled?.(false);
       if (this.wakeWordDetector) {
         this.wakeWordDetector.disableDirectTranscription();
       }

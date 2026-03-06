@@ -32,4 +32,6 @@ export class ProductionUIService implements IUIService {
   showButton(): void {
     this.startButton.style.display = "";
   }
+
+  setTranscriptInputEnabled(_enabled: boolean): void {}
 }
