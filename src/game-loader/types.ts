@@ -1,4 +1,4 @@
-import type { GameState } from "../orchestrator/types";
+import type { DecisionPoint, GameState } from "../orchestrator/types";
 
 /**
  * Metadata about a game module.
@@ -48,6 +48,7 @@ export interface GameModule {
   metadata: GameMetadata;
   initialState: GameState;
   rules: GameRules;
+  decisionPoints?: DecisionPoint[];
   soundEffects?: Record<string, string>;
   customActions?: string[];
   stateDisplay?: StateDisplayMetadata;

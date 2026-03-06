@@ -97,6 +97,10 @@ export class KaliAppCore {
     this.stateManager = new StateManager();
     this.stateManager.init(this.gameModule.initialState);
 
+    if (this.gameModule.decisionPoints?.length) {
+      this.stateManager.set("decisionPoints", this.gameModule.decisionPoints);
+    }
+
     if (this.gameModule.stateDisplay) {
       this.stateManager.set("stateDisplay", this.gameModule.stateDisplay);
     }
@@ -105,13 +109,19 @@ export class KaliAppCore {
     this.llmClient = this.createLLMClient();
     this.llmClient.setGameRules(this.formatGameRules(this.gameModule));
 
+    const initialState = {
+      ...this.gameModule.initialState,
+      ...(this.gameModule.decisionPoints?.length
+        ? { decisionPoints: this.gameModule.decisionPoints }
+        : {}),
+    };
     const indicator = this.uiService.getStatusIndicator();
     this.orchestrator = new Orchestrator(
       this.llmClient,
       this.stateManager,
       this.speechService,
       indicator,
-      this.gameModule.initialState,
+      initialState,
     );
 
     Logger.info("🔊 Loading sound effects...");
@@ -203,6 +213,9 @@ ${rules.examples.map((ex: string, i: number) => `${i + 1}. ${ex}`).join("\n")}
     } catch (error) {
       Logger.error(`Error handling saved game: ${error}. Starting fresh.`);
       this.stateManager.resetState(this.gameModule.initialState);
+      if (this.gameModule.decisionPoints?.length) {
+        this.stateManager.set("decisionPoints", this.gameModule.decisionPoints);
+      }
       await this.runNameCollection();
       return true;
     }
