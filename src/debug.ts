@@ -5,6 +5,7 @@ import { t } from "./i18n";
 import { KaliAppCore } from "./kali-app-core";
 import { DebugUIService } from "./services/debug-ui-service";
 import { NoOpSpeechService } from "./services/no-op-speech-service";
+import { setLogStateEnabled } from "./utils/debug-options";
 import { Logger } from "./utils/logger";
 
 class KaliDebugApp {
@@ -41,6 +42,11 @@ class KaliDebugApp {
 
     startButton.addEventListener("click", async () => {
       if (this.core.isInitialized()) return;
+
+      const logStateCheckbox = document.getElementById(
+        "log-state-checkbox",
+      ) as HTMLInputElement | null;
+      setLogStateEnabled(logStateCheckbox?.checked ?? false);
 
       this.speechService.prime();
       this.uiService.setButtonState(t("ui.status.initializing"), true);

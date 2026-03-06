@@ -122,6 +122,18 @@
   cursor: not-allowed;
 }
 
+.debug-option {
+  display: block;
+  margin: 0.5rem 0;
+  font-size: 0.9rem;
+  color: var(--text-color);
+  cursor: pointer;
+}
+
+.debug-option input {
+  margin-right: 0.5rem;
+}
+
 .skip-button {
   background: rgba(255, 165, 0, 0.3);
   border: 2px solid rgba(255, 165, 0, 0.7);

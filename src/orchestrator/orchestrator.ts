@@ -4,6 +4,7 @@ import type { LLMClient } from "../llm/LLMClient";
 import { formatStateContext } from "../llm/system-prompt";
 import type { ISpeechService } from "../services/speech-service";
 import type { StateManager } from "../state-manager";
+import { isLogStateEnabled } from "../utils/debug-options";
 import { deepClone } from "../utils/deep-clone";
 import { Logger } from "../utils/logger";
 import { Profiler } from "../utils/profiler";
@@ -261,7 +262,9 @@ export class Orchestrator {
       Logger.brain(`Orchestrator processing: ${transcript} (depth: ${context.depth})`);
 
       const state = this.stateManager.getState();
-      Logger.state("Current state:\n" + formatStateContext(state as Record<string, unknown>));
+      if (isLogStateEnabled()) {
+        Logger.state("Current state:\n" + formatStateContext(state as Record<string, unknown>));
+      }
       Profiler.start(`orchestrator.llm.${context.depth}`);
       const actions = await this.llmClient.getActions(transcript, state);
       Profiler.end(`orchestrator.llm.${context.depth}`);
@@ -286,7 +289,9 @@ export class Orchestrator {
     profilerPrefix: string,
   ): Promise<{ success: boolean; shouldAdvanceTurn: boolean }> {
     const state = this.stateManager.getState();
-    Logger.state("Current state:\n" + formatStateContext(state as Record<string, unknown>));
+    if (isLogStateEnabled()) {
+      Logger.state("Current state:\n" + formatStateContext(state as Record<string, unknown>));
+    }
 
     Profiler.start(`${profilerPrefix}.validation.${context.depth}`);
     const validation = validateActions(actions, state, this.stateManager, this);
