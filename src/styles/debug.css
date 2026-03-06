@@ -65,7 +65,7 @@
   word-wrap: break-word;
 }
 
-.test-actions-panel {
+.transcript-input-panel {
   background: rgba(0, 100, 255, 0.1);
   border: 1px solid rgba(0, 100, 255, 0.5);
   border-radius: 4px;
@@ -74,26 +74,34 @@
   text-align: left;
 }
 
-.test-actions-panel h3 {
+.transcript-input-panel h3 {
   color: rgba(0, 150, 255, 0.9);
   margin: 0 0 0.5rem 0;
   font-size: 1rem;
 }
 
-.test-actions-panel textarea {
-  width: 100%;
+.transcript-row {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.transcript-row input {
+  flex: 1;
   background: var(--console-bg);
   border: 1px solid rgba(0, 150, 255, 0.5);
   border-radius: 4px;
-  padding: 0.5rem;
+  padding: 0.5rem 0.75rem;
   color: var(--text-color);
   font-family: "Courier New", monospace;
   font-size: 0.9rem;
-  resize: vertical;
-  margin-bottom: 0.5rem;
 }
 
-.test-actions-panel button {
+.transcript-row input::placeholder {
+  color: rgba(255, 255, 255, 0.4);
+}
+
+.transcript-row button {
   background: rgba(0, 150, 255, 0.3);
   border: 1px solid rgba(0, 150, 255, 0.7);
   color: var(--text-color);
@@ -104,81 +112,14 @@
   transition: all 0.3s ease;
 }
 
-.test-actions-panel button:hover:not(:disabled) {
+.transcript-row button:hover:not(:disabled) {
   background: rgba(0, 150, 255, 0.5);
   border-color: rgba(0, 150, 255, 1);
 }
 
-.test-actions-panel button:disabled {
+.transcript-row button:disabled {
   opacity: 0.5;
   cursor: not-allowed;
-}
-
-#execution-result {
-  margin-top: 0.5rem;
-  padding: 0.5rem;
-  border-radius: 4px;
-  font-family: "Courier New", monospace;
-  font-size: 0.85rem;
-}
-
-#execution-result.success {
-  background: rgba(0, 255, 0, 0.1);
-  border: 1px solid rgba(0, 255, 0, 0.5);
-  color: rgba(0, 255, 0, 0.9);
-}
-
-#execution-result.error {
-  background: rgba(255, 0, 0, 0.1);
-  border: 1px solid rgba(255, 0, 0, 0.5);
-  color: rgba(255, 100, 100, 0.9);
-}
-
-.test-actions-panel details {
-  margin-top: 1rem;
-}
-
-.test-actions-panel summary {
-  cursor: pointer;
-  color: rgba(0, 200, 255, 0.9);
-  font-weight: bold;
-  padding: 0.5rem;
-  background: rgba(0, 100, 255, 0.1);
-  border-radius: 4px;
-  user-select: none;
-}
-
-.test-actions-panel summary:hover {
-  background: rgba(0, 100, 255, 0.2);
-}
-
-.example-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
-  gap: 0.5rem;
-  margin-top: 0.5rem;
-}
-
-.example-btn {
-  background: rgba(100, 100, 100, 0.3);
-  border: 1px solid rgba(150, 150, 150, 0.5);
-  color: rgba(200, 200, 200, 0.9);
-  padding: 0.5rem;
-  border-radius: 4px;
-  cursor: pointer;
-  font-family: "Courier New", monospace;
-  font-size: 0.75rem;
-  transition: all 0.2s ease;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.example-btn:hover {
-  background: rgba(100, 200, 100, 0.3);
-  border-color: rgba(0, 255, 0, 0.7);
-  color: rgba(0, 255, 0, 0.9);
-  transform: translateY(-2px);
 }
 
 .skip-button {

@@ -33,7 +33,7 @@ class KaliDebugApp {
     statusElement.textContent = t("ui.clickToStart");
     this.setupStartButton(startButton);
     this.setupSkipToPlayingButton();
-    this.setupExecuteActionsButton();
+    this.setupTranscriptInput();
   }
 
   private setupStartButton(startButton: HTMLButtonElement): void {
@@ -54,8 +54,8 @@ class KaliDebugApp {
       // Hide skip button after initialization completes
       skipButton.style.display = "none";
 
-      const executeButton = document.getElementById("execute-actions-button") as HTMLButtonElement;
-      executeButton.disabled = false;
+      const submitButton = document.getElementById("submit-transcript-button") as HTMLButtonElement;
+      if (submitButton) submitButton.disabled = false;
     });
   }
 
@@ -76,11 +76,10 @@ class KaliDebugApp {
 
         skipButton.style.display = "none";
 
-        // Enable execute actions button
-        const executeButton = document.getElementById(
-          "execute-actions-button",
+        const submitButton = document.getElementById(
+          "submit-transcript-button",
         ) as HTMLButtonElement;
-        executeButton.disabled = false;
+        if (submitButton) submitButton.disabled = false;
 
         this.uiService.updateStatus("Ready to test!");
         Logger.info("✅ Successfully skipped to PLAYING phase");
@@ -92,80 +91,40 @@ class KaliDebugApp {
     });
   }
 
-  private setupExecuteActionsButton(): void {
-    const executeButton = document.getElementById("execute-actions-button") as HTMLButtonElement;
-    const actionsInput = document.getElementById("actions-input") as HTMLTextAreaElement;
-    const resultDiv = document.getElementById("execution-result") as HTMLElement;
+  private setupTranscriptInput(): void {
+    const input = document.getElementById("transcript-input") as HTMLInputElement;
+    const submitButton = document.getElementById("submit-transcript-button") as HTMLButtonElement;
 
-    if (!executeButton || !actionsInput || !resultDiv) {
-      Logger.warn("Test actions panel elements not found");
+    if (!input || !submitButton) {
+      Logger.warn("Transcript input elements not found");
       return;
     }
 
-    // Wire up example buttons
-    const exampleButtons = document.querySelectorAll(".example-btn");
-    exampleButtons.forEach((btn) => {
-      btn.addEventListener("click", () => {
-        const actionData = btn.getAttribute("data-action");
-        if (actionData) {
-          actionsInput.value = actionData;
-          // Format it nicely
-          try {
-            const parsed = JSON.parse(actionData);
-            actionsInput.value = JSON.stringify(parsed, null, 2);
-          } catch {
-            // If parsing fails, just use the raw data
-            actionsInput.value = actionData;
-          }
-        }
-      });
-    });
-
-    executeButton.addEventListener("click", async () => {
+    const submit = async (): Promise<void> => {
       if (!this.core.isInitialized()) {
-        resultDiv.className = "error";
-        resultDiv.textContent = "Error: Kali not initialized";
+        Logger.warn("Kali not initialized");
         return;
       }
 
-      const input = actionsInput.value.trim();
-      if (!input) {
-        resultDiv.className = "error";
-        resultDiv.textContent = "Error: No actions provided";
-        return;
-      }
+      const text = input.value.trim();
+      if (!text) return;
+
+      submitButton.disabled = true;
+      input.value = "";
 
       try {
-        const actions = JSON.parse(input);
-
-        if (!Array.isArray(actions)) {
-          resultDiv.className = "error";
-          resultDiv.textContent = "Error: Actions must be an array";
-          return;
-        }
-
-        executeButton.disabled = true;
-        resultDiv.className = "";
-        resultDiv.textContent = "Executing...";
-
-        const result = await this.core.testExecuteActions(actions);
-
-        if (result.success) {
-          resultDiv.className = "success";
-          resultDiv.textContent = "✅ Actions executed successfully";
-        } else {
-          resultDiv.className = "error";
-          resultDiv.textContent = "❌ Execution failed (check console for details)";
-        }
-      } catch (error) {
-        resultDiv.className = "error";
-        if (error instanceof SyntaxError) {
-          resultDiv.textContent = `❌ Invalid JSON: ${error.message}`;
-        } else {
-          resultDiv.textContent = `❌ Error: ${error}`;
-        }
+        await this.core.submitTranscript(text);
       } finally {
-        executeButton.disabled = false;
+        submitButton.disabled = false;
+        input.focus();
+      }
+    };
+
+    submitButton.addEventListener("click", () => void submit());
+    input.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        void submit();
       }
     });
   }
