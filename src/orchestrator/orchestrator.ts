@@ -238,6 +238,15 @@ export class Orchestrator {
   }
 
   /**
+   * Returns the prompt for the current player's pending decision, if any.
+   * Used for decision-aware turn announcements (e.g. path choice at position 0).
+   * @returns The decision prompt string, or null if no pending decision
+   */
+  getPendingDecisionPrompt(): string | null {
+    return this.turnManager.getPendingDecisionPrompt();
+  }
+
+  /**
    * Advances to the next player's turn.
    * AUTHORITY: Only the orchestrator can advance turns.
    * @returns The next player's ID and details, or null if unable to advance

@@ -22,6 +22,7 @@ export const enUS = {
     proactiveStart: "Start the game and explain the current situation.",
     turnAnnouncement:
       "{name}, it's your turn. You're at position {position}. Tell me what you rolled, or where you landed.",
+    turnAnnouncementWithDecision: "{name}, it's your turn. You're at position {position}. {prompt}",
     readyToPlay: "Ready to play!",
     yourTurn: "Your turn, {name}.",
     moved: "{name} moved to {position}.",

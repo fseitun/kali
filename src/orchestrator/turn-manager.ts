@@ -17,6 +17,63 @@ export class TurnManager {
   constructor(private stateManager: StateManager) {}
 
   /**
+   * Returns the prompt for the current player's pending decision, if any.
+   * Used to include decision prompts (e.g. path choice) in turn announcements.
+   * @returns The decision prompt string, or null if no pending decision
+   */
+  getPendingDecisionPrompt(): string | null {
+    const state = this.stateManager.getState();
+    const game = state.game as Record<string, unknown> | undefined;
+    const currentTurn = game?.turn as string | undefined;
+
+    if (!currentTurn) {
+      return null;
+    }
+
+    const decisionPoints = state.decisionPoints as
+      | Array<{
+          position: number;
+          requiredField: string;
+          prompt: string;
+        }>
+      | undefined;
+
+    if (!decisionPoints || decisionPoints.length === 0) {
+      return null;
+    }
+
+    try {
+      const players = state.players as Record<string, Record<string, unknown>> | undefined;
+      const currentPlayer = players?.[currentTurn];
+
+      if (!currentPlayer) {
+        return null;
+      }
+
+      const position = currentPlayer.position as number | undefined;
+
+      if (typeof position !== "number") {
+        return null;
+      }
+
+      const decisionPoint = decisionPoints.find((dp) => dp.position === position);
+      if (!decisionPoint) {
+        return null;
+      }
+
+      const fieldValue = currentPlayer[decisionPoint.requiredField];
+      if (fieldValue === null || fieldValue === undefined) {
+        return decisionPoint.prompt;
+      }
+
+      return null;
+    } catch (error) {
+      Logger.error("Error getting pending decision prompt:", error);
+      return null;
+    }
+  }
+
+  /**
    * Checks if the current player has pending decisions that must be resolved.
    * @returns true if there are unresolved decisions, false otherwise
    */

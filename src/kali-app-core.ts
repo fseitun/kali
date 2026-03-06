@@ -311,10 +311,17 @@ ${rules.examples.map((ex: string, i: number) => `${i + 1}. ${ex}`).join("\n")}
     const nextPlayer = await this.orchestrator.advanceTurn();
 
     if (nextPlayer) {
-      const message = t("game.turnAnnouncement", {
-        name: nextPlayer.name,
-        position: nextPlayer.position,
-      });
+      const pendingPrompt = this.orchestrator.getPendingDecisionPrompt();
+      const message = pendingPrompt
+        ? t("game.turnAnnouncementWithDecision", {
+            name: nextPlayer.name,
+            position: nextPlayer.position,
+            prompt: pendingPrompt,
+          })
+        : t("game.turnAnnouncement", {
+            name: nextPlayer.name,
+            position: nextPlayer.position,
+          });
       Logger.info(`🎯 Turn start sanity check: ${nextPlayer.name} at ${nextPlayer.position}`);
       await this.speechService.speak(message);
     }
