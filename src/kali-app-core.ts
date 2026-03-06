@@ -126,7 +126,7 @@ export class KaliAppCore {
       case "ollama":
         return new OllamaClient();
       case "mock":
-        return new MockLLMClient(CONFIG.MOCK_SCENARIO);
+        return new MockLLMClient();
       default:
         throw new Error(`Unknown LLM provider: ${CONFIG.LLM_PROVIDER}`);
     }

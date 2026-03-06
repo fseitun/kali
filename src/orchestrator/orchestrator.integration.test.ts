@@ -21,7 +21,7 @@ describe("Orchestrator Integration Tests", () => {
   let mockIndicator: StatusIndicator;
 
   function createScriptedLLM(responses: PrimitiveAction[][]): MockLLMClient {
-    return new MockLLMClient("scripted", [], responses);
+    return new MockLLMClient("scripted", responses);
   }
 
   function createMockServices(): void {
