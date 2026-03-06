@@ -4,13 +4,13 @@ import "./i18n";
 import { t } from "./i18n";
 import { KaliAppCore } from "./kali-app-core";
 import { DebugUIService } from "./services/debug-ui-service";
-import { SpeechService } from "./services/speech-service";
+import { NoOpSpeechService } from "./services/no-op-speech-service";
 import { Logger } from "./utils/logger";
 
 class KaliDebugApp {
   private core: KaliAppCore;
   private uiService: DebugUIService;
-  private speechService: SpeechService;
+  private speechService: NoOpSpeechService;
   private static instance: KaliDebugApp | null = null;
 
   constructor() {
@@ -24,7 +24,7 @@ class KaliDebugApp {
     const startButton = document.getElementById("start-button") as HTMLButtonElement;
 
     this.uiService = new DebugUIService(statusElement, consoleElement, startButton);
-    this.speechService = new SpeechService();
+    this.speechService = new NoOpSpeechService();
 
     Logger.setUIService(this.uiService);
 

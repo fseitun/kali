@@ -2,7 +2,7 @@ import type { StatusIndicator } from "../components/status-indicator";
 import { t } from "../i18n";
 import type { LLMClient } from "../llm/LLMClient";
 import { formatStateContext } from "../llm/system-prompt";
-import type { SpeechService } from "../services/speech-service";
+import type { ISpeechService } from "../services/speech-service";
 import type { StateManager } from "../state-manager";
 import { deepClone } from "../utils/deep-clone";
 import { Logger } from "../utils/logger";
@@ -41,7 +41,7 @@ export class Orchestrator {
   constructor(
     private llmClient: LLMClient,
     private stateManager: StateManager,
-    private speechService: SpeechService,
+    private speechService: ISpeechService,
     private statusIndicator: StatusIndicator,
     initialState: GameState,
   ) {

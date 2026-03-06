@@ -2,10 +2,17 @@ import { CONFIG } from "../config";
 import { getTtsLang } from "../locale-manager";
 import { Logger } from "../utils/logger";
 
+export interface ISpeechService {
+  prime(): void;
+  speak(text: string): Promise<void>;
+  loadSound(name: string, url: string): Promise<void>;
+  playSound(name: string): void;
+}
+
 /**
  * Manages text-to-speech narration and sound effect playback for voice-only interaction.
  */
-export class SpeechService {
+export class SpeechService implements ISpeechService {
   private audioContext?: AudioContext;
   private sounds: Map<string, AudioBuffer> = new Map();
   private primed = false;

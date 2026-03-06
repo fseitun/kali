@@ -1,4 +1,4 @@
-import type { SpeechService } from "../services/speech-service";
+import type { ISpeechService } from "../services/speech-service";
 import { Logger } from "../utils/logger";
 import type { GameModule } from "./types";
 
@@ -43,7 +43,7 @@ export class GameLoader {
    * @param module - The game module containing sound effect definitions
    * @param speechService - Service to load the sounds into
    */
-  async loadSoundEffects(module: GameModule, speechService: SpeechService): Promise<void> {
+  async loadSoundEffects(module: GameModule, speechService: ISpeechService): Promise<void> {
     if (!module.soundEffects) {
       Logger.info("No sound effects to load");
       return;

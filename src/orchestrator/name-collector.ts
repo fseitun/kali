@@ -1,7 +1,7 @@
 import type { GameMetadata } from "../game-loader/types";
 import { t, getNumberWords, getConfirmationWords } from "../i18n";
 import type { LLMClient } from "../llm/LLMClient";
-import type { SpeechService } from "../services/speech-service";
+import type { ISpeechService } from "../services/speech-service";
 import { Logger } from "../utils/logger";
 import {
   validateName,
@@ -25,7 +25,7 @@ export class NameCollector {
   private maxPlayers: number;
 
   constructor(
-    private speechService: SpeechService,
+    private speechService: ISpeechService,
     private gameName: string,
     private enableDirectTranscription: () => void,
     private llmClient: LLMClient,

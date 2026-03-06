@@ -9,7 +9,7 @@ import { OllamaClient } from "./llm/OllamaClient";
 import { NameCollector } from "./orchestrator/name-collector";
 import { Orchestrator } from "./orchestrator/orchestrator";
 import { GamePhase, type PrimitiveAction } from "./orchestrator/types";
-import type { SpeechService } from "./services/speech-service";
+import type { ISpeechService } from "./services/speech-service";
 import type { IUIService } from "./services/ui-service";
 import { StateManager } from "./state-manager";
 import { checkBrowserSupport } from "./utils/browser-support";
@@ -28,7 +28,7 @@ export class KaliAppCore {
 
   constructor(
     private uiService: IUIService,
-    private speechService: SpeechService,
+    private speechService: ISpeechService,
   ) {}
 
   async initialize(): Promise<void> {
