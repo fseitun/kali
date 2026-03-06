@@ -37,7 +37,9 @@ class KaliDebugApp {
 
     Logger.setUIService(this.uiService);
 
-    this.core = new KaliAppCore(this.uiService, this.speechService);
+    this.core = new KaliAppCore(this.uiService, this.speechService, {
+      skipWakeWord: true,
+    });
 
     statusElement.textContent = t("ui.clickToStart");
     this.setupStartButton(startButton);

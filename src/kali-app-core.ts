@@ -15,7 +15,7 @@ import { StateManager } from "./state-manager";
 import { checkBrowserSupport } from "./utils/browser-support";
 import { validateConfig } from "./utils/config-validator";
 import { Logger } from "./utils/logger";
-import { WakeWordDetector } from "./wake-word";
+import type { WakeWordDetector } from "./wake-word";
 
 export class KaliAppCore {
   private wakeWordDetector: WakeWordDetector | null = null;
@@ -29,6 +29,7 @@ export class KaliAppCore {
   constructor(
     private uiService: IUIService,
     private speechService: ISpeechService,
+    private options?: { skipWakeWord?: boolean },
   ) {}
 
   async initialize(): Promise<void> {
@@ -41,7 +42,11 @@ export class KaliAppCore {
 
       checkBrowserSupport();
       await this.initializeOrchestrator();
-      await this.initializeWakeWord();
+      if (!this.options?.skipWakeWord) {
+        await this.initializeWakeWord();
+      } else {
+        Logger.info("Skipping Vosk (debug mode - text input only)");
+      }
 
       const shouldStartGame = await this.handleSavedGameOrSetup();
 
@@ -159,6 +164,7 @@ ${rules.examples.map((ex: string, i: number) => `${i + 1}. ${ex}`).join("\n")}
     Logger.mic("Initializing speech recognition...");
     const indicator = this.uiService.getStatusIndicator();
 
+    const { WakeWordDetector } = await import("./wake-word");
     this.wakeWordDetector = new WakeWordDetector(
       () => this.handleWakeWord(),
       (text) => this.handleTranscription(text),
@@ -221,7 +227,7 @@ ${rules.examples.map((ex: string, i: number) => `${i + 1}. ${ex}`).join("\n")}
   }
 
   private async runNameCollection(): Promise<void> {
-    if (!this.stateManager || !this.wakeWordDetector || !this.gameModule || !this.orchestrator) {
+    if (!this.stateManager || !this.gameModule || !this.orchestrator) {
       throw new Error("Cannot run name collection: components not initialized");
     }
 
@@ -261,7 +267,9 @@ ${rules.examples.map((ex: string, i: number) => `${i + 1}. ${ex}`).join("\n")}
       });
 
       this.currentNameHandler = null;
-      this.wakeWordDetector.disableDirectTranscription();
+      if (this.wakeWordDetector) {
+        this.wakeWordDetector.disableDirectTranscription();
+      }
       this.uiService.setTranscriptInputEnabled?.(false);
 
       // Let orchestrator handle state mutations
