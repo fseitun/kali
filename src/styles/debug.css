@@ -73,25 +73,11 @@
   word-wrap: break-word;
 }
 
-.transcript-input-panel {
-  background: rgba(0, 100, 255, 0.1);
-  border: 1px solid rgba(0, 100, 255, 0.5);
-  border-radius: 4px;
-  padding: 1rem;
-  margin: 1rem 0;
-  text-align: left;
-}
-
-.transcript-input-panel h3 {
-  color: rgba(0, 150, 255, 0.9);
-  margin: 0 0 0.5rem 0;
-  font-size: 1rem;
-}
-
 .transcript-row {
   display: flex;
   gap: 0.5rem;
   align-items: center;
+  margin: 1rem 0;
 }
 
 .transcript-row input {
