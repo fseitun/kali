@@ -25,15 +25,15 @@
 
         <div class="transcript-input-panel">
           <h3>Free Text (skips wake word + STT, LLM interprets)</h3>
-          <div class="transcript-row">
+          <form id="transcript-form" class="transcript-row">
             <input
               id="transcript-input"
               type="text"
               placeholder="Type a command: I rolled 5, say hello, etc."
               autocomplete="off"
             />
-            <button id="submit-transcript-button" disabled>Send</button>
-          </div>
+            <button type="submit" id="submit-transcript-button" disabled>Send</button>
+          </form>
         </div>
 
         <div id="console"></div>

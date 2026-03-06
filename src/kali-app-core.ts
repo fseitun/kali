@@ -355,6 +355,14 @@ ${rules.examples.map((ex: string, i: number) => `${i + 1}. ${ex}`).join("\n")}
   }
 
   /**
+   * Returns true when the core can accept transcript input (initialized or name collection active).
+   * Used by debug UI to allow typing names during setup.
+   */
+  canAcceptTranscript(): boolean {
+    return this.initialized || this.currentNameHandler !== null;
+  }
+
+  /**
    * Debug: Submit text directly (skips wake word + STT), LLM interprets.
    * Same path as voice: text → LLM → primitives → orchestrator → TTS.
    * @param text - Free-form command (e.g. "I rolled 5", "say hello")

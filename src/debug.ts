@@ -98,22 +98,25 @@ class KaliDebugApp {
   }
 
   private setupTranscriptInput(): void {
+    const form = document.getElementById("transcript-form") as HTMLFormElement;
     const input = document.getElementById("transcript-input") as HTMLInputElement;
     const submitButton = document.getElementById("submit-transcript-button") as HTMLButtonElement;
 
-    if (!input || !submitButton) {
+    if (!form || !input || !submitButton) {
       Logger.warn("Transcript input elements not found");
       return;
     }
 
     const submit = async (): Promise<void> => {
-      if (!this.core.isInitialized()) {
+      const text = input.value.trim();
+      if (!text) return;
+
+      Logger.info("User entered:", text);
+
+      if (!this.core.canAcceptTranscript()) {
         Logger.warn("Kali not initialized");
         return;
       }
-
-      const text = input.value.trim();
-      if (!text) return;
 
       submitButton.disabled = true;
       input.value = "";
@@ -127,11 +130,9 @@ class KaliDebugApp {
     };
 
     submitButton.addEventListener("click", () => void submit());
-    input.addEventListener("keydown", (e) => {
-      if (e.key === "Enter") {
-        e.preventDefault();
-        void submit();
-      }
+    form.addEventListener("submit", (e) => {
+      e.preventDefault();
+      void submit();
     });
   }
 
