@@ -1,4 +1,4 @@
-import { CONFIG } from "../config";
+import { getLocale } from "../locale-manager";
 import { enUS } from "./locales/en-US";
 import { esAR } from "./locales/es-AR";
 
@@ -10,7 +10,7 @@ const locales: Record<string, TranslationObject> = {
   "en-US": enUS,
 };
 
-let currentLocale: TranslationObject = locales[CONFIG.LOCALE] ?? esAR;
+let currentLocale: TranslationObject = locales[getLocale()] ?? esAR;
 
 export function setLocale(locale: string): void {
   if (locale in locales) {

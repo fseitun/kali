@@ -1,4 +1,5 @@
 import { CONFIG } from "../config";
+import { getTtsLang } from "../locale-manager";
 import { Logger } from "../utils/logger";
 
 /**
@@ -46,7 +47,7 @@ export class SpeechService {
       const utterance = new SpeechSynthesisUtterance(text);
       utterance.rate = CONFIG.TTS.RATE;
       utterance.pitch = CONFIG.TTS.PITCH;
-      utterance.lang = CONFIG.TTS.VOICE_LANG;
+      utterance.lang = getTtsLang();
 
       utterance.onend = () => {
         resolve();

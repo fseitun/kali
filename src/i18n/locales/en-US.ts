@@ -19,6 +19,10 @@ export const enUS = {
     extractionFailed: "I didn't catch that.",
   },
   game: {
+    proactiveStart: "Start the game and explain the current situation.",
+    turnAnnouncement:
+      "{name}, it's your turn. You're at position {position}. Tell me what you rolled, or where you landed.",
+    readyToPlay: "Ready to play!",
     yourTurn: "Your turn, {name}.",
     moved: "{name} moved to {position}.",
     winner: "{name} won! Congratulations!",

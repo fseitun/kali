@@ -81,6 +81,7 @@ export class KaliAppCore {
       Logger.error(`Error: ${error}`);
       const indicator = this.uiService.getStatusIndicator();
       indicator.setState("idle");
+      await this.speechService.speak(t("ui.initializationFailed"));
     }
   }
 
@@ -211,7 +212,7 @@ ${rules.examples.map((ex: string, i: number) => `${i + 1}. ${ex}`).join("\n")}
 
     Logger.info("🎮 Starting game proactively");
     const { success, shouldAdvanceTurn } = await this.orchestrator.handleTranscript(
-      "Start the game and explain the current situation",
+      t("game.proactiveStart"),
     );
 
     if (success && shouldAdvanceTurn) {
@@ -300,7 +301,10 @@ ${rules.examples.map((ex: string, i: number) => `${i + 1}. ${ex}`).join("\n")}
     const nextPlayer = await this.orchestrator.advanceTurn();
 
     if (nextPlayer) {
-      const message = `${nextPlayer.name}, it's your turn. You're at position ${nextPlayer.position}. Tell me what you rolled, or where you landed.`;
+      const message = t("game.turnAnnouncement", {
+        name: nextPlayer.name,
+        position: nextPlayer.position,
+      });
       Logger.info(`🎯 Turn start sanity check: ${nextPlayer.name} at ${nextPlayer.position}`);
       await this.speechService.speak(message);
     }
@@ -351,6 +355,15 @@ ${rules.examples.map((ex: string, i: number) => `${i + 1}. ${ex}`).join("\n")}
   }
 
   /**
+   * Debug: Submit text directly (skips wake word + STT), LLM interprets.
+   * Same path as voice: text → LLM → primitives → orchestrator → TTS.
+   * @param text - Free-form command (e.g. "I rolled 5", "say hello")
+   */
+  async submitTranscript(text: string): Promise<void> {
+    await this.handleTranscription(text);
+  }
+
+  /**
    * Test-only: Execute actions directly without LLM interpretation.
    * Only available when orchestrator is initialized.
    * @param actions - Array of primitive actions to validate and execute
@@ -388,6 +401,6 @@ ${rules.examples.map((ex: string, i: number) => `${i + 1}. ${ex}`).join("\n")}
     this.orchestrator.transitionPhase(GamePhase.PLAYING);
 
     Logger.info("✅ Skipped to PLAYING phase");
-    await this.speechService.speak("Ready to play!");
+    await this.speechService.speak(t("game.readyToPlay"));
   }
 }

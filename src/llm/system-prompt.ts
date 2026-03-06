@@ -1,4 +1,4 @@
-import { CONFIG } from "../config";
+import { getLocale } from "../locale-manager";
 
 const LANGUAGE_INSTRUCTIONS: Record<string, string> = {
   "es-AR":
@@ -7,7 +7,7 @@ const LANGUAGE_INSTRUCTIONS: Record<string, string> = {
 };
 
 function getLanguageInstruction(): string {
-  return LANGUAGE_INSTRUCTIONS[CONFIG.LOCALE] ?? LANGUAGE_INSTRUCTIONS["en-US"];
+  return LANGUAGE_INSTRUCTIONS[getLocale()] ?? LANGUAGE_INSTRUCTIONS["en-US"];
 }
 
 const NARRATION_EXAMPLES: Record<string, { good: string[]; bad: string[] }> = {
@@ -36,7 +36,7 @@ const NARRATION_EXAMPLES: Record<string, { good: string[]; bad: string[] }> = {
 };
 
 function getNarrationExamples(): string {
-  const examples = NARRATION_EXAMPLES[CONFIG.LOCALE] ?? NARRATION_EXAMPLES["en-US"];
+  const examples = NARRATION_EXAMPLES[getLocale()] ?? NARRATION_EXAMPLES["en-US"];
   return `- Examples:
   * GOOD: "${examples.good[0]}"
   * BAD: "${examples.bad[0]}"
@@ -51,7 +51,7 @@ const EXAMPLE_NARRATION: Record<string, string> = {
 };
 
 function getExampleNarration(): string {
-  return EXAMPLE_NARRATION[CONFIG.LOCALE] ?? EXAMPLE_NARRATION["en-US"];
+  return EXAMPLE_NARRATION[getLocale()] ?? EXAMPLE_NARRATION["en-US"];
 }
 
 function getBasePrimitivesDocs(): string {

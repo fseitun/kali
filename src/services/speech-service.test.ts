@@ -8,9 +8,13 @@ vi.mock("../config", () => ({
     TTS: {
       RATE: 0.9,
       PITCH: 1.0,
-      VOICE_LANG: "en-US",
     },
   },
+}));
+
+// Mock locale-manager (getTtsLang used by SpeechService for TTS language)
+vi.mock("../locale-manager", () => ({
+  getTtsLang: () => "en-US",
 }));
 
 // Mock Logger

@@ -19,6 +19,10 @@ export const esAR = {
     extractionFailed: "No te escuché bien.",
   },
   game: {
+    proactiveStart: "Empezamos. Te explico la situación.",
+    turnAnnouncement:
+      "{name}, te toca. Estás en el casillero {position}. Decime qué sacaste o dónde caíste.",
+    readyToPlay: "¡Listos para jugar!",
     yourTurn: "Te toca, {name}.",
     moved: "{name} avanzó al casillero {position}.",
     winner: "¡{name} ganó! ¡Felicitaciones!",
