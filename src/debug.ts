@@ -41,7 +41,6 @@ class KaliDebugApp {
 
     statusElement.textContent = t("ui.clickToStart");
     this.setupStartButton(startButton);
-    this.setupSkipToPlayingButton();
     this.setupTranscriptInput();
   }
 
@@ -59,49 +58,10 @@ class KaliDebugApp {
       this.speechService.prime();
       this.uiService.setButtonState(t("ui.status.initializing"), true);
 
-      // Show skip button as soon as initialization starts
-      const skipButton = document.getElementById("skip-to-playing-button") as HTMLButtonElement;
-      skipButton.style.display = "block";
-
       await this.core.initialize();
-
-      // Hide skip button after initialization completes
-      skipButton.style.display = "none";
 
       const submitButton = document.getElementById("submit-transcript-button") as HTMLButtonElement;
       if (submitButton) submitButton.disabled = false;
-    });
-  }
-
-  private setupSkipToPlayingButton(): void {
-    const skipButton = document.getElementById("skip-to-playing-button") as HTMLButtonElement;
-
-    if (!skipButton) {
-      Logger.warn("Skip to playing button not found");
-      return;
-    }
-
-    skipButton.addEventListener("click", async () => {
-      try {
-        skipButton.disabled = true;
-        skipButton.textContent = "⏳ Skipping...";
-
-        await this.core.skipToPlaying();
-
-        skipButton.style.display = "none";
-
-        const submitButton = document.getElementById(
-          "submit-transcript-button",
-        ) as HTMLButtonElement;
-        if (submitButton) submitButton.disabled = false;
-
-        this.uiService.updateStatus("Ready to test!");
-        Logger.info("✅ Successfully skipped to PLAYING phase");
-      } catch (error) {
-        Logger.error("Failed to skip to playing:", error);
-        skipButton.disabled = false;
-        skipButton.textContent = "⚡ Skip to Playing";
-      }
     });
   }
 

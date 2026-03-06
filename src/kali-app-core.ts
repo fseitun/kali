@@ -396,23 +396,4 @@ ${rules.examples.map((ex: string, i: number) => `${i + 1}. ${ex}`).join("\n")}
 
     return result;
   }
-
-  /**
-   * Debug-only: Skip name collection and force game to PLAYING phase with default players.
-   * Useful for testing without waiting through name collection timeouts.
-   */
-  async skipToPlaying(): Promise<void> {
-    if (!this.orchestrator || !this.gameModule) {
-      throw new Error("Cannot skip to playing: core components not initialized");
-    }
-
-    Logger.info("🚀 Skipping to PLAYING phase with default players");
-
-    // Let orchestrator handle state setup
-    this.orchestrator.setupPlayers(["Player 1", "Player 2"]);
-    this.orchestrator.transitionPhase(GamePhase.PLAYING);
-
-    Logger.info("✅ Skipped to PLAYING phase");
-    await this.speechService.speak(t("game.readyToPlay"));
-  }
 }
