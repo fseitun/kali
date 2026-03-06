@@ -1,5 +1,5 @@
 import type { GameMetadata } from "../game-loader/types";
-import { t, getNumberWords, getConfirmationWords } from "../i18n";
+import { t, getNumberWords, parseConfirmation } from "../i18n";
 import type { LLMClient } from "../llm/LLMClient";
 import type { ISpeechService } from "../services/speech-service";
 import { Logger } from "../utils/logger";
@@ -224,18 +224,13 @@ export class NameCollector {
         return;
       }
 
-      const lower = text.toLowerCase().trim();
-      const confirmWords = getConfirmationWords();
-
-      if (confirmWords.yes.some((word) => lower.includes(word))) {
+      const confirmation = parseConfirmation(text);
+      if (confirmation === "yes" || confirmation === "unclear") {
         await this.speechService.speak(t("setup.nameConfirmYes", { name }));
         resolve(name);
-      } else if (confirmWords.no.some((word) => lower.includes(word))) {
+      } else {
         await this.speechService.speak(t("setup.nameConfirmRetry"));
         this.retryNameCollection(onTranscript, playerNumber, resolve);
-      } else {
-        await this.speechService.speak(t("setup.nameConfirmYes", { name }));
-        resolve(name);
       }
     };
 
@@ -330,18 +325,13 @@ export class NameCollector {
         return;
       }
 
-      const lower = text.toLowerCase().trim();
-      const confirmWords = getConfirmationWords();
-
-      if (confirmWords.yes.some((word) => lower.includes(word))) {
+      const confirmation = parseConfirmation(text);
+      if (confirmation === "yes" || confirmation === "unclear") {
         await this.speechService.speak(t("setup.nameConfirmYes", { name }));
         resolve(name);
-      } else if (confirmWords.no.some((word) => lower.includes(word))) {
+      } else {
         await this.speechService.speak(t("setup.nameConfirmRetry"));
         this.retryNameCollection(onTranscript, playerNumber, resolve);
-      } else {
-        await this.speechService.speak(t("setup.nameConfirmYes", { name }));
-        resolve(name);
       }
     };
 
@@ -426,13 +416,11 @@ export class NameCollector {
           return;
         }
 
-        const lower = text.toLowerCase().trim();
-        const confirmWords = getConfirmationWords();
-
-        if (confirmWords.yes.some((word) => lower.includes(word))) {
+        const confirmation = parseConfirmation(text);
+        if (confirmation === "yes") {
           await this.speechService.speak(t("setup.nameConflictPerfect"));
           resolve(suggestion);
-        } else if (confirmWords.no.some((word) => lower.includes(word))) {
+        } else if (confirmation === "no") {
           await this.speechService.speak(t("setup.nameConflictAlternative"));
           await this.resolveAlternativeName(onTranscript, original, resolve);
         } else {

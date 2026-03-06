@@ -282,6 +282,32 @@ const SQUARE_EFFECT_ALLOWED_PLAYER_KEYS = new Set([
   "inverseMode",
 ]);
 
+function validateSquareEffectPathRestriction(
+  path: string,
+  index: number,
+  orchestrator?: Orchestrator,
+): ValidationResult {
+  if (!orchestrator?.isProcessingEffect()) return { valid: true };
+
+  const playerMatch = path.match(/^players\.([^.]+)\.(.+)$/);
+  if (!playerMatch) return { valid: true };
+
+  const key = playerMatch[2];
+  if (SQUARE_EFFECT_FORBIDDEN_PLAYER_KEYS.has(key)) {
+    return {
+      valid: false,
+      error: `SET_STATE at index ${index}: Cannot set players.*.${key} during square effect processing. The orchestrator applies game-rule state; use NARRATE only.`,
+    };
+  }
+  if (!SQUARE_EFFECT_ALLOWED_PLAYER_KEYS.has(key)) {
+    return {
+      valid: false,
+      error: `SET_STATE at index ${index}: Path "${path}" is not allowed during square effect processing. Only explicit user-choice fields (e.g. pathChoice) are permitted.`,
+    };
+  }
+  return { valid: true };
+}
+
 function validateSetState(
   action: PrimitiveAction,
   state: GameState,
@@ -301,24 +327,12 @@ function validateSetState(
   }
 
   if ("path" in action && typeof action.path === "string") {
-    if (orchestrator?.isProcessingEffect()) {
-      const playerMatch = action.path.match(/^players\.([^.]+)\.(.+)$/);
-      if (playerMatch) {
-        const key = playerMatch[2];
-        if (SQUARE_EFFECT_FORBIDDEN_PLAYER_KEYS.has(key)) {
-          return {
-            valid: false,
-            error: `SET_STATE at index ${index}: Cannot set players.*.${key} during square effect processing. The orchestrator applies game-rule state; use NARRATE only.`,
-          };
-        }
-        if (!SQUARE_EFFECT_ALLOWED_PLAYER_KEYS.has(key)) {
-          return {
-            valid: false,
-            error: `SET_STATE at index ${index}: Path "${action.path}" is not allowed during square effect processing. Only explicit user-choice fields (e.g. pathChoice) are permitted.`,
-          };
-        }
-      }
-    }
+    const squareEffectValidation = validateSquareEffectPathRestriction(
+      action.path,
+      index,
+      orchestrator,
+    );
+    if (!squareEffectValidation.valid) return squareEffectValidation;
 
     if (action.path === "game.turn") {
       const game = state.game;

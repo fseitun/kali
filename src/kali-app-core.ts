@@ -55,32 +55,27 @@ export class KaliAppCore {
       this.uiService.hideButton();
       indicator.setState("listening");
 
+      const defaultStatus = t("ui.wakeWordReady", { wakeWord: CONFIG.WAKE_WORD.TEXT[0] });
       if (shouldStartGame) {
-        this.uiService.updateStatus(t("ui.wakeWordReady", { wakeWord: CONFIG.WAKE_WORD.TEXT[0] }));
+        this.uiService.updateStatus(defaultStatus);
         Logger.info("Kali is ready");
         await this.proactiveGameStart();
-      } else {
-        if (this.stateManager) {
-          const state = this.stateManager.getState();
-          const game = state.game as Record<string, unknown> | undefined;
-          if (game?.phase === GamePhase.PLAYING) {
-            const message = t("ui.savedGameDetected", {
-              wakeWord: CONFIG.WAKE_WORD.TEXT[0],
-            });
-            this.uiService.updateStatus(message);
-            await this.speechService.speak(message);
-          } else {
-            this.uiService.updateStatus(
-              t("ui.wakeWordReady", { wakeWord: CONFIG.WAKE_WORD.TEXT[0] }),
-            );
-          }
-        } else {
-          this.uiService.updateStatus(
-            t("ui.wakeWordReady", { wakeWord: CONFIG.WAKE_WORD.TEXT[0] }),
-          );
-        }
-        Logger.info("Kali is ready");
+        return;
       }
+
+      let statusMessage = defaultStatus;
+      if (this.stateManager) {
+        const state = this.stateManager.getState();
+        const game = state.game as Record<string, unknown> | undefined;
+        if (game?.phase === GamePhase.PLAYING) {
+          statusMessage = t("ui.savedGameDetected", { wakeWord: CONFIG.WAKE_WORD.TEXT[0] });
+        }
+      }
+      this.uiService.updateStatus(statusMessage);
+      if (statusMessage !== defaultStatus) {
+        await this.speechService.speak(statusMessage);
+      }
+      Logger.info("Kali is ready");
     } catch (error) {
       this.uiService.setButtonState(t("ui.startKali"), false);
       this.uiService.updateStatus(t("ui.initializationFailed"));

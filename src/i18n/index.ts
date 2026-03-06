@@ -52,3 +52,12 @@ export function getNumberWords(): string[] {
 export function getConfirmationWords(): { yes: string[]; no: string[] } {
   return currentLocale.confirmationWords;
 }
+
+/** Parses user text for yes/no confirmation. Returns "unclear" when ambiguous. */
+export function parseConfirmation(text: string): "yes" | "no" | "unclear" {
+  const lower = text.toLowerCase().trim();
+  const { yes, no } = getConfirmationWords();
+  if (yes.some((word) => lower.includes(word))) return "yes";
+  if (no.some((word) => lower.includes(word))) return "no";
+  return "unclear";
+}
