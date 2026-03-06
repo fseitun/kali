@@ -1,3 +1,6 @@
 {
-  "setup-worktree": ["npm ci", "cp $ROOT_WORKTREE_PATH/.env .env"]
+  "setup-worktree": [
+    "npm install",
+    "[ -f \"$ROOT_WORKTREE_PATH/.env\" ] && cp \"$ROOT_WORKTREE_PATH/.env\" .env || true"
+  ]
 }
