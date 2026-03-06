@@ -64,6 +64,9 @@ export class DebugUIService implements IUIService {
     const timestamp = new Date().toLocaleTimeString();
     const logEntry = document.createElement("div");
     logEntry.textContent = `[${timestamp}] ${message}`;
+    if (message.startsWith("🔊")) {
+      logEntry.classList.add("log-narration");
+    }
     this.consoleElement.appendChild(logEntry);
     this.consoleElement.scrollTop = this.consoleElement.scrollHeight;
   }
