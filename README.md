@@ -19,6 +19,10 @@ A voice-first game moderator for kids to play board games independently. Uses sp
    VITE_GEMINI_API_KEY=your_api_key_here
    VITE_LLM_PROVIDER=gemini
 
+   # Or use Groq (fast, free tier available)
+   VITE_GROQ_API_KEY=your_groq_api_key_here
+   VITE_LLM_PROVIDER=groq
+
    # Or use Ollama (local, slow but free)
    VITE_LLM_PROVIDER=ollama
    ```

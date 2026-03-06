@@ -1,5 +1,9 @@
 export const CONFIG = {
-  LLM_PROVIDER: (import.meta.env.VITE_LLM_PROVIDER ?? "gemini") as "ollama" | "gemini" | "mock",
+  LLM_PROVIDER: (import.meta.env.VITE_LLM_PROVIDER ?? "gemini") as
+    | "ollama"
+    | "gemini"
+    | "groq"
+    | "mock",
 
   LOCALE: (import.meta.env.VITE_LOCALE ?? "es-AR") as "es-AR" | "en-US",
 
@@ -23,6 +27,12 @@ export const CONFIG = {
     API_URL:
       "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent",
     API_KEY: import.meta.env.VITE_GEMINI_API_KEY,
+  },
+
+  GROQ: {
+    API_URL: "https://api.groq.com/openai/v1/chat/completions",
+    API_KEY: import.meta.env.VITE_GROQ_API_KEY,
+    MODEL: "llama-3.3-70b-versatile",
   },
 
   AUDIO: {

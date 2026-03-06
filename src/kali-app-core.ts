@@ -3,6 +3,7 @@ import { GameLoader } from "./game-loader";
 import type { GameModule } from "./game-loader";
 import { t } from "./i18n";
 import { GeminiClient } from "./llm/GeminiClient";
+import { GroqClient } from "./llm/GroqClient";
 import type { LLMClient } from "./llm/LLMClient";
 import { MockLLMClient } from "./llm/MockLLMClient";
 import { OllamaClient } from "./llm/OllamaClient";
@@ -128,6 +129,8 @@ export class KaliAppCore {
     switch (CONFIG.LLM_PROVIDER) {
       case "gemini":
         return new GeminiClient();
+      case "groq":
+        return new GroqClient();
       case "ollama":
         return new OllamaClient();
       case "mock":
