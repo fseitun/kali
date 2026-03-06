@@ -19,6 +19,13 @@
     "test:coverage": "vitest run --coverage",
     "prepare": "husky"
   },
+  "lint-staged": {
+    "*.{ts,tsx,js}": [
+      "eslint --fix",
+      "prettier --write"
+    ],
+    "*.{json,md,css,html,yaml,yml}": "prettier --write"
+  },
   "keywords": [
     "voice",
     "game",
@@ -34,6 +41,7 @@
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-import-x": "^4.16.1",
     "husky": "^9.1.7",
+    "lint-staged": "^15.4.3",
     "prettier": "^3.8.1",
     "typescript": "^5.9.3",
     "typescript-eslint": "^8.56.1",
