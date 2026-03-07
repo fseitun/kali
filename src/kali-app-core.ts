@@ -2,6 +2,7 @@ import { CONFIG } from "./config";
 import { GameLoader } from "./game-loader";
 import type { GameModule } from "./game-loader";
 import { t } from "./i18n";
+import { DeepInfraClient } from "./llm/DeepInfraClient";
 import { GeminiClient } from "./llm/GeminiClient";
 import { GroqClient } from "./llm/GroqClient";
 import type { LLMClient } from "./llm/LLMClient";
@@ -139,6 +140,8 @@ export class KaliAppCore {
         return new GroqClient();
       case "openrouter":
         return new OpenRouterClient();
+      case "deepinfra":
+        return new DeepInfraClient();
       case "ollama":
         return new OllamaClient();
       case "mock":

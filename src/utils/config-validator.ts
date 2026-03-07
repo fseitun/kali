@@ -10,7 +10,7 @@ export class ConfigValidationError extends Error {
 export function validateConfig(): void {
   if (!CONFIG.LLM_PROVIDER) {
     throw new ConfigValidationError(
-      'VITE_LLM_PROVIDER environment variable is required. Set it to "gemini", "groq", "openrouter", "ollama", or "mock".',
+      'VITE_LLM_PROVIDER environment variable is required. Set it to "gemini", "groq", "openrouter", "deepinfra", "ollama", or "mock".',
     );
   }
 
@@ -19,10 +19,11 @@ export function validateConfig(): void {
     CONFIG.LLM_PROVIDER !== "gemini" &&
     CONFIG.LLM_PROVIDER !== "groq" &&
     CONFIG.LLM_PROVIDER !== "openrouter" &&
+    CONFIG.LLM_PROVIDER !== "deepinfra" &&
     CONFIG.LLM_PROVIDER !== "mock"
   ) {
     throw new ConfigValidationError(
-      `Invalid VITE_LLM_PROVIDER: "${CONFIG.LLM_PROVIDER}". Must be "gemini", "groq", "openrouter", "ollama", or "mock".`,
+      `Invalid VITE_LLM_PROVIDER: "${CONFIG.LLM_PROVIDER}". Must be "gemini", "groq", "openrouter", "deepinfra", "ollama", or "mock".`,
     );
   }
 
@@ -49,6 +50,15 @@ export function validateConfig(): void {
       throw new ConfigValidationError(
         "VITE_OPENROUTER_API_KEY environment variable is required when using OpenRouter provider. " +
           "Get your API key from https://openrouter.ai/keys",
+      );
+    }
+  }
+
+  if (CONFIG.LLM_PROVIDER === "deepinfra") {
+    if (!CONFIG.DEEPINFRA.API_KEY) {
+      throw new ConfigValidationError(
+        "VITE_DEEPINFRA_API_KEY environment variable is required when using DeepInfra provider. " +
+          "Get your API key from https://deepinfra.com/dash/api_keys",
       );
     }
   }

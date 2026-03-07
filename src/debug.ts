@@ -21,6 +21,8 @@ function getLLMDisplayLabel(): string {
       return `Groq (${CONFIG.GROQ.MODEL})`;
     case "openrouter":
       return `OpenRouter (${CONFIG.OPENROUTER.MODEL})`;
+    case "deepinfra":
+      return `DeepInfra (${CONFIG.DEEPINFRA.MODEL})`;
     case "ollama":
       return `Ollama (${CONFIG.OLLAMA.MODEL})`;
     case "mock":

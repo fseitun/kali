@@ -4,6 +4,7 @@ export const CONFIG = {
     | "gemini"
     | "groq"
     | "openrouter"
+    | "deepinfra"
     | "mock",
 
   LOCALE: (import.meta.env.VITE_LOCALE ?? "es-AR") as "es-AR" | "en-US",
@@ -42,6 +43,12 @@ export const CONFIG = {
     API_URL: "https://openrouter.ai/api/v1/chat/completions",
     API_KEY: import.meta.env.VITE_OPENROUTER_API_KEY,
     MODEL: import.meta.env.VITE_OPENROUTER_MODEL ?? "google/gemini-2.0-flash-001",
+  },
+
+  DEEPINFRA: {
+    API_URL: "https://api.deepinfra.com/v1/openai/chat/completions",
+    API_KEY: import.meta.env.VITE_DEEPINFRA_API_KEY,
+    MODEL: import.meta.env.VITE_DEEPINFRA_MODEL ?? "Qwen/Qwen2.5-72B-Instruct",
   },
 
   AUDIO: {
