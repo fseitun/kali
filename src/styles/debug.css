@@ -23,6 +23,11 @@
   border-radius: 4px;
 }
 
+.llm-badge {
+  color: rgba(0, 200, 255, 0.9);
+  border-color: rgba(0, 200, 255, 0.9);
+}
+
 #console {
   background: var(--console-bg);
   border: 1px solid var(--accent-color);

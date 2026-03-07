@@ -1,12 +1,28 @@
 import "./styles/shared.css";
 import "./styles/debug.css";
 import "./i18n";
+import { CONFIG } from "./config";
 import { t } from "./i18n";
 import { KaliAppCore } from "./kali-app-core";
 import { DebugUIService } from "./services/debug-ui-service";
 import { NoOpSpeechService } from "./services/no-op-speech-service";
 import { getLogCategories, setLogCategoryEnabled } from "./utils/debug-options";
 import { Logger } from "./utils/logger";
+
+function getLLMDisplayLabel(): string {
+  switch (CONFIG.LLM_PROVIDER) {
+    case "gemini":
+      return `Gemini (${CONFIG.GEMINI.MODEL.replace(/^models\//, "")})`;
+    case "groq":
+      return `Groq (${CONFIG.GROQ.MODEL})`;
+    case "ollama":
+      return `Ollama (${CONFIG.OLLAMA.MODEL})`;
+    case "mock":
+      return "Mock";
+    default:
+      return String(CONFIG.LLM_PROVIDER);
+  }
+}
 
 class KaliDebugApp {
   private core: KaliAppCore;
@@ -42,6 +58,10 @@ class KaliDebugApp {
     });
 
     statusElement.textContent = t("ui.clickToStart");
+
+    const llmIndicator = document.getElementById("llm-indicator");
+    if (llmIndicator) llmIndicator.textContent = getLLMDisplayLabel();
+
     this.setupLogOptions();
     this.setupStartButton(startButton);
     this.setupTranscriptInput();

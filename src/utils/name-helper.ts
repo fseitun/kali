@@ -87,9 +87,13 @@ export function areNamesSimilar(name1: string, name2: string): boolean {
     return true;
   }
 
-  const distance = levenshteinDistance(lower1, lower2);
   const maxLength = Math.max(lower1.length, lower2.length);
+  // For very short names, only exact match counts as similar
+  if (maxLength <= 2) {
+    return false;
+  }
 
+  const distance = levenshteinDistance(lower1, lower2);
   return distance <= 2 || distance / maxLength < 0.3;
 }
 

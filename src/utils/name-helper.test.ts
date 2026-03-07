@@ -112,6 +112,15 @@ describe("name-helper", () => {
       expect(areNamesSimilar("Bob", "Bob")).toBe(true);
     });
 
+    it("should not treat different single-letter names as similar", () => {
+      expect(areNamesSimilar("a", "b")).toBe(false);
+      expect(areNamesSimilar("x", "y")).toBe(false);
+    });
+
+    it("should treat identical single-letter names as similar", () => {
+      expect(areNamesSimilar("a", "a")).toBe(true);
+    });
+
     it("should handle empty names", () => {
       expect(areNamesSimilar("", "Alice")).toBe(false);
       expect(areNamesSimilar("Alice", "")).toBe(false);
