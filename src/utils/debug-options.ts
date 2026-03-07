@@ -4,15 +4,15 @@
  */
 
 export const LOG_CATEGORIES = [
-  { id: "state", label: "State" },
-  { id: "brain", label: "Brain" },
-  { id: "llm", label: "LLM" },
-  { id: "actions", label: "Actions" },
-  { id: "user", label: "User input" },
-  { id: "transcription", label: "Transcription" },
-  { id: "narration", label: "Narration" },
-  { id: "voice", label: "Voice pipeline" },
-  { id: "init", label: "Init" },
+  { id: "state", label: "State", icon: "📊" },
+  { id: "brain", label: "Brain", icon: "🧠" },
+  { id: "llm", label: "LLM", icon: "🤖" },
+  { id: "actions", label: "Actions", icon: "✏️" },
+  { id: "user", label: "User input", icon: "👤" },
+  { id: "transcription", label: "Transcription", icon: "📝" },
+  { id: "narration", label: "Narration", icon: "🔊" },
+  { id: "voice", label: "Voice pipeline", icon: "🎤" },
+  { id: "init", label: "Init", icon: "🚀" },
 ] as const;
 
 export type LogCategoryId = (typeof LOG_CATEGORIES)[number]["id"];
@@ -31,6 +31,10 @@ export function setLogCategoryEnabled(category: string, enabled: boolean): void 
   }
 }
 
-export function getLogCategories(): ReadonlyArray<{ id: string; label: string }> {
+export function getLogCategories(): ReadonlyArray<{
+  id: string;
+  label: string;
+  icon?: string;
+}> {
   return LOG_CATEGORIES;
 }

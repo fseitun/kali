@@ -60,9 +60,10 @@ class KaliDebugApp {
       "voice",
     ]);
 
-    for (const { id, label } of getLogCategories()) {
+    for (const { id, label, icon } of getLogCategories()) {
       const labelEl = document.createElement("label");
       labelEl.className = "debug-option";
+      labelEl.title = label;
       const checkbox = document.createElement("input");
       checkbox.type = "checkbox";
       checkbox.dataset.category = id;
@@ -72,7 +73,7 @@ class KaliDebugApp {
         setLogCategoryEnabled(id, checkbox.checked);
       });
       labelEl.appendChild(checkbox);
-      labelEl.append(` ${label}`);
+      labelEl.append(` ${icon ?? ""}`);
       container.appendChild(labelEl);
     }
   }
