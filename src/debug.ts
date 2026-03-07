@@ -5,7 +5,7 @@ import { t } from "./i18n";
 import { KaliAppCore } from "./kali-app-core";
 import { DebugUIService } from "./services/debug-ui-service";
 import { NoOpSpeechService } from "./services/no-op-speech-service";
-import { setLogStateEnabled } from "./utils/debug-options";
+import { getLogCategories, setLogCategoryEnabled } from "./utils/debug-options";
 import { Logger } from "./utils/logger";
 
 class KaliDebugApp {
@@ -42,8 +42,39 @@ class KaliDebugApp {
     });
 
     statusElement.textContent = t("ui.clickToStart");
+    this.setupLogOptions();
     this.setupStartButton(startButton);
     this.setupTranscriptInput();
+  }
+
+  private setupLogOptions(): void {
+    const container = document.getElementById("log-categories");
+    if (!container) return;
+
+    const defaultEnabled = new Set([
+      "brain",
+      "llm",
+      "actions",
+      "transcription",
+      "narration",
+      "voice",
+    ]);
+
+    for (const { id, label } of getLogCategories()) {
+      const labelEl = document.createElement("label");
+      labelEl.className = "debug-option";
+      const checkbox = document.createElement("input");
+      checkbox.type = "checkbox";
+      checkbox.dataset.category = id;
+      checkbox.checked = defaultEnabled.has(id);
+      setLogCategoryEnabled(id, checkbox.checked);
+      checkbox.addEventListener("change", () => {
+        setLogCategoryEnabled(id, checkbox.checked);
+      });
+      labelEl.appendChild(checkbox);
+      labelEl.append(` ${label}`);
+      container.appendChild(labelEl);
+    }
   }
 
   private setupStartButton(startButton: HTMLButtonElement): void {
@@ -51,11 +82,6 @@ class KaliDebugApp {
 
     startButton.addEventListener("click", async () => {
       if (this.core.isInitialized()) return;
-
-      const logStateCheckbox = document.getElementById(
-        "log-state-checkbox",
-      ) as HTMLInputElement | null;
-      setLogStateEnabled(logStateCheckbox?.checked ?? false);
 
       this.speechService.prime();
       this.uiService.setButtonState(t("ui.status.initializing"), true);
@@ -81,7 +107,7 @@ class KaliDebugApp {
       const text = input.value.trim();
       if (!text) return;
 
-      Logger.info("User entered:", text);
+      Logger.user("User entered:", text);
 
       if (!this.core.canAcceptTranscript()) {
         Logger.warn("Kali not initialized");

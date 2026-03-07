@@ -1,5 +1,4 @@
 import type { GameState, PrimitiveAction } from "../orchestrator/types";
-import { isLogStateEnabled } from "../utils/debug-options";
 import { Logger } from "../utils/logger";
 import type { LLMClient } from "./LLMClient";
 
@@ -29,9 +28,7 @@ export class MockLLMClient implements LLMClient {
   async getActions(transcript: string, state: GameState): Promise<PrimitiveAction[]> {
     this.callCount++;
     Logger.info(`MockLLMClient call #${this.callCount}: "${transcript}"`);
-    if (isLogStateEnabled()) {
-      Logger.debug("Current state:", state);
-    }
+    Logger.state("Current state:", state);
 
     // Small delay to simulate network/processing (skip for scripted to speed up tests)
     if (this.scenario !== "scripted") {

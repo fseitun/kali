@@ -1,5 +1,4 @@
 import type { GameState } from "./orchestrator/types";
-import { isLogStateEnabled } from "./utils/debug-options";
 import { deepClone } from "./utils/deep-clone";
 import { Logger } from "./utils/logger";
 
@@ -29,9 +28,7 @@ export class StateManager {
    */
   init(initialState: GameState): void {
     this.state = deepClone(initialState);
-    if (isLogStateEnabled()) {
-      Logger.info("Initialized game state:", initialState);
-    }
+    Logger.init("Initialized game state:", initialState);
   }
 
   /**

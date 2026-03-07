@@ -341,7 +341,7 @@ ${rules.examples.map((ex: string, i: number) => `${i + 1}. ${ex}`).join("\n")}
   }
 
   private async handleTranscription(text: string): Promise<void> {
-    Logger.info(`You said: "${text}"`);
+    Logger.user(`You said: "${text}"`);
 
     const indicator = this.uiService.getStatusIndicator();
     indicator.setState("listening");

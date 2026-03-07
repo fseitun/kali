@@ -406,6 +406,28 @@ class StateManager {
 
 ---
 
+### Remote Error Reporting & Log Capture 📡
+
+**Value: 5/10 | Complexity: 4/10 | Ratio: 1.25**
+
+**Problem:** When users report issues in production, there is no way to inspect logs or errors remotely. Debugging requires reproduction or user-provided screenshots.
+
+**Implementation:**
+
+- Send production errors (stack traces) to a remote service (e.g. Sentry, LogRocket)
+- Optional: capture minimal context (session ID, game phase) with errors
+- Privacy: no transcripts, voice data, or PII without explicit consent
+- Minimal version: errors-only SDK integration (~1–2 days)
+- Full version: session replay, structured logs, source maps (~1–2 weeks)
+
+**Files:**
+
+- `src/utils/error-reporter.ts` (new)
+- `src/main.ts`, `src/debug.ts` (init)
+- Build config for source maps
+
+---
+
 ## 🔧 Infrastructure (Foundation for Other Work)
 
 ### Dependency Injection Container 🔧

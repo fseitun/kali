@@ -14,10 +14,10 @@
         <h1>Kali <span class="debug-badge">DEBUG</span></h1>
         <div id="status-indicator"></div>
         <p id="status"></p>
-        <label class="debug-option">
-          <input type="checkbox" id="log-state-checkbox" />
-          Print state
-        </label>
+        <fieldset class="log-options" id="log-options">
+          <legend>Log categories</legend>
+          <div id="log-categories"></div>
+        </fieldset>
         <button id="start-button"></button>
 
         <form id="transcript-form" class="transcript-row">

@@ -1,4 +1,5 @@
 import type { IUIService } from "../services/ui-service";
+import { isLogCategoryEnabled } from "./debug-options";
 
 export class Logger {
   private static uiService: IUIService | null = null;
@@ -41,51 +42,59 @@ export class Logger {
   }
 
   static listening(message: string): void {
-    Logger.log(`👂 ${message}`);
+    if (isLogCategoryEnabled("transcription")) Logger.log(`👂 ${message}`);
   }
 
   static transcription(message: string): void {
-    Logger.log(`📝 ${message}`);
+    if (isLogCategoryEnabled("transcription")) Logger.log(`📝 ${message}`);
   }
 
   static narration(message: string): void {
-    Logger.log(`🔊 ${message}`);
+    if (isLogCategoryEnabled("narration")) Logger.log(`🔊 ${message}`);
   }
 
   static wakeWord(message: string): void {
-    Logger.log(`🔥 ${message}`);
+    if (isLogCategoryEnabled("voice")) Logger.log(`🔥 ${message}`);
   }
 
   static brain(message: string): void {
-    Logger.log(`🧠 ${message}`);
+    if (isLogCategoryEnabled("brain")) Logger.log(`🧠 ${message}`);
   }
 
   static download(message: string): void {
-    Logger.log(`📥 ${message}`);
+    if (isLogCategoryEnabled("voice")) Logger.log(`📥 ${message}`);
   }
 
   static mic(message: string): void {
-    Logger.log(`🎤 ${message}`);
+    if (isLogCategoryEnabled("voice")) Logger.log(`🎤 ${message}`);
   }
 
   static headphones(message: string): void {
-    Logger.log(`🎧 ${message}`);
+    if (isLogCategoryEnabled("voice")) Logger.log(`🎧 ${message}`);
   }
 
   static stop(message: string): void {
-    Logger.log(`🛑 ${message}`);
+    if (isLogCategoryEnabled("voice")) Logger.log(`🛑 ${message}`);
   }
 
   static timeout(message: string): void {
-    Logger.log(`⏱️ ${message}`);
+    if (isLogCategoryEnabled("voice")) Logger.log(`⏱️ ${message}`);
   }
 
   static state(message: string, ...args: unknown[]): void {
-    Logger.log(`📊 ${message}`, ...args);
+    if (isLogCategoryEnabled("state")) Logger.log(`📊 ${message}`, ...args);
   }
 
   static write(message: string): void {
-    Logger.log(`✏️ ${message}`);
+    if (isLogCategoryEnabled("actions")) Logger.log(`✏️ ${message}`);
+  }
+
+  static user(message: string, ...args: unknown[]): void {
+    if (isLogCategoryEnabled("user")) Logger.log(`👤 ${message}`, ...args);
+  }
+
+  static init(message: string, ...args: unknown[]): void {
+    if (isLogCategoryEnabled("init")) Logger.log(`🚀 ${message}`, ...args);
   }
 
   static read(message: string): void {
@@ -93,6 +102,6 @@ export class Logger {
   }
 
   static robot(message: string, ...args: unknown[]): void {
-    Logger.log(`🤖 ${message}`, ...args);
+    if (isLogCategoryEnabled("llm")) Logger.log(`🤖 ${message}`, ...args);
   }
 }
