@@ -41,9 +41,7 @@ export const esAR = {
     wakeWordInstruction: 'Decí "{wakeWord}" antes de hablar',
     wakeWordReady: 'Decí "{wakeWord}" para despertarme',
     savedGameDetected: 'Partida guardada. Decí "{wakeWord}, seguir" o "{wakeWord}, juego nuevo"',
-    copyLogs: "📋 Copiar Registros",
-    copied: "✅ ¡Copiado!",
-    copyFailed: "❌ Error",
+    exportLogs: "📁 Exportar",
     status: {
       initializing: "Iniciando...",
       loading: "Cargando modelo...",

@@ -1,5 +1,6 @@
 import type { IUIService } from "../services/ui-service";
-import { isLogCategoryEnabled } from "./debug-options";
+import { getLogBuffer } from "./log-buffer";
+import type { LogLevel } from "./log-buffer";
 
 export class Logger {
   private static uiService: IUIService | null = null;
@@ -8,100 +9,140 @@ export class Logger {
     Logger.uiService = service;
   }
 
-  private static serializeArg(arg: unknown): string {
+  private static serializeArg(arg: unknown): unknown {
     if (arg instanceof Error) {
-      return arg.stack ?? `${arg.name}: ${arg.message}`;
+      return {
+        name: arg.name,
+        message: arg.message,
+        stack: arg.stack,
+      };
     }
-    return JSON.stringify(arg);
+    return arg;
   }
 
-  private static log(message: string, ...args: unknown[]): void {
+  private static pushToBuffer(
+    level: LogLevel,
+    category: string,
+    message: string,
+    args: unknown[],
+  ): void {
+    const buffer = getLogBuffer();
+    if (!buffer) return;
+
+    const context: Record<string, unknown> = {};
+    if (args.length > 0) {
+      context.args = args.map((a) => Logger.serializeArg(a));
+    }
+    const lastArg = args[args.length - 1];
+    const stack = lastArg instanceof Error && lastArg.stack ? lastArg.stack : undefined;
+
+    buffer.push(
+      level,
+      category,
+      message,
+      Object.keys(context).length > 0 ? context : undefined,
+      stack,
+    );
+  }
+
+  private static formatForLegacy(message: string, ...args: unknown[]): string {
+    const serialize = (a: unknown): string =>
+      a instanceof Error ? (a.stack ?? `${a.name}: ${a.message}`) : JSON.stringify(a);
+    return args.length > 0 ? `${message} ${args.map(serialize).join(" ")}` : message;
+  }
+
+  private static logWithCategory(
+    level: LogLevel,
+    category: string,
+    icon: string,
+    message: string,
+    ...args: unknown[]
+  ): void {
+    const fullMessage = `${icon} ${message}`;
+    Logger.pushToBuffer(level, category, fullMessage, args);
+
     if (Logger.uiService) {
-      const formatted =
-        args.length > 0
-          ? `${message} ${args.map((a) => Logger.serializeArg(a)).join(" ")}`
-          : message;
-      Logger.uiService.log(formatted);
+      Logger.uiService.log(Logger.formatForLegacy(fullMessage, ...args));
     }
   }
 
   static info(message: string, ...args: unknown[]): void {
-    Logger.log(`✅ ${message}`, ...args);
+    Logger.logWithCategory("info", "general", "✅", message, ...args);
   }
 
   static warn(message: string, ...args: unknown[]): void {
-    Logger.log(`⚠️ ${message}`, ...args);
+    Logger.logWithCategory("warn", "general", "⚠️", message, ...args);
   }
 
   static error(message: string, ...args: unknown[]): void {
-    Logger.log(`❌ ${message}`, ...args);
+    Logger.logWithCategory("error", "general", "❌", message, ...args);
   }
 
   static debug(message: string, ...args: unknown[]): void {
-    Logger.log(`🔍 ${message}`, ...args);
+    Logger.logWithCategory("debug", "general", "🔍", message, ...args);
   }
 
   static listening(message: string): void {
-    if (isLogCategoryEnabled("transcription")) Logger.log(`👂 ${message}`);
+    Logger.logWithCategory("info", "transcription", "👂", message);
   }
 
   static transcription(message: string): void {
-    if (isLogCategoryEnabled("transcription")) Logger.log(`📝 ${message}`);
+    Logger.logWithCategory("info", "transcription", "📝", message);
   }
 
   static narration(message: string): void {
-    if (isLogCategoryEnabled("narration")) Logger.log(`🔊 ${message}`);
+    Logger.logWithCategory("info", "narration", "🔊", message);
   }
 
   static wakeWord(message: string): void {
-    if (isLogCategoryEnabled("voice")) Logger.log(`🔥 ${message}`);
+    Logger.logWithCategory("info", "voice", "🔥", message);
   }
 
   static brain(message: string): void {
-    if (isLogCategoryEnabled("brain")) Logger.log(`🧠 ${message}`);
+    Logger.logWithCategory("info", "brain", "🧠", message);
   }
 
   static download(message: string): void {
-    if (isLogCategoryEnabled("voice")) Logger.log(`📥 ${message}`);
+    Logger.logWithCategory("info", "voice", "📥", message);
   }
 
   static mic(message: string): void {
-    if (isLogCategoryEnabled("voice")) Logger.log(`🎤 ${message}`);
+    Logger.logWithCategory("info", "voice", "🎤", message);
   }
 
   static headphones(message: string): void {
-    if (isLogCategoryEnabled("voice")) Logger.log(`🎧 ${message}`);
+    Logger.logWithCategory("info", "voice", "🎧", message);
   }
 
   static stop(message: string): void {
-    if (isLogCategoryEnabled("voice")) Logger.log(`🛑 ${message}`);
+    Logger.logWithCategory("info", "voice", "🛑", message);
   }
 
   static timeout(message: string): void {
-    if (isLogCategoryEnabled("voice")) Logger.log(`⏱️ ${message}`);
+    Logger.logWithCategory("info", "voice", "⏱️", message);
   }
 
   static state(message: string, ...args: unknown[]): void {
-    if (isLogCategoryEnabled("state")) Logger.log(`📊 ${message}`, ...args);
+    Logger.logWithCategory("info", "state", "📊", message, ...args);
   }
 
   static write(message: string): void {
-    if (isLogCategoryEnabled("actions")) Logger.log(`✏️ ${message}`);
+    Logger.logWithCategory("info", "actions", "✏️", message);
   }
 
   static user(message: string, ...args: unknown[]): void {
-    if (isLogCategoryEnabled("user")) Logger.log(`👤 ${message}`, ...args);
+    Logger.logWithCategory("info", "user", "👤", message, ...args);
   }
 
   static init(message: string, ...args: unknown[]): void {
-    if (isLogCategoryEnabled("init")) Logger.log(`🚀 ${message}`, ...args);
+    Logger.logWithCategory("info", "init", "🚀", message, ...args);
   }
 
   static read(message: string): void {
-    Logger.log(`👁️ ${message}`);
+    Logger.logWithCategory("info", "general", "👁️", message);
   }
 
   static robot(message: string, ...args: unknown[]): void {
-    if (isLogCategoryEnabled("llm")) Logger.log(`🤖 ${message}`, ...args);
+    Logger.logWithCategory("info", "llm", "🤖", message, ...args);
   }
 }

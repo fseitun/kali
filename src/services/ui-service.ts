@@ -10,4 +10,5 @@ export interface IUIService {
   log(message: string): void;
   addTranscription(raw: string, processed: string, wakeWordDetected: boolean): void;
   setTranscriptInputEnabled?(enabled: boolean): void;
+  dispose?(): void;
 }

@@ -41,12 +41,25 @@
   line-height: 1.4;
 }
 
-#console div {
+#console .log-entry {
   margin-bottom: 0.5rem;
 }
 
-#console div:last-child {
+#console .log-entry:last-child {
   margin-bottom: 0;
+}
+
+#console .log-entry-details {
+  margin: 0.25rem 0 0 1rem;
+  padding: 0.5rem;
+  font-size: 0.8rem;
+  line-height: 1.3;
+  white-space: pre-wrap;
+  word-break: break-word;
+  color: rgba(255, 120, 100, 0.95);
+  background: rgba(80, 20, 20, 0.3);
+  border-left: 2px solid rgba(255, 100, 80, 0.6);
+  border-radius: 0 4px 4px 0;
 }
 
 #console .log-narration {

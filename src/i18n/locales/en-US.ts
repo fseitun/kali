@@ -41,9 +41,7 @@ export const enUS = {
     wakeWordInstruction: 'Say "{wakeWord}" before speaking',
     wakeWordReady: 'Say "{wakeWord}" to wake me up',
     savedGameDetected: 'Saved game detected. Say "{wakeWord}, continue" or "{wakeWord}, new game"',
-    copyLogs: "📋 Copy Logs",
-    copied: "✅ Copied!",
-    copyFailed: "❌ Failed",
+    exportLogs: "📁 Export",
     status: {
       initializing: "Initializing...",
       loading: "Loading model...",

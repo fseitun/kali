@@ -162,6 +162,7 @@ class KaliDebugApp {
   }
 
   private async dispose(): Promise<void> {
+    this.uiService.dispose?.();
     await this.core.dispose();
   }
 

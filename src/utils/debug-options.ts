@@ -18,9 +18,14 @@ export const LOG_CATEGORIES = [
 export type LogCategoryId = (typeof LOG_CATEGORIES)[number]["id"];
 
 const enabledCategories = new Set<string>();
+const categoryChangeListeners: Array<() => void> = [];
 
 export function isLogCategoryEnabled(category: string): boolean {
   return enabledCategories.has(category);
+}
+
+export function getEnabledCategories(): Set<string> {
+  return new Set(enabledCategories);
 }
 
 export function setLogCategoryEnabled(category: string, enabled: boolean): void {
@@ -29,6 +34,17 @@ export function setLogCategoryEnabled(category: string, enabled: boolean): void 
   } else {
     enabledCategories.delete(category);
   }
+  for (const cb of categoryChangeListeners) {
+    cb();
+  }
+}
+
+export function subscribeToCategoryChanges(callback: () => void): () => void {
+  categoryChangeListeners.push(callback);
+  return () => {
+    const i = categoryChangeListeners.indexOf(callback);
+    if (i >= 0) categoryChangeListeners.splice(i, 1);
+  };
 }
 
 export function getLogCategories(): ReadonlyArray<{
