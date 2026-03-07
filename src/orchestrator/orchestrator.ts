@@ -11,12 +11,12 @@ import { BoardEffectsHandler } from "./board-effects-handler";
 import { DecisionPointEnforcer } from "./decision-point-enforcer";
 import { TurnManager } from "./turn-manager";
 import {
+  GamePhase,
   type PrimitiveAction,
   type ExecutionContext,
   type ActionHandler,
   type GameState,
 } from "./types";
-import type { GamePhase } from "./types";
 import { validateActions } from "./validator";
 
 /**
@@ -324,7 +324,6 @@ export class Orchestrator {
     }
 
     await this.decisionPointEnforcer.enforceDecisionPoints(context);
-
     return { success: true, shouldAdvanceTurn };
   }
 
@@ -342,6 +341,35 @@ export class Orchestrator {
         await this.executeAction(action, context);
       } catch (error) {
         Logger.error("Failed to execute action:", action, error);
+      }
+    }
+  }
+
+  /**
+   * Checks if the current player has reached or exceeded win position.
+   * Sets game.winner and transitions to FINISHED if so.
+   */
+  private checkAndApplyWinCondition(positionPath: string): void {
+    if (!positionPath.startsWith("players.") || !positionPath.endsWith(".position")) {
+      return;
+    }
+    const position = this.stateManager.get(positionPath) as number;
+    if (typeof position !== "number") return;
+
+    const state = this.stateManager.getState();
+    const board = state.board as { winPosition?: number } | undefined;
+    const winPosition = board?.winPosition;
+    if (typeof winPosition !== "number") return;
+
+    if (position >= winPosition) {
+      const match = positionPath.match(/^players\.([^.]+)\.position$/);
+      const playerId = match?.[1];
+      if (playerId) {
+        Logger.info(
+          `🏆 Win detected: ${playerId} reached position ${position} (win: ${winPosition})`,
+        );
+        this.stateManager.set("game.winner", playerId);
+        this.stateManager.set("game.phase", GamePhase.FINISHED);
       }
     }
   }
@@ -372,6 +400,7 @@ export class Orchestrator {
         this.stateManager.set(primitive.path, primitive.value);
         await this.boardEffectsHandler.checkAndApplyBoardMoves(primitive.path);
         await this.boardEffectsHandler.checkAndApplySquareEffects(primitive.path, context);
+        this.checkAndApplyWinCondition(primitive.path);
         break;
       }
 
@@ -400,6 +429,7 @@ export class Orchestrator {
         this.stateManager.set("game.lastRoll", primitive.value);
         await this.boardEffectsHandler.checkAndApplyBoardMoves(path);
         await this.boardEffectsHandler.checkAndApplySquareEffects(path, context);
+        this.checkAndApplyWinCondition(path);
         break;
       }
 

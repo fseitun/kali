@@ -236,3 +236,115 @@ describe("NameCollector - State Isolation (Rule #4)", () => {
     });
   });
 });
+
+describe("NameCollector - Runtime Flow", () => {
+  let mockSpeechService: SpeechService;
+  let mockLLMClient: LLMClient;
+  let mockEnableDirectTranscription: () => void;
+  let gameMetadata: GameMetadata;
+  let transcriptHandler: ((text: string) => void) | null;
+
+  beforeEach(() => {
+    (
+      globalThis as typeof globalThis & {
+        window?: { setTimeout: typeof setTimeout; clearTimeout: typeof clearTimeout };
+      }
+    ).window = (
+      globalThis as typeof globalThis & {
+        window?: { setTimeout: typeof setTimeout; clearTimeout: typeof clearTimeout };
+      }
+    ).window ?? {
+      setTimeout,
+      clearTimeout,
+    };
+
+    transcriptHandler = null;
+    mockSpeechService = {
+      speak: vi.fn(async () => {}),
+      playSound: vi.fn(),
+    } as unknown as SpeechService;
+
+    mockLLMClient = {
+      analyzeResponse: vi.fn(async () => ({ isOnTopic: true })),
+      extractName: vi.fn(async (text: string) => text.trim()),
+    } as unknown as LLMClient;
+
+    mockEnableDirectTranscription = vi.fn();
+
+    gameMetadata = {
+      id: "test-game",
+      name: "Test Game",
+      version: "1.0.0",
+      description: "A test game",
+      minPlayers: 2,
+      maxPlayers: 4,
+    };
+  });
+
+  it("collectNames returns names in order for 2 players happy path", async () => {
+    const nameCollector = new NameCollector(
+      mockSpeechService,
+      "Test Game",
+      mockEnableDirectTranscription,
+      mockLLMClient,
+      gameMetadata,
+    );
+
+    const collectPromise = nameCollector.collectNames((handler) => {
+      transcriptHandler = handler;
+    });
+
+    const sendAsync = async (text: string): Promise<void> => {
+      const fn = transcriptHandler;
+      if (!fn) throw new Error("transcriptHandler not set");
+      await (fn as (t: string) => Promise<void>)(text);
+    };
+
+    await new Promise((r) => setTimeout(r, 100));
+    await sendAsync("2");
+    await sendAsync("Alice");
+    await sendAsync("yes");
+    await sendAsync("Bob");
+    await sendAsync("yes");
+
+    const names = await collectPromise;
+
+    expect(names).toEqual(["Alice", "Bob"]);
+    expect(mockEnableDirectTranscription).toHaveBeenCalled();
+    expect(mockLLMClient.extractName).toHaveBeenCalledWith("Alice");
+    expect(mockLLMClient.extractName).toHaveBeenCalledWith("Bob");
+  });
+
+  it("collectNames calls analyzeResponse for player count and names", async () => {
+    const nameCollector = new NameCollector(
+      mockSpeechService,
+      "Test Game",
+      mockEnableDirectTranscription,
+      mockLLMClient,
+      gameMetadata,
+    );
+
+    const collectPromise = nameCollector.collectNames((handler) => {
+      transcriptHandler = handler;
+    });
+
+    const sendAsync = async (text: string): Promise<void> => {
+      const fn = transcriptHandler;
+      if (!fn) throw new Error("transcriptHandler not set");
+      await (fn as (t: string) => Promise<void>)(text);
+    };
+
+    await new Promise((r) => setTimeout(r, 100));
+    await sendAsync("2");
+    await sendAsync("Alice");
+    await sendAsync("yes");
+    await sendAsync("Bob");
+    await sendAsync("yes");
+
+    await collectPromise;
+
+    expect(mockLLMClient.analyzeResponse).toHaveBeenCalled();
+    expect(mockLLMClient.extractName).toHaveBeenCalledWith("Alice");
+    expect(mockLLMClient.extractName).toHaveBeenCalledWith("Bob");
+  });
+});

@@ -3,6 +3,12 @@ import { defineConfig } from "vite";
 import { VitePWA } from "vite-plugin-pwa";
 
 export default defineConfig({
+  define:
+    process.env.VITEST === "true"
+      ? {
+          "import.meta.env.VITE_LLM_PROVIDER": JSON.stringify("mock"),
+        }
+      : undefined,
   plugins: [
     {
       name: "debug-route-rewrite",
