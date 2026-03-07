@@ -20,7 +20,7 @@ export const CONFIG = {
 
   OLLAMA: {
     API_URL: "http://localhost:11434/api/chat",
-    MODEL: "llama3.2:latest",
+    MODEL: import.meta.env.VITE_OLLAMA_MODEL ?? "llama3.2:latest",
   },
 
   GEMINI: {

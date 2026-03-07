@@ -23,9 +23,12 @@ A voice-first game moderator for kids to play board games independently. Uses sp
    VITE_GROQ_API_KEY=your_groq_api_key_here
    VITE_LLM_PROVIDER=groq
 
-   # Or use Ollama (local, slow but free)
+   # Or use Ollama (local, free; use llama3.2:1b for low resource usage)
    VITE_LLM_PROVIDER=ollama
+   VITE_OLLAMA_MODEL=llama3.2:1b
    ```
+
+   When using Ollama, run `ollama run llama3.2:1b` in another terminal before starting the app.
 
 3. Start development server:
 
