@@ -19,6 +19,8 @@ function getLLMDisplayLabel(): string {
       return `Gemini (${CONFIG.GEMINI.MODEL.replace(/^models\//, "")})`;
     case "groq":
       return `Groq (${CONFIG.GROQ.MODEL})`;
+    case "openrouter":
+      return `OpenRouter (${CONFIG.OPENROUTER.MODEL})`;
     case "ollama":
       return `Ollama (${CONFIG.OLLAMA.MODEL})`;
     case "mock":

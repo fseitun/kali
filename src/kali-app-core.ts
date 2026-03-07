@@ -7,6 +7,7 @@ import { GroqClient } from "./llm/GroqClient";
 import type { LLMClient } from "./llm/LLMClient";
 import { MockLLMClient } from "./llm/MockLLMClient";
 import { OllamaClient } from "./llm/OllamaClient";
+import { OpenRouterClient } from "./llm/OpenRouterClient";
 import { NameCollector } from "./orchestrator/name-collector";
 import { Orchestrator } from "./orchestrator/orchestrator";
 import { GamePhase, type PrimitiveAction } from "./orchestrator/types";
@@ -136,6 +137,8 @@ export class KaliAppCore {
         return new GeminiClient();
       case "groq":
         return new GroqClient();
+      case "openrouter":
+        return new OpenRouterClient();
       case "ollama":
         return new OllamaClient();
       case "mock":

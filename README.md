@@ -23,6 +23,11 @@ A voice-first game moderator for kids to play board games independently. Uses sp
    VITE_GROQ_API_KEY=your_groq_api_key_here
    VITE_LLM_PROVIDER=groq
 
+   # Or use OpenRouter (many models: Claude, Gemini, Llama, etc.)
+   VITE_OPENROUTER_API_KEY=your_api_key_here
+   VITE_LLM_PROVIDER=openrouter
+   # VITE_OPENROUTER_MODEL=google/gemini-2.0-flash-001  # optional, default
+
    # Or use Ollama (local, free; use llama3.2:1b for low resource usage)
    VITE_LLM_PROVIDER=ollama
    VITE_OLLAMA_MODEL=llama3.2:1b

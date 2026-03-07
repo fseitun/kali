@@ -10,7 +10,7 @@ export class ConfigValidationError extends Error {
 export function validateConfig(): void {
   if (!CONFIG.LLM_PROVIDER) {
     throw new ConfigValidationError(
-      'VITE_LLM_PROVIDER environment variable is required. Set it to "gemini", "groq", "ollama", or "mock".',
+      'VITE_LLM_PROVIDER environment variable is required. Set it to "gemini", "groq", "openrouter", "ollama", or "mock".',
     );
   }
 
@@ -18,10 +18,11 @@ export function validateConfig(): void {
     CONFIG.LLM_PROVIDER !== "ollama" &&
     CONFIG.LLM_PROVIDER !== "gemini" &&
     CONFIG.LLM_PROVIDER !== "groq" &&
+    CONFIG.LLM_PROVIDER !== "openrouter" &&
     CONFIG.LLM_PROVIDER !== "mock"
   ) {
     throw new ConfigValidationError(
-      `Invalid VITE_LLM_PROVIDER: "${CONFIG.LLM_PROVIDER}". Must be "gemini", "groq", "ollama", or "mock".`,
+      `Invalid VITE_LLM_PROVIDER: "${CONFIG.LLM_PROVIDER}". Must be "gemini", "groq", "openrouter", "ollama", or "mock".`,
     );
   }
 
@@ -39,6 +40,15 @@ export function validateConfig(): void {
       throw new ConfigValidationError(
         "VITE_GROQ_API_KEY environment variable is required when using Groq provider. " +
           "Get your API key from https://console.groq.com/keys",
+      );
+    }
+  }
+
+  if (CONFIG.LLM_PROVIDER === "openrouter") {
+    if (!CONFIG.OPENROUTER.API_KEY) {
+      throw new ConfigValidationError(
+        "VITE_OPENROUTER_API_KEY environment variable is required when using OpenRouter provider. " +
+          "Get your API key from https://openrouter.ai/keys",
       );
     }
   }

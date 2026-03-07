@@ -3,6 +3,7 @@ export const CONFIG = {
     | "ollama"
     | "gemini"
     | "groq"
+    | "openrouter"
     | "mock",
 
   LOCALE: (import.meta.env.VITE_LOCALE ?? "es-AR") as "es-AR" | "en-US",
@@ -35,6 +36,12 @@ export const CONFIG = {
     API_URL: "https://api.groq.com/openai/v1/chat/completions",
     API_KEY: import.meta.env.VITE_GROQ_API_KEY,
     MODEL: "llama-3.3-70b-versatile",
+  },
+
+  OPENROUTER: {
+    API_URL: "https://openrouter.ai/api/v1/chat/completions",
+    API_KEY: import.meta.env.VITE_OPENROUTER_API_KEY,
+    MODEL: import.meta.env.VITE_OPENROUTER_MODEL ?? "google/gemini-2.0-flash-001",
   },
 
   AUDIO: {
