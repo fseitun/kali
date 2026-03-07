@@ -12,6 +12,7 @@ globs:
 
 ## Why Vosk?
 
+- **Voice is central to Kali**—the primary interaction mode. The app is designed for hands-free, screen-up play. Text input exists only for `debug/` and tests (`skipWakeWord`); production never skips voice.
 - Completely free and offline
 - No API limits or costs
 - Both wake word and full STT in one package

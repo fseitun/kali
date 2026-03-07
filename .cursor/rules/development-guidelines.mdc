@@ -29,6 +29,7 @@ JSDoc should include:
 
 ## Voice-Only UX Requirements
 
+- **Voice is central**—production flows always require Vosk; `skipWakeWord` is for debug/tests only
 - Screen stays on but no visual interaction required
 - All feedback must be audible
 - Users cannot see errors, so voice feedback is critical

@@ -7,7 +7,7 @@ alwaysApply: true
 
 ## Project Overview
 
-Kali is a voice-first PWA game moderator for kids to play board games independently. Currently supports Snakes & Ladders and Kalimba with a modular, game-agnostic architecture.
+Kali is a voice-first PWA game moderator for kids to play board games independently. Voice is the central input—no alternative in production. Text input exists only for the debug UI and automated tests. Currently supports Snakes & Ladders and Kalimba with a modular, game-agnostic architecture.
 
 ## Core Architecture: The CPU and the Game Designer
 
