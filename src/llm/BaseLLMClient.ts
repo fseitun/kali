@@ -196,6 +196,10 @@ JSON:`;
   }
 
   private isDuplicate(transcript: string): boolean {
+    // Never deduplicate system-injected prompts (decision point enforcer, etc.)
+    if (transcript.startsWith("[SYSTEM:")) {
+      return false;
+    }
     const now = Date.now();
     const timeSinceLastRequest = now - this.lastTranscriptTime;
 
