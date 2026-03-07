@@ -323,7 +323,12 @@ export class Orchestrator {
       Logger.info("Actions executed successfully");
     }
 
-    await this.decisionPointEnforcer.enforceDecisionPoints(context);
+    // Only enforce decision points for top-level (user-initiated) flows.
+    // When depth > 0, we're in a nested call from a previous enforcement or board effect;
+    // we just executed the LLM's response (e.g. asking the question). Don't re-inject.
+    if (context.depth === 0) {
+      await this.decisionPointEnforcer.enforceDecisionPoints(context);
+    }
     return { success: true, shouldAdvanceTurn };
   }
 
