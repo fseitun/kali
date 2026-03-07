@@ -6,7 +6,11 @@ import { t } from "./i18n";
 import { KaliAppCore } from "./kali-app-core";
 import { DebugUIService } from "./services/debug-ui-service";
 import { NoOpSpeechService } from "./services/no-op-speech-service";
-import { getLogCategories, setLogCategoryEnabled } from "./utils/debug-options";
+import {
+  getLogCategories,
+  isLogCategoryEnabled,
+  setLogCategoryEnabled,
+} from "./utils/debug-options";
 import { Logger } from "./utils/logger";
 
 function getLLMDisplayLabel(): string {
@@ -81,20 +85,22 @@ class KaliDebugApp {
     ]);
 
     for (const { id, label, icon } of getLogCategories()) {
-      const labelEl = document.createElement("label");
-      labelEl.className = "debug-option";
-      labelEl.title = label;
-      const checkbox = document.createElement("input");
-      checkbox.type = "checkbox";
-      checkbox.dataset.category = id;
-      checkbox.checked = defaultEnabled.has(id);
-      setLogCategoryEnabled(id, checkbox.checked);
-      checkbox.addEventListener("change", () => {
-        setLogCategoryEnabled(id, checkbox.checked);
+      const enabled = defaultEnabled.has(id);
+      setLogCategoryEnabled(id, enabled);
+
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "filter-toggle";
+      btn.dataset.category = id;
+      btn.title = label;
+      btn.setAttribute("aria-pressed", String(enabled));
+      btn.textContent = icon ?? "";
+      btn.addEventListener("click", () => {
+        const next = !isLogCategoryEnabled(id);
+        setLogCategoryEnabled(id, next);
+        btn.setAttribute("aria-pressed", String(next));
       });
-      labelEl.appendChild(checkbox);
-      labelEl.append(` ${icon ?? ""}`);
-      container.appendChild(labelEl);
+      container.appendChild(btn);
     }
   }
 

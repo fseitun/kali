@@ -141,18 +141,26 @@
   gap: 0.5rem 1.5rem;
 }
 
-#log-categories .debug-option {
-  margin: 0;
-}
-
-.debug-option {
-  display: block;
-  margin: 0.5rem 0;
-  font-size: 0.9rem;
-  color: var(--text-color);
+.filter-toggle {
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  font-size: 1.1rem;
+  border-radius: 4px;
   cursor: pointer;
+  border: 1px solid transparent;
+  background: transparent;
+  transition:
+    opacity 0.2s ease,
+    background 0.2s ease;
 }
 
-.debug-option input {
-  margin-right: 0.5rem;
+.filter-toggle[aria-pressed="true"] {
+  opacity: 1;
+  background: rgba(0, 200, 255, 0.2);
+  border-color: rgba(0, 200, 255, 0.5);
+}
+
+.filter-toggle[aria-pressed="false"] {
+  opacity: 0.35;
 }
