@@ -26,6 +26,8 @@ export const CONFIG = {
   GEMINI: {
     API_URL:
       "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent",
+    CACHED_CONTENTS_URL: "https://generativelanguage.googleapis.com/v1beta/cachedContents",
+    MODEL: "models/gemini-2.0-flash",
     API_KEY: import.meta.env.VITE_GEMINI_API_KEY,
   },
 

@@ -74,7 +74,8 @@ export abstract class BaseLLMClient implements LLMClient {
     Profiler.start("llm.network");
     const result = await this.makeApiCall(fullPrompt, {
       temperature: 0.7,
-      maxTokens: 1024,
+      maxTokens: 512,
+      contextParts: { systemPrompt: this.systemPrompt, userMessage },
     });
     Profiler.end("llm.network");
 

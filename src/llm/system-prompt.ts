@@ -37,12 +37,8 @@ const NARRATION_EXAMPLES: Record<string, { good: string[]; bad: string[] }> = {
 
 function getNarrationExamples(): string {
   const examples = NARRATION_EXAMPLES[getLocale()] ?? NARRATION_EXAMPLES["en-US"];
-  return `- Examples:
-  * GOOD: "${examples.good[0]}"
-  * BAD: "${examples.bad[0]}"
-  * GOOD: "${examples.good[1]}"
-  * BAD: "${examples.bad[1]}"
-  * GOOD: "${examples.good[2]}"`;
+  return `- GOOD: "${examples.good[0]}" | BAD: "${examples.bad[0]}"
+- GOOD: "${examples.good[1]}"`;
 }
 
 const EXAMPLE_NARRATION: Record<string, string> = {
@@ -139,74 +135,16 @@ Each action must be one of these 5 primitives:
 - **If JSON parsing fails**: Orchestrator will tell you the error and ask you to retry
 - Validator enforces rules deterministically - learn from its feedback
 
-**Verbal Dice Roll Interpretation - Context Aware - CRITICAL:**
-- Users report physical dice results verbally (speech-to-text may create artifacts like duplicated words)
-- **Check players.X.bonusDiceNextTurn flag FIRST** to determine if expecting 1d6 or 2d6
-- **When bonusDiceNextTurn=true (expecting 2d6, range 2-12):**
-  * "tiré uno uno" = rolled 1 and 1 = **ADD them: 2**
-  * "tiré dos tres" = rolled 2 and 3 = **ADD them: 5**
-  * "saqué tres cuatro" = rolled 3 and 4 = **ADD them: 7**
-  * When user says TWO numbers, ADD them together for movement
-  * **IMPORTANT**: When setting bonusDiceNextTurn=true, tell the player they'll roll 2 dice next turn (e.g., "Próximo turno tirás 2 dados" / "Next turn you roll 2 dice")
-  * Dice order doesn't matter: "tres dos" = "dos tres" (both = 5)
-- **When bonusDiceNextTurn=false (expecting 1d6, range 1-6):**
-  * "tiré uno uno" = repetition/transcription = **single die: 1** (NOT 1+1)
-  * "tiré dos dos" = repetition = **single die: 2**
-  * "tiré dos tres" = AMBIGUOUS (correction or error) → **ASK: "¿Tiraste un 2 o un 3?"**
-  * "tiré un cinco" = **single die: 5**
-  * When user says SAME number twice, treat as single roll
-  * When user says DIFFERENT numbers, ask for clarification
-- **Edge cases**:
-  * Three+ numbers: "tiré uno dos tres" → Ask for clarification: "¿Cuántos dados tiraste?" / "How many dice did you roll?"
-  * Out of range values: If user says 7+ with 1d6 expected → Ask for clarification
-  * Zero or negative: Ask for clarification
-- Common STT errors: transcription may duplicate words, "rode" for "rolled"
+**Verbal Dice Roll - Context Aware (check bonusDiceNextTurn):**
+- **2d6 (bonusDiceNextTurn=true):** Two numbers → ADD them. "tiré dos tres" = 5. Tell player "próximo turno 2 dados".
+- **1d6 (bonusDiceNextTurn=false):** Same number twice = single roll. Different numbers = ASK "¿Tiraste un 2 o un 3?".
+- **Edge:** Three+ numbers or out-of-range → Ask for clarification. STT may duplicate words ("rode"→rolled).
 
-**State Awareness - CRITICAL:**
-- **ALWAYS check current game state before asking questions**
-- **If information is already in state, NEVER re-ask for it**
-- **If player has empty arrays (instruments=[], items=[]), NEVER ask if they want to use them**
-- When user says "I already told you X" or "I already did Y":
-  1. Check if X/Y is in current state
-  2. If YES: Acknowledge and proceed ("Dale, tenés razón")
-  3. If NO: Apologize and re-ask ("Disculpá, no lo registré. ¿Me lo decís de nuevo?")
-- **Example**: pathChoice="A" in state → NEVER re-ask about path choice
-- **Example**: instruments=[] (empty) → NEVER ask "do you have instruments to use?"
-- **Example**: items=[] (empty) → NEVER ask "do you have items?"
-- **Example**: User at position 0 with pathChoice="A" → Skip path question, proceed to roll
-- **Example**: User says "tiré un 3" → Store it, don't ask them to repeat their roll
+**State - User is Authoritative:**
+- **Check state before asking:** If pathChoice, instruments, items already set → don't re-ask. Empty arrays → never ask to use them.
+- **User corrections = SET_STATE + NARRATE:** "we're both at 100" → SET_STATE both positions, NARRATE "Got it!". "I have 3 hearts" → SET_STATE, NARRATE. Don't argue.
 
-**State Override Pattern - USER IS AUTHORITATIVE:**
-- **When users correct game state, they are ALWAYS right - use SET_STATE**
-- Users may say "we're both at position X", "I have Y hearts", "my name is Z"
-- **CRITICAL**: Update state with SET_STATE, then acknowledge with NARRATE
-- **Pattern**: SET_STATE actions → NARRATE acknowledgment
-- **Examples**:
-  * User: "we're both at 100"
-    → [{ "action": "SET_STATE", "path": "players.p1.position", "value": 100 }, { "action": "SET_STATE", "path": "players.p2.position", "value": 100 }, { "action": "NARRATE", "text": "Got it, both at 100!" }]
-  * User: "I have 3 hearts"
-    → [{ "action": "SET_STATE", "path": "players.p1.hearts", "value": 3 }, { "action": "NARRATE", "text": "Perfect, 3 hearts." }]
-  * User: "my position is 50"
-    → [{ "action": "SET_STATE", "path": "players.p1.position", "value": 50 }, { "action": "NARRATE", "text": "You're at 50." }]
-- **DO NOT** just narrate without updating state
-- **DO NOT** argue with user corrections
-- Trust users - they're looking at the physical game board
-
-**Synthetic Transcript Handling - ORCHESTRATOR AUTHORITY:**
-- The orchestrator may inject \`[SYSTEM: ...]\` messages to enforce game rules
-- These are NOT user speech - they're authoritative commands from the system
-- **When you receive \`[SYSTEM: ...]\` messages, process them immediately**
-- Common synthetic transcript patterns:
-  * \`[SYSTEM: Player landed on square X: {...}. Process encounter.]\` → You MUST handle this square effect now
-  * \`[SYSTEM: PlayerName must choose 'fieldName' before proceeding. Ask: "..."]\` → You MUST ask this question now
-- **DO NOT** wait for user input when processing system messages
-- **DO NOT** narrate "the system says..." - just process the requirement naturally
-- The orchestrator uses these to guarantee critical steps aren't skipped
-- Example flow:
-  1. User: "I rolled a 2" → You: PLAYER_ROLLED value: 2, NARRATE
-  2. Orchestrator: Calculates new position, checks square, auto-advances turn
-  3. Orchestrator: [SYSTEM: Player landed on square 5: Cobra...] → You: Process encounter
-  4. This ensures NO encounters are ever missed and turns advance at the right time
+**\`[SYSTEM: ...]\` messages:** Orchestrator injects these. Process immediately - don't wait for user. Patterns: "Player landed on square X" → narrate encounter; "PlayerName must choose 'field' before proceeding. Ask: ..." → ask that question. Don't narrate "the system says...".
 
 **Handling Ambiguity - When in Doubt, Ask:**
 - If user input could mean multiple things, ASK for clarification before acting
@@ -322,40 +260,34 @@ function formatObjectFields(obj: Record<string, unknown>, config?: StateDisplayC
  * @returns Formatted state string
  */
 export function formatStateContext(state: Record<string, unknown>): string {
-  const lines: string[] = [];
+  const parts: string[] = [];
   const displayConfig = state.stateDisplay as StateDisplayMetadata | undefined;
 
   const game = state.game as Record<string, unknown> | undefined;
   if (game) {
-    lines.push("Game:");
     const fields = formatObjectFields(game, displayConfig?.game);
-    lines.push(`  ${fields.join(", ")}`);
+    if (fields.length > 0) parts.push(`Game: ${fields.join(", ")}`);
   }
 
   const players = state.players as Record<string, Record<string, unknown>> | undefined;
   if (players) {
-    lines.push("\nPlayers:");
-    Object.entries(players).forEach(([id, player]) => {
+    const playerParts = Object.entries(players).map(([id, player]) => {
       const fields = formatObjectFields(player, displayConfig?.players);
-      lines.push(`  ${id}: ${fields.join(", ")}`);
+      return `${id}:${fields.join(",")}`;
     });
+    if (playerParts.length > 0) parts.push(`Players: ${playerParts.join(" | ")}`);
   }
 
   const board = state.board as Record<string, unknown> | undefined;
   if (board) {
-    lines.push("\nBoard:");
     const fields = formatObjectFields(board, displayConfig?.board);
-    if (fields.length > 0) {
-      lines.push(`  ${fields.join(", ")}`);
-    }
+    if (fields.length > 0) parts.push(`Board: ${fields.join(", ")}`);
   }
 
   const decisionContext = formatDecisionPointContext(state);
-  if (decisionContext) {
-    lines.push("\n" + decisionContext);
-  }
+  if (decisionContext) parts.push(decisionContext);
 
-  return lines.join("\n");
+  return parts.join("\n");
 }
 
 function formatDecisionPointContext(state: Record<string, unknown>): string {
@@ -390,22 +322,11 @@ function formatDecisionPointContext(state: Record<string, unknown>): string {
 
     const fieldValue = player[decisionPoint.requiredField];
     if (fieldValue === null || fieldValue === undefined) {
-      const playerId = (player.id as string) || id;
-      const playerName = (player.name as string) || playerId;
-      const isCurrent = currentTurn === playerId;
-
-      lines.push(`⚠️ DECISION REQUIRED for ${playerName} (${playerId}):`);
-      lines.push(`  Field: ${decisionPoint.requiredField} (currently null)`);
-      lines.push(`  Prompt: "${decisionPoint.prompt}"`);
-      if (isCurrent) {
-        lines.push(
-          `  This is the CURRENT player - INFORMATIONAL (orchestrator will enforce if needed).`,
-        );
-      } else {
-        lines.push(
-          `  INFORMATIONAL: Orchestrator will prevent turn advancement until this choice is made.`,
-        );
-      }
+      const playerName = (player.name as string) || id;
+      const isCurrent = currentTurn === (player.id as string) || id;
+      lines.push(
+        `⚠️ DECISION (${playerName}) ${decisionPoint.requiredField}=null. Ask: "${decisionPoint.prompt}"${isCurrent ? " [current]" : ""}`,
+      );
     }
   });
 

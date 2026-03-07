@@ -147,24 +147,31 @@ export class KaliAppCore {
 
   private formatGameRules(gameModule: GameModule): string {
     const { rules, metadata } = gameModule;
+    const maxMechanics = 2000;
+    const maxTurnStructure = 1000;
+    const mechanics =
+      rules.mechanics.length > maxMechanics
+        ? rules.mechanics.slice(0, maxMechanics) + "..."
+        : rules.mechanics;
+    const turnStructure =
+      rules.turnStructure.length > maxTurnStructure
+        ? rules.turnStructure.slice(0, maxTurnStructure) + "..."
+        : rules.turnStructure;
+    const examples = rules.examples.slice(0, 5);
 
     return `
-## ${metadata.name} Rules
-
-You are moderating a game of ${metadata.name}.
+## ${metadata.name}
 
 **Objective:** ${rules.objective}
 
-**Mechanics:** ${rules.mechanics}
+**Mechanics:** ${mechanics}
 
-**Turn Structure:**
-${rules.turnStructure}
+**Turn:** ${turnStructure}
 
-**Board Layout:**
-${rules.boardLayout}
+**Board:** Orchestrator injects square data in [SYSTEM: ...] when needed.
 
-**Example Sequences:**
-${rules.examples.map((ex: string, i: number) => `${i + 1}. ${ex}`).join("\n")}
+**Examples:**
+${examples.map((ex: string, i: number) => `${i + 1}. ${ex}`).join("\n")}
 `;
   }
 

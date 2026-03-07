@@ -6,6 +6,8 @@ vi.mock("../config", () => ({
   CONFIG: {
     GEMINI: {
       API_URL: "https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent",
+      CACHED_CONTENTS_URL: "https://generativelanguage.googleapis.com/v1beta/cachedContents",
+      MODEL: "models/gemini-pro",
       API_KEY: "test-api-key",
     },
   },
@@ -117,7 +119,7 @@ describe("GeminiClient", () => {
             ],
             generationConfig: {
               temperature: 0.7,
-              maxOutputTokens: 1024,
+              maxOutputTokens: 512,
             },
           }),
         }),
