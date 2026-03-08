@@ -192,11 +192,13 @@ export class BoardEffectsHandler {
       );
 
       if (isAnimalEncounterKind(kind) && playerId) {
+        const habitat = squareData.habitat as string | undefined;
         this.stateManager.set("game.pendingAnimalEncounter", {
           position,
           power,
           playerId,
           phase: "riddle",
+          riddleHint: typeof habitat === "string" ? habitat : undefined,
         });
       }
 

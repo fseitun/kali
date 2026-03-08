@@ -293,7 +293,17 @@ function formatAnimalEncounterContext(state: Record<string, unknown>): string {
   const power = pending.power ?? 0;
 
   if (pending.phase === "riddle") {
-    return `⚠️ RIDDLE (${playerName}) phase=riddle. Ask a habitat-themed riddle. Return RIDDLE_RESOLVED { correct: true/false } - do NOT use SET_STATE on game.pendingAnimalEncounter. [current]`;
+    const riddleCtx = pending as { riddleHint?: string; riddlePrompt?: string };
+    const prompt = riddleCtx.riddlePrompt;
+    const hint = riddleCtx.riddleHint;
+    let helpInst =
+      " If user asks what to do, NARRATE reminding them to answer. Never invent a new riddle.";
+    if (prompt) {
+      helpInst = ` If user asks what to do, NARRATE re-asking the same riddle: "${prompt}"`;
+    } else if (hint) {
+      helpInst = ` If user asks what to do, NARRATE reminding them (e.g. "Respondé: el hábitat es ${hint}."). Never invent a new riddle.`;
+    }
+    return `⚠️ RIDDLE (${playerName}) phase=riddle. Ask a habitat-themed riddle. Return RIDDLE_RESOLVED { correct: true/false } - do NOT use SET_STATE on game.pendingAnimalEncounter.${helpInst} [current]`;
   }
 
   if (pending.phase === "powerCheck") {

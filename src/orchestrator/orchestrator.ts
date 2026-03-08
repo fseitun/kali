@@ -380,8 +380,28 @@ export class Orchestrator {
       return;
     }
 
+    let skipTrailingNarrate = false;
+
     for (const action of actions) {
       try {
+        if (action.action === "PLAYER_ROLLED") {
+          await this.executeAction(action, context);
+          const game = this.stateManager.getState().game as Record<string, unknown> | undefined;
+          const pending = game?.pendingAnimalEncounter as { phase?: string } | null | undefined;
+          if (pending && ["riddle", "powerCheck", "revenge"].includes(pending.phase ?? "")) {
+            skipTrailingNarrate = true;
+          }
+          continue;
+        }
+
+        if (skipTrailingNarrate && action.action === "NARRATE") {
+          Logger.info(
+            "Skipping movement NARRATE: square effect already narrated; avoids confusing player after riddle",
+          );
+          continue;
+        }
+
+        skipTrailingNarrate = false;
         await this.executeAction(action, context);
       } catch (error) {
         Logger.error("Failed to execute action:", action, error);
@@ -650,6 +670,22 @@ export class Orchestrator {
 
     switch (primitive.action) {
       case "NARRATE": {
+        const state = this.stateManager.getState();
+        const game = state.game as Record<string, unknown> | undefined;
+        const pending = game?.pendingAnimalEncounter as
+          | { phase?: string; riddleHint?: string }
+          | null
+          | undefined;
+        if (
+          this.boardEffectsHandler.isProcessingEffect() &&
+          pending?.phase === "riddle" &&
+          primitive.text
+        ) {
+          this.stateManager.set("game.pendingAnimalEncounter", {
+            ...pending,
+            riddlePrompt: primitive.text,
+          } as Record<string, unknown>);
+        }
         this.statusIndicator.setState("speaking");
         if (primitive.soundEffect) {
           this.speechService.playSound(primitive.soundEffect);
