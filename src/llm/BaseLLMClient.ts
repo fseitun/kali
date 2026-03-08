@@ -6,7 +6,6 @@ import type { LLMClient } from "./LLMClient";
 import { buildSystemPrompt, formatStateContext } from "./system-prompt";
 import type { ApiCallOptions, ApiCallResult } from "./types";
 
-const PROMPT_TRUNCATE_CHARS = 600;
 type PromptPurpose = "getActions" | "extractName" | "analyzeResponse";
 
 export abstract class BaseLLMClient implements LLMClient {
@@ -19,12 +18,7 @@ export abstract class BaseLLMClient implements LLMClient {
 
   private logPrompt(purpose: PromptPurpose, prompt: string): void {
     const len = prompt.length;
-    const preview =
-      len <= PROMPT_TRUNCATE_CHARS
-        ? prompt
-        : prompt.slice(0, PROMPT_TRUNCATE_CHARS) +
-          `\n... (${len - PROMPT_TRUNCATE_CHARS} more chars)`;
-    Logger.prompt(`[${purpose}] (${len} chars)\n${preview}`, {
+    Logger.prompt(`[${purpose}] (${len} chars)`, {
       purpose,
       fullPrompt: prompt,
       promptLength: len,
@@ -33,12 +27,7 @@ export abstract class BaseLLMClient implements LLMClient {
 
   private logPromptResponse(purpose: PromptPurpose, content: string): void {
     const len = content.length;
-    const preview =
-      len <= PROMPT_TRUNCATE_CHARS
-        ? content
-        : content.slice(0, PROMPT_TRUNCATE_CHARS) +
-          `\n... (${len - PROMPT_TRUNCATE_CHARS} more chars)`;
-    Logger.prompt(`[${purpose}] response (${len} chars)\n${preview}`, {
+    Logger.prompt(`[${purpose}] response (${len} chars)`, {
       purpose: `${purpose}Response`,
       fullResponse: content,
       responseLength: len,
