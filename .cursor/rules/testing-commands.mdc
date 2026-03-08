@@ -70,7 +70,7 @@ The real orchestrator runs with mock services; state assertions catch regression
 **Scenario format:**
 ```json
 {
-  "game": "snakes-and-ladders",
+  "game": "kalimba",
   "players": 3,
   "initialState": { "game": { "phase": "PLAYING", "turn": "p1", ... } },
   "steps": [

@@ -63,7 +63,7 @@ By default, the model is fetched from the alphacephei CDN (no model in `public/`
 
 ## Goal & Vision
 
-Kali is an always-available, voice-first game moderator. Its immediate goal is to moderate games like **Snakes and Ladders** and **Kalimba** by understanding spoken player actions. The long-term vision is a **game-agnostic engine** capable of learning new games, including complex ones like Dungeons & Dragons, simply by being fed their rulebooks and state schemas.
+Kali is an always-available, voice-first game moderator. Its immediate goal is to moderate **Kalimba** by understanding spoken player actions. The long-term vision is a **game-agnostic engine** capable of learning new games, including complex ones like Dungeons & Dragons, simply by being fed their rulebooks and state schemas.
 
 ## Architecture
 

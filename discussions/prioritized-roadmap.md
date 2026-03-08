@@ -230,12 +230,12 @@ _(Value/Complexity ratio; higher = better ROI)_
 
 **Value: 3/10 | Complexity: 3/10 | Ratio: 1.0**
 
-**Problem:** Currently defaulting to Kalimba game. Need runtime game selection.
+**Problem:** Currently Kalimba-only. Runtime game selection deferred until a second game exists.
 
-**Implementation:**
+**Implementation (future):**
 
 - Voice-activated game selection after language selection
-- "Choose a game: Kalimba or Snakes and Ladders"
+- "Choose a game: [list from /public/games/]"
 - Automatically detect available games from `/public/games/`
 - Store last played game preference in IndexedDB
 - Voice command to switch games: "Kali, change game" (with confirmation)
@@ -331,13 +331,12 @@ _(Value/Complexity ratio; higher = better ROI)_
 
 **Value: 8/10 | Complexity: 7/10 | Ratio: 1.14**
 
-**Problem:** `BoardEffectsHandler` contains game-specific logic (Snakes & Ladders). While configurable via JSON, the handler itself is hardcoded in orchestrator.
+**Problem:** `BoardEffectsHandler` contains Kalimba-specific logic (board.moves, magic door, square effects). MVP is Kalimba-only; this is deferred until a second game is added.
 
-**Implementation:**
+**Implementation (future):**
 
-- Move board move logic to game config via `onStateChange` hooks
+- Move board logic to game config via `onStateChange` hooks
 - Create `APPLY_BOARD_EFFECT` primitive action
-- Remove hard-coded Snakes & Ladders logic from orchestrator
 - Enable games to define state transformation hooks in JSON
 - Make BoardEffectsHandler truly generic
 
@@ -346,7 +345,7 @@ _(Value/Complexity ratio; higher = better ROI)_
 - `src/orchestrator/orchestrator.ts` (remove checkAndApplyBoardMoves)
 - `src/orchestrator/types.ts` (add APPLY_BOARD_EFFECT)
 - `src/game-loader/types.ts` (add hooks support)
-- `public/games/snakes-and-ladders/config.json` (add hooks)
+- `public/games/kalimba/config.json` (add hooks)
 
 ---
 

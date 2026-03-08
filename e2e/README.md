@@ -10,7 +10,7 @@ End-to-end scenarios run the **real orchestrator** with a scripted mock LLM and 
 
 Each JSON file defines:
 
-- `game` – Game id (e.g. `snakes-and-ladders`, `kalimba`)
+- `game` – Game id (e.g. `kalimba`)
 - `players` – Number of players (optional; names are generated)
 - `initialState` – Optional overrides merged onto the game's `initialState`
 - `llmScript` – Optional **top-level** array of scripted LLM responses (one array per LLM call, in order). Use only when not using per-step `llmResponses`.

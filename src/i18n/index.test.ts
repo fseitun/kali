@@ -25,8 +25,8 @@ describe("i18n", () => {
     });
 
     it("should interpolate parameters", () => {
-      expect(t("setup.welcome", { game: "Snakes & Ladders" })).toBe(
-        "Welcome to Snakes & Ladders! Let's get started.",
+      expect(t("setup.welcome", { game: "Kalimba" })).toBe(
+        "Welcome to Kalimba! Let's get started.",
       );
     });
 

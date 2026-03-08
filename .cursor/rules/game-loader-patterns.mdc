@@ -79,17 +79,9 @@ Game rules are passed to LLM via system prompt:
 - LLM translates player actions to primitives
 - Orchestrator executes primitives deterministically
 
-## Current Limitations
+## Current Scope
 
-**Board Effects Are Hardcoded:**
-- `BoardEffectsHandler` contains Snakes & Ladders logic
-- Square effects trigger for Kalimba encounters
-- NOT truly game-agnostic yet
-
-**Future (Roadmap #12):**
-- Move board logic to game config
-- Create hook system for game-specific behavior
-- Make orchestrator completely game-agnostic
+MVP is Kalimba-only. `BoardEffectsHandler` contains Kalimba board logic (board.moves, magic door, square effects). Game rules come from config; orchestrator executes primitives deterministically.
 
 ## Sound Effects
 
@@ -104,14 +96,3 @@ Used by SpeechService for:
 - Win conditions
 - Special events
 - Ambient sounds (future)
-
-## Adding a New Game
-
-1. Create `public/games/[game-name]/config.json`
-2. Define metadata, rules, initialState
-3. Add board config if applicable
-4. Include sound effect paths
-5. Define decision points if needed
-6. Test via debug interface
-
-Most game logic lives in LLM context via `rules` - no code changes needed for new games (with current limitations noted above).

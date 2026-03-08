@@ -4,15 +4,13 @@ import { getSquareKind, isAnimalEncounterKind, isDeferredRewardKind } from "./sq
 import type { ExecutionContext } from "./types";
 
 /**
- * Handles automatic board mechanics and square-based effects.
+ * Handles automatic board mechanics and square-based effects for Kalimba.
  *
  * Responsibilities:
- * - Auto-apply board moves (snakes, ladders, portals)
+ * - Auto-apply board moves (board.moves: portals, path merge)
+ * - Magic door bounce (overshooting 186)
  * - Apply deterministic square effects from config (points, hearts, skipTurn, item, instrument)
  * - Trigger LLM for narration only (no game-rule state from LLM)
- *
- * Note: Currently contains game-specific logic for Snakes & Ladders and Kalimba.
- * Future work will move this to game config hooks for true game-agnostic orchestrator.
  */
 export class BoardEffectsHandler {
   private isProcessingSquareEffect = false;

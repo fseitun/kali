@@ -29,8 +29,6 @@ export const enUS = {
     moved: "{name} moved to {position}.",
     winner: "{name} won! Congratulations!",
     position: "You're at position {position}.",
-    ladderUp: "{name} climbed a ladder to {position}!",
-    snakeDown: "{name} slid down a snake to {position}!",
   },
   ui: {
     startButton: "Start",

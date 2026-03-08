@@ -15,7 +15,7 @@ The orchestrator uses modular subsystems:
 - `assertPlayerTurnOwnership(path)` - Validate mutations target correct player
 
 ### BoardEffectsHandler
-- `checkAndApplyBoardMoves(path)` - Auto-apply snakes/ladders after position changes
+- `checkAndApplyBoardMoves(path)` - Auto-apply board moves (portals, path merge) after position changes
 - `checkAndApplySquareEffects(path, context)` - Trigger square effects via LLM
 - `isProcessingEffect()` - Check if currently processing a square effect
 
@@ -52,7 +52,7 @@ Turns auto-advance, but are blocked when:
 ## Board Effects Pattern
 
 After any position change:
-1. Check `board.moves` for snakes/ladders → auto-apply silently
+1. Check `board.moves` for portals/teleports → auto-apply silently
 2. Check `board.squares` for special content → inject LLM prompt
 
 This is deterministic and happens BEFORE turn advancement.

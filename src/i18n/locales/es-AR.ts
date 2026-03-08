@@ -29,8 +29,6 @@ export const esAR = {
     moved: "{name} avanzó al casillero {position}.",
     winner: "¡{name} ganó! ¡Felicitaciones!",
     position: "Estás en el casillero {position}.",
-    ladderUp: "¡{name} subió por una escalera hasta el casillero {position}!",
-    snakeDown: "¡{name} bajó por una serpiente hasta el casillero {position}!",
   },
   ui: {
     startButton: "Jugar",

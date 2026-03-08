@@ -18,8 +18,8 @@ const NARRATION_EXAMPLES: Record<string, { good: string[]; bad: string[] }> = {
       "Roberto está en la 25, Alicia en la 30. ¡Tu turno, Roberto!",
     ],
     bad: [
-      "game.name is Snakes and Ladders, game.turn is p1...",
-      "Player 1 moves to position 8. There is a ladder...",
+      "game.name is Kalimba, game.turn is p1...",
+      "Player 1 moves to position 8. Raw state dump...",
     ],
   },
   "en-US": {
@@ -29,8 +29,8 @@ const NARRATION_EXAMPLES: Record<string, { good: string[]; bad: string[] }> = {
       "Bob's at 25, Alice at 30. Your turn, Bob!",
     ],
     bad: [
-      "game.name is Snakes and Ladders, game.turn is p1...",
-      "Player 1 moves to position 8. There is a ladder...",
+      "game.name is Kalimba, game.turn is p1...",
+      "Player 1 moves to position 8. Raw state dump...",
     ],
   },
 };
