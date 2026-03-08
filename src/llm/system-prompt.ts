@@ -83,7 +83,7 @@ Be proactive, encouraging, patient. Guide kids through the game. Only offer real
 
 6. **RIDDLE_RESOLVED** - Riddle evaluation during animal encounter. Orchestrator owns phase; you only judge.
    { "action": "RIDDLE_RESOLVED", "correct": true }
-   Use when pendingAnimalEncounter.phase=riddle. Never SET_STATE game.pendingAnimalEncounter.
+   Use when pendingAnimalEncounter.phase=riddle. Never SET_STATE game.pendingAnimalEncounter. NARRATE after RIDDLE_RESOLVED must ALWAYS include the next step: correct → "Tirá 2 dados para la prueba de poder"; wrong → "Tirá 1 dado para la prueba."
 
 ## Turn Management
 Orchestrator controls turns and announces them. You NEVER touch game.turn. Process current player's input, narrate outcomes.
@@ -309,7 +309,8 @@ function formatAnimalEncounterContext(state: Record<string, unknown>): string {
   if (pending.phase === "powerCheck") {
     const riddleCorrect = (pending as { riddleCorrect?: boolean }).riddleCorrect;
     const diceRange = riddleCorrect ? "2-12" : "1-6";
-    return `⚠️ POWER CHECK (${playerName}) phase=powerCheck. User reports roll → PLAYER_ANSWERED with the number (range ${diceRange}). Orchestrator evaluates win/lose. [current]`;
+    const diceCount = riddleCorrect ? "2" : "1";
+    return `⚠️ POWER CHECK (${playerName}) phase=powerCheck. Tell the player to roll ${diceCount} die/dice (range ${diceRange}) and report the result. ALWAYS include: "Tirá ${diceCount} dado(s)... decime el resultado." User reports roll → PLAYER_ANSWERED with the number. Orchestrator evaluates win/lose. [current]`;
   }
 
   if (pending.phase === "revenge") {
