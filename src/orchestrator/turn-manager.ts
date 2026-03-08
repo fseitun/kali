@@ -134,14 +134,20 @@ export class TurnManager {
    * - Game has a winner
    * - Game is not in PLAYING phase
    *
+   * If the next player has skipTurns > 0, consumes one skip and advances again.
+   * Returns skippedPlayer when a player was skipped so the app can announce it.
+   *
    * AUTHORITY: Only the turn manager (via orchestrator) can advance turns.
    *
    * @param isProcessingSquareEffect - Flag indicating if square effect is currently being processed
-   * @returns The next player's ID and details, or null if unable to advance
+   * @returns The next player's ID and details, or null if unable to advance. Includes skippedPlayer if someone was skipped.
    */
-  async advanceTurn(
-    isProcessingSquareEffect: boolean,
-  ): Promise<{ playerId: string; name: string; position: number } | null> {
+  async advanceTurn(isProcessingSquareEffect: boolean): Promise<{
+    playerId: string;
+    name: string;
+    position: number;
+    skippedPlayer?: { playerId: string; name: string };
+  } | null> {
     const state = this.stateManager.getState();
     const game = state.game as Record<string, unknown> | undefined;
     const players = state.players as Record<string, Record<string, unknown>> | undefined;
@@ -189,11 +195,33 @@ export class TurnManager {
       const nextIndex = (currentIndex + 1) % playerOrder.length;
       const nextPlayerId = playerOrder[nextIndex];
       const nextPlayer = players[nextPlayerId];
+      const nextPlayerName = (nextPlayer?.name as string) || nextPlayerId;
+      const skipTurns = (nextPlayer?.skipTurns as number) ?? 0;
+
+      if (skipTurns > 0) {
+        this.stateManager.set(`players.${nextPlayerId}.skipTurns`, skipTurns - 1);
+        Logger.info(
+          `⏭️ Skipping ${nextPlayerName} (had ${skipTurns} skip(s), now ${skipTurns - 1})`,
+        );
+        this.stateManager.set("game.turn", nextPlayerId);
+        const afterSkipped = await this.advanceTurn(isProcessingSquareEffect);
+        if (afterSkipped) {
+          return {
+            ...afterSkipped,
+            skippedPlayer: { playerId: nextPlayerId, name: nextPlayerName },
+          };
+        }
+        return {
+          playerId: nextPlayerId,
+          name: nextPlayerName,
+          position: (nextPlayer?.position as number) || 0,
+          skippedPlayer: { playerId: nextPlayerId, name: nextPlayerName },
+        };
+      }
 
       Logger.info(`🔄 Auto-advancing turn: ${currentTurn} → ${nextPlayerId}`);
       this.stateManager.set("game.turn", nextPlayerId);
 
-      const nextPlayerName = (nextPlayer?.name as string) || nextPlayerId;
       const nextPlayerPosition = (nextPlayer?.position as number) || 0;
 
       return {

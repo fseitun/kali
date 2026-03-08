@@ -12,7 +12,10 @@
   "steps": [
     {
       "description": "Intro; decision point triggers path choice (Path A)",
-      "actions": [{ "action": "NARRATE", "text": "Let's begin!" }],
+      "actions": [
+        { "action": "SET_STATE", "path": "players.p1.pathChoice", "value": "A" },
+        { "action": "NARRATE", "text": "Let's begin!" }
+      ],
       "llmResponses": [
         [
           { "action": "SET_STATE", "path": "players.p1.pathChoice", "value": "A" },
@@ -68,9 +71,9 @@
       "roll": 1,
       "llmResponses": [[{ "action": "NARRATE", "text": "Arenas! Skip next turn." }]]
     },
-    { "roll": 2, "expect": { "players.p1.position": 36 } },
-    { "roll": 1, "expect": { "players.p2.position": 36 } },
-    { "roll": 3, "expect": { "players.p3.position": 36 } },
+    { "roll": 2, "expect": { "players.p1.position": 15 } },
+    { "roll": 1, "expect": { "players.p2.position": 13 } },
+    { "roll": 2, "expect": { "players.p3.position": 13 } },
     {
       "description": "Land on Escorpión (+4 points)",
       "roll": 2,

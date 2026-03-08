@@ -23,6 +23,7 @@ export const esAR = {
     turnAnnouncement:
       "{name}, te toca. Estás en el casillero {position}. Decime qué sacaste o dónde caíste.",
     turnAnnouncementWithDecision: "{name}, te toca. Estás en el casillero {position}. {prompt}",
+    skipTurnAnnouncement: "{name}, saltás este turno.",
     readyToPlay: "¡Listos para jugar!",
     yourTurn: "Te toca, {name}.",
     moved: "{name} avanzó al casillero {position}.",

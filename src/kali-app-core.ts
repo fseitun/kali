@@ -364,15 +364,24 @@ ${examples.map((ex: string, i: number) => `${i + 1}. ${ex}`).join("\n")}
   /**
    * Checks if turn should advance and delegates to orchestrator.
    * UI layer responsibility: announce turn changes to user.
+   * When a player is skipped (skipTurns > 0), announces the skip first, then the next player.
    */
   private async checkAndAdvanceTurn(): Promise<void> {
     if (!this.orchestrator) {
       return;
     }
 
-    const nextPlayer = await this.orchestrator.advanceTurn();
+    const result = await this.orchestrator.advanceTurn();
 
-    if (nextPlayer) {
+    if (result) {
+      const nextPlayer = result;
+      if (nextPlayer.skippedPlayer) {
+        await this.speechService.speak(
+          t("game.skipTurnAnnouncement", {
+            name: nextPlayer.skippedPlayer.name,
+          }),
+        );
+      }
       const pendingPrompt = this.orchestrator.getPendingDecisionPrompt();
       const message = pendingPrompt
         ? t("game.turnAnnouncementWithDecision", {

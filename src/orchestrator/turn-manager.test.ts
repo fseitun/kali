@@ -231,6 +231,29 @@ describe("TurnManager", () => {
       // Should still advance, but might have undefined values
       expect(result?.playerId).toBe("p99");
     });
+
+    it("should skip next player when they have skipTurns and return skippedPlayer", async () => {
+      stateManager.set("players.p2.skipTurns", 1);
+
+      const result = await turnManager.advanceTurn(false);
+
+      expect(result?.playerId).toBe("p3");
+      expect(result?.skippedPlayer).toEqual({ playerId: "p2", name: "Bob" });
+      expect((stateManager.getState().game as Record<string, unknown>).turn).toBe("p3");
+      expect(stateManager.get("players.p2.skipTurns")).toBe(0);
+    });
+
+    it("should recursively skip multiple players with skipTurns", async () => {
+      stateManager.set("players.p2.skipTurns", 1);
+      stateManager.set("players.p3.skipTurns", 1);
+
+      const result = await turnManager.advanceTurn(false);
+
+      expect(result?.playerId).toBe("p1");
+      expect((stateManager.getState().game as Record<string, unknown>).turn).toBe("p1");
+      expect(stateManager.get("players.p2.skipTurns")).toBe(0);
+      expect(stateManager.get("players.p3.skipTurns")).toBe(0);
+    });
   });
 
   describe("assertPlayerTurnOwnership()", () => {

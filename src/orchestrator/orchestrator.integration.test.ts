@@ -421,6 +421,51 @@ describe("Orchestrator Integration Tests", () => {
       expect(p1Position).toBe(3);
     });
 
+    it("uses Path B (pathBSquares) when pathChoice is B and rolling from 0", async () => {
+      const responses: PrimitiveAction[][] = [
+        [
+          { action: "PLAYER_ROLLED", value: 4 },
+          { action: "NARRATE", text: "Pedro moved to path B!" },
+        ],
+      ];
+
+      mockLLM = createScriptedLLM(responses);
+
+      const pathASquares = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14];
+      const pathBSquares = [
+        15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35,
+      ];
+      const initialState: GameState = {
+        game: {
+          name: "Kalimba",
+          phase: GamePhase.PLAYING,
+          turn: "p2",
+          playerOrder: ["p1", "p2"],
+          winner: null,
+          lastRoll: 0,
+        },
+        players: {
+          p1: { id: "p1", name: "Alice", position: 3, pathChoice: "A" },
+          p2: { id: "p2", name: "Pedro", position: 0, pathChoice: "B" },
+        },
+        board: {
+          winPosition: 196,
+          moves: { "14": 36, "35": 36 },
+          squares: {},
+          pathASquares,
+          pathBSquares,
+        },
+        decisionPoints: [],
+      };
+
+      setupGame(initialState);
+
+      await orchestrator.handleTranscript("4");
+
+      const p2Position = stateManager.get("players.p2.position");
+      expect(p2Position).toBe(18); // pathBSquares[3] = 18 (4th square of Path B)
+    });
+
     it("rejects PLAYER_ANSWERED for path choice when current player has no pending decision", async () => {
       // Simulates bug: LLM returns PLAYER_ANSWERED "B" for fico when it's p1's turn and p1 already chose
       const initialState: GameState = {

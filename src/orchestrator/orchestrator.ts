@@ -253,12 +253,13 @@ export class Orchestrator {
   /**
    * Advances to the next player's turn.
    * AUTHORITY: Only the orchestrator can advance turns.
-   * @returns The next player's ID and details, or null if unable to advance
+   * @returns The next player's ID and details, or null if unable to advance. Includes skippedPlayer when a player was skipped.
    */
   async advanceTurn(): Promise<{
     playerId: string;
     name: string;
     position: number;
+    skippedPlayer?: { playerId: string; name: string };
   } | null> {
     return await this.turnManager.advanceTurn(this.boardEffectsHandler.isProcessingEffect());
   }
@@ -456,6 +457,39 @@ export class Orchestrator {
     }
   }
 
+  /**
+   * Computes the new position after a dice roll.
+   * When at 0 with pathChoice A/B, uses pathASquares/pathBSquares to route correctly.
+   * Otherwise uses linear addition.
+   */
+  private computeNewPosition(playerId: string, currentPosition: number, roll: number): number {
+    if (currentPosition !== 0) {
+      return currentPosition + roll;
+    }
+
+    const state = this.stateManager.getState();
+    const board = state.board as
+      | {
+          pathASquares?: number[];
+          pathBSquares?: number[];
+        }
+      | undefined;
+    const player = (state.players as Record<string, Record<string, unknown>>)?.[playerId];
+    const pathChoice = player?.pathChoice as string | undefined;
+
+    if (pathChoice === "A" && Array.isArray(board?.pathASquares) && board.pathASquares.length > 0) {
+      const idx = Math.min(roll - 1, board.pathASquares.length - 1);
+      return board.pathASquares[idx];
+    }
+
+    if (pathChoice === "B" && Array.isArray(board?.pathBSquares) && board.pathBSquares.length > 0) {
+      const idx = Math.min(roll - 1, board.pathBSquares.length - 1);
+      return board.pathBSquares[idx];
+    }
+
+    return currentPosition + roll;
+  }
+
   private async executeAction(
     primitive: PrimitiveAction,
     context: ExecutionContext,
@@ -502,7 +536,7 @@ export class Orchestrator {
           throw new Error(`Cannot process PLAYER_ROLLED: ${path} is not a number`);
         }
 
-        const newPosition = currentPosition + primitive.value;
+        const newPosition = this.computeNewPosition(currentTurn, currentPosition, primitive.value);
         Logger.write(
           `Player rolled ${primitive.value}: ${path} (${currentPosition} + ${primitive.value} = ${newPosition})`,
         );
