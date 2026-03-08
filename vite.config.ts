@@ -27,6 +27,15 @@ export default defineConfig({
         globPatterns: ["**/*.{js,css,html,ico,png,svg}"],
         navigateFallback: null,
         maximumFileSizeToCacheInBytes: 10 * 1024 * 1024,
+        manifestTransforms: [
+          (entries: { url: string }[]) => ({
+            manifest: entries.filter((e) => {
+              if (e.url.includes("/debug/")) return false;
+              if (e.url.includes("/assets/") && /[-.]debug[-.]/.test(e.url)) return false;
+              return true;
+            }),
+          }),
+        ],
         runtimeCaching: [
           {
             urlPattern: /^https:\/\/alphacephei\.com\/vosk\/models\/.*/i,
@@ -40,6 +49,19 @@ export default defineConfig({
               cacheableResponse: {
                 statuses: [0, 200],
               },
+            },
+          },
+          {
+            urlPattern: ({ url }) => url.pathname.startsWith("/debug"),
+            handler: "NetworkFirst",
+            options: {
+              cacheName: "kali-debug-v1",
+              expiration: {
+                maxEntries: 5,
+                maxAgeSeconds: 60 * 60 * 24,
+              },
+              cacheableResponse: { statuses: [0, 200] },
+              networkTimeoutSeconds: 10,
             },
           },
         ],
@@ -75,8 +97,16 @@ export default defineConfig({
         debug: "./debug/index.html",
       },
       output: {
-        manualChunks: {
-          vosk: ["vosk-browser"],
+        manualChunks(id) {
+          if (id.includes("vosk-browser")) return "vosk";
+          if (
+            id.includes("debug.ts") ||
+            id.includes("debug/") ||
+            id.includes("debug-ui-service") ||
+            id.includes("debug-options") ||
+            id.includes("styles/debug.css")
+          )
+            return "debug";
         },
       },
     },
