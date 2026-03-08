@@ -17,6 +17,7 @@
     "test:e2e": "vitest run e2e/",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
+    "check-vosk": "node scripts/check-vosk-model.mjs",
     "prepare": "husky"
   },
   "lint-staged": {

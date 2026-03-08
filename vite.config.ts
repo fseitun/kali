@@ -1,6 +1,9 @@
 /// <reference types="vitest/config" />
 import { defineConfig } from "vite";
 import { VitePWA } from "vite-plugin-pwa";
+import type { ManifestEntry } from "workbox-build";
+
+type ManifestTransformEntry = ManifestEntry & { size: number };
 
 export default defineConfig({
   define:
@@ -28,7 +31,7 @@ export default defineConfig({
         navigateFallback: null,
         maximumFileSizeToCacheInBytes: 10 * 1024 * 1024,
         manifestTransforms: [
-          (entries: { url: string }[]) => ({
+          (entries: ManifestTransformEntry[]): { manifest: ManifestTransformEntry[] } => ({
             manifest: entries.filter((e) => {
               if (e.url.includes("/debug/")) return false;
               if (e.url.includes("/assets/") && /[-.]debug[-.]/.test(e.url)) return false;
