@@ -420,6 +420,37 @@ describe("Orchestrator Integration Tests", () => {
       expect(pathChoice).toBe("A");
       expect(p1Position).toBe(3);
     });
+
+    it("rejects PLAYER_ANSWERED for path choice when current player has no pending decision", async () => {
+      // Simulates bug: LLM returns PLAYER_ANSWERED "B" for fico when it's p1's turn and p1 already chose
+      const initialState: GameState = {
+        game: {
+          name: "Test Game",
+          phase: GamePhase.PLAYING,
+          turn: "p1",
+          playerOrder: ["p1", "p2"],
+          winner: null,
+          lastRoll: 0,
+        },
+        players: {
+          p1: { id: "p1", name: "Alice", position: 0, pathChoice: "A" },
+          p2: { id: "p2", name: "Bob", position: 0, pathChoice: null },
+        },
+        board: { winPosition: 100, moves: {}, squares: {} },
+        decisionPoints: [{ position: 0, requiredField: "pathChoice", prompt: "Choose A or B?" }],
+      };
+
+      mockLLM = createScriptedLLM([]);
+      setupGame(initialState);
+
+      const result = await orchestrator.testExecuteActions([
+        { action: "PLAYER_ANSWERED", answer: "B" },
+        { action: "NARRATE", text: "Bob chose B" },
+      ]);
+
+      expect(result.success).toBe(false);
+      expect(stateManager.get("players.p2.pathChoice")).toBeNull();
+    });
   });
 
   describe("Portal and Teleportation", () => {

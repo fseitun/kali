@@ -146,6 +146,42 @@ describe("Validator - New Primitives", () => {
       expect(result.valid).toBe(false);
       expect(result.error).toContain("missing");
     });
+
+    it("rejects path choice A/B when current player has no pending path choice", () => {
+      (mockState.players as Record<string, Record<string, unknown>>).p1.position = 0;
+      (mockState.players as Record<string, Record<string, unknown>>).p1.pathChoice = "A";
+      (mockState.players as Record<string, Record<string, unknown>>).p2.position = 0;
+      (mockState.players as Record<string, Record<string, unknown>>).p2.pathChoice = null;
+      mockState.decisionPoints = [
+        { position: 0, requiredField: "pathChoice", prompt: "Choose A or B?" },
+      ];
+
+      const actions = [{ action: "PLAYER_ANSWERED", answer: "B" }];
+      const result = validateActions(
+        actions,
+        mockState,
+        mockStateManager as unknown as StateManager,
+      );
+      expect(result.valid).toBe(false);
+      expect(result.error).toContain("Path choice");
+      expect(result.error).toContain("no pending path choice");
+    });
+
+    it("allows path choice when current player has pending path choice at position 0", () => {
+      (mockState.players as Record<string, Record<string, unknown>>).p1.position = 0;
+      (mockState.players as Record<string, Record<string, unknown>>).p1.pathChoice = null;
+      mockState.decisionPoints = [
+        { position: 0, requiredField: "pathChoice", prompt: "Choose A or B?" },
+      ];
+
+      const actions = [{ action: "PLAYER_ANSWERED", answer: "A" }];
+      const result = validateActions(
+        actions,
+        mockState,
+        mockStateManager as unknown as StateManager,
+      );
+      expect(result.valid).toBe(true);
+    });
   });
 
   describe("Old Primitives Rejection", () => {

@@ -140,7 +140,7 @@ function validateAction(
     case "PLAYER_ROLLED":
       return validatePlayerRolled(primitive, index, orchestrator);
     case "PLAYER_ANSWERED":
-      return validatePlayerAnswered(primitive, index);
+      return validatePlayerAnswered(primitive, state, index);
     default:
       return {
         valid: false,
@@ -414,7 +414,11 @@ function validatePlayerRolled(
   return { valid: true };
 }
 
-function validatePlayerAnswered(action: PrimitiveAction, index: number): ValidationResult {
+function validatePlayerAnswered(
+  action: PrimitiveAction,
+  state: GameState,
+  index: number,
+): ValidationResult {
   const actionRecord = action as unknown as Record<string, unknown>;
   const answerValidation = validateField(
     actionRecord,
@@ -432,6 +436,37 @@ function validatePlayerAnswered(action: PrimitiveAction, index: number): Validat
         valid: false,
         error: `PLAYER_ANSWERED at index ${index} requires non-empty answer`,
       };
+    }
+  }
+
+  // Path choice answers (A/B) must target the current turn player who has pending pathChoice
+  const actionWithAnswer = action as { answer?: string };
+  const answer = (actionWithAnswer.answer ?? "").trim();
+  const first = answer.charAt(0).toUpperCase();
+  if (first === "A" || first === "B") {
+    const decisionPoints = state.decisionPoints;
+    const game = state.game;
+    const currentTurn = game?.turn as string | undefined;
+    if (currentTurn && decisionPoints?.length) {
+      const pathChoiceDp = decisionPoints.find((dp) => dp.requiredField === "pathChoice");
+      if (pathChoiceDp) {
+        const players = state.players;
+        const currentPlayer = players?.[currentTurn];
+        if (currentPlayer) {
+          const pos = currentPlayer.position as number | undefined;
+          const pathVal = currentPlayer.pathChoice;
+          const hasPendingPathChoice =
+            typeof pos === "number" &&
+            pos === pathChoiceDp.position &&
+            (pathVal === null || pathVal === undefined);
+          if (!hasPendingPathChoice) {
+            return {
+              valid: false,
+              error: `PLAYER_ANSWERED at index ${index}: Path choice (A/B) can only be applied when the current turn player is at position ${pathChoiceDp.position} with pathChoice=null. Current player has no pending path choice.`,
+            };
+          }
+        }
+      }
     }
   }
 

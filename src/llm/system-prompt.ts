@@ -142,6 +142,7 @@ Each action must be one of these 5 primitives:
 
 **State - User is Authoritative:**
 - **Check state before asking:** If pathChoice, instruments, items already set → don't re-ask. Empty arrays → never ask to use them.
+- **Path choice: only ask the current turn player.** If game.turn is p1, only p1 can answer path choice. Do NOT ask another player for path choice—process the current player's action (e.g. their dice roll) instead.
 - **User corrections = SET_STATE + NARRATE:** "we're both at 100" → SET_STATE both positions, NARRATE "Got it!". "I have 3 hearts" → SET_STATE, NARRATE. Don't argue.
 
 **\`[SYSTEM: ...]\` messages:** Orchestrator injects these. Process immediately - don't wait for user. Patterns: "Player landed on square X" → narrate encounter; "PlayerName must choose 'field' before proceeding. Ask: ..." → ask that question. Don't narrate "the system says...".
@@ -313,22 +314,23 @@ function formatDecisionPointContext(state: Record<string, unknown>): string {
 
   const lines: string[] = [];
 
-  Object.entries(players).forEach(([id, player]) => {
-    const position = player.position as number | undefined;
-    if (typeof position !== "number") return;
+  // Only show decision for the current turn player - prevents LLM from asking wrong player
+  const currentPlayer = players[currentTurn];
+  if (!currentPlayer) return "";
 
-    const decisionPoint = decisionPoints.find((dp) => dp.position === position);
-    if (!decisionPoint) return;
+  const position = currentPlayer.position as number | undefined;
+  if (typeof position !== "number") return "";
 
-    const fieldValue = player[decisionPoint.requiredField];
-    if (fieldValue === null || fieldValue === undefined) {
-      const playerName = (player.name as string) || id;
-      const isCurrent = currentTurn === (player.id as string) || id;
-      lines.push(
-        `⚠️ DECISION (${playerName}) ${decisionPoint.requiredField}=null. Ask: "${decisionPoint.prompt}"${isCurrent ? " [current]" : ""}`,
-      );
-    }
-  });
+  const decisionPoint = decisionPoints.find((dp) => dp.position === position);
+  if (!decisionPoint) return "";
+
+  const fieldValue = currentPlayer[decisionPoint.requiredField];
+  if (fieldValue === null || fieldValue === undefined) {
+    const playerName = (currentPlayer.name as string) || currentTurn;
+    lines.push(
+      `⚠️ DECISION (${playerName}) ${decisionPoint.requiredField}=null. Ask: "${decisionPoint.prompt}" [current]`,
+    );
+  }
 
   if (lines.length > 0) {
     return lines.join("\n");
