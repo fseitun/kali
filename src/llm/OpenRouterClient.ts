@@ -8,6 +8,9 @@ import type { ApiCallOptions, ApiCallResult } from "./types";
  * OpenRouter LLM client using the OpenAI-compatible chat completions API.
  * Supports many models via https://openrouter.ai
  *
+ * Uses system + user messages when contextParts is present so the system prompt
+ * is byte-identical across requests and OpenRouter can apply cached-input pricing.
+ *
  * OpenRouter models often return JSON wrapped in markdown code blocks (```json ... ```).
  * This client strips markdown before parsing.
  */
@@ -22,6 +25,14 @@ export class OpenRouterClient extends BaseLLMClient {
   }
 
   async makeApiCall(prompt: string, options: ApiCallOptions): Promise<ApiCallResult> {
+    const messages =
+      options.contextParts != null
+        ? [
+            { role: "system" as const, content: options.contextParts.systemPrompt },
+            { role: "user" as const, content: options.contextParts.userMessage },
+          ]
+        : [{ role: "user" as const, content: prompt }];
+
     const response = await fetch(CONFIG.OPENROUTER.API_URL, {
       method: "POST",
       headers: {
@@ -30,7 +41,7 @@ export class OpenRouterClient extends BaseLLMClient {
       },
       body: JSON.stringify({
         model: CONFIG.OPENROUTER.MODEL,
-        messages: [{ role: "user", content: prompt }],
+        messages,
         temperature: options.temperature ?? 0.7,
         max_tokens: options.maxTokens ?? 1024,
         ...(options.responseFormatJson && { response_format: { type: "json_object" } }),

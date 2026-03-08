@@ -153,8 +153,8 @@ export class KaliAppCore {
 
   private formatGameRules(gameModule: GameModule): string {
     const { rules, metadata } = gameModule;
-    const maxMechanics = 2000;
-    const maxTurnStructure = 1000;
+    const maxMechanics = 1600;
+    const maxTurnStructure = 700;
     const mechanics =
       rules.mechanics.length > maxMechanics
         ? rules.mechanics.slice(0, maxMechanics) + "..."
@@ -163,22 +163,15 @@ export class KaliAppCore {
       rules.turnStructure.length > maxTurnStructure
         ? rules.turnStructure.slice(0, maxTurnStructure) + "..."
         : rules.turnStructure;
-    const examples = rules.examples.slice(0, 5);
+    const examples = rules.examples.slice(0, 4);
 
-    return `
-## ${metadata.name}
-
+    return `## ${metadata.name}
 **Objective:** ${rules.objective}
-
 **Mechanics:** ${mechanics}
-
 **Turn:** ${turnStructure}
-
-**Board:** Orchestrator injects square data in [SYSTEM: ...] when needed.
-
+**Board:** [SYSTEM: ...] injects square data when needed.
 **Examples:**
-${examples.map((ex: string, i: number) => `${i + 1}. ${ex}`).join("\n")}
-`;
+${examples.map((ex: string, i: number) => `${i + 1}. ${ex}`).join("\n")}`;
   }
 
   private async initializeWakeWord(): Promise<void> {

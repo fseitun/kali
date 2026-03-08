@@ -78,4 +78,25 @@ describe("OpenRouterClient", () => {
       expect(actions[0]).toEqual({ action: "NARRATE", text: "Pure JSON works too" });
     });
   });
+
+  describe("makeApiCall - cache-friendly messages", () => {
+    it("sends system + user messages when contextParts is provided", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () =>
+          Promise.resolve({
+            choices: [{ message: { content: '[{"action":"NARRATE","text":"OK"}]' } }],
+          }),
+      });
+
+      await client.getActions("roll dice", mockState);
+
+      const body = JSON.parse(mockFetch.mock.calls[0][1].body);
+      expect(body.messages).toHaveLength(2);
+      expect(body.messages[0].role).toBe("system");
+      expect(body.messages[0].content).toContain("Test game rules");
+      expect(body.messages[1].role).toBe("user");
+      expect(body.messages[1].content).toContain('User Command: "roll dice"');
+    });
+  });
 });
