@@ -29,7 +29,7 @@
     "game": {
       "primary": ["turn", "phase"],
       "secondary": ["lastRoll", "pendingRoll", "currentHabitat", "pendingAnimalEncounter"],
-      "hidden": ["name"]
+      "hidden": ["name", "lastAnswer", "playerOrder"]
     },
     "players": {
       "primary": ["id", "position", "pathChoice"],
