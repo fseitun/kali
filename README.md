@@ -84,6 +84,6 @@ Kali is built on a strict separation between the **LLM** (interprets natural lan
 **For detailed information:**
 
 - [File Structure & Locations](.cursor/rules/file-structure.mdc)
-- [Common Development Tasks](.cursor/rules/common-tasks.mdc)
+- [Task Guides](.cursor/rules/task-guides.mdc)
 - [Development Guidelines](.cursor/rules/development-guidelines.mdc)
 - [Testing Commands & Workflows](.cursor/rules/testing-commands.mdc)

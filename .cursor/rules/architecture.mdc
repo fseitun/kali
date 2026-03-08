@@ -22,7 +22,7 @@ The system is built on a strict separation of duties:
 ### The Orchestrator (CPU)
 - Deterministic, authoritative, and simple component
 - Knows nothing about game rules
-- Only understands primitive actions: `READ_STATE`, `WRITE_STATE`, `ROLL_DICE`, `NARRATE`
+- Only understands primitive actions: `NARRATE`, `RESET_GAME`, `SET_STATE`, `PLAYER_ROLLED`, `PLAYER_ANSWERED`
 - Validates and executes instructions from the LLM
 - Guarantees game state integrity
 

@@ -1,10 +1,12 @@
 ---
-description: How to add primitives, games, modify prompts, and adjust voice flows
+description: Step-by-step guides for common development tasks - add primitives, add games, modify prompts, adjust voice flows. Fetch when user asks "how do I..." for these tasks.
 ---
 
-# Common Tasks
+# Task Guides
 
 ## Adding New Primitive Actions
+
+**Current primitives:** `NARRATE`, `RESET_GAME`, `SET_STATE`, `PLAYER_ROLLED`, `PLAYER_ANSWERED` (see `architecture.mdc`).
 
 1. Add new action type to `src/orchestrator/types.ts`
 2. Implement validation in `src/orchestrator/validator.ts`
@@ -32,7 +34,7 @@ description: How to add primitives, games, modify prompts, and adjust voice flow
 
 ## Voice Interaction Flow
 
-1. User says wake word: "Zookeeper"
+1. User says wake word: "Kali"
 2. System responds: "Listening for command..."
 3. User speaks command (5 second window)
 4. System transcribes and processes via LLM

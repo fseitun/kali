@@ -9,20 +9,20 @@ globs: src/orchestrator/**/*.ts
 
 The orchestrator uses modular subsystems:
 
-### TurnManager (182 lines)
+### TurnManager
 - `hasPendingDecisions()` - Check if current player needs to make a decision
 - `advanceTurn()` - Advance to next player with automatic blocking
 - `assertPlayerTurnOwnership(path)` - Validate mutations target correct player
 
-### BoardEffectsHandler (122 lines)
+### BoardEffectsHandler
 - `checkAndApplyBoardMoves(path)` - Auto-apply snakes/ladders after position changes
 - `checkAndApplySquareEffects(path, context)` - Trigger square effects via LLM
 - `isProcessingEffect()` - Check if currently processing a square effect
 
-### DecisionPointEnforcer (89 lines)
+### DecisionPointEnforcer
 - `enforceDecisionPoints(context)` - Enforce required decisions at special positions
 
-### Orchestrator (395 lines)
+### Orchestrator
 - Core coordination and primitive execution
 - Delegates to subsystems for specialized logic
 - Maintains processing lock to prevent concurrent LLM requests
@@ -39,25 +39,7 @@ The orchestrator uses modular subsystems:
 
 ## Processing Lock Pattern
 
-The orchestrator uses `isProcessing` flag to prevent overlapping LLM requests:
-
-```typescript
-if (this.isProcessing) {
-  return // Block new requests
-}
-this.isProcessing = true
-try {
-  await this.processTranscript(transcript)
-} finally {
-  this.isProcessing = false
-}
-```
-
-**Why:**
-- Prevents race conditions in state updates
-- Ensures deterministic game flow
-- Avoids confusing parallel TTS responses
-- Users get serial, ordered feedback
+The orchestrator uses `isProcessing` to serialize LLM requests. See `architecture-decisions.mdc` for the full pattern and rationale.
 
 ## Turn Advancement Blocking
 

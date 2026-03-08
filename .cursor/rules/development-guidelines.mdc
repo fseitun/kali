@@ -57,10 +57,11 @@ Test files (`*.test.ts`) have more flexibility:
 
 ### Primitive Actions
 The orchestrator only understands these primitives:
-- `READ_STATE` - Read from game state
-- `WRITE_STATE` - Write to game state
-- `ROLL_DICE` - Generate random numbers
 - `NARRATE` - Speak to players via TTS
+- `RESET_GAME` - Reset game to initial state
+- `SET_STATE` - Set value in game state (user corrections/overrides)
+- `PLAYER_ROLLED` - Report dice roll; orchestrator calculates position
+- `PLAYER_ANSWERED` - Report player answer (path choice, fight/flee, etc.)
 
 ### State Machine
 Audio pipeline follows: idle → listening → processing → speaking
