@@ -1,6 +1,10 @@
 import { StatusIndicator } from "../components/status-indicator";
 import { t } from "../i18n";
-import { getEnabledCategories, subscribeToCategoryChanges } from "../utils/debug-options";
+import {
+  getCategoryIcon,
+  getEnabledCategories,
+  subscribeToCategoryChanges,
+} from "../utils/debug-options";
 import { initLogBuffer, type LogEntry, type LogSink } from "../utils/log-buffer";
 import type { IUIService } from "./ui-service";
 
@@ -98,12 +102,13 @@ export class DebugUIService implements IUIService {
 
   private renderEntry(entry: LogEntry): void {
     const time = new Date(entry.timestamp).toLocaleTimeString();
+    const icon = getCategoryIcon(entry.category);
     const wrap = document.createElement("div");
     wrap.className = "log-entry";
 
     const main = document.createElement("div");
-    main.textContent = `[${time}] ${entry.message}`;
-    if (entry.message.startsWith("🔊")) {
+    main.textContent = `[${time}] ${icon} ${entry.message}`;
+    if (entry.category === "narration") {
       main.classList.add("log-narration");
     }
     wrap.appendChild(main);

@@ -97,7 +97,7 @@ export class Orchestrator {
     options?: { skipDecisionPointEnforcement?: boolean },
   ): Promise<{ success: boolean; shouldAdvanceTurn: boolean }> {
     if (this.isProcessing) {
-      Logger.warn("⏸️ Orchestrator busy, ignoring new request");
+      Logger.warn("Orchestrator busy, ignoring new request");
       return { success: false, shouldAdvanceTurn: false };
     }
 
@@ -129,7 +129,7 @@ export class Orchestrator {
     actions: PrimitiveAction[],
   ): Promise<{ success: boolean; shouldAdvanceTurn: boolean }> {
     if (this.isProcessing) {
-      Logger.warn("⏸️ Orchestrator busy, ignoring test request");
+      Logger.warn("Orchestrator busy, ignoring test request");
       return { success: false, shouldAdvanceTurn: false };
     }
 
@@ -138,17 +138,17 @@ export class Orchestrator {
     Profiler.start("orchestrator.test");
 
     try {
-      Logger.info("🧪 Test mode: Executing actions directly");
+      Logger.info("Test mode: Executing actions directly");
       const context: ExecutionContext = { ...this.defaultContext };
       Profiler.start("orchestrator.test.run");
       const result = await this.runValidatedActions(actions, context, "orchestrator.test");
       Profiler.end("orchestrator.test.run");
       if (result.success) {
-        Logger.info("✅ Test actions executed successfully");
+        Logger.info("Test actions executed successfully");
       }
       return result;
     } catch (error) {
-      Logger.error("❌ Test execution error:", error);
+      Logger.error("Test execution error:", error);
       return { success: false, shouldAdvanceTurn: false };
     } finally {
       this.isProcessing = false;
@@ -168,7 +168,7 @@ export class Orchestrator {
     actions: PrimitiveAction[],
   ): Promise<{ success: boolean; shouldAdvanceTurn: boolean }> {
     if (this.isProcessing) {
-      Logger.warn("⏸️ Orchestrator busy, ignoring primitive execution request");
+      Logger.warn("Orchestrator busy, ignoring primitive execution request");
       return { success: false, shouldAdvanceTurn: false };
     }
 
@@ -229,7 +229,7 @@ export class Orchestrator {
    * @param phase - The phase to transition to
    */
   transitionPhase(phase: GamePhase): void {
-    Logger.info(`🎮 Phase transition: ${this.stateManager.get("game.phase")} → ${phase}`);
+    Logger.info(`Phase transition: ${this.stateManager.get("game.phase")} → ${phase}`);
     this.stateManager.set("game.phase", phase);
   }
 
@@ -568,7 +568,7 @@ export class Orchestrator {
       }
 
       case "RESET_GAME": {
-        Logger.info(`🔄 Resetting game state (keepPlayerNames: ${primitive.keepPlayerNames})`);
+        Logger.info(`Resetting game state (keepPlayerNames: ${primitive.keepPlayerNames})`);
 
         const playerNames: Map<string, string> = new Map();
         if (primitive.keepPlayerNames) {

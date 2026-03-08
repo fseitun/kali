@@ -181,12 +181,12 @@ export class TurnManager {
     }
 
     if (isProcessingSquareEffect) {
-      Logger.info("⏸️ Turn advancement blocked: square effect being processed");
+      Logger.info("Turn advancement blocked: square effect being processed");
       return null;
     }
 
     if (this.hasPendingDecisions()) {
-      Logger.info("⏸️ Turn advancement blocked: current player has pending decisions");
+      Logger.info("Turn advancement blocked: current player has pending decisions");
       return null;
     }
 
@@ -219,7 +219,7 @@ export class TurnManager {
         };
       }
 
-      Logger.info(`🔄 Auto-advancing turn: ${currentTurn} → ${nextPlayerId}`);
+      Logger.info(`Auto-advancing turn: ${currentTurn} → ${nextPlayerId}`);
       this.stateManager.set("game.turn", nextPlayerId);
 
       const nextPlayerPosition = (nextPlayer?.position as number) || 0;

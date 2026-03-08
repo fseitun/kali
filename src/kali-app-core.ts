@@ -41,7 +41,7 @@ export class KaliAppCore {
 
       const indicator = this.uiService.getStatusIndicator();
       indicator.setState("processing");
-      Logger.info("🚀 Initializing Kali...");
+      Logger.info("Initializing Kali...");
 
       checkBrowserSupport();
       await this.initializeOrchestrator();
@@ -91,11 +91,11 @@ export class KaliAppCore {
   private async initializeOrchestrator(): Promise<void> {
     Logger.brain("Initializing orchestrator...");
 
-    Logger.info(`📦 Loading game module: ${CONFIG.GAME.DEFAULT_MODULE}...`);
+    Logger.info(`Loading game module: ${CONFIG.GAME.DEFAULT_MODULE}...`);
     const gameLoader = new GameLoader(CONFIG.GAME.MODULES_PATH);
     this.gameModule = await gameLoader.loadGame(CONFIG.GAME.DEFAULT_MODULE);
 
-    Logger.info("🎮 Initializing game state...");
+    Logger.info("Initializing game state...");
     this.stateManager = new StateManager();
     this.stateManager.init(this.gameModule.initialState);
 
@@ -126,7 +126,7 @@ export class KaliAppCore {
       initialState,
     );
 
-    Logger.info("🔊 Loading sound effects...");
+    Logger.info("Loading sound effects...");
     await gameLoader.loadSoundEffects(this.gameModule, this.speechService);
 
     Logger.info("Orchestrator ready");
@@ -210,18 +210,18 @@ ${examples.map((ex: string, i: number) => `${i + 1}. ${ex}`).join("\n")}
       const state = this.stateManager.getState();
       const game = state.game as Record<string, unknown> | undefined;
 
-      Logger.info(`🎮 Startup phase check - phase: ${game?.phase}`);
+      Logger.info(`Startup phase check - phase: ${game?.phase}`);
 
       if (game?.phase === GamePhase.PLAYING) {
-        Logger.info("📂 Saved game detected - waiting for user command");
+        Logger.info("Saved game detected - waiting for user command");
         return false;
       } else if (game?.phase === GamePhase.SETUP) {
-        Logger.info("👋 Starting name collection...");
+        Logger.info("Starting name collection...");
         await this.runNameCollection();
         return true;
       }
 
-      Logger.info("⏭️ No action needed");
+      Logger.info("No action needed");
       return false;
     } catch (error) {
       Logger.error(`Error handling saved game: ${error}. Starting fresh.`);
@@ -240,7 +240,7 @@ ${examples.map((ex: string, i: number) => `${i + 1}. ${ex}`).join("\n")}
       return;
     }
 
-    Logger.info("🎮 Starting game proactively");
+    Logger.info("Starting game proactively");
 
     const pendingPrompt = this.orchestrator.getPendingDecisionPrompt();
     if (pendingPrompt) {
@@ -272,7 +272,7 @@ ${examples.map((ex: string, i: number) => `${i + 1}. ${ex}`).join("\n")}
       );
 
       if (game?.phase !== GamePhase.SETUP) {
-        Logger.info("⏭️ Skipping name collection - not in SETUP phase");
+        Logger.info("Skipping name collection - not in SETUP phase");
         return;
       }
 
@@ -357,7 +357,7 @@ ${examples.map((ex: string, i: number) => `${i + 1}. ${ex}`).join("\n")}
       position,
       prompt: pendingPrompt,
     });
-    Logger.info(`🎯 Announcing current turn (decision pending): ${name} at ${position}`);
+    Logger.info(`Announcing current turn (decision pending): ${name} at ${position}`);
     await this.speechService.speak(message);
   }
 
@@ -393,7 +393,7 @@ ${examples.map((ex: string, i: number) => `${i + 1}. ${ex}`).join("\n")}
             name: nextPlayer.name,
             position: nextPlayer.position,
           });
-      Logger.info(`🎯 Turn start sanity check: ${nextPlayer.name} at ${nextPlayer.position}`);
+      Logger.info(`Turn start sanity check: ${nextPlayer.name} at ${nextPlayer.position}`);
       await this.speechService.speak(message);
     }
   }

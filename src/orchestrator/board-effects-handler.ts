@@ -63,7 +63,7 @@ export class BoardEffectsHandler {
     if (destination !== undefined && destination !== position) {
       const isLadder = destination > position;
       const moveType = isLadder ? "ladder" : "snake";
-      Logger.info(`🎲 Auto-applying ${moveType}: position ${position} → ${destination}`);
+      Logger.info(`Auto-applying ${moveType}: position ${position} → ${destination}`);
       this.stateManager.set(path, destination);
     }
   }

@@ -54,95 +54,93 @@ export class Logger {
   private static logWithCategory(
     level: LogLevel,
     category: string,
-    icon: string,
     message: string,
     ...args: unknown[]
   ): void {
-    const fullMessage = `${icon} ${message}`;
-    Logger.pushToBuffer(level, category, fullMessage, args);
+    Logger.pushToBuffer(level, category, message, args);
 
     if (Logger.uiService) {
-      Logger.uiService.log(Logger.formatForLegacy(fullMessage, ...args));
+      Logger.uiService.log(Logger.formatForLegacy(message, ...args));
     }
   }
 
   static info(message: string, ...args: unknown[]): void {
-    Logger.logWithCategory("info", "general", "✅", message, ...args);
+    Logger.logWithCategory("info", "general", message, ...args);
   }
 
   static warn(message: string, ...args: unknown[]): void {
-    Logger.logWithCategory("warn", "general", "⚠️", message, ...args);
+    Logger.logWithCategory("warn", "general", message, ...args);
   }
 
   static error(message: string, ...args: unknown[]): void {
-    Logger.logWithCategory("error", "general", "❌", message, ...args);
+    Logger.logWithCategory("error", "general", message, ...args);
   }
 
   static debug(message: string, ...args: unknown[]): void {
-    Logger.logWithCategory("debug", "general", "🔍", message, ...args);
+    Logger.logWithCategory("debug", "general", message, ...args);
   }
 
   static listening(message: string): void {
-    Logger.logWithCategory("info", "transcription", "👂", message);
+    Logger.logWithCategory("info", "transcription", message);
   }
 
   static transcription(message: string): void {
-    Logger.logWithCategory("info", "transcription", "📝", message);
+    Logger.logWithCategory("info", "transcription", message);
   }
 
   static narration(message: string): void {
-    Logger.logWithCategory("info", "narration", "🔊", message);
+    Logger.logWithCategory("info", "narration", message);
   }
 
   static wakeWord(message: string): void {
-    Logger.logWithCategory("info", "voice", "🔥", message);
+    Logger.logWithCategory("info", "voice", message);
   }
 
   static brain(message: string): void {
-    Logger.logWithCategory("info", "brain", "🧠", message);
+    Logger.logWithCategory("info", "brain", message);
   }
 
   static download(message: string): void {
-    Logger.logWithCategory("info", "voice", "📥", message);
+    Logger.logWithCategory("info", "voice", message);
   }
 
   static mic(message: string): void {
-    Logger.logWithCategory("info", "voice", "🎤", message);
+    Logger.logWithCategory("info", "voice", message);
   }
 
   static headphones(message: string): void {
-    Logger.logWithCategory("info", "voice", "🎧", message);
+    Logger.logWithCategory("info", "voice", message);
   }
 
   static stop(message: string): void {
-    Logger.logWithCategory("info", "voice", "🛑", message);
+    Logger.logWithCategory("info", "voice", message);
   }
 
   static timeout(message: string): void {
-    Logger.logWithCategory("info", "voice", "⏱️", message);
+    Logger.logWithCategory("info", "voice", message);
   }
 
   static state(message: string, ...args: unknown[]): void {
-    Logger.logWithCategory("info", "state", "📊", message, ...args);
+    Logger.logWithCategory("info", "state", message, ...args);
   }
 
   static write(message: string): void {
-    Logger.logWithCategory("info", "actions", "✏️", message);
+    Logger.logWithCategory("info", "actions", message);
   }
 
   static user(message: string, ...args: unknown[]): void {
-    Logger.logWithCategory("info", "user", "👤", message, ...args);
+    Logger.logWithCategory("info", "user", message, ...args);
   }
 
   static init(message: string, ...args: unknown[]): void {
-    Logger.logWithCategory("info", "init", "🚀", message, ...args);
+    Logger.logWithCategory("info", "init", message, ...args);
   }
 
   static read(message: string): void {
-    Logger.logWithCategory("info", "general", "👁️", message);
+    Logger.logWithCategory("info", "general", message);
   }
 
   static robot(message: string, ...args: unknown[]): void {
-    Logger.logWithCategory("info", "llm", "🤖", message, ...args);
+    Logger.logWithCategory("info", "llm", message, ...args);
   }
 }

@@ -54,3 +54,8 @@ export function getLogCategories(): ReadonlyArray<{
 }> {
   return LOG_CATEGORIES;
 }
+
+export function getCategoryIcon(categoryId: string): string {
+  const cat = LOG_CATEGORIES.find((c) => c.id === categoryId);
+  return cat?.icon ?? "📋";
+}

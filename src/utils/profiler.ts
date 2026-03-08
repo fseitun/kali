@@ -39,7 +39,7 @@ class PerformanceProfiler {
 
     this.measurements.delete(label);
 
-    Logger.info(`⏱️ ${label}: ${duration.toFixed(2)}ms`);
+    Logger.info(`${label}: ${duration.toFixed(2)}ms`);
     return duration;
   }
 

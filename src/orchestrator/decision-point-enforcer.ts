@@ -75,7 +75,7 @@ export class DecisionPointEnforcer {
       const fieldValue = currentPlayer[decisionPoint.requiredField];
       if (fieldValue === null || fieldValue === undefined) {
         Logger.info(
-          `⚠️ Orchestrator enforcing decision point for ${playerName} at position ${position}: ${decisionPoint.requiredField}`,
+          `Orchestrator enforcing decision point for ${playerName} at position ${position}: ${decisionPoint.requiredField}`,
         );
 
         const newContext: ExecutionContext = {
