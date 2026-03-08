@@ -275,7 +275,7 @@ describe("BoardEffectsHandler", () => {
       );
     });
 
-    it("animal squares get narration only, no rewards on landing (deferred to LLM after riddle)", async () => {
+    it("animal squares get narration only, no rewards on landing (orchestrator applies after power check)", async () => {
       stateManager.set("board.squares", {
         "5": { type: "animal", name: "Halcón", power: 3, points: 3 },
       });
@@ -286,14 +286,14 @@ describe("BoardEffectsHandler", () => {
 
       expect(stateManager.get("players.p1.points")).toBe(0);
       expect(mockProcessTranscript).toHaveBeenCalledWith(
-        expect.stringContaining("Narrate the encounter"),
+        expect.stringContaining("RIDDLE_RESOLVED"),
         expect.anything(),
       );
       expect(stateManager.get("game.pendingAnimalEncounter")).toEqual({
         position: 5,
         power: 3,
         playerId: "p1",
-        phase: "powerCheck",
+        phase: "riddle",
       });
       const transcript = mockProcessTranscript.mock.calls[0]?.[0] ?? "";
       expect(transcript).not.toContain("Orchestrator applied");

@@ -390,15 +390,148 @@ export class Orchestrator {
   }
 
   /**
+   * Handles RIDDLE_RESOLVED: updates pendingAnimalEncounter to phase powerCheck, riddleCorrect.
+   */
+  private async handleRiddleResolved(primitive: {
+    action: "RIDDLE_RESOLVED";
+    correct: boolean;
+  }): Promise<void> {
+    const state = this.stateManager.getState();
+    const game = state.game as Record<string, unknown> | undefined;
+    const pending = game?.pendingAnimalEncounter as
+      | { position: number; power: number; playerId: string; phase?: string }
+      | null
+      | undefined;
+
+    if (pending?.phase !== "riddle") {
+      return;
+    }
+
+    this.stateManager.set("game.pendingAnimalEncounter", {
+      ...pending,
+      phase: "powerCheck",
+      riddleCorrect: primitive.correct,
+    });
+    Logger.info(`Riddle resolved: correct=${primitive.correct}, phase→powerCheck`);
+  }
+
+  /**
+   * If PLAYER_ANSWERED is a power-check roll, handles it and returns true.
+   * Otherwise returns false so caller can process as decision point.
+   */
+  private async tryHandlePowerCheckAnswer(
+    answer: string,
+    context: ExecutionContext,
+  ): Promise<boolean> {
+    const state = this.stateManager.getState();
+    const game = state.game as Record<string, unknown> | undefined;
+    const currentTurn = game?.turn as string | undefined;
+    const pending = game?.pendingAnimalEncounter as
+      | {
+          position: number;
+          power: number;
+          playerId: string;
+          phase?: string;
+          riddleCorrect?: boolean;
+        }
+      | null
+      | undefined;
+
+    if (
+      !pending ||
+      !currentTurn ||
+      pending.playerId !== currentTurn ||
+      (pending.phase !== "powerCheck" && pending.phase !== "revenge")
+    ) {
+      return false;
+    }
+
+    const rollStr = answer.trim().replace(/\D/g, "") || answer.trim();
+    const roll = parseInt(rollStr, 10);
+    if (isNaN(roll) || roll < 1 || roll > 12) {
+      return false;
+    }
+
+    const power = pending.power ?? 0;
+    const isRevenge = pending.phase === "revenge";
+    const win = isRevenge ? roll >= power : roll > power;
+
+    const playerId = pending.playerId;
+    const position = pending.position;
+    const board = state.board as Record<string, unknown> | undefined;
+    const squares = (board?.squares as Record<string, Record<string, unknown>>) ?? {};
+    const squareData = squares[position.toString()];
+
+    if (win) {
+      const currentPos = this.stateManager.get(`players.${playerId}.position`) as number;
+      const winJumpTo = squareData?.winJumpTo as number | undefined;
+      const newPosition = typeof winJumpTo === "number" ? winJumpTo : currentPos + roll;
+
+      this.stateManager.set(`players.${playerId}.position`, newPosition);
+      this.applyAnimalEncounterRewards(playerId, squareData ?? {});
+      this.stateManager.set("game.pendingAnimalEncounter", null);
+      Logger.info(`Power check WIN: ${playerId} advances to ${newPosition}`);
+
+      await this.boardEffectsHandler.checkAndApplyBoardMoves(`players.${playerId}.position`);
+      await this.boardEffectsHandler.checkAndApplySquareEffects(
+        `players.${playerId}.position`,
+        context,
+      );
+      this.checkAndApplyWinCondition(`players.${playerId}.position`);
+    } else {
+      if (pending.phase === "powerCheck") {
+        this.stateManager.set("game.pendingAnimalEncounter", {
+          ...pending,
+          phase: "revenge",
+        });
+        Logger.info(`Power check LOSE: phase→revenge`);
+      }
+    }
+
+    return true;
+  }
+
+  /**
+   * Applies rewards from animal encounter (points, heart, instrument).
+   */
+  private applyAnimalEncounterRewards(playerId: string, squareData: Record<string, unknown>): void {
+    const points = squareData.points as number | undefined;
+    if (typeof points === "number" && points > 0) {
+      const current = (this.stateManager.get(`players.${playerId}.points`) as number) ?? 0;
+      this.stateManager.set(`players.${playerId}.points`, current + points);
+    }
+
+    if (squareData.heart === true) {
+      const current = (this.stateManager.get(`players.${playerId}.hearts`) as number) ?? 0;
+      this.stateManager.set(`players.${playerId}.hearts`, current + 1);
+    }
+
+    const instrument = squareData.instrument as string | undefined;
+    if (typeof instrument === "string" && instrument.length > 0) {
+      const current = (this.stateManager.get(`players.${playerId}.instruments`) as unknown[]) ?? [];
+      const next = Array.isArray(current) ? [...current, instrument] : [instrument];
+      this.stateManager.set(`players.${playerId}.instruments`, next);
+    }
+  }
+
+  /**
    * If current player has a pending decision point, returns the path and normalized value
    * to apply the answer. Used to auto-set pathChoice etc. from PLAYER_ANSWERED.
+   * For branch decisions with positionOptions, also returns positionUpdate.
    */
-  private getDecisionPointApplyState(answer: string): { path: string; value: string } | null {
+  private getDecisionPointApplyState(
+    answer: string,
+  ): { path: string; value: string; positionUpdate?: number } | null {
     const state = this.stateManager.getState();
     const game = state.game as Record<string, unknown> | undefined;
     const currentTurn = game?.turn as string | undefined;
     const decisionPoints = state.decisionPoints as
-      | Array<{ position: number; requiredField: string; prompt: string }>
+      | Array<{
+          position: number;
+          requiredField: string;
+          prompt: string;
+          positionOptions?: Record<string, number>;
+        }>
       | undefined;
 
     if (!currentTurn || !decisionPoints?.length) return null;
@@ -423,6 +556,21 @@ export class Orchestrator {
       const first = answer.trim().charAt(0).toUpperCase();
       const value = first === "A" || first === "B" ? first : answer.trim();
       return { path, value };
+    }
+
+    // Branch choice with positionOptions: match answer to a target position
+    const options = decisionPoint.positionOptions;
+    if (options) {
+      const trimmed = answer.trim();
+      // Exact match or extract number from answer (e.g. "al 97" -> "97")
+      const numMatch = trimmed.match(/\d+/);
+      for (const [key, targetPos] of Object.entries(options)) {
+        if (trimmed === key || numMatch?.[0] === key) {
+          return { path, value: key, positionUpdate: targetPos };
+        }
+      }
+      // Fallback: use raw trimmed as value, no position update
+      return { path, value: trimmed };
     }
 
     return { path, value: answer.trim() };
@@ -549,20 +697,42 @@ export class Orchestrator {
         break;
       }
 
+      case "RIDDLE_RESOLVED": {
+        await this.handleRiddleResolved(primitive);
+        break;
+      }
+
       case "PLAYER_ANSWERED": {
         Logger.info(`Player answered: "${primitive.answer}"`);
         this.stateManager.set("game.lastAnswer", primitive.answer);
 
+        // Power check / revenge: orchestrator handles roll evaluation
+        const powerCheckResult = await this.tryHandlePowerCheckAnswer(primitive.answer, context);
+        if (powerCheckResult) {
+          break;
+        }
+
         // Auto-apply answer to current player's decision point if they have one pending.
-        // Ensures pathChoice etc. gets set even when LLM returns only PLAYER_ANSWERED.
         const applyState = this.getDecisionPointApplyState(primitive.answer);
         if (applyState) {
           Logger.write(
             `Auto-applying PLAYER_ANSWERED to decision point: ${applyState.path} = ${JSON.stringify(applyState.value)}`,
           );
           this.stateManager.set(applyState.path, applyState.value);
-          await this.boardEffectsHandler.checkAndApplyBoardMoves(applyState.path);
-          await this.boardEffectsHandler.checkAndApplySquareEffects(applyState.path, context);
+          if (typeof applyState.positionUpdate === "number") {
+            const playerId = applyState.path.match(/^players\.([^.]+)\./)?.[1];
+            const turn = (this.stateManager.getState().game as Record<string, unknown>)?.turn as
+              | string
+              | undefined;
+            const positionPath = `players.${playerId ?? turn ?? "p1"}.position`;
+            this.stateManager.set(positionPath, applyState.positionUpdate);
+            await this.boardEffectsHandler.checkAndApplyBoardMoves(positionPath);
+            await this.boardEffectsHandler.checkAndApplySquareEffects(positionPath, context);
+            this.checkAndApplyWinCondition(positionPath);
+          } else {
+            await this.boardEffectsHandler.checkAndApplyBoardMoves(applyState.path);
+            await this.boardEffectsHandler.checkAndApplySquareEffects(applyState.path, context);
+          }
         }
         break;
       }

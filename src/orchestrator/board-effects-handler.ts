@@ -66,6 +66,23 @@ export class BoardEffectsHandler {
       Logger.info(`Auto-applying ${moveType}: position ${position} → ${destination}`);
       this.stateManager.set(path, destination);
     }
+
+    // Magic door bounce (Kalimba): overshooting 186 bounces back
+    const finalPosition = this.stateManager.get(path) as number;
+    const magicDoor = board?.magicDoorPosition as number | undefined;
+    const winPosition = board?.winPosition as number | undefined;
+    if (
+      typeof magicDoor === "number" &&
+      typeof winPosition === "number" &&
+      finalPosition > magicDoor &&
+      finalPosition < winPosition
+    ) {
+      const bounceTo = magicDoor - (finalPosition - magicDoor);
+      Logger.info(
+        `Magic door bounce: overshot ${finalPosition} (door ${magicDoor}), bouncing to ${bounceTo}`,
+      );
+      this.stateManager.set(path, bounceTo);
+    }
   }
 
   /**
@@ -181,7 +198,7 @@ export class BoardEffectsHandler {
           position,
           power,
           playerId,
-          phase: "powerCheck",
+          phase: "riddle",
         });
       }
 
@@ -198,11 +215,8 @@ export class BoardEffectsHandler {
       if (isAnimalEncounterKind(kind)) {
         transcript =
           `[SYSTEM: Current player just landed on animal square ${position} (${squareName}, power ${power}). ` +
-          `game.pendingAnimalEncounter is set - turn advancement is BLOCKED until you clear it. ` +
-          `Narrate the encounter and ask the player to roll 1d6 for the power check. ` +
-          `When they respond: roll < ${power} → SET_STATE revert position to previous, SET_STATE game.pendingAnimalEncounter null. ` +
-          `roll >= ${power} → SET_STATE game.pendingAnimalEncounter to {position:${position},power:${power},playerId:"${playerId}",phase:"riddle"}, ask riddle. ` +
-          `When they answer the riddle: correct → apply rewards (points, heart, instrument per square), SET bonusDiceNextTurn. Wrong → SET_STATE game.pendingAnimalEncounter null only (no points, no bonus). ` +
+          `phase=riddle. Ask a habitat-themed riddle. When user answers, return RIDDLE_RESOLVED { correct: true/false }. ` +
+          `When phase is powerCheck or revenge, user reports roll → use PLAYER_ANSWERED with the number. Orchestrator owns all phase transitions and rewards. ` +
           `Square data: ${squareInfo}]`;
       } else {
         transcript =

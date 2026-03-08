@@ -51,6 +51,19 @@ function applyActionToMockState(state: GameState, primitive: PrimitiveAction): G
           player.position += primitive.value;
         }
       }
+    } else if (primitive.action === "RIDDLE_RESOLVED" && "correct" in primitive) {
+      const game = mockState.game as Record<string, unknown>;
+      const pending = game?.pendingAnimalEncounter as
+        | { position: number; power: number; playerId: string; phase?: string }
+        | null
+        | undefined;
+      if (pending?.phase === "riddle") {
+        game.pendingAnimalEncounter = {
+          ...pending,
+          phase: "powerCheck",
+          riddleCorrect: primitive.correct,
+        };
+      }
     }
   } catch {
     return state;
@@ -141,6 +154,8 @@ function validateAction(
       return validatePlayerRolled(primitive, state, index, orchestrator);
     case "PLAYER_ANSWERED":
       return validatePlayerAnswered(primitive, state, index);
+    case "RIDDLE_RESOLVED":
+      return validateRiddleResolved(primitive, state, index, orchestrator);
     default:
       return {
         valid: false,
@@ -363,6 +378,13 @@ function validateSetState(
       };
     }
 
+    if (action.path === "game.pendingAnimalEncounter") {
+      return {
+        valid: false,
+        error: `SET_STATE at index ${index}: Cannot set game.pendingAnimalEncounter. The orchestrator owns encounter state. Use RIDDLE_RESOLVED or PLAYER_ANSWERED with roll value.`,
+      };
+    }
+
     const turnValidation = validateTurnOwnership(action.path, state, "SET_STATE", index);
     if (!turnValidation.valid) return turnValidation;
 
@@ -412,17 +434,20 @@ function validatePlayerRolled(
     };
   }
 
-  // When awaiting power check for animal encounter, numbers are power check results (PLAYER_ANSWERED), not movement rolls
+  // When awaiting power check or revenge for animal encounter, roll values go via PLAYER_ANSWERED
   const game = state.game as Record<string, unknown> | undefined;
   const currentTurn = game?.turn as string | undefined;
   const pending = game?.pendingAnimalEncounter as
     | { phase?: string; playerId?: string }
     | null
     | undefined;
-  if (pending?.phase === "powerCheck" && pending?.playerId === currentTurn) {
+  const awaitingRoll =
+    (pending?.phase === "powerCheck" || pending?.phase === "revenge") &&
+    pending?.playerId === currentTurn;
+  if (awaitingRoll) {
     return {
       valid: false,
-      error: `PLAYER_ROLLED at index ${index}: Awaiting power check for animal encounter. Use PLAYER_ANSWERED with the roll value (1-6), not PLAYER_ROLLED.`,
+      error: `PLAYER_ROLLED at index ${index}: Awaiting ${pending?.phase} roll for animal encounter. Use PLAYER_ANSWERED with the roll value, not PLAYER_ROLLED.`,
     };
   }
 
@@ -481,6 +506,46 @@ function validatePlayerAnswered(
     return {
       valid: false,
       error: `PLAYER_ANSWERED at index ${index}: Path choice (A/B) can only be applied when the current turn player is at position ${pathChoiceDp.position} with pathChoice=null. Current player has no pending path choice.`,
+    };
+  }
+
+  return { valid: true };
+}
+
+function validateRiddleResolved(
+  action: PrimitiveAction,
+  state: GameState,
+  index: number,
+  _orchestrator?: Orchestrator,
+): ValidationResult {
+  const actionRecord = action as unknown as Record<string, unknown>;
+  const correctValidation = validateField(
+    actionRecord,
+    "correct",
+    "boolean",
+    "RIDDLE_RESOLVED",
+    index,
+  );
+  if (!correctValidation.valid) return correctValidation;
+
+  const game = state.game as Record<string, unknown> | undefined;
+  const currentTurn = game?.turn as string | undefined;
+  const pending = game?.pendingAnimalEncounter as
+    | { phase?: string; playerId?: string }
+    | null
+    | undefined;
+
+  if (!pending || pending.playerId !== currentTurn) {
+    return {
+      valid: false,
+      error: `RIDDLE_RESOLVED at index ${index}: No pending riddle for current player. Only use when phase=riddle.`,
+    };
+  }
+
+  if (pending.phase !== "riddle") {
+    return {
+      valid: false,
+      error: `RIDDLE_RESOLVED at index ${index}: Expected phase=riddle, got phase=${pending.phase}. Use PLAYER_ANSWERED for power-check roll.`,
     };
   }
 

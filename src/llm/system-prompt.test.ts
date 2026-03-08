@@ -77,8 +77,6 @@ describe("formatStateContext", () => {
     expect(result).toContain("POWER CHECK (fico)");
     expect(result).toContain("powerCheck");
     expect(result).toContain("PLAYER_ANSWERED");
-    expect(result).toContain("NOT PLAYER_ROLLED");
-    expect(result).toContain("Roll < 2 = fail");
-    expect(result).toContain("roll >= 2 = ask riddle");
+    expect(result).toContain("Orchestrator evaluates win/lose");
   });
 });

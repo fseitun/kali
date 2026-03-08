@@ -561,7 +561,7 @@ describe("Validator - New Primitives", () => {
       );
 
       expect(result.valid).toBe(false);
-      expect(result.error).toContain("Awaiting power check");
+      expect(result.error).toContain("Awaiting");
       expect(result.error).toContain("PLAYER_ANSWERED");
     });
 
@@ -590,7 +590,33 @@ describe("Validator - New Primitives", () => {
       expect(result.valid).toBe(true);
     });
 
-    it("allows PLAYER_ROLLED when pendingAnimalEncounter is riddle phase not powerCheck", () => {
+    it("blocks PLAYER_ROLLED when pendingAnimalEncounter phase revenge for current player", () => {
+      const stateWithPending = {
+        ...mockState,
+        game: {
+          ...mockState.game,
+          turn: "p1",
+          pendingAnimalEncounter: {
+            position: 21,
+            power: 2,
+            playerId: "p1",
+            phase: "revenge",
+          },
+        },
+      };
+
+      const actions = [{ action: "PLAYER_ROLLED", value: 4 }];
+      const result = validateActions(
+        actions,
+        stateWithPending,
+        mockStateManager as unknown as StateManager,
+      );
+
+      expect(result.valid).toBe(false);
+      expect(result.error).toContain("revenge");
+    });
+
+    it("allows PLAYER_ROLLED when pendingAnimalEncounter is riddle phase (not powerCheck/revenge)", () => {
       const stateWithPending = {
         ...mockState,
         game: {

@@ -56,11 +56,14 @@ export interface SquareData {
 
 /**
  * Decision points for player choices.
+ * When positionOptions is set, the answer maps to a position and triggers a move.
  */
 export interface DecisionPoint {
   position: number;
   requiredField: string;
   prompt: string;
+  /** Maps answer to target position for branch choices (e.g. 96 → 97 or 99) */
+  positionOptions?: Record<string, number>;
 }
 
 /**
@@ -100,7 +103,8 @@ export type PrimitiveAction =
   | ResetGameAction
   | SetStateAction
   | PlayerRolledAction
-  | PlayerAnsweredAction;
+  | PlayerAnsweredAction
+  | RiddleResolvedAction;
 
 /**
  * Speaks text aloud via TTS and optionally plays a sound effect.
@@ -150,4 +154,13 @@ export interface PlayerRolledAction {
 export interface PlayerAnsweredAction {
   action: "PLAYER_ANSWERED";
   answer: string;
+}
+
+/**
+ * Reports the result of a riddle evaluation during an animal encounter.
+ * Orchestrator updates phase to powerCheck and applies riddleCorrect. LLM only judges; orchestrator owns state.
+ */
+export interface RiddleResolvedAction {
+  action: "RIDDLE_RESOLVED";
+  correct: boolean;
 }

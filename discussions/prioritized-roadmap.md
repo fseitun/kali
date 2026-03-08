@@ -7,7 +7,9 @@ Ranked by value-to-complexity ratio.
 ---
 
 1.8: Advanced Error Recovery & State Rollback
+1.75: Orchestrator Authority Phase 2 (Rewards and Hazards)
 1.6: State Corruption Recovery
+1.5: Orchestrator Authority Phase 3 (Magic Door, Special Effects)
 1.4: LLM Narration Rephrasing
 1.4: Background Music & Audio Management System
 1.33: IndexedDB Persistence for Resume Game
@@ -278,6 +280,52 @@ _(Value/Complexity ratio; higher = better ROI)_
 ---
 
 ## 💎 Strategic (Long-term Value / Higher Complexity)
+
+### Orchestrator Authority Phase 2: Rewards and Hazards 💎
+
+**Value: 7/10 | Complexity: 4/10 | Ratio: 1.75**
+
+**Context:** Follow-up to Orchestrator Authority Phase 1 (animal encounter). Moves remaining LLM-delegated logic to orchestrator.
+
+**Problem:** Rewards (points, hearts, instruments) and hazard resolution (checkTorch, checkAntiWasp) are applied via LLM SET_STATE. These are deterministic — orchestrator should own them.
+
+**Implementation:**
+
+- Move reward application into orchestrator (after encounter resolution)
+- Add orchestrator logic for checkTorch, checkAntiWasp (read player items, apply effect)
+- Config mechanics: remove instructions for LLM to apply these; document that orchestrator does it
+
+**Files:**
+
+- `src/orchestrator/orchestrator.ts`
+- `src/orchestrator/board-effects-handler.ts`
+- `src/orchestrator/validator.ts` (update SQUARE_EFFECT_ALLOWED_PLAYER_KEYS)
+- `public/games/kalimba/config.json`
+
+---
+
+### Orchestrator Authority Phase 3: Magic Door, Special Effects, Config Cleanup 💎
+
+**Value: 6/10 | Complexity: 4/10 | Ratio: 1.5**
+
+**Context:** Follow-up to Orchestrator Authority Phase 1 and 2.
+
+**Problem:** Magic door formula, returnTo187, jumpToLeader are LLM-driven. Config has misleading instructions (e.g. "SET winner"). heartsRequiredForDoor is misnamed.
+
+**Implementation:**
+
+- Magic door: orchestrator evaluates formula when player at 186 reports roll
+- returnTo187, jumpToLeader: orchestrator-applied from square effects
+- Fix config: remove "SET winner" from instructions; fix heartsRequiredForDoor → magicDoorBaseDifficulty
+
+**Files:**
+
+- `src/orchestrator/orchestrator.ts`
+- `src/orchestrator/board-effects-handler.ts`
+- `public/games/kalimba/config.json`
+- `src/orchestrator/orchestrator.integration.test.ts`
+
+---
 
 ### Game-Agnostic Orchestrator 💎
 

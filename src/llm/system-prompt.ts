@@ -60,7 +60,7 @@ Be proactive, encouraging, patient. Guide kids through the game. Only offer real
 
 **CRITICAL: Return PURE JSON ONLY. No markdown, no backticks. Just the JSON array.**
 
-## 5 Primitives
+## 6 Primitives
 
 1. **NARRATE** - Speak via TTS (ALWAYS narrate; voice-only!)
    { "action": "NARRATE", "text": "...", "soundEffect": "optional" }
@@ -77,8 +77,13 @@ Be proactive, encouraging, patient. Guide kids through the game. Only offer real
    { "action": "PLAYER_ROLLED", "value": 5 }
    Or user gives position directly → SET_STATE.
 
-5. **PLAYER_ANSWERED** - Path choice, riddle, yes/no. Orchestrator knows context.
+5. **PLAYER_ANSWERED** - Path choice, power-check roll value, yes/no. Orchestrator knows context.
    { "action": "PLAYER_ANSWERED", "answer": "A" }
+   For power-check roll: answer = the number (e.g. "7" for 2d6 sum).
+
+6. **RIDDLE_RESOLVED** - Riddle evaluation during animal encounter. Orchestrator owns phase; you only judge.
+   { "action": "RIDDLE_RESOLVED", "correct": true }
+   Use when pendingAnimalEncounter.phase=riddle. Never SET_STATE game.pendingAnimalEncounter.
 
 ## Turn Management
 Orchestrator controls turns and announces them. You NEVER touch game.turn. Process current player's input, narrate outcomes.
@@ -285,14 +290,20 @@ function formatAnimalEncounterContext(state: Record<string, unknown>): string {
   }
 
   const playerName = (players[currentTurn].name as string) || currentTurn;
-
-  if (pending.phase === "powerCheck") {
-    const power = pending.power ?? 0;
-    return `⚠️ POWER CHECK (${playerName}) pendingAnimalEncounter.phase=powerCheck. When user says a number (1-6), use PLAYER_ANSWERED with that value - NOT PLAYER_ROLLED. Roll < ${power} = fail, roll >= ${power} = ask riddle. [current]`;
-  }
+  const power = pending.power ?? 0;
 
   if (pending.phase === "riddle") {
-    return `⚠️ RIDDLE (${playerName}) pendingAnimalEncounter.phase=riddle. Correct answer: apply rewards (points, heart, instrument), SET bonusDiceNextTurn, SET pendingAnimalEncounter null. Wrong answer: SET pendingAnimalEncounter null only (no points, no bonus). Next player. [current]`;
+    return `⚠️ RIDDLE (${playerName}) phase=riddle. Ask a habitat-themed riddle. Return RIDDLE_RESOLVED { correct: true/false } - do NOT use SET_STATE on game.pendingAnimalEncounter. [current]`;
+  }
+
+  if (pending.phase === "powerCheck") {
+    const riddleCorrect = (pending as { riddleCorrect?: boolean }).riddleCorrect;
+    const diceRange = riddleCorrect ? "2-12" : "1-6";
+    return `⚠️ POWER CHECK (${playerName}) phase=powerCheck. User reports roll → PLAYER_ANSWERED with the number (range ${diceRange}). Orchestrator evaluates win/lose. [current]`;
+  }
+
+  if (pending.phase === "revenge") {
+    return `⚠️ REVENGE (${playerName}) phase=revenge. 1 die, roll >= ${power} wins. User reports roll → PLAYER_ANSWERED with the number (1-6). [current]`;
   }
 
   return "";

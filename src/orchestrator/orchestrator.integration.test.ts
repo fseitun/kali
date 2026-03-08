@@ -958,7 +958,7 @@ describe("Orchestrator Integration Tests", () => {
         board: {
           winPosition: 196,
           magicDoorPosition: 186,
-          heartsRequiredForDoor: 7,
+          magicDoorTarget: 6,
           moves: {},
           squares: {
             "186": {
