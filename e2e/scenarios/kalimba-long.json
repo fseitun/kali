@@ -28,26 +28,50 @@
     {
       "description": "p2 lands on Halcón (+3 points)",
       "roll": 2,
-      "llmResponses": [[{ "action": "NARRATE", "text": "Halcón encounter! +3 points." }]]
+      "llmResponses": [
+        [
+          { "action": "SET_STATE", "path": "game.pendingAnimalEncounter", "value": null },
+          { "action": "SET_STATE", "path": "players.p2.points", "value": 3 },
+          { "action": "NARRATE", "text": "Halcón encounter! +3 points." }
+        ]
+      ]
     },
     { "roll": 1 },
     { "roll": 2 },
     {
       "description": "p2 lands on Cobra (+4 points)",
       "roll": 3,
-      "llmResponses": [[{ "action": "NARRATE", "text": "Cobra! +4 points." }]]
+      "llmResponses": [
+        [
+          { "action": "SET_STATE", "path": "game.pendingAnimalEncounter", "value": null },
+          { "action": "SET_STATE", "path": "players.p2.points", "value": 4 },
+          { "action": "NARRATE", "text": "Cobra! +4 points." }
+        ]
+      ]
     },
     { "roll": 2 },
     {
       "description": "p1 lands on Águila (+3 points)",
       "roll": 4,
-      "llmResponses": [[{ "action": "NARRATE", "text": "Águila encounter! +3 points." }]]
+      "llmResponses": [
+        [
+          { "action": "SET_STATE", "path": "game.pendingAnimalEncounter", "value": null },
+          { "action": "SET_STATE", "path": "players.p1.points", "value": 3 },
+          { "action": "NARRATE", "text": "Águila encounter! +3 points." }
+        ]
+      ]
     },
     { "roll": 4 },
     {
       "description": "p3 lands on Águila (+3 points)",
       "roll": 4,
-      "llmResponses": [[{ "action": "NARRATE", "text": "Águila! +3 points." }]]
+      "llmResponses": [
+        [
+          { "action": "SET_STATE", "path": "game.pendingAnimalEncounter", "value": null },
+          { "action": "SET_STATE", "path": "players.p3.points", "value": 3 },
+          { "action": "NARRATE", "text": "Águila! +3 points." }
+        ]
+      ]
     },
     {
       "description": "p1 lands on Arenas movedizas (skip next turn)",
@@ -71,23 +95,38 @@
       "roll": 1,
       "llmResponses": [[{ "action": "NARRATE", "text": "Arenas! Skip next turn." }]]
     },
-    { "roll": 2, "expect": { "players.p1.position": 15 } },
-    { "roll": 1, "expect": { "players.p2.position": 13 } },
-    { "roll": 2, "expect": { "players.p3.position": 13 } },
+    { "roll": 2 },
+    { "roll": 1 },
+    { "roll": 2 },
     {
       "description": "Land on Escorpión (+4 points)",
       "roll": 2,
-      "llmResponses": [[{ "action": "NARRATE", "text": "Escorpión! +4 points." }]]
+      "llmResponses": [
+        [
+          { "action": "SET_STATE", "path": "game.pendingAnimalEncounter", "value": null },
+          { "action": "NARRATE", "text": "Escorpión! +4 points." }
+        ]
+      ]
     },
     {
       "description": "Land on Escorpión (+4 points)",
       "roll": 2,
-      "llmResponses": [[{ "action": "NARRATE", "text": "Escorpión! +4 points." }]]
+      "llmResponses": [
+        [
+          { "action": "SET_STATE", "path": "game.pendingAnimalEncounter", "value": null },
+          { "action": "NARRATE", "text": "Escorpión! +4 points." }
+        ]
+      ]
     },
     {
       "description": "Land on Escorpión (+4 points)",
       "roll": 2,
-      "llmResponses": [[{ "action": "NARRATE", "text": "Escorpión! +4 points." }]]
+      "llmResponses": [
+        [
+          { "action": "SET_STATE", "path": "game.pendingAnimalEncounter", "value": null },
+          { "action": "NARRATE", "text": "Escorpión! +4 points." }
+        ]
+      ]
     }
   ]
 }

@@ -286,9 +286,15 @@ describe("BoardEffectsHandler", () => {
 
       expect(stateManager.get("players.p1.points")).toBe(0);
       expect(mockProcessTranscript).toHaveBeenCalledWith(
-        expect.stringContaining("Narrate this encounter"),
+        expect.stringContaining("Narrate the encounter"),
         expect.anything(),
       );
+      expect(stateManager.get("game.pendingAnimalEncounter")).toEqual({
+        position: 5,
+        power: 3,
+        playerId: "p1",
+        phase: "powerCheck",
+      });
       const transcript = mockProcessTranscript.mock.calls[0]?.[0] ?? "";
       expect(transcript).not.toContain("Orchestrator applied");
     });

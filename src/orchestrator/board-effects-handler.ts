@@ -1,6 +1,6 @@
 import type { StateManager } from "../state-manager";
 import { Logger } from "../utils/logger";
-import { getSquareKind, isDeferredRewardKind } from "./square-types";
+import { getSquareKind, isAnimalEncounterKind, isDeferredRewardKind } from "./square-types";
 import type { ExecutionContext } from "./types";
 
 /**
@@ -168,10 +168,22 @@ export class BoardEffectsHandler {
     if (squareData && Object.keys(squareData).length > 0) {
       const kind = getSquareKind(squareData);
       const squareName = (squareData.name as string) || "unknown";
+      const match = path.match(/^players\.([^.]+)\.position$/);
+      const playerId = match?.[1] ?? "";
+      const power = (squareData.power as number) ?? 0;
 
       Logger.info(
         `🎯 Orchestrator enforcing square effect at position ${position}: ${kind ?? "unknown"} (${squareName})`,
       );
+
+      if (isAnimalEncounterKind(kind) && playerId) {
+        this.stateManager.set("game.pendingAnimalEncounter", {
+          position,
+          power,
+          playerId,
+          phase: "powerCheck",
+        });
+      }
 
       const applied = this.applyDeterministicSquareEffects(path, squareData);
       const appliedText = applied.length > 0 ? ` Orchestrator applied: ${applied.join(", ")}.` : "";
@@ -182,10 +194,22 @@ export class BoardEffectsHandler {
       };
 
       const squareInfo = JSON.stringify(squareData);
-      const transcript =
-        applied.length > 0
-          ? `[SYSTEM: Current player just landed on square ${position} (${squareName}).${appliedText} Narrate this encounter. Square data for flavour: ${squareInfo}]`
-          : `[SYSTEM: Current player just landed on square ${position} (${squareName}). Narrate this encounter. Do not change game state. Square data for flavour: ${squareInfo}]`;
+      let transcript: string;
+      if (isAnimalEncounterKind(kind)) {
+        transcript =
+          `[SYSTEM: Current player just landed on animal square ${position} (${squareName}, power ${power}). ` +
+          `game.pendingAnimalEncounter is set - turn advancement is BLOCKED until you clear it. ` +
+          `Narrate the encounter and ask the player to roll 1d6 for the power check. ` +
+          `When they respond: roll < ${power} → SET_STATE revert position to previous, SET_STATE game.pendingAnimalEncounter null. ` +
+          `roll >= ${power} → SET_STATE game.pendingAnimalEncounter to {position:${position},power:${power},playerId:"${playerId}",phase:"riddle"}, ask riddle. ` +
+          `When they answer the riddle: apply rewards (points, heart, instrument per square), SET_STATE game.pendingAnimalEncounter null. ` +
+          `Square data: ${squareInfo}]`;
+      } else {
+        transcript =
+          applied.length > 0
+            ? `[SYSTEM: Current player just landed on square ${position} (${squareName}).${appliedText} Narrate this encounter. Square data for flavour: ${squareInfo}]`
+            : `[SYSTEM: Current player just landed on square ${position} (${squareName}). Narrate this encounter. Do not change game state. Square data for flavour: ${squareInfo}]`;
+      }
 
       this.isProcessingSquareEffect = true;
       try {

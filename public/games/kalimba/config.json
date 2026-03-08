@@ -17,7 +17,7 @@
   "stateDisplay": {
     "game": {
       "primary": ["turn", "phase"],
-      "secondary": ["lastRoll", "pendingRoll", "currentHabitat"],
+      "secondary": ["lastRoll", "pendingRoll", "currentHabitat", "pendingAnimalEncounter"],
       "hidden": ["name"]
     },
     "players": {
@@ -26,9 +26,9 @@
       "hidden": ["bonusDiceNextTurn", "inverseMode"]
     },
     "board": {
-      "primary": ["winPosition", "magicDoorPosition"],
+      "primary": [],
       "secondary": [],
-      "hidden": ["pathASquares", "pathBSquares", "moves", "squares", "heartsRequiredForDoor"]
+      "hidden": ["winPosition", "magicDoorPosition", "pathASquares", "pathBSquares", "moves", "squares", "heartsRequiredForDoor"]
     }
   },
   "initialState": {
@@ -40,7 +40,8 @@
       "winner": null,
       "lastRoll": 0,
       "pendingRoll": null,
-      "currentHabitat": "Inicio"
+      "currentHabitat": "Inicio",
+      "pendingAnimalEncounter": null
     },
     "players": {
       "p1": {
