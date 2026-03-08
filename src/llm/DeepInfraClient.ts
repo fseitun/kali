@@ -1,4 +1,5 @@
 import { CONFIG } from "../config";
+import type { PrimitiveAction } from "../orchestrator/types";
 import { Logger } from "../utils/logger";
 import { BaseLLMClient } from "./BaseLLMClient";
 import type { ApiCallOptions, ApiCallResult } from "./types";
@@ -12,7 +13,7 @@ import type { ApiCallOptions, ApiCallResult } from "./types";
  * Some models return JSON wrapped in markdown code blocks; this client strips them.
  */
 export class DeepInfraClient extends BaseLLMClient {
-  protected override extractActions(content: string) {
+  protected override extractActions(content: string): PrimitiveAction[] {
     return super.extractActions(this.stripMarkdownIfPresent(content));
   }
 

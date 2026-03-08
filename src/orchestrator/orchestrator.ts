@@ -89,10 +89,12 @@ export class Orchestrator {
    * Processes a voice transcript by sending to LLM and executing returned actions.
    * This is the main entry point for handling user voice commands.
    * @param transcript - The transcribed user command
+   * @param options - Optional flags; skipDecisionPointEnforcement for system-initiated flows (e.g. proactive start)
    * @returns Object with success flag and shouldAdvanceTurn; advance turn only when state was mutated
    */
   async handleTranscript(
     transcript: string,
+    options?: { skipDecisionPointEnforcement?: boolean },
   ): Promise<{ success: boolean; shouldAdvanceTurn: boolean }> {
     if (this.isProcessing) {
       Logger.warn("⏸️ Orchestrator busy, ignoring new request");
@@ -104,7 +106,10 @@ export class Orchestrator {
     Profiler.start("orchestrator.total");
 
     try {
-      const context: ExecutionContext = { ...this.defaultContext };
+      const context: ExecutionContext = {
+        ...this.defaultContext,
+        skipDecisionPointEnforcement: options?.skipDecisionPointEnforcement,
+      };
       const result = await this.processTranscript(transcript, context);
       return result;
     } finally {
@@ -326,7 +331,8 @@ export class Orchestrator {
     // Only enforce decision points for top-level (user-initiated) flows.
     // When depth > 0, we're in a nested call from a previous enforcement or board effect;
     // we just executed the LLM's response (e.g. asking the question). Don't re-inject.
-    if (context.depth === 0) {
+    // Skip when skipDecisionPointEnforcement (e.g. proactive start already asked).
+    if (context.depth === 0 && !context.skipDecisionPointEnforcement) {
       await this.decisionPointEnforcer.enforceDecisionPoints(context);
     }
     return { success: true, shouldAdvanceTurn };
@@ -348,6 +354,45 @@ export class Orchestrator {
         Logger.error("Failed to execute action:", action, error);
       }
     }
+  }
+
+  /**
+   * If current player has a pending decision point, returns the path and normalized value
+   * to apply the answer. Used to auto-set pathChoice etc. from PLAYER_ANSWERED.
+   */
+  private getDecisionPointApplyState(answer: string): { path: string; value: string } | null {
+    const state = this.stateManager.getState();
+    const game = state.game as Record<string, unknown> | undefined;
+    const currentTurn = game?.turn as string | undefined;
+    const decisionPoints = state.decisionPoints as
+      | Array<{ position: number; requiredField: string; prompt: string }>
+      | undefined;
+
+    if (!currentTurn || !decisionPoints?.length) return null;
+
+    const players = state.players as Record<string, Record<string, unknown>> | undefined;
+    const currentPlayer = players?.[currentTurn];
+    if (!currentPlayer) return null;
+
+    const position = currentPlayer.position as number | undefined;
+    if (typeof position !== "number") return null;
+
+    const decisionPoint = decisionPoints.find((dp) => dp.position === position);
+    if (!decisionPoint) return null;
+
+    const fieldValue = currentPlayer[decisionPoint.requiredField];
+    if (fieldValue !== null && fieldValue !== undefined) return null; // Already set
+
+    const path = `players.${currentTurn}.${decisionPoint.requiredField}`;
+
+    // Normalize pathChoice: "a", "A", "el A", "path a" -> "A"; "b"/"B" -> "B"
+    if (decisionPoint.requiredField === "pathChoice") {
+      const first = answer.trim().charAt(0).toUpperCase();
+      const value = first === "A" || first === "B" ? first : answer.trim();
+      return { path, value };
+    }
+
+    return { path, value: answer.trim() };
   }
 
   /**
@@ -440,8 +485,19 @@ export class Orchestrator {
 
       case "PLAYER_ANSWERED": {
         Logger.info(`Player answered: "${primitive.answer}"`);
-        // Store answer in temporary state for orchestrator to process
         this.stateManager.set("game.lastAnswer", primitive.answer);
+
+        // Auto-apply answer to current player's decision point if they have one pending.
+        // Ensures pathChoice etc. gets set even when LLM returns only PLAYER_ANSWERED.
+        const applyState = this.getDecisionPointApplyState(primitive.answer);
+        if (applyState) {
+          Logger.write(
+            `Auto-applying PLAYER_ANSWERED to decision point: ${applyState.path} = ${JSON.stringify(applyState.value)}`,
+          );
+          this.stateManager.set(applyState.path, applyState.value);
+          await this.boardEffectsHandler.checkAndApplyBoardMoves(applyState.path);
+          await this.boardEffectsHandler.checkAndApplySquareEffects(applyState.path, context);
+        }
         break;
       }
 

@@ -81,6 +81,8 @@ export interface GameState {
 export interface ExecutionContext {
   depth: number;
   maxDepth: number;
+  /** When true, skip decision point enforcement after actions (e.g. proactive start). */
+  skipDecisionPointEnforcement?: boolean;
 }
 
 export type ActionHandler = (action: PrimitiveAction, context: ExecutionContext) => Promise<void>;

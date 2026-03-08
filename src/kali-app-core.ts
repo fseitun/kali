@@ -241,12 +241,20 @@ ${examples.map((ex: string, i: number) => `${i + 1}. ${ex}`).join("\n")}
     }
 
     Logger.info("🎮 Starting game proactively");
-    const { success, shouldAdvanceTurn } = await this.orchestrator.handleTranscript(
-      t("game.proactiveStart"),
-    );
 
-    if (success && shouldAdvanceTurn) {
-      await this.checkAndAdvanceTurn();
+    const pendingPrompt = this.orchestrator.getPendingDecisionPrompt();
+    if (pendingPrompt) {
+      // At game start with a decision point (e.g. path choice): speak turn announcement
+      // directly. Avoids proactiveGameStart LLM also asking, causing duplicate path ask.
+      await this.announceCurrentTurnIfPending();
+    } else {
+      const { success, shouldAdvanceTurn } = await this.orchestrator.handleTranscript(
+        t("game.proactiveStart"),
+        { skipDecisionPointEnforcement: true },
+      );
+      if (success && shouldAdvanceTurn) {
+        await this.checkAndAdvanceTurn();
+      }
     }
   }
 
@@ -323,6 +331,34 @@ ${examples.map((ex: string, i: number) => `${i + 1}. ${ex}`).join("\n")}
     } else {
       this.uiService.updateStatus(t("ui.listeningForCommand"));
     }
+  }
+
+  /**
+   * Speaks the current player's turn announcement when they have a pending decision.
+   * Used at game start before proactive welcome to ensure one clear "your turn, which path?"
+   */
+  private async announceCurrentTurnIfPending(): Promise<void> {
+    if (!this.orchestrator || !this.stateManager) return;
+    const pendingPrompt = this.orchestrator.getPendingDecisionPrompt();
+    if (!pendingPrompt) return;
+
+    const state = this.stateManager.getState();
+    const game = state.game as Record<string, unknown> | undefined;
+    const players = state.players as Record<string, Record<string, unknown>> | undefined;
+    const currentTurn = game?.turn as string | undefined;
+    if (!currentTurn || !players?.[currentTurn]) return;
+
+    const player = players[currentTurn];
+    const name = (player?.name as string) || currentTurn;
+    const position = (player?.position as number) ?? 0;
+
+    const message = t("game.turnAnnouncementWithDecision", {
+      name,
+      position,
+      prompt: pendingPrompt,
+    });
+    Logger.info(`🎯 Announcing current turn (decision pending): ${name} at ${position}`);
+    await this.speechService.speak(message);
   }
 
   /**
