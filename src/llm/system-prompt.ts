@@ -301,9 +301,11 @@ function formatAnimalEncounterContext(state: Record<string, unknown>): string {
     if (prompt) {
       helpInst = ` If user asks what to do, NARRATE re-asking the same riddle: "${prompt}"`;
     } else if (hint) {
-      helpInst = ` If user asks what to do, NARRATE reminding them (e.g. "Respondé: el hábitat es ${hint}."). Never invent a new riddle.`;
+      helpInst = ` If the user asks what to do or says they don't know (e.g. "¿qué hago?", "no sé"), THEN you may NARRATE a hint: "Respondé: el hábitat es ${hint}." Otherwise do not give the answer. Never invent a new riddle.`;
     }
-    return `⚠️ RIDDLE (${playerName}) phase=riddle. Ask a habitat-themed riddle. Return RIDDLE_RESOLVED { correct: true/false } - do NOT use SET_STATE on game.pendingAnimalEncounter.${helpInst} [current]`;
+    const antiLeak =
+      " When asking the riddle: ask only the riddle. Do NOT include the correct answer in that NARRATE.";
+    return `⚠️ RIDDLE (${playerName}) phase=riddle.${antiLeak} Ask a habitat-themed riddle. Return RIDDLE_RESOLVED { correct: true/false } - do NOT use SET_STATE on game.pendingAnimalEncounter.${helpInst} [current]`;
   }
 
   if (pending.phase === "powerCheck") {
