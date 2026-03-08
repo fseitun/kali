@@ -303,9 +303,7 @@ describe("NameCollector - Runtime Flow", () => {
     await new Promise((r) => setTimeout(r, 100));
     await sendAsync("2");
     await sendAsync("Alice");
-    await sendAsync("yes");
     await sendAsync("Bob");
-    await sendAsync("yes");
 
     const names = await collectPromise;
 
@@ -337,9 +335,7 @@ describe("NameCollector - Runtime Flow", () => {
     await new Promise((r) => setTimeout(r, 100));
     await sendAsync("2");
     await sendAsync("Alice");
-    await sendAsync("yes");
     await sendAsync("Bob");
-    await sendAsync("yes");
 
     await collectPromise;
 

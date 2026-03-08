@@ -171,7 +171,8 @@ export class NameCollector {
         if (nameToTry) {
           const validation = validateName(nameToTry);
           if (validation.valid) {
-            await this.confirmName(validation.cleaned, onTranscript, playerNumber, resolve);
+            await this.speechService.speak(t("setup.nameConfirmYes", { name: validation.cleaned }));
+            resolve(validation.cleaned);
             return;
           }
         }
@@ -199,150 +200,15 @@ export class NameCollector {
     });
   }
 
-  private async confirmName(
-    name: string,
-    onTranscript: (handler: (text: string) => void) => void,
-    playerNumber: number,
-    resolve: (value: string) => void,
-  ): Promise<void> {
-    const confirmHandler = async (text: string): Promise<void> => {
-      Logger.info(`Confirmation handler received: "${text}"`);
-      if (this.timeoutHandle) {
-        clearTimeout(this.timeoutHandle);
-        this.timeoutHandle = null;
-      }
-
-      const analysis = await this.llmClient.analyzeResponse(text, "expecting yes/no confirmation");
-      if (!analysis.isOnTopic) {
-        if (analysis.urgentMessage) {
-          Logger.info(`LLM debug: ${analysis.urgentMessage}`);
-        }
-        await this.speechService.speak(t("setup.nameConfirm", { name }));
-        this.setupTimeout(() => resolve(name), 10000);
-        return;
-      }
-
-      const confirmation = parseConfirmation(text);
-      if (confirmation === "yes" || confirmation === "unclear") {
-        await this.speechService.speak(t("setup.nameConfirmYes", { name }));
-        resolve(name);
-      } else {
-        await this.speechService.speak(t("setup.nameConfirmRetry"));
-        this.retryNameCollection(onTranscript, playerNumber, resolve);
-      }
-    };
-
-    onTranscript(confirmHandler);
-    this.setupTimeout(async () => {
-      Logger.info("Confirmation timeout - assuming yes");
-      await this.speechService.speak(t("setup.nameConfirmYes", { name }));
-      resolve(name);
-    }, 10000);
-
-    void this.speechService.speak(t("setup.nameConfirm", { name }));
-  }
-
-  private async retryNameCollection(
-    onTranscript: (handler: (text: string) => void) => void,
-    playerNumber: number,
-    resolve: (value: string) => void,
-  ): Promise<void> {
-    const handler = async (text: string): Promise<void> => {
-      Logger.info(`Retry name handler received: "${text}"`);
-      if (this.timeoutHandle) {
-        clearTimeout(this.timeoutHandle);
-        this.timeoutHandle = null;
-      }
-
-      const analysis = await this.llmClient.analyzeResponse(text, "expecting person name");
-      if (!analysis.isOnTopic) {
-        if (analysis.urgentMessage) {
-          Logger.info(`LLM debug: ${analysis.urgentMessage}`);
-        }
-        await this.speechService.speak(t("setup.nameConfirmRetry"));
-        this.setupTimeout(() => this.handleNameTimeout(playerNumber, resolve, onTranscript), 10000);
-        return;
-      }
-
-      const extractedName = await this.llmClient.extractName(text);
-
-      if (extractedName) {
-        const validation = validateName(extractedName);
-        if (validation.valid) {
-          await this.confirmName(validation.cleaned, onTranscript, playerNumber, resolve);
-          return;
-        }
-      }
-
-      await this.handleNameTimeout(playerNumber, resolve, onTranscript);
-    };
-
-    onTranscript(handler);
-    this.setupTimeout(async () => {
-      Logger.info("Retry timeout - using fallback name");
-      await this.handleNameTimeout(playerNumber, resolve, onTranscript);
-    }, 10000);
-  }
-
   private async handleNameTimeout(
     playerNumber: number,
     resolve: (value: string) => void,
-    onTranscript?: (handler: (text: string) => void) => void,
+    _onTranscript?: (handler: (text: string) => void) => void,
   ): Promise<void> {
     const kindName = generateNickname(`Player${playerNumber}`, this.collectedNames);
 
-    if (!onTranscript) {
-      await this.speechService.speak(t("setup.nameTimeout", { name: kindName }));
-      resolve(kindName);
-      return;
-    }
-
-    await this.confirmFriendlyName(kindName, onTranscript, playerNumber, resolve);
-  }
-
-  private async confirmFriendlyName(
-    name: string,
-    onTranscript: (handler: (text: string) => void) => void,
-    playerNumber: number,
-    resolve: (value: string) => void,
-  ): Promise<void> {
-    const confirmHandler = async (text: string): Promise<void> => {
-      Logger.info(`Friendly name confirmation handler received: "${text}"`);
-      if (this.timeoutHandle) {
-        clearTimeout(this.timeoutHandle);
-        this.timeoutHandle = null;
-      }
-
-      const analysis = await this.llmClient.analyzeResponse(text, "expecting yes/no confirmation");
-      if (!analysis.isOnTopic) {
-        if (analysis.urgentMessage) {
-          Logger.info(`LLM debug: ${analysis.urgentMessage}`);
-        }
-        await this.speechService.speak(t("setup.nameConfirm", { name }));
-        this.setupTimeout(() => resolve(name), 10000);
-        return;
-      }
-
-      const confirmation = parseConfirmation(text);
-      if (confirmation === "yes" || confirmation === "unclear") {
-        await this.speechService.speak(t("setup.nameConfirmYes", { name }));
-        resolve(name);
-      } else {
-        await this.speechService.speak(t("setup.nameConfirmRetry"));
-        this.retryNameCollection(onTranscript, playerNumber, resolve);
-      }
-    };
-
-    onTranscript(confirmHandler);
-    this.setupTimeout(async () => {
-      Logger.info("Friendly name confirmation timeout - assuming yes");
-      await this.speechService.speak(t("setup.nameConfirmYes", { name }));
-      resolve(name);
-    }, 10000);
-
-    void this.speechService.speak(
-      t("setup.nameTimeout", { name }) + " " + t("setup.nameConfirm", { name }),
-    );
+    await this.speechService.speak(t("setup.nameTimeout", { name: kindName }));
+    resolve(kindName);
   }
 
   private async resolveConflicts(
