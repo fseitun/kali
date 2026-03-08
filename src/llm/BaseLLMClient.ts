@@ -177,6 +177,7 @@ JSON:`;
       const apiResult = await this.makeApiCall(prompt, {
         temperature: 0.3,
         maxTokens: 100,
+        responseFormatJson: true,
       });
 
       const content = apiResult.content;

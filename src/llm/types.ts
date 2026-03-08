@@ -15,6 +15,8 @@ export interface ApiCallOptions {
   maxTokens?: number;
   /** When set, provider may use cached system prompt and send only userMessage */
   contextParts?: ContextParts;
+  /** When true, pass response_format: { type: "json_object" } for supported providers */
+  responseFormatJson?: boolean;
 }
 
 /**

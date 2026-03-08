@@ -19,6 +19,7 @@ export class GroqClient extends BaseLLMClient {
         messages: [{ role: "user", content: prompt }],
         temperature: options.temperature ?? 0.7,
         max_tokens: options.maxTokens ?? 1024,
+        ...(options.responseFormatJson && { response_format: { type: "json_object" } }),
       }),
     });
 
