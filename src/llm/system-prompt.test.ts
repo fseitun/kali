@@ -53,4 +53,32 @@ describe("formatStateContext", () => {
     expect(result).toContain("[current]");
     expect(result).not.toContain("DECISION (Alice)");
   });
+
+  it("shows POWER CHECK hint when pendingAnimalEncounter powerCheck for current player", () => {
+    const state = {
+      game: {
+        turn: "p1",
+        phase: "PLAYING",
+        pendingAnimalEncounter: {
+          position: 21,
+          power: 2,
+          playerId: "p1",
+          phase: "powerCheck",
+        },
+      },
+      players: {
+        p1: { id: "p1", name: "fico", position: 21, pathChoice: "B" },
+        p2: { id: "p2", name: "pedro", position: 6, pathChoice: "A" },
+      },
+    } as Record<string, unknown>;
+
+    const result = formatStateContext(state);
+
+    expect(result).toContain("POWER CHECK (fico)");
+    expect(result).toContain("powerCheck");
+    expect(result).toContain("PLAYER_ANSWERED");
+    expect(result).toContain("NOT PLAYER_ROLLED");
+    expect(result).toContain("Roll < 2 = fail");
+    expect(result).toContain("roll >= 2 = ask riddle");
+  });
 });

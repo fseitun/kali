@@ -16,12 +16,6 @@
         { "action": "SET_STATE", "path": "players.p1.pathChoice", "value": "A" },
         { "action": "NARRATE", "text": "Let's begin!" }
       ],
-      "llmResponses": [
-        [
-          { "action": "SET_STATE", "path": "players.p1.pathChoice", "value": "A" },
-          { "action": "NARRATE", "text": "Path A it is!" }
-        ]
-      ],
       "expect": { "players.p1.pathChoice": "A" }
     },
     { "roll": 1 },

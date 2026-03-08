@@ -288,6 +288,9 @@ export function formatStateContext(state: Record<string, unknown>): string {
   const decisionContext = formatDecisionPointContext(state);
   if (decisionContext) parts.push(decisionContext);
 
+  const animalEncounterContext = formatAnimalEncounterContext(state);
+  if (animalEncounterContext) parts.push(animalEncounterContext);
+
   return parts.join("\n");
 }
 
@@ -334,6 +337,33 @@ function formatDecisionPointContext(state: Record<string, unknown>): string {
 
   if (lines.length > 0) {
     return lines.join("\n");
+  }
+
+  return "";
+}
+
+function formatAnimalEncounterContext(state: Record<string, unknown>): string {
+  const game = state.game as Record<string, unknown> | undefined;
+  const players = state.players as Record<string, Record<string, unknown>> | undefined;
+  const currentTurn = game?.turn as string | undefined;
+  const pending = game?.pendingAnimalEncounter as
+    | { phase?: string; power?: number; playerId?: string }
+    | null
+    | undefined;
+
+  if (!pending || !currentTurn || pending.playerId !== currentTurn || !players?.[currentTurn]) {
+    return "";
+  }
+
+  const playerName = (players[currentTurn].name as string) || currentTurn;
+
+  if (pending.phase === "powerCheck") {
+    const power = pending.power ?? 0;
+    return `⚠️ POWER CHECK (${playerName}) pendingAnimalEncounter.phase=powerCheck. When user says a number (1-6), use PLAYER_ANSWERED with that value - NOT PLAYER_ROLLED. Roll < ${power} = fail, roll >= ${power} = ask riddle. [current]`;
+  }
+
+  if (pending.phase === "riddle") {
+    return `⚠️ RIDDLE (${playerName}) pendingAnimalEncounter.phase=riddle. When user answers, apply rewards and SET_STATE game.pendingAnimalEncounter null. [current]`;
   }
 
   return "";

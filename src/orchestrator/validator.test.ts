@@ -538,6 +538,83 @@ describe("Validator - New Primitives", () => {
       expect(result.valid).toBe(true);
     });
 
+    it("blocks PLAYER_ROLLED when pendingAnimalEncounter powerCheck for current player", () => {
+      const stateWithPending = {
+        ...mockState,
+        game: {
+          ...mockState.game,
+          turn: "p1",
+          pendingAnimalEncounter: {
+            position: 21,
+            power: 2,
+            playerId: "p1",
+            phase: "powerCheck",
+          },
+        },
+      };
+
+      const actions = [{ action: "PLAYER_ROLLED", value: 4 }];
+      const result = validateActions(
+        actions,
+        stateWithPending,
+        mockStateManager as unknown as StateManager,
+      );
+
+      expect(result.valid).toBe(false);
+      expect(result.error).toContain("Awaiting power check");
+      expect(result.error).toContain("PLAYER_ANSWERED");
+    });
+
+    it("allows PLAYER_ROLLED when pendingAnimalEncounter is for different player", () => {
+      const stateWithPending = {
+        ...mockState,
+        game: {
+          ...mockState.game,
+          turn: "p1",
+          pendingAnimalEncounter: {
+            position: 21,
+            power: 2,
+            playerId: "p2",
+            phase: "powerCheck",
+          },
+        },
+      };
+
+      const actions = [{ action: "PLAYER_ROLLED", value: 4 }];
+      const result = validateActions(
+        actions,
+        stateWithPending,
+        mockStateManager as unknown as StateManager,
+      );
+
+      expect(result.valid).toBe(true);
+    });
+
+    it("allows PLAYER_ROLLED when pendingAnimalEncounter is riddle phase not powerCheck", () => {
+      const stateWithPending = {
+        ...mockState,
+        game: {
+          ...mockState.game,
+          turn: "p1",
+          pendingAnimalEncounter: {
+            position: 21,
+            power: 2,
+            playerId: "p1",
+            phase: "riddle",
+          },
+        },
+      };
+
+      const actions = [{ action: "PLAYER_ROLLED", value: 4 }];
+      const result = validateActions(
+        actions,
+        stateWithPending,
+        mockStateManager as unknown as StateManager,
+      );
+
+      expect(result.valid).toBe(true);
+    });
+
     it("allows NARRATE during square effect processing", () => {
       const mockOrchestrator = {
         isProcessingEffect: () => true,
