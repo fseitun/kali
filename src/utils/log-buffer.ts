@@ -83,10 +83,7 @@ export class LogBuffer {
   }
 
   getFiltered(enabledCategories: Set<string>): LogEntry[] {
-    return this.entries.filter((e) => {
-      if (e.category === "general") return true;
-      return enabledCategories.has(e.category);
-    });
+    return this.entries.filter((e) => enabledCategories.has(e.category));
   }
 
   getAll(): LogEntry[] {

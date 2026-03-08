@@ -78,7 +78,6 @@ export class DebugUIService implements IUIService {
   }
 
   private shouldShow(entry: LogEntry): boolean {
-    if (entry.category === "general") return true;
     return getEnabledCategories().has(entry.category);
   }
 

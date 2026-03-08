@@ -80,6 +80,7 @@ class KaliDebugApp {
     if (!container) return;
 
     const defaultEnabled = new Set([
+      "general",
       "brain",
       "llm",
       "actions",

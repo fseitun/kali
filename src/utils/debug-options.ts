@@ -4,6 +4,7 @@
  */
 
 export const LOG_CATEGORIES = [
+  { id: "general", label: "General", icon: "📋" },
   { id: "state", label: "State", icon: "📊" },
   { id: "brain", label: "Brain", icon: "🧠" },
   { id: "llm", label: "LLM", icon: "🤖" },
