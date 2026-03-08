@@ -3,7 +3,6 @@
     "id": "kalimba",
     "name": "Kalimba - El Desafío de los 7 Hábitats",
     "description": "Un juego de aventuras épico donde los jugadores avanzan por siete hábitats únicos, enfrentan animales con desafíos de poder y adivinanzas, coleccionan instrumentos mágicos y corazones, y buscan alcanzar el tesoro en la casilla 196.",
-    "version": "2.1.1",
     "minPlayers": 2,
     "maxPlayers": 6
   },

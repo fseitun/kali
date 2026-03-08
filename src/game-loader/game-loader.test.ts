@@ -43,7 +43,6 @@ describe("GameLoader", () => {
           id: "test-game",
           name: "Test Game",
           description: "Test description",
-          version: "1.0.0",
           minPlayers: 2,
           maxPlayers: 4,
         },
@@ -176,9 +175,7 @@ describe("GameLoader", () => {
 
     it("should validate metadata id and name", async () => {
       const invalidModule = {
-        metadata: {
-          version: "1.0.0",
-        },
+        metadata: {},
         rules: {
           objective: "Test objective",
           mechanics: "Test mechanics",
@@ -213,7 +210,6 @@ describe("GameLoader", () => {
           id: "test-game",
           name: "Test Game",
           description: "Test description",
-          version: "1.0.0",
           minPlayers: 2,
           maxPlayers: 4,
         },
@@ -257,7 +253,6 @@ describe("GameLoader", () => {
           id: "test-game",
           name: "Test Game",
           description: "Test description",
-          version: "1.0.0",
           minPlayers: 2,
           maxPlayers: 4,
         },
@@ -291,7 +286,6 @@ describe("GameLoader", () => {
           id: "test-game",
           name: "Test Game",
           description: "Test description",
-          version: "1.0.0",
           minPlayers: 2,
           maxPlayers: 4,
         },
@@ -336,7 +330,6 @@ describe("GameLoader", () => {
           id: "test-game",
           name: "Test Game",
           description: "Test description",
-          version: "1.0.0",
           minPlayers: 2,
           maxPlayers: 4,
         },

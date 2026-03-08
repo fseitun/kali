@@ -7,7 +7,6 @@ export interface GameMetadata {
   id: string;
   name: string;
   description: string;
-  version: string;
   minPlayers: number;
   maxPlayers: number;
 }

@@ -16,7 +16,6 @@ Each game lives in `public/games/[game-name]/config.json`:
   "metadata": {
     "id": "game-id",
     "name": "Display Name",
-    "version": "1.0.0",
     "description": "Brief description",
     "minPlayers": 2,
     "maxPlayers": 4

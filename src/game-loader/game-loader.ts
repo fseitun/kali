@@ -29,7 +29,7 @@ export class GameLoader {
 
       this.validateGameModule(module);
 
-      Logger.info(`Game module loaded: ${module.metadata.name} v${module.metadata.version}`);
+      Logger.info(`Game module loaded: ${module.metadata.name}`);
       return module;
     } catch (error) {
       Logger.error(`Error loading game module ${gameId}:`, error);

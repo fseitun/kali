@@ -3,7 +3,6 @@
     "id": "snakes-and-ladders",
     "name": "Serpientes y Escaleras",
     "description": "Un juego de mesa clásico donde los jugadores compiten para llegar a la posición 100, subiendo escaleras y bajando por serpientes.",
-    "version": "1.0.0",
     "minPlayers": 2,
     "maxPlayers": 4
   },
