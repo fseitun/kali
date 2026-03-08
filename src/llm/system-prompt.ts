@@ -292,7 +292,7 @@ function formatAnimalEncounterContext(state: Record<string, unknown>): string {
   }
 
   if (pending.phase === "riddle") {
-    return `⚠️ RIDDLE (${playerName}) pendingAnimalEncounter.phase=riddle. When user answers, apply rewards and SET_STATE game.pendingAnimalEncounter null. [current]`;
+    return `⚠️ RIDDLE (${playerName}) pendingAnimalEncounter.phase=riddle. Correct answer: apply rewards (points, heart, instrument), SET bonusDiceNextTurn, SET pendingAnimalEncounter null. Wrong answer: SET pendingAnimalEncounter null only (no points, no bonus). Next player. [current]`;
   }
 
   return "";

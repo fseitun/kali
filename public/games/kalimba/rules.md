@@ -60,7 +60,7 @@ La dificultad de la adivinanza depende del nivel del animal (1–6).
 Si el jugador acierta la adivinanza, puede tirar dos dados en lugar de uno, aumentando sus chances de avanzar.
 
 
-Si falla, tira un solo dado.
+Si falla la adivinanza: no recibe puntos, corazón ni instrumento; pasa el turno al siguiente jugador; en su próximo turno tira un solo dado.
 
 
 Algunos animales otorgan instrumentos mágicos si se acierta la adivinanza.

@@ -202,7 +202,7 @@ export class BoardEffectsHandler {
           `Narrate the encounter and ask the player to roll 1d6 for the power check. ` +
           `When they respond: roll < ${power} → SET_STATE revert position to previous, SET_STATE game.pendingAnimalEncounter null. ` +
           `roll >= ${power} → SET_STATE game.pendingAnimalEncounter to {position:${position},power:${power},playerId:"${playerId}",phase:"riddle"}, ask riddle. ` +
-          `When they answer the riddle: apply rewards (points, heart, instrument per square), SET_STATE game.pendingAnimalEncounter null. ` +
+          `When they answer the riddle: correct → apply rewards (points, heart, instrument per square), SET bonusDiceNextTurn. Wrong → SET_STATE game.pendingAnimalEncounter null only (no points, no bonus). ` +
           `Square data: ${squareInfo}]`;
       } else {
         transcript =
