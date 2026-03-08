@@ -70,6 +70,19 @@
   border-radius: 0 4px 4px 0;
 }
 
+#console .log-entry-prompt {
+  margin: 0.25rem 0 0 1rem;
+  padding: 0.5rem;
+  font-size: 0.8rem;
+  line-height: 1.3;
+  white-space: pre-wrap;
+  word-break: break-word;
+  color: rgba(0, 220, 180, 0.95);
+  background: rgba(0, 80, 70, 0.25);
+  border-left: 2px solid rgba(0, 200, 170, 0.6);
+  border-radius: 0 4px 4px 0;
+}
+
 .debug-info {
   background: var(--console-bg);
   border: 1px solid rgba(255, 191, 0, 0.5);

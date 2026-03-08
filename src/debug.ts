@@ -86,6 +86,7 @@ class KaliDebugApp {
       "init",
       "llm",
       "narration",
+      "prompt",
       "state",
       "transcription",
       "user",

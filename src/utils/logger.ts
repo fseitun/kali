@@ -143,4 +143,8 @@ export class Logger {
   static robot(message: string, ...args: unknown[]): void {
     Logger.logWithCategory("info", "llm", message, ...args);
   }
+
+  static prompt(message: string, ...args: unknown[]): void {
+    Logger.logWithCategory("info", "prompt", message, ...args);
+  }
 }

@@ -99,6 +99,17 @@ export class DebugUIService implements IUIService {
     return parts.join("\n");
   }
 
+  private getFullPromptOrResponse(entry: LogEntry): string | null {
+    if (entry.category !== "prompt") return null;
+    const args = entry.context?.args as unknown[] | undefined;
+    const first = args?.[0];
+    if (first && typeof first === "object") {
+      const obj = first as { fullPrompt?: string; fullResponse?: string };
+      return obj.fullPrompt ?? obj.fullResponse ?? null;
+    }
+    return null;
+  }
+
   private renderEntry(entry: LogEntry): void {
     const time = new Date(entry.timestamp).toLocaleTimeString();
     const icon = getCategoryIcon(entry.category);
@@ -113,13 +124,21 @@ export class DebugUIService implements IUIService {
     wrap.appendChild(main);
 
     const args = entry.context?.args as unknown[] | undefined;
-    const hasDetails =
+    const hasErrorDetails =
       (entry.level === "error" || entry.level === "warn") &&
       (Boolean(entry.stack) || (args?.length ?? 0) > 0);
-    if (hasDetails) {
+    if (hasErrorDetails) {
       const details = document.createElement("pre");
       details.className = "log-entry-details";
       details.textContent = this.formatErrorContext(entry);
+      wrap.appendChild(details);
+    }
+
+    const fullPromptOrResponse = this.getFullPromptOrResponse(entry);
+    if (fullPromptOrResponse) {
+      const details = document.createElement("pre");
+      details.className = "log-entry-prompt";
+      details.textContent = fullPromptOrResponse;
       wrap.appendChild(details);
     }
 

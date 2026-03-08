@@ -8,6 +8,7 @@ export const LOG_CATEGORIES = [
   { id: "state", label: "State", icon: "📊" },
   { id: "brain", label: "Brain", icon: "🧠" },
   { id: "llm", label: "LLM", icon: "🤖" },
+  { id: "prompt", label: "Prompts", icon: "📤" },
   { id: "actions", label: "Actions", icon: "✏️" },
   { id: "user", label: "User input", icon: "👤" },
   { id: "transcription", label: "Transcription", icon: "📝" },

@@ -6,6 +6,9 @@ import type { LLMClient } from "./LLMClient";
 import { buildSystemPrompt, formatStateContext } from "./system-prompt";
 import type { ApiCallOptions, ApiCallResult } from "./types";
 
+const PROMPT_TRUNCATE_CHARS = 600;
+type PromptPurpose = "getActions" | "extractName" | "analyzeResponse";
+
 export abstract class BaseLLMClient implements LLMClient {
   protected systemPrompt: string = "";
   private lastTranscript: string = "";
@@ -13,6 +16,34 @@ export abstract class BaseLLMClient implements LLMClient {
   private readonly deduplicationWindowMs = 2000;
 
   abstract makeApiCall(prompt: string, options: ApiCallOptions): Promise<ApiCallResult>;
+
+  private logPrompt(purpose: PromptPurpose, prompt: string): void {
+    const len = prompt.length;
+    const preview =
+      len <= PROMPT_TRUNCATE_CHARS
+        ? prompt
+        : prompt.slice(0, PROMPT_TRUNCATE_CHARS) +
+          `\n... (${len - PROMPT_TRUNCATE_CHARS} more chars)`;
+    Logger.prompt(`[${purpose}] (${len} chars)\n${preview}`, {
+      purpose,
+      fullPrompt: prompt,
+      promptLength: len,
+    });
+  }
+
+  private logPromptResponse(purpose: PromptPurpose, content: string): void {
+    const len = content.length;
+    const preview =
+      len <= PROMPT_TRUNCATE_CHARS
+        ? content
+        : content.slice(0, PROMPT_TRUNCATE_CHARS) +
+          `\n... (${len - PROMPT_TRUNCATE_CHARS} more chars)`;
+    Logger.prompt(`[${purpose}] response (${len} chars)\n${preview}`, {
+      purpose: `${purpose}Response`,
+      fullResponse: content,
+      responseLength: len,
+    });
+  }
 
   setGameRules(rules: string): void {
     this.systemPrompt = buildSystemPrompt(rules);
@@ -71,6 +102,7 @@ export abstract class BaseLLMClient implements LLMClient {
     const userMessage = `${stateContext}\n\nUser Command: "${transcript}"`;
     const fullPrompt = `${this.systemPrompt}\n\n${userMessage}`;
 
+    this.logPrompt("getActions", fullPrompt);
     Profiler.start("llm.network");
     const result = await this.makeApiCall(fullPrompt, {
       temperature: 0.7,
@@ -86,6 +118,7 @@ export abstract class BaseLLMClient implements LLMClient {
       return [];
     }
 
+    this.logPromptResponse("getActions", content);
     Profiler.start("llm.parsing");
     const actions = this.extractActions(content);
     Profiler.end("llm.parsing");
@@ -101,12 +134,14 @@ Text: "${transcript}"
 
 Name:`;
 
+      this.logPrompt("extractName", prompt);
       const result = await this.makeApiCall(prompt, {
         temperature: 0.3,
         maxTokens: 50,
       });
 
       const content = result.content;
+      if (content) this.logPromptResponse("extractName", content);
       const cleaned = content.trim().toLowerCase();
 
       if (cleaned === "null" || cleaned === "" || cleaned.length > 50) {
@@ -138,12 +173,14 @@ or
 
 JSON:`;
 
+      this.logPrompt("analyzeResponse", prompt);
       const apiResult = await this.makeApiCall(prompt, {
         temperature: 0.3,
         maxTokens: 100,
       });
 
       const content = apiResult.content;
+      if (content) this.logPromptResponse("analyzeResponse", content);
 
       const markdownMatch = content.match(/```(?:json)?\s*\n?([\s\S]*?)\n?```/);
       const jsonString = markdownMatch ? markdownMatch[1].trim() : content.trim();
