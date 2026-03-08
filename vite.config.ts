@@ -55,6 +55,18 @@ export default defineConfig({
             },
           },
           {
+            urlPattern: /^https:\/\/.*\.blob\.vercel-storage\.com\/.*/i,
+            handler: "CacheFirst",
+            options: {
+              cacheName: "kali-models-v1",
+              expiration: {
+                maxEntries: 10,
+                maxAgeSeconds: 60 * 60 * 24 * 365,
+              },
+              cacheableResponse: { statuses: [0, 200] },
+            },
+          },
+          {
             urlPattern: ({ url }) => url.pathname.startsWith("/debug"),
             handler: "NetworkFirst",
             options: {

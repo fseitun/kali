@@ -18,6 +18,7 @@
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
     "check-vosk": "node scripts/check-vosk-model.mjs",
+    "upload-vosk": "node scripts/upload-vosk-model.mjs",
     "prepare": "husky"
   },
   "lint-staged": {
@@ -38,6 +39,7 @@
   "devDependencies": {
     "@eslint/js": "^10.0.1",
     "@types/node": "^22.10.0",
+    "@vercel/blob": "^2.3.1",
     "@vitest/coverage-v8": "^4.0.18",
     "eslint": "^10.0.2",
     "eslint-config-prettier": "^10.1.8",
