@@ -80,12 +80,15 @@ class KaliDebugApp {
     if (!container) return;
 
     const defaultEnabled = new Set([
-      "general",
-      "brain",
-      "llm",
       "actions",
-      "transcription",
+      "brain",
+      "general",
+      "init",
+      "llm",
       "narration",
+      "state",
+      "transcription",
+      "user",
       "voice",
     ]);
 
