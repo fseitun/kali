@@ -310,9 +310,8 @@ function formatAnimalEncounterContext(state: Record<string, unknown>): string {
 
   if (pending.phase === "powerCheck") {
     const riddleCorrect = (pending as { riddleCorrect?: boolean }).riddleCorrect;
-    const diceRange = riddleCorrect ? "2-12" : "1-6";
     const diceCount = riddleCorrect ? "2" : "1";
-    return `⚠️ POWER CHECK (${playerName}) phase=powerCheck. Tell the player to roll ${diceCount} die/dice (range ${diceRange}) and report the result. ALWAYS include: "Tirá ${diceCount} dado(s)... decime el resultado." User reports roll → PLAYER_ANSWERED with the number. Orchestrator evaluates win/lose. [current]`;
+    return `⚠️ POWER CHECK (${playerName}) phase=powerCheck. If user REPORTS their roll (e.g. "tire un dos y un seis", "ocho", "siete") → PLAYER_ANSWERED with the number (sum for 2d6). Do NOT ask "decime el resultado" — they just gave it. NARRATE briefly: confirm the roll ("Sumás 2 y 6, da 8") or similar; never re-ask. If user asks what to do → NARRATE "Tirá ${diceCount} dado(s)... decime el resultado." Orchestrator evaluates win/lose. [current]`;
   }
 
   if (pending.phase === "revenge") {
