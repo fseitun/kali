@@ -17,6 +17,7 @@
     "test:e2e": "vitest run e2e/",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
+    "full-check": "npm run lint:fix && npm run type-check && npm run test && npm run format",
     "check-vosk": "node scripts/check-vosk-model.mjs",
     "upload-vosk": "node scripts/upload-vosk-model.mjs",
     "prepare": "husky"
