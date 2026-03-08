@@ -150,6 +150,31 @@ describe("Orchestrator - New Action Handlers", () => {
       expect(result.success).toBe(true);
       expect(result.shouldAdvanceTurn).toBe(false);
     });
+
+    it("PLAYER_ANSWERED + SET_STATE pathChoice at position 0 does not advance turn", async () => {
+      (testState.players as any).p1.position = 0;
+      (testState.players as any).p1.pathChoice = null;
+      testState.decisionPoints = [
+        { position: 0, requiredField: "pathChoice", prompt: "Choose A or B?" },
+      ];
+      mockStateManager.get = vi.fn((path: string) => {
+        if (path === "players.p1.position") return 0;
+        if (path === "players.p1.pathChoice") return null;
+        return undefined;
+      });
+      (mockStateManager as any).pathExists = vi.fn(() => true);
+
+      const actions: PrimitiveAction[] = [
+        { action: "PLAYER_ANSWERED", answer: "B" },
+        { action: "SET_STATE", path: "players.p1.pathChoice", value: "B" },
+        { action: "NARRATE", text: "Elegiste el Camino B. Tirá el dado." },
+      ];
+
+      const result = await orchestrator.testExecuteActions(actions);
+
+      expect(result.success).toBe(true);
+      expect(result.shouldAdvanceTurn).toBe(false);
+    });
   });
 
   describe("Board Mechanics - Orchestrator Control", () => {

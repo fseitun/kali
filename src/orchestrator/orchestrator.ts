@@ -322,13 +322,35 @@ export class Orchestrator {
       actions.some((a) => a.action === "PLAYER_ANSWERED") &&
       !actions.some((a) => a.action === "PLAYER_ROLLED");
 
-    const shouldAdvanceTurn = actions.some(
+    const setStateActions = actions.filter((a) => a.action === "SET_STATE");
+    const allSetStateTargetPathChoice =
+      setStateActions.length === 0 ||
+      setStateActions.every(
+        (a) =>
+          typeof (a as { path?: string }).path === "string" &&
+          /^players\.\w+\.pathChoice$/.test((a as { path: string }).path),
+      );
+    const onlyResolvedPathChoiceAtStart =
+      currentPlayer?.position === 0 &&
+      (currentPlayer?.pathChoice === null || currentPlayer?.pathChoice === undefined) &&
+      !actions.some((a) => a.action === "PLAYER_ROLLED") &&
+      (actions.some((a) => a.action === "PLAYER_ANSWERED") ||
+        actions.some(
+          (a) =>
+            a.action === "SET_STATE" &&
+            typeof (a as { path?: string }).path === "string" &&
+            /^players\.\w+\.pathChoice$/.test((a as { path: string }).path),
+        )) &&
+      allSetStateTargetPathChoice;
+
+    const rawShouldAdvanceTurn = actions.some(
       (a) =>
         a.action === "PLAYER_ROLLED" ||
         a.action === "SET_STATE" ||
         a.action === "RESET_GAME" ||
         (a.action === "PLAYER_ANSWERED" && !isPathChoiceAtStart),
     );
+    const shouldAdvanceTurn = rawShouldAdvanceTurn && !onlyResolvedPathChoiceAtStart;
 
     Logger.info("Actions validated, executing...");
     Profiler.start(`${profilerPrefix}.execution.${context.depth}`);

@@ -63,8 +63,6 @@ export class NameCollector {
 
       await this.speechService.speak(t("setup.ready", { name: this.collectedNames[0] }));
 
-      Logger.info("Name collection complete");
-
       return this.collectedNames;
     } catch (error) {
       Logger.error("Name collection error:", error);
