@@ -31,9 +31,14 @@
   },
   "steps": [
     {
-      "description": "p1 rolls 2, lands on Halcón square (+3 points)",
+      "description": "p1 rolls 2, lands on Halcón (animal square; points from LLM after riddle)",
       "roll": 2,
-      "llmResponses": [[{ "action": "NARRATE", "text": "Halcón encounter! +3 points." }]],
+      "llmResponses": [
+        [
+          { "action": "SET_STATE", "path": "players.p1.points", "value": 3 },
+          { "action": "NARRATE", "text": "Halcón encounter! +3 points." }
+        ]
+      ],
       "expect": { "players.p1.position": 2, "players.p1.points": 3 }
     }
   ]

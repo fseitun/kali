@@ -312,12 +312,22 @@ export class Orchestrator {
       return { success: false, shouldAdvanceTurn: false };
     }
 
+    const game = state.game as Record<string, unknown> | undefined;
+    const currentPlayer = game?.turn
+      ? (state.players as Record<string, Record<string, unknown>>)?.[game.turn as string]
+      : undefined;
+    const isPathChoiceAtStart =
+      currentPlayer?.position === 0 &&
+      (currentPlayer?.pathChoice === null || currentPlayer?.pathChoice === undefined) &&
+      actions.some((a) => a.action === "PLAYER_ANSWERED") &&
+      !actions.some((a) => a.action === "PLAYER_ROLLED");
+
     const shouldAdvanceTurn = actions.some(
       (a) =>
         a.action === "PLAYER_ROLLED" ||
         a.action === "SET_STATE" ||
-        a.action === "PLAYER_ANSWERED" ||
-        a.action === "RESET_GAME",
+        a.action === "RESET_GAME" ||
+        (a.action === "PLAYER_ANSWERED" && !isPathChoiceAtStart),
     );
 
     Logger.info("Actions validated, executing...");

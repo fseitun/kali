@@ -1,5 +1,6 @@
 import type { StateManager } from "../state-manager";
 import { Logger } from "../utils/logger";
+import { getSquareKind, isDeferredRewardKind } from "./square-types";
 import type { ExecutionContext } from "./types";
 
 /**
@@ -85,20 +86,34 @@ export class BoardEffectsHandler {
       return [];
     }
 
+    const kind = getSquareKind(squareData);
+    const deferRewards = isDeferredRewardKind(kind);
+
     const applied: string[] = [];
 
-    const points = squareData.points as number | undefined;
-    if (typeof points === "number" && points > 0) {
-      const current = (this.stateManager.get(`players.${playerId}.points`) as number) ?? 0;
-      const next = current + points;
-      this.stateManager.set(`players.${playerId}.points`, next);
-      applied.push(`+${points} points`);
-    }
+    if (!deferRewards) {
+      const points = squareData.points as number | undefined;
+      if (typeof points === "number" && points > 0) {
+        const current = (this.stateManager.get(`players.${playerId}.points`) as number) ?? 0;
+        const next = current + points;
+        this.stateManager.set(`players.${playerId}.points`, next);
+        applied.push(`+${points} points`);
+      }
 
-    if (squareData.heart === true) {
-      const current = (this.stateManager.get(`players.${playerId}.hearts`) as number) ?? 0;
-      this.stateManager.set(`players.${playerId}.hearts`, current + 1);
-      applied.push("+1 heart");
+      if (squareData.heart === true) {
+        const current = (this.stateManager.get(`players.${playerId}.hearts`) as number) ?? 0;
+        this.stateManager.set(`players.${playerId}.hearts`, current + 1);
+        applied.push("+1 heart");
+      }
+
+      const instrument = squareData.instrument as string | undefined;
+      if (typeof instrument === "string" && instrument.length > 0) {
+        const current =
+          (this.stateManager.get(`players.${playerId}.instruments`) as unknown[]) ?? [];
+        const next = Array.isArray(current) ? [...current, instrument] : [instrument];
+        this.stateManager.set(`players.${playerId}.instruments`, next);
+        applied.push(`instrument: ${instrument}`);
+      }
     }
 
     if (squareData.effect === "skipTurn") {
@@ -113,14 +128,6 @@ export class BoardEffectsHandler {
       const next = Array.isArray(current) ? [...current, item] : [item];
       this.stateManager.set(`players.${playerId}.items`, next);
       applied.push(`item: ${item}`);
-    }
-
-    const instrument = squareData.instrument as string | undefined;
-    if (typeof instrument === "string" && instrument.length > 0) {
-      const current = (this.stateManager.get(`players.${playerId}.instruments`) as unknown[]) ?? [];
-      const next = Array.isArray(current) ? [...current, instrument] : [instrument];
-      this.stateManager.set(`players.${playerId}.instruments`, next);
-      applied.push(`instrument: ${instrument}`);
     }
 
     return applied;
@@ -159,11 +166,11 @@ export class BoardEffectsHandler {
 
     const squareData = squares[position.toString()];
     if (squareData && Object.keys(squareData).length > 0) {
-      const squareType = squareData.type as string;
+      const kind = getSquareKind(squareData);
       const squareName = (squareData.name as string) || "unknown";
 
       Logger.info(
-        `🎯 Orchestrator enforcing square effect at position ${position}: ${squareType} (${squareName})`,
+        `🎯 Orchestrator enforcing square effect at position ${position}: ${kind ?? "unknown"} (${squareName})`,
       );
 
       const applied = this.applyDeterministicSquareEffects(path, squareData);

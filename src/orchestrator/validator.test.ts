@@ -535,10 +535,11 @@ describe("Validator - New Primitives", () => {
       expect(result.valid).toBe(true);
     });
 
-    it("rejects SET_STATE for points during square effect processing", () => {
+    it("allows SET_STATE for points during square effect (LLM applies after riddle)", () => {
       const mockOrchestrator = {
         isProcessingEffect: () => true,
       } as any;
+      (mockState.players as Record<string, Record<string, unknown>>).p1.points = 0;
 
       const actions = [{ action: "SET_STATE", path: "players.p1.points", value: 3 }];
       const result = validateActions(
@@ -548,9 +549,7 @@ describe("Validator - New Primitives", () => {
         mockOrchestrator,
       );
 
-      expect(result.valid).toBe(false);
-      expect(result.error).toContain("during square effect processing");
-      expect(result.error).toContain("orchestrator applies");
+      expect(result.valid).toBe(true);
     });
 
     it("rejects SET_STATE for skipTurns during square effect processing", () => {

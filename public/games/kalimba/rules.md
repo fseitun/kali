@@ -51,7 +51,7 @@ Si sacás igual o más, podés avanzar, pero antes deberás responder una adivin
 
 
 3️⃣ Adivinanzas de Kalimba
-Todas las casillas con animales traen una adivinanza.
+Todas las casillas con animales traen una adivinanza. Los premios (puntos, corazón, instrumento) se otorgan solo después de superar el desafío de poder y acertar la adivinanza, no al caer en la casilla.
 
 
 La dificultad de la adivinanza depende del nivel del animal (1–6).

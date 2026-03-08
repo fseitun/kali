@@ -510,7 +510,7 @@ describe("Orchestrator Authority - LLM Adversarial Tests", () => {
       expect(mockSpeech.speak).toHaveBeenCalledWith("You fell into a trap!");
     });
 
-    it("orchestrator applies square effect points; LLM only narrates", async () => {
+    it("animal squares: orchestrator does not apply points on landing; LLM applies after riddle", async () => {
       (testState.board as any).squares = {
         "8": {
           type: "animal",
@@ -540,7 +540,7 @@ describe("Orchestrator Authority - LLM Adversarial Tests", () => {
 
       mockLLM.getActions = vi.fn(async (transcript: string) => {
         if (transcript.includes("[SYSTEM: Current player just landed")) {
-          return [{ action: "NARRATE", text: "You met a Wolf! +3 points." }];
+          return [{ action: "NARRATE", text: "You met a Wolf!" }];
         }
         return [];
       });
@@ -550,7 +550,7 @@ describe("Orchestrator Authority - LLM Adversarial Tests", () => {
       const { success } = await orchestrator.testExecuteActions(actions);
 
       expect(success).toBe(true);
-      expect(mockStateManager.set).toHaveBeenCalledWith("players.p1.points", 3);
+      expect(testState.players.p1.points).toBe(0);
     });
   });
 

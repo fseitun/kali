@@ -275,7 +275,7 @@ describe("BoardEffectsHandler", () => {
       );
     });
 
-    it("should apply points from square config and request narration only", async () => {
+    it("animal squares get narration only, no rewards on landing (deferred to LLM after riddle)", async () => {
       stateManager.set("board.squares", {
         "5": { type: "animal", name: "Halcón", power: 3, points: 3 },
       });
@@ -284,28 +284,29 @@ describe("BoardEffectsHandler", () => {
 
       await boardEffectsHandler.checkAndApplySquareEffects("players.p1.position", baseContext);
 
-      expect(stateManager.get("players.p1.points")).toBe(3);
-      expect(mockProcessTranscript).toHaveBeenCalledWith(
-        expect.stringContaining("Orchestrator applied: +3 points"),
-        expect.anything(),
-      );
+      expect(stateManager.get("players.p1.points")).toBe(0);
       expect(mockProcessTranscript).toHaveBeenCalledWith(
         expect.stringContaining("Narrate this encounter"),
         expect.anything(),
       );
+      const transcript = mockProcessTranscript.mock.calls[0]?.[0] ?? "";
+      expect(transcript).not.toContain("Orchestrator applied");
     });
 
-    it("should apply heart from square config", async () => {
+    it("trap squares apply skipTurn and request narration", async () => {
       stateManager.set("board.squares", {
-        "10": { type: "animal", name: "Fox", heart: true, points: 1 },
+        "10": { type: "hazard", name: "Quicksand", effect: "skipTurn" },
       });
       stateManager.set("players.p2.position", 10);
-      stateManager.set("players.p2.hearts", 2);
+      stateManager.set("players.p2.skipTurns", 0);
 
       await boardEffectsHandler.checkAndApplySquareEffects("players.p2.position", baseContext);
 
-      expect(stateManager.get("players.p2.hearts")).toBe(3);
-      expect(stateManager.get("players.p2.points")).toBe(1);
+      expect(stateManager.get("players.p2.skipTurns")).toBe(1);
+      expect(mockProcessTranscript).toHaveBeenCalledWith(
+        expect.stringContaining("Orchestrator applied: skip next turn"),
+        expect.anything(),
+      );
     });
 
     it("should apply skipTurn effect from square config", async () => {
@@ -324,7 +325,7 @@ describe("BoardEffectsHandler", () => {
       expect(stateManager.get("players.p1.skipTurns")).toBe(1);
     });
 
-    it("should add item to player items array", async () => {
+    it("protectionItem and heart squares add item immediately", async () => {
       stateManager.set("board.squares", {
         "63": { type: "item", name: "Traje anti-avispas", item: "anti-wasp" },
       });
@@ -336,11 +337,24 @@ describe("BoardEffectsHandler", () => {
       expect(stateManager.get("players.p1.items")).toEqual(["anti-wasp"]);
     });
 
-    it("should add instrument to player instruments array", async () => {
+    it("heart square (Cimitarra) adds scimitar item immediately", async () => {
+      stateManager.set("board.squares", {
+        "176": { type: "item", name: "Cimitarra", item: "scimitar" },
+      });
+      stateManager.set("players.p1.position", 176);
+      stateManager.set("players.p1.items", []);
+
+      await boardEffectsHandler.checkAndApplySquareEffects("players.p1.position", baseContext);
+
+      expect(stateManager.get("players.p1.items")).toEqual(["scimitar"]);
+    });
+
+    it("rollAdvance squares get narration only, no rewards on landing (deferred to LLM)", async () => {
       stateManager.set("board.squares", {
         "7": {
           type: "special",
           name: "Águila",
+          effect: "roll2d6Advance",
           instrument: "flauta del desierto",
           points: 3,
         },
@@ -351,8 +365,12 @@ describe("BoardEffectsHandler", () => {
 
       await boardEffectsHandler.checkAndApplySquareEffects("players.p1.position", baseContext);
 
-      expect(stateManager.get("players.p1.instruments")).toEqual(["flauta del desierto"]);
-      expect(stateManager.get("players.p1.points")).toBe(3);
+      expect(stateManager.get("players.p1.instruments")).toEqual([]);
+      expect(stateManager.get("players.p1.points")).toBe(0);
+      expect(mockProcessTranscript).toHaveBeenCalledWith(
+        expect.stringContaining("Narrate this encounter"),
+        expect.anything(),
+      );
     });
 
     it("should handle position value that is not a number", async () => {
