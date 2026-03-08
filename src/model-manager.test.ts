@@ -2,11 +2,13 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { ModelManager } from "./model-manager";
 
-// Mock CONFIG
+const MOCK_MODEL_URL = "https://alphacephei.com/vosk/models/vosk-model-small-es-0.42.zip";
+
+// Mock CONFIG (matches default in config.ts)
 vi.mock("./config", () => ({
   CONFIG: {
     MODEL: {
-      URL: "/vosk-model-small-es-0.42.zip",
+      URL: "https://alphacephei.com/vosk/models/vosk-model-small-es-0.42.zip",
       VERSION: "0.42",
       CACHE_NAME: "kali-models-v1",
     },
@@ -81,7 +83,7 @@ describe("ModelManager", () => {
 
       const result = await modelManager.getModel();
 
-      expect(mockCaches.match).toHaveBeenCalledWith("/vosk-model-small-es-0.42.zip");
+      expect(mockCaches.match).toHaveBeenCalledWith(MOCK_MODEL_URL);
       expect(result).toBe("blob:mock-url");
       expect(mockFetch).not.toHaveBeenCalled(); // Should not download
     });
@@ -111,7 +113,7 @@ describe("ModelManager", () => {
 
       const result = await modelManager.getModel();
 
-      expect(mockFetch).toHaveBeenCalledWith("/vosk-model-small-es-0.42.zip");
+      expect(mockFetch).toHaveBeenCalledWith(MOCK_MODEL_URL);
       expect(result).toBe("blob:mock-url");
     });
 
@@ -149,8 +151,8 @@ describe("ModelManager", () => {
 
       const result = await modelManager.getModel();
 
-      expect(mockCaches.delete).toHaveBeenCalledWith("/vosk-model-small-es-0.42.zip");
-      expect(mockFetch).toHaveBeenCalledWith("/vosk-model-small-es-0.42.zip");
+      expect(mockCaches.delete).toHaveBeenCalledWith(MOCK_MODEL_URL);
+      expect(mockFetch).toHaveBeenCalledWith(MOCK_MODEL_URL);
       expect(result).toBe("blob:mock-url");
     });
 

@@ -606,6 +606,20 @@ class StateManager {
 
 ---
 
+### Revisit: Vosk Model Source (alphacephei CDN) 🔄
+
+**Value: 6/10 | Complexity: 3/10 | Ratio: 2.0**
+
+**Context:** Model now defaults to alphacephei.com CDN (no public/ shipping). AlphaCephei is the canonical Vosk maintainer but is a small Russia-based operation with no hosting SLA. CORS may block fetch in some environments.
+
+**Revisit:**
+
+- Monitor alphacephei reliability and CORS behavior in production
+- If issues arise: consider self-hosting the model on project CDN (S3/R2), or publishing an npm package (e.g. `@kali/vosk-model-es`) served via jsDelivr (CORS-enabled)
+- Update docs with real-world findings
+
+---
+
 ### Sound Effect Management 🎨
 
 **Value: 4/10 | Complexity: 4/10 | Ratio: 1.0**

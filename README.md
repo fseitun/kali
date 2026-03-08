@@ -54,6 +54,14 @@ A voice-first game moderator for kids to play board games independently. Uses sp
 6. On first load, Vosk model downloads automatically (~40MB, cached for offline use)
 7. Say "Kali" to wake, then speak your command
 
+### Vosk Model & CDN
+
+By default, the model is fetched from the alphacephei CDN (no model in `public/` needed). If the fetch fails (e.g. CORS blocks it), set `VITE_VOSK_MODEL_URL` to your own CDN:
+
+1. Upload `vosk-model-small-es-0.42.zip` to S3, Cloudflare R2, or similar
+2. Configure CORS: `Access-Control-Allow-Origin` must include your app's origin
+3. Set in your build env: `VITE_VOSK_MODEL_URL=https://your-bucket.s3.amazonaws.com/vosk-model-small-es-0.42.zip`
+
 ## Goal & Vision
 
 Kali is an always-available, voice-first game moderator. Its immediate goal is to moderate games like **Snakes and Ladders** and **Kalimba** by understanding spoken player actions. The long-term vision is a **game-agnostic engine** capable of learning new games, including complex ones like Dungeons & Dragons, simply by being fed their rulebooks and state schemas.
