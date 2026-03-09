@@ -50,3 +50,5 @@ When working with turn logic, board effects, or decision points, look in the cor
 - **TTS**: Browser SpeechSynthesis API
 - **Sound Effects**: WebAudio for preloaded local audio
 - **Caching**: Service Worker + Cache API for offline operation
+
+**Known limitations:** API keys (e.g., Gemini) are client-exposed; acceptable for personal/offline-first use; backend proxy needed for public deployment.

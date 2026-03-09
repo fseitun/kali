@@ -16,6 +16,7 @@ Ranked by value-to-complexity ratio.
 1.33: Explicit Save/Load Game Feature
 1.0: Runtime Game Selection
 1.0: User Language Selection at Setup
+1.0: API Key / Secret Management
 
 - **TODO:** Voice-based language setting (spoken command e.g. "Kali, speak English" / "Kali, cambiar a español") — no UI, change language anytime via spoken words
 
@@ -493,6 +494,28 @@ class StateManager {
 
 - `src/di-container.ts` (new)
 - Refactor all services to use DI
+
+---
+
+### API Key / Secret Management (Frontend Constraint) 🔧
+
+**Value: 6/10 | Complexity: 5–8/10 (varies by solution) | Ratio: ~1.0**
+
+**Problem:** Fully frontend app cannot safely hold API keys. Gemini (or any cloud LLM) requires a key that would be exposed in the client bundle or network traffic. Keys can be extracted, shared, or abused; providers may revoke keys with unexpected traffic.
+
+**Potential mitigations:**
+
+- **Backend proxy (BFF):** Minimal backend that holds the key and proxies LLM requests. Adds hosting, deployment, and security surface. Complexity: 7–8.
+- **User-supplied keys:** Let users paste their own API key (stored in IndexedDB); each user brings their own. Simple but poor UX for kids/families. Complexity: 3.
+- **Ollama-only for production:** Use only local Ollama; no cloud keys needed. Offline-first, but requires capable device. Complexity: low (already supported).
+
+**Files (if BFF chosen):**
+
+- New backend service
+- `src/llm/GeminiClient.ts` — route requests via proxy
+- `src/config.ts` — API base URL, key handling
+
+**Status:** Documented risk; no immediate action. Revisit when scaling or sharing the app beyond personal use.
 
 ---
 
