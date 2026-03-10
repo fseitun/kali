@@ -17,6 +17,7 @@ Ranked by value-to-complexity ratio.
 1.0: Runtime Game Selection
 1.0: User Language Selection at Setup
 1.0: API Key / Secret Management
+1.25: LLM Prompt Language Deduplication (all-en / all-es)
 
 - **TODO:** Voice-based language setting (spoken command e.g. "Kali, speak English" / "Kali, cambiar a español") — no UI, change language anytime via spoken words
 
@@ -277,6 +278,32 @@ _(Value/Complexity ratio; higher = better ROI)_
 - `src/state-manager.ts` (persist language choice)
 
 **Status:** i18n infrastructure exists, just needs UI flow
+
+---
+
+### LLM Prompt Language Deduplication (all-en / all-es) ⭐
+
+**Value: 5/10 | Complexity: 4/10 | Ratio: 1.25**
+
+**Problem:** Prompts mix Spanish and English. Game examples, mechanics, decision prompts, and animal-encounter templates are Spanish-only. Only 3 narration lines are locale-aware. This inconsistency hurts LLM output quality (research: same-language examples improve output).
+
+**Implementation:**
+
+- Create two clean variants: **all English** and **all Spanish**
+- Config: add `rules.examples` (or `examplesByLocale`) with `en-US` and `es-AR` keys; same for `decisionPoints[].prompt`
+- Mechanics/turn structure: locale-keyed strings where user-facing (or English canonical with "translate to X" instruction)
+- `formatAnimalEncounterContext()`: move hardcoded Spanish into `LOCALE_TEMPLATES` map
+- `formatGameRules()`: accept locale, select locale-specific examples and prompts
+- Fallback: `en-US` when a locale has no specific strings
+
+**Files:**
+
+- `public/games/kalimba/config.json` (add locale-keyed examples, prompts)
+- `src/game-loader/types.ts` (schema for locale-keyed content)
+- `src/llm/system-prompt.ts` (LOCALE_TEMPLATES, formatAnimalEncounterContext)
+- `src/kali-app-core.ts` (formatGameRules locale param)
+
+**Rationale:** Deduplication = no mixing. One prompt is 100% English, one 100% Spanish. User locale selects the variant. Improves LLM answers and token clarity.
 
 ---
 
