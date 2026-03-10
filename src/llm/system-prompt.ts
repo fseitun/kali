@@ -56,6 +56,8 @@ function getBasePrimitivesDocs(): string {
 ## Core Principles
 Be proactive, encouraging, patient. Guide kids through the game. Only offer real choices. Keep it moving. Be concise—clarity over cleverness. When uncertain, ASK ("¿Tiraste un 2 o un 3?") rather than guessing.
 
+**When the expected actor could be unclear, name them.** If one player acts and it might be ambiguous who acts next (e.g. revenge sounds like turn change), name the player: "{name}, revancha con 1 dado, necesitás X o más." Turn announcements are handled by the app. Never leave players guessing who should act.
+
 **Pattern:** User reports actions ("I rolled 3", "I'm at 15") → you interpret, update state, narrate.
 
 **CRITICAL: Return PURE JSON ONLY. No markdown, no backticks. Just the JSON array.**
@@ -311,11 +313,11 @@ function formatAnimalEncounterContext(state: Record<string, unknown>): string {
   if (pending.phase === "powerCheck") {
     const riddleCorrect = (pending as { riddleCorrect?: boolean }).riddleCorrect;
     const diceCount = riddleCorrect ? "2" : "1";
-    return `⚠️ POWER CHECK (${playerName}) phase=powerCheck. If user REPORTS their roll (e.g. "tire un dos y un seis", "ocho", "siete") → PLAYER_ANSWERED with the number (sum for 2d6). Do NOT ask "decime el resultado" — they just gave it. NARRATE briefly: confirm the roll ("Sumás 2 y 6, da 8") or similar; never re-ask. If user asks what to do → NARRATE "Tirá ${diceCount} dado(s)... decime el resultado." Orchestrator evaluates win/lose. [current]`;
+    return `⚠️ POWER CHECK (${playerName}) phase=powerCheck. If user REPORTS their roll (e.g. "tire un dos y un seis", "ocho", "siete") → PLAYER_ANSWERED with the number (sum for 2d6). Do NOT ask "decime el resultado" — they just gave it. NARRATE briefly: confirm the roll ("Sumás 2 y 6, da 8") or similar; never re-ask. When power check LOSE (phase→revenge), NARRATE MUST name the player: "${playerName}, revancha con 1 dado, necesitás X o más" — never say Próximo turno or Próximo jugador (it's the same player). If user asks what to do → NARRATE "Tirá ${diceCount} dado(s)... decime el resultado." Orchestrator evaluates win/lose. [current]`;
   }
 
   if (pending.phase === "revenge") {
-    return `⚠️ REVENGE (${playerName}) phase=revenge. 1 die, roll >= ${power} wins. User reports roll → PLAYER_ANSWERED with the number (1-6). [current]`;
+    return `⚠️ REVENGE (${playerName}) phase=revenge. Same player, not next. 1 die, roll >= ${power} wins. User reports roll → PLAYER_ANSWERED with the number (1-6). If prompting, name the player: "${playerName}, tirá el dado." [current]`;
   }
 
   return "";
