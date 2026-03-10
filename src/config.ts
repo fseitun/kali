@@ -16,7 +16,9 @@ export const CONFIG = {
 
   MODEL: {
     CACHE_NAME: "kali-models-v1",
-    URL: import.meta.env.VITE_VOSK_MODEL_URL ?? "/vosk-model-small-es-0.42.zip",
+    URL:
+      import.meta.env.VITE_VOSK_MODEL_URL ??
+      "https://alphacephei.com/vosk/models/vosk-model-small-es-0.42.zip",
     VERSION: "0.42",
   },
 

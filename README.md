@@ -56,10 +56,10 @@ A voice-first game moderator for kids to play board games independently. Uses sp
 
 ### Vosk Model & CDN
 
-By default, the model is fetched from the alphacephei CDN (no model in `public/` needed). If the fetch fails (e.g. CORS blocks it), set `VITE_VOSK_MODEL_URL` to your own CDN:
+By default, the model is fetched from the alphacephei CDN (no model in `public/` needed). Production deployments (e.g. Vercel) may hit CORS limits—if the model fails to load, set `VITE_VOSK_MODEL_URL` to your own CDN:
 
-- **Vercel Blob**: Create a public Blob store, put the model in `public/`, run `npm run upload-vosk`, then set `VITE_VOSK_MODEL_URL` to the printed URL. Keeps deploys lean.
-- **S3, R2, etc.**: Upload `vosk-model-small-es-0.42.zip`, configure CORS (`Access-Control-Allow-Origin` must include your app's origin), set `VITE_VOSK_MODEL_URL`
+- **Vercel Blob** (recommended for production): Create a public Blob store in Vercel, put `vosk-model-small-es-0.42.zip` in `public/`, run `npm run upload-vosk`, then set `VITE_VOSK_MODEL_URL` in Vercel env vars to the printed URL.
+- **S3, R2, etc.**: Upload `vosk-model-small-es-0.42.zip`, configure CORS (`Access-Control-Allow-Origin` must include your app's origin), set `VITE_VOSK_MODEL_URL`.
 
 ## Goal & Vision
 
