@@ -7,10 +7,19 @@ import { ProductionUIService } from "./services/production-ui-service";
 import { SpeechService } from "./services/speech-service";
 import { Logger } from "./utils/logger";
 
+/**
+ * Non-standard event; only Chromium-based browsers. Used to trigger native PWA install prompt.
+ * @see https://developer.mozilla.org/en-US/docs/Web/API/BeforeInstallPromptEvent
+ */
+interface BeforeInstallPromptEvent extends Event {
+  prompt(): Promise<{ outcome: "accepted" | "dismissed"; platform: string }>;
+}
+
 class KaliApp {
   private core: KaliAppCore;
   private uiService: ProductionUIService;
   private speechService: SpeechService;
+  private installPrompt: BeforeInstallPromptEvent | null = null;
   private static instance: KaliApp | null = null;
 
   constructor() {
@@ -29,6 +38,40 @@ class KaliApp {
     this.core = new KaliAppCore(this.uiService, this.speechService);
 
     this.setupStartButton(startButton);
+    this.setupInstallPrompt();
+  }
+
+  private setupInstallPrompt(): void {
+    if (this.isAlreadyInstalled()) return;
+
+    const installButton = document.getElementById("install-button") as HTMLButtonElement | null;
+    if (!installButton) return;
+
+    window.addEventListener("beforeinstallprompt", (e: Event) => {
+      e.preventDefault();
+      this.installPrompt = e as BeforeInstallPromptEvent;
+      installButton.textContent = t("ui.installButton");
+      installButton.hidden = false;
+    });
+
+    installButton.addEventListener("click", async () => {
+      if (!this.installPrompt) return;
+      await this.installPrompt.prompt();
+      this.installPrompt = null;
+      installButton.hidden = true;
+    });
+
+    window.addEventListener("appinstalled", () => {
+      this.installPrompt = null;
+      installButton.hidden = true;
+    });
+  }
+
+  private isAlreadyInstalled(): boolean {
+    return (
+      window.matchMedia("(display-mode: standalone)").matches ||
+      (navigator as { standalone?: boolean }).standalone === true
+    );
   }
 
   private setupStartButton(startButton: HTMLButtonElement): void {

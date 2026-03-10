@@ -34,6 +34,7 @@ export const enUS = {
     startButton: "Start",
     stopButton: "Stop",
     startKali: "Start Kali",
+    installButton: "Install",
     clickToStart: 'Click "Start Kali" to begin voice interaction',
     initializationFailed: "Initialization failed",
     listeningForCommand: "Listening for command...",

@@ -34,6 +34,7 @@ export const esAR = {
     startButton: "Jugar",
     stopButton: "Parar",
     startKali: "Iniciar Kali",
+    installButton: "Instalar",
     clickToStart: 'Hacé clic en "Iniciar Kali" para comenzar',
     initializationFailed: "Error al inicializar",
     listeningForCommand: "Esperando comando...",
