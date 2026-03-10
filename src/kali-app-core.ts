@@ -57,7 +57,9 @@ export class KaliAppCore {
       this.uiService.hideButton();
       indicator.setState("listening");
 
-      const defaultStatus = t("ui.wakeWordReady", { wakeWord: CONFIG.WAKE_WORD.TEXT[0] });
+      const defaultStatus = this.options?.skipWakeWord
+        ? t("ui.status.ready")
+        : t("ui.wakeWordReady", { wakeWord: CONFIG.WAKE_WORD.TEXT[0] });
       if (shouldStartGame) {
         this.uiService.updateStatus(defaultStatus);
         Logger.info("Kali is ready");
@@ -66,7 +68,7 @@ export class KaliAppCore {
       }
 
       let statusMessage = defaultStatus;
-      if (this.stateManager) {
+      if (this.stateManager && !this.options?.skipWakeWord) {
         const state = this.stateManager.getState();
         const game = state.game as Record<string, unknown> | undefined;
         if (game?.phase === GamePhase.PLAYING) {
@@ -408,7 +410,11 @@ ${examples.map((ex: string, i: number) => `${i + 1}. ${ex}`).join("\n")}`;
       }
     }
 
-    this.uiService.updateStatus(t("ui.wakeWordReady", { wakeWord: CONFIG.WAKE_WORD.TEXT[0] }));
+    this.uiService.updateStatus(
+      this.options?.skipWakeWord
+        ? t("ui.status.ready")
+        : t("ui.wakeWordReady", { wakeWord: CONFIG.WAKE_WORD.TEXT[0] }),
+    );
   }
 
   async dispose(): Promise<void> {
