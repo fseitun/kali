@@ -403,9 +403,17 @@ ${examples.map((ex: string, i: number) => `${i + 1}. ${ex}`).join("\n")}`;
     }
 
     if (this.orchestrator) {
-      const { success, shouldAdvanceTurn } = await this.orchestrator.handleTranscript(text);
+      const { success, shouldAdvanceTurn, turnAdvancedForRevenge } =
+        await this.orchestrator.handleTranscript(text);
 
-      if (success && shouldAdvanceTurn) {
+      if (success && turnAdvancedForRevenge) {
+        await this.speechService.speak(
+          t("game.turnAnnouncement", {
+            name: turnAdvancedForRevenge.name,
+            position: turnAdvancedForRevenge.position,
+          }),
+        );
+      } else if (success && shouldAdvanceTurn) {
         await this.checkAndAdvanceTurn();
       }
     }
@@ -458,16 +466,25 @@ ${examples.map((ex: string, i: number) => `${i + 1}. ${ex}`).join("\n")}`;
    * @param actions - Array of primitive actions to validate and execute
    * @returns true if execution succeeded, false otherwise
    */
-  async testExecuteActions(
-    actions: PrimitiveAction[],
-  ): Promise<{ success: boolean; shouldAdvanceTurn: boolean }> {
+  async testExecuteActions(actions: PrimitiveAction[]): Promise<{
+    success: boolean;
+    shouldAdvanceTurn: boolean;
+    turnAdvancedForRevenge?: { playerId: string; name: string; position: number };
+  }> {
     if (!this.orchestrator) {
       throw new Error("Orchestrator not initialized");
     }
 
     const result = await this.orchestrator.testExecuteActions(actions);
 
-    if (result.success && result.shouldAdvanceTurn) {
+    if (result.success && result.turnAdvancedForRevenge) {
+      await this.speechService.speak(
+        t("game.turnAnnouncement", {
+          name: result.turnAdvancedForRevenge.name,
+          position: result.turnAdvancedForRevenge.position,
+        }),
+      );
+    } else if (result.success && result.shouldAdvanceTurn) {
       await this.checkAndAdvanceTurn();
     }
 

@@ -86,6 +86,8 @@ export interface ExecutionContext {
   maxDepth: number;
   /** When true, skip decision point enforcement after actions (e.g. proactive start). */
   skipDecisionPointEnforcement?: boolean;
+  /** Set when power check fails and turn was advanced; app should announce next player. */
+  turnAdvancedForRevenge?: { playerId: string; name: string; position: number };
 }
 
 export type ActionHandler = (action: PrimitiveAction, context: ExecutionContext) => Promise<void>;

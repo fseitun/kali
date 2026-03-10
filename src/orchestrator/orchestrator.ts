@@ -95,7 +95,11 @@ export class Orchestrator {
   async handleTranscript(
     transcript: string,
     options?: { skipDecisionPointEnforcement?: boolean },
-  ): Promise<{ success: boolean; shouldAdvanceTurn: boolean }> {
+  ): Promise<{
+    success: boolean;
+    shouldAdvanceTurn: boolean;
+    turnAdvancedForRevenge?: { playerId: string; name: string; position: number };
+  }> {
     if (this.isProcessing) {
       Logger.warn("Orchestrator busy, ignoring new request");
       return { success: false, shouldAdvanceTurn: false };
@@ -125,9 +129,11 @@ export class Orchestrator {
    * @param actions - Array of primitive actions to validate and execute
    * @returns Object with success and shouldAdvanceTurn
    */
-  async testExecuteActions(
-    actions: PrimitiveAction[],
-  ): Promise<{ success: boolean; shouldAdvanceTurn: boolean }> {
+  async testExecuteActions(actions: PrimitiveAction[]): Promise<{
+    success: boolean;
+    shouldAdvanceTurn: boolean;
+    turnAdvancedForRevenge?: { playerId: string; name: string; position: number };
+  }> {
     if (this.isProcessing) {
       Logger.warn("Orchestrator busy, ignoring test request");
       return { success: false, shouldAdvanceTurn: false };
@@ -164,9 +170,11 @@ export class Orchestrator {
    * @param actions - Array of primitive actions to validate and execute
    * @returns Object with success and shouldAdvanceTurn
    */
-  async executePrimitiveActions(
-    actions: PrimitiveAction[],
-  ): Promise<{ success: boolean; shouldAdvanceTurn: boolean }> {
+  async executePrimitiveActions(actions: PrimitiveAction[]): Promise<{
+    success: boolean;
+    shouldAdvanceTurn: boolean;
+    turnAdvancedForRevenge?: { playerId: string; name: string; position: number };
+  }> {
     if (this.isProcessing) {
       Logger.warn("Orchestrator busy, ignoring primitive execution request");
       return { success: false, shouldAdvanceTurn: false };
@@ -271,7 +279,11 @@ export class Orchestrator {
   private async processTranscript(
     transcript: string,
     context: ExecutionContext,
-  ): Promise<{ success: boolean; shouldAdvanceTurn: boolean }> {
+  ): Promise<{
+    success: boolean;
+    shouldAdvanceTurn: boolean;
+    turnAdvancedForRevenge?: { playerId: string; name: string; position: number };
+  }> {
     try {
       Logger.brain(`Orchestrator processing: ${transcript} (depth: ${context.depth})`);
 
@@ -299,7 +311,11 @@ export class Orchestrator {
     actions: PrimitiveAction[],
     context: ExecutionContext,
     profilerPrefix: string,
-  ): Promise<{ success: boolean; shouldAdvanceTurn: boolean }> {
+  ): Promise<{
+    success: boolean;
+    shouldAdvanceTurn: boolean;
+    turnAdvancedForRevenge?: { playerId: string; name: string; position: number };
+  }> {
     const state = this.stateManager.getState();
     Logger.state("Current state:\n" + formatStateContext(state as Record<string, unknown>));
 
@@ -367,6 +383,15 @@ export class Orchestrator {
     // Skip when skipDecisionPointEnforcement (e.g. proactive start already asked).
     if (context.depth === 0 && !context.skipDecisionPointEnforcement) {
       await this.decisionPointEnforcer.enforceDecisionPoints(context);
+    }
+
+    // When power check failed and we advanced turn internally, don't call advanceTurn again
+    if (context.turnAdvancedForRevenge) {
+      return {
+        success: true,
+        shouldAdvanceTurn: false,
+        turnAdvancedForRevenge: context.turnAdvancedForRevenge,
+      };
     }
     return { success: true, shouldAdvanceTurn };
   }
@@ -436,13 +461,14 @@ export class Orchestrator {
   }
 
   /**
-   * If PLAYER_ANSWERED is a power-check roll, handles it and returns true.
-   * Otherwise returns false so caller can process as decision point.
+   * If PLAYER_ANSWERED is a power-check roll, handles it.
+   * Returns false if not handled. Returns true if handled (win or revenge phase set).
+   * Returns { turnAdvanced } when power check failed and turn was advanced to next player.
    */
   private async tryHandlePowerCheckAnswer(
     answer: string,
     context: ExecutionContext,
-  ): Promise<boolean> {
+  ): Promise<boolean | { turnAdvanced: { playerId: string; name: string; position: number } }> {
     const state = this.stateManager.getState();
     const game = state.game as Record<string, unknown> | undefined;
     const currentTurn = game?.turn as string | undefined;
@@ -504,11 +530,54 @@ export class Orchestrator {
           ...pending,
           phase: "revenge",
         });
-        Logger.info(`Power check LOSE: phase→revenge`);
+        Logger.info(`Power check LOSE: phase→revenge, advancing turn to next player`);
+        const turnAdvanced = this.advanceTurnForPowerCheckLose();
+        if (turnAdvanced) {
+          return { turnAdvanced };
+        }
       }
     }
 
     return true;
+  }
+
+  /**
+   * Advances turn to next player (used when power check fails). Reuses TurnManager logic.
+   * Keeps pending encounter with failed player; they get revenge when their turn comes again.
+   */
+  private advanceTurnForPowerCheckLose(): {
+    playerId: string;
+    name: string;
+    position: number;
+  } | null {
+    const state = this.stateManager.getState();
+    const game = state.game as Record<string, unknown> | undefined;
+    const players = state.players as Record<string, Record<string, unknown>> | undefined;
+    const currentTurn = game?.turn as string | undefined;
+    const playerOrder = game?.playerOrder as string[] | undefined;
+
+    if (!game || !players || !currentTurn || !playerOrder?.length) return null;
+
+    const currentIndex = playerOrder.indexOf(currentTurn);
+    const nextIndex = (currentIndex + 1) % playerOrder.length;
+    let nextPlayerId = playerOrder[nextIndex];
+    let nextPlayer = players[nextPlayerId];
+    let nextPlayerName = (nextPlayer?.name as string) || nextPlayerId;
+
+    // Handle skipTurns: consume one and use the player after (simplified - no recursion)
+    const skipTurns = (nextPlayer?.skipTurns as number) ?? 0;
+    if (skipTurns > 0) {
+      this.stateManager.set(`players.${nextPlayerId}.skipTurns`, skipTurns - 1);
+      Logger.info(`⏭️ Skipping ${nextPlayerName} (power check lose advance)`);
+      const skipIndex = (nextIndex + 1) % playerOrder.length;
+      nextPlayerId = playerOrder[skipIndex];
+      nextPlayer = players[nextPlayerId];
+      nextPlayerName = (nextPlayer?.name as string) || nextPlayerId;
+    }
+
+    this.stateManager.set("game.turn", nextPlayerId);
+    const position = (nextPlayer?.position as number) ?? 0;
+    return { playerId: nextPlayerId, name: nextPlayerName, position };
   }
 
   /**
@@ -745,6 +814,9 @@ export class Orchestrator {
         // Power check / revenge: orchestrator handles roll evaluation
         const powerCheckResult = await this.tryHandlePowerCheckAnswer(primitive.answer, context);
         if (powerCheckResult) {
+          if (typeof powerCheckResult === "object" && powerCheckResult.turnAdvanced) {
+            context.turnAdvancedForRevenge = powerCheckResult.turnAdvanced;
+          }
           break;
         }
 

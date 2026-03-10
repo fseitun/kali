@@ -78,5 +78,33 @@ describe("formatStateContext", () => {
     expect(result).toContain("powerCheck");
     expect(result).toContain("PLAYER_ANSWERED");
     expect(result).toContain("Orchestrator evaluates win/lose");
+    expect(result).toContain("¿alcanza?");
+    expect(result).toContain("is that enough");
+  });
+
+  it("shows REVENGE hint with anti-pattern when pendingAnimalEncounter phase=revenge", () => {
+    const state = {
+      game: {
+        turn: "p1",
+        phase: "PLAYING",
+        pendingAnimalEncounter: {
+          position: 21,
+          power: 4,
+          playerId: "p1",
+          phase: "revenge",
+        },
+      },
+      players: {
+        p1: { id: "p1", name: "Alice", position: 21 },
+        p2: { id: "p2", name: "Bob", position: 5 },
+      },
+    } as Record<string, unknown>;
+
+    const result = formatStateContext(state);
+
+    expect(result).toContain("REVENGE (Alice)");
+    expect(result).toContain("phase=revenge");
+    expect(result).toContain("roll >= 4");
+    expect(result).toContain("is that enough");
   });
 });

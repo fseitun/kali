@@ -209,6 +209,60 @@ describe("Orchestrator Integration Tests", () => {
       expect(mockLLM.getCallCount()).toBe(2);
     });
 
+    it("advances turn to next player on power check failure and returns turnAdvancedForRevenge", async () => {
+      const initialState: GameState = {
+        game: {
+          name: "Test Game",
+          phase: GamePhase.PLAYING,
+          turn: "p1",
+          playerOrder: ["p1", "p2"],
+          winner: null,
+          lastRoll: 0,
+          pendingAnimalEncounter: {
+            position: 5,
+            power: 4,
+            playerId: "p1",
+            phase: "powerCheck",
+            riddleCorrect: false,
+          },
+        },
+        players: {
+          p1: { id: "p1", name: "Alice", position: 5 },
+          p2: { id: "p2", name: "Bob", position: 0 },
+        },
+        board: {
+          winPosition: 100,
+          moves: {},
+          squares: { "5": { type: "animal", name: "Cobra", power: 4, points: 4 } },
+        },
+      };
+
+      setupGame(initialState);
+
+      const result = await orchestrator.testExecuteActions([
+        { action: "PLAYER_ANSWERED", answer: "2" },
+        { action: "NARRATE", text: "No alcanzó. Próximo jugador. Revancha: 1 dado, 4 o más." },
+      ]);
+
+      expect(result.success).toBe(true);
+      expect(result.shouldAdvanceTurn).toBe(false);
+      expect(result.turnAdvancedForRevenge).toEqual({
+        playerId: "p2",
+        name: "Bob",
+        position: 0,
+      });
+
+      const turn = stateManager.get("game.turn");
+      expect(turn).toBe("p2");
+
+      const pending = stateManager.get("game.pendingAnimalEncounter") as {
+        playerId: string;
+        phase: string;
+      };
+      expect(pending.playerId).toBe("p1");
+      expect(pending.phase).toBe("revenge");
+    });
+
     it("handles animal encounter triggering square effect", async () => {
       const responses: PrimitiveAction[][] = [
         [
