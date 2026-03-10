@@ -1,3 +1,4 @@
+import { CONFIG } from "../config";
 import type { GameState, PrimitiveAction } from "../orchestrator/types";
 import { safeParse, parseArray } from "../utils/json-parser";
 import { Logger } from "../utils/logger";
@@ -14,7 +15,22 @@ export abstract class BaseLLMClient implements LLMClient {
   private lastTranscriptTime: number = 0;
   private readonly deduplicationWindowMs = 2000;
 
+  onRetry?: (attempt: number, maxAttempts: number) => void;
+
   abstract makeApiCall(prompt: string, options: ApiCallOptions): Promise<ApiCallResult>;
+
+  private isTransientError(err: unknown): boolean {
+    const msg = err instanceof Error ? err.message : String(err);
+    return (
+      /429|Too Many|Model busy/i.test(msg) ||
+      /503|Service Unavailable/i.test(msg) ||
+      /abort|timeout/i.test(msg)
+    );
+  }
+
+  private delay(ms: number): Promise<void> {
+    return new Promise((resolve) => setTimeout(resolve, ms));
+  }
 
   private logPrompt(purpose: PromptPurpose, prompt: string): void {
     const len = prompt.length;
@@ -64,6 +80,11 @@ export abstract class BaseLLMClient implements LLMClient {
       // One retry with error feedback
       Logger.error("LLM attempt 1 failed:", error);
       Logger.info("Retrying with error feedback...");
+
+      if (this.isTransientError(error)) {
+        this.onRetry?.(1, 2);
+        await this.delay(CONFIG.LLM.RETRY_DELAY_MS);
+      }
 
       try {
         const errorMessage = error instanceof Error ? error.message : String(error);

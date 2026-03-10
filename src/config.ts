@@ -1,4 +1,9 @@
 export const CONFIG = {
+  LLM: {
+    RETRY_DELAY_MS: 1_500,
+    REQUEST_TIMEOUT_MS: 20_000,
+  },
+
   LLM_PROVIDER: (import.meta.env.VITE_LLM_PROVIDER ?? "gemini") as
     | "ollama"
     | "gemini"

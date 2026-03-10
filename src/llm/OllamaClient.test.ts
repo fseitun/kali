@@ -4,6 +4,7 @@ import { OllamaClient } from "./OllamaClient";
 // Mock CONFIG
 vi.mock("../config", () => ({
   CONFIG: {
+    LLM: { RETRY_DELAY_MS: 1500, REQUEST_TIMEOUT_MS: 20000 },
     OLLAMA: {
       API_URL: "http://localhost:11434/api/generate",
       MODEL: "llama2",
@@ -43,21 +44,24 @@ describe("OllamaClient", () => {
         maxTokens: 1000,
       });
 
-      expect(mockFetch).toHaveBeenCalledWith("http://localhost:11434/api/generate", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          model: "llama2",
-          messages: [{ role: "user", content: "Test prompt" }],
-          stream: false,
-          options: {
-            temperature: 0.7,
-            num_predict: 1000,
+      expect(mockFetch).toHaveBeenCalledWith(
+        "http://localhost:11434/api/generate",
+        expect.objectContaining({
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
           },
+          body: JSON.stringify({
+            model: "llama2",
+            messages: [{ role: "user", content: "Test prompt" }],
+            stream: false,
+            options: {
+              temperature: 0.7,
+              num_predict: 1000,
+            },
+          }),
         }),
-      });
+      );
 
       expect(result).toEqual({ content: "Test response from Ollama" });
     });

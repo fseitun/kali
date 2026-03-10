@@ -5,6 +5,7 @@ import { OpenRouterClient } from "./OpenRouterClient";
 
 vi.mock("../config", () => ({
   CONFIG: {
+    LLM: { RETRY_DELAY_MS: 1500, REQUEST_TIMEOUT_MS: 20000 },
     OPENROUTER: {
       API_URL: "https://openrouter.ai/api/v1/chat/completions",
       API_KEY: "test-key",

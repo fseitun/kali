@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from "vitest";
+import { describe, it, expect, beforeEach, vi } from "vitest";
 import { GamePhase } from "../orchestrator/types";
 import type { GameState, PrimitiveAction } from "../orchestrator/types";
 import { BaseLLMClient } from "./BaseLLMClient";
@@ -6,9 +6,15 @@ import { BaseLLMClient } from "./BaseLLMClient";
 class TestLLMClient extends BaseLLMClient {
   public responseQueue: string[] = [];
   public callCount = 0;
+  public throwOnFirstCall?: Error;
 
   async makeApiCall(_prompt: string): Promise<{ content: string }> {
     this.callCount++;
+    if (this.callCount === 1 && this.throwOnFirstCall) {
+      const err = this.throwOnFirstCall;
+      this.throwOnFirstCall = undefined;
+      throw err;
+    }
     const response = this.responseQueue.shift() ?? "[]";
     return { content: response };
   }
@@ -125,6 +131,40 @@ describe("LLM - Pure JSON Parsing", () => {
 
       expect(client.callCount).toBe(1);
       expect(actions).toHaveLength(0);
+    });
+
+    it("delays before retry for transient errors (429)", async () => {
+      vi.useFakeTimers();
+      client.throwOnFirstCall = new Error(
+        'DeepInfra API error: 429 Too Many Requests\n{"error":{"message":"Model busy, retry later"}}',
+      );
+      client.responseQueue = ['[{"action":"NARRATE","text":"Retry ok"}]'];
+
+      const promise = client.getActions("test", mockState);
+      await vi.runAllTimersAsync();
+      const actions = await promise;
+
+      expect(client.callCount).toBe(2);
+      expect(actions).toHaveLength(1);
+      expect(actions[0]).toEqual({ action: "NARRATE", text: "Retry ok" });
+      vi.useRealTimers();
+    });
+
+    it("no delay before retry for non-transient errors", async () => {
+      vi.useFakeTimers();
+      client.throwOnFirstCall = new Error("Invalid JSON: Unexpected token");
+      client.responseQueue = ['[{"action":"NARRATE","text":"Retry ok"}]'];
+
+      const start = Date.now();
+      const promise = client.getActions("test", mockState);
+      await vi.runAllTimersAsync();
+      const actions = await promise;
+      const elapsed = Date.now() - start;
+
+      expect(client.callCount).toBe(2);
+      expect(actions).toHaveLength(1);
+      expect(elapsed).toBe(0);
+      vi.useRealTimers();
     });
   });
 

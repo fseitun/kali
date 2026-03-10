@@ -5,6 +5,7 @@ import { DeepInfraClient } from "./DeepInfraClient";
 
 vi.mock("../config", () => ({
   CONFIG: {
+    LLM: { RETRY_DELAY_MS: 1500, REQUEST_TIMEOUT_MS: 20000 },
     DEEPINFRA: {
       API_URL: "https://api.deepinfra.com/v1/openai/chat/completions",
       API_KEY: "test-key",

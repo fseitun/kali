@@ -50,11 +50,27 @@ export class GeminiClient extends BaseLLMClient {
     return this.generateUncached(prompt, options);
   }
 
+  private async fetchWithTimeout(url: string, init: RequestInit): Promise<Response> {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), CONFIG.LLM.REQUEST_TIMEOUT_MS);
+    try {
+      const response = await fetch(url, { ...init, signal: controller.signal });
+      return response;
+    } catch (err) {
+      if (err instanceof Error && err.name === "AbortError") {
+        throw new Error("Request timeout", { cause: err });
+      }
+      throw err;
+    } finally {
+      clearTimeout(timeoutId);
+    }
+  }
+
   private async generateWithCache(
     userMessage: string,
     options: ApiCallOptions,
   ): Promise<ApiCallResult> {
-    const response = await fetch(CONFIG.GEMINI.API_URL, {
+    const response = await this.fetchWithTimeout(CONFIG.GEMINI.API_URL, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -85,7 +101,7 @@ export class GeminiClient extends BaseLLMClient {
   }
 
   private async generateUncached(prompt: string, options: ApiCallOptions): Promise<ApiCallResult> {
-    const response = await fetch(CONFIG.GEMINI.API_URL, {
+    const response = await this.fetchWithTimeout(CONFIG.GEMINI.API_URL, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

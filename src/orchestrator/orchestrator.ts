@@ -57,6 +57,10 @@ export class Orchestrator {
       stateManager,
       this.processTranscriptAsBool.bind(this),
     );
+
+    llmClient.onRetry = () => {
+      this.speechService.speak(t("llm.retrying"));
+    };
   }
 
   /**

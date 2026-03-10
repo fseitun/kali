@@ -7,21 +7,34 @@ import type { ApiCallOptions, ApiCallResult } from "./types";
  */
 export class OllamaClient extends BaseLLMClient {
   async makeApiCall(prompt: string, options: ApiCallOptions): Promise<ApiCallResult> {
-    const response = await fetch(CONFIG.OLLAMA.API_URL, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: CONFIG.OLLAMA.MODEL,
-        messages: [{ role: "user", content: prompt }],
-        stream: false,
-        options: {
-          temperature: options.temperature ?? 0.7,
-          num_predict: options.maxTokens ?? 1024,
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), CONFIG.LLM.REQUEST_TIMEOUT_MS);
+    let response: Response;
+    try {
+      response = await fetch(CONFIG.OLLAMA.API_URL, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
         },
-      }),
-    });
+        body: JSON.stringify({
+          model: CONFIG.OLLAMA.MODEL,
+          messages: [{ role: "user", content: prompt }],
+          stream: false,
+          options: {
+            temperature: options.temperature ?? 0.7,
+            num_predict: options.maxTokens ?? 1024,
+          },
+        }),
+        signal: controller.signal,
+      });
+    } catch (err) {
+      if (err instanceof Error && err.name === "AbortError") {
+        throw new Error("Request timeout", { cause: err });
+      }
+      throw err;
+    } finally {
+      clearTimeout(timeoutId);
+    }
 
     if (!response.ok) {
       throw new Error(`Ollama API error: ${response.status} ${response.statusText}`);

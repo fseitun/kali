@@ -4,6 +4,7 @@ import { GeminiClient } from "./GeminiClient";
 // Mock CONFIG
 vi.mock("../config", () => ({
   CONFIG: {
+    LLM: { RETRY_DELAY_MS: 1500, REQUEST_TIMEOUT_MS: 20000 },
     GEMINI: {
       API_URL: "https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent",
       CACHED_CONTENTS_URL: "https://generativelanguage.googleapis.com/v1beta/cachedContents",
@@ -55,7 +56,7 @@ describe("GeminiClient", () => {
 
       expect(mockFetch).toHaveBeenCalledWith(
         "https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent",
-        {
+        expect.objectContaining({
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -76,7 +77,7 @@ describe("GeminiClient", () => {
               maxOutputTokens: 1000,
             },
           }),
-        },
+        }),
       );
 
       expect(result).toEqual({ content: "Test response from Gemini" });
