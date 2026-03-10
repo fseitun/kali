@@ -156,13 +156,13 @@ export class KaliAppCore {
   private formatGameRules(gameModule: GameModule): string {
     const { rules, metadata } = gameModule;
     const examples = rules.examples.slice(0, 4);
+    const boardSection = rules.boardLayout?.trim() ? `**Board:** ${rules.boardLayout.trim()}` : "";
 
     return `## ${metadata.name}
 **Objective:** ${rules.objective}
 **Mechanics:** ${rules.mechanics}
 **Turn:** ${rules.turnStructure}
-**Board:** [SYSTEM: ...] injects square data when needed.
-**Examples:**
+${boardSection ? boardSection + "\n" : ""}**Examples:**
 ${examples.map((ex: string, i: number) => `${i + 1}. ${ex}`).join("\n")}`;
   }
 
