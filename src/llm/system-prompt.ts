@@ -313,11 +313,11 @@ function formatAnimalEncounterContext(state: Record<string, unknown>): string {
   if (pending.phase === "powerCheck") {
     const riddleCorrect = (pending as { riddleCorrect?: boolean }).riddleCorrect;
     const diceCount = riddleCorrect ? "2" : "1";
-    return `⚠️ POWER CHECK (${playerName}) phase=powerCheck. If user REPORTS their roll (e.g. "tire un dos y un seis", "ocho", "siete") → PLAYER_ANSWERED with the number (sum for 2d6). Do NOT ask "decime el resultado" — they just gave it. NARRATE briefly: confirm the roll ("Sumás 2 y 6, da 8") or similar; never re-ask. When power check LOSE (phase→revenge), NARRATE MUST name the player: "${playerName}, revancha con 1 dado, necesitás X o más" — never say Próximo turno or Próximo jugador (it's the same player). If user asks what to do → NARRATE "Tirá ${diceCount} dado(s)... decime el resultado." Orchestrator evaluates win/lose. [current]`;
+    return `⚠️ POWER CHECK (${playerName}) phase=powerCheck. If user REPORTS their roll (e.g. "tire un dos y un seis", "ocho", "siete") → PLAYER_ANSWERED with the number (sum for 2d6). Do NOT ask "decime el resultado", "¿alcanza?", "is that enough?", "¿sirve?" — they gave the number; process it immediately. NARRATE briefly: confirm the roll ("Sumás 2 y 6, da 8") or similar; never re-ask. When power check LOSE (phase→revenge), NARRATE MUST name the player: "${playerName}, revancha con 1 dado, necesitás X o más" — never say Próximo turno or Próximo jugador (it's the same player). If user asks what to do → NARRATE "Tirá ${diceCount} dado(s)... decime el resultado." Orchestrator evaluates win/lose. [current]`;
   }
 
   if (pending.phase === "revenge") {
-    return `⚠️ REVENGE (${playerName}) phase=revenge. Same player, not next. 1 die, roll >= ${power} wins. User reports roll → PLAYER_ANSWERED with the number (1-6). If prompting, name the player: "${playerName}, tirá el dado." [current]`;
+    return `⚠️ REVENGE (${playerName}) phase=revenge. Same player, not next. 1 die, roll >= ${power} wins. User reports roll → PLAYER_ANSWERED with the number (1-6). Do NOT ask "¿alcanza?", "is that enough?" — process it immediately. If prompting, name the player: "${playerName}, tirá el dado." [current]`;
   }
 
   return "";
