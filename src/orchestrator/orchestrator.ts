@@ -1,4 +1,4 @@
-import type { StatusIndicator } from "../components/status-indicator";
+import type { IStatusIndicator } from "../components/status-indicator";
 import { t } from "../i18n";
 import type { LLMClient } from "../llm/LLMClient";
 import { formatStateContext } from "../llm/system-prompt";
@@ -42,7 +42,7 @@ export class Orchestrator {
     private llmClient: LLMClient,
     private stateManager: StateManager,
     private speechService: ISpeechService,
-    private statusIndicator: StatusIndicator,
+    private statusIndicator: IStatusIndicator,
     initialState: GameState,
   ) {
     this.initialState = initialState;

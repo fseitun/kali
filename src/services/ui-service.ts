@@ -1,7 +1,7 @@
-import type { StatusIndicator } from "../components/status-indicator";
+import type { IStatusIndicator } from "../components/status-indicator";
 
 export interface IUIService {
-  getStatusIndicator(): StatusIndicator;
+  getStatusIndicator(): IStatusIndicator;
   setButtonState(text: string, disabled: boolean): void;
   hideButton(): void;
   showButton(): void;

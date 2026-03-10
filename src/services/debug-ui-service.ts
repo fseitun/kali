@@ -1,4 +1,5 @@
-import { StatusIndicator } from "../components/status-indicator";
+import type { IStatusIndicator } from "../components/status-indicator";
+import { NoOpStatusIndicator } from "../components/status-indicator";
 import { t } from "../i18n";
 import {
   getCategoryIcon,
@@ -11,7 +12,8 @@ import type { IUIService } from "./ui-service";
 const MAX_DISPLAY_ENTRIES = 3000;
 
 export class DebugUIService implements IUIService {
-  private statusIndicator: StatusIndicator;
+  private statusIndicator: NoOpStatusIndicator;
+  private exportButton: HTMLButtonElement | null = null;
   private sink: LogSink;
   private unsubscribeCategories: (() => void) | null = null;
 
@@ -21,7 +23,7 @@ export class DebugUIService implements IUIService {
     private startButton: HTMLButtonElement,
     private submitTranscriptButton?: HTMLButtonElement,
   ) {
-    this.statusIndicator = new StatusIndicator("status-indicator");
+    this.statusIndicator = new NoOpStatusIndicator();
     this.setupExportButton();
 
     const buffer = initLogBuffer();
@@ -36,10 +38,10 @@ export class DebugUIService implements IUIService {
   }
 
   private setupExportButton(): void {
-    const exportButton = document.createElement("button");
-    exportButton.textContent = t("ui.exportLogs");
-    exportButton.className = "export-logs-button";
-    exportButton.style.cssText = `
+    this.exportButton = document.createElement("button");
+    this.exportButton.textContent = t("ui.exportLogs");
+    this.exportButton.className = "export-logs-button";
+    this.exportButton.style.cssText = `
       position: fixed;
       bottom: 1rem;
       right: 1rem;
@@ -53,7 +55,7 @@ export class DebugUIService implements IUIService {
       font-size: 0.9rem;
       z-index: 1000;
     `;
-    exportButton.addEventListener("click", () => {
+    this.exportButton.addEventListener("click", () => {
       const buffer = initLogBuffer();
       const entries = buffer.getAll();
       const blob = new Blob([JSON.stringify(entries, null, 2)], {
@@ -66,10 +68,10 @@ export class DebugUIService implements IUIService {
       a.click();
       URL.revokeObjectURL(a.href);
     });
-    document.body.appendChild(exportButton);
+    document.body.appendChild(this.exportButton);
   }
 
-  getStatusIndicator(): StatusIndicator {
+  getStatusIndicator(): IStatusIndicator {
     return this.statusIndicator;
   }
 
@@ -189,6 +191,10 @@ export class DebugUIService implements IUIService {
     if (this.unsubscribeCategories) {
       this.unsubscribeCategories();
       this.unsubscribeCategories = null;
+    }
+    if (this.exportButton?.parentNode) {
+      this.exportButton.remove();
+      this.exportButton = null;
     }
     const buffer = initLogBuffer();
     buffer.removeSink(this.sink);
