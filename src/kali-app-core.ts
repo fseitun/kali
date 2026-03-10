@@ -153,22 +153,12 @@ export class KaliAppCore {
 
   private formatGameRules(gameModule: GameModule): string {
     const { rules, metadata } = gameModule;
-    const maxMechanics = 1600;
-    const maxTurnStructure = 700;
-    const mechanics =
-      rules.mechanics.length > maxMechanics
-        ? rules.mechanics.slice(0, maxMechanics) + "..."
-        : rules.mechanics;
-    const turnStructure =
-      rules.turnStructure.length > maxTurnStructure
-        ? rules.turnStructure.slice(0, maxTurnStructure) + "..."
-        : rules.turnStructure;
     const examples = rules.examples.slice(0, 4);
 
     return `## ${metadata.name}
 **Objective:** ${rules.objective}
-**Mechanics:** ${mechanics}
-**Turn:** ${turnStructure}
+**Mechanics:** ${rules.mechanics}
+**Turn:** ${rules.turnStructure}
 **Board:** [SYSTEM: ...] injects square data when needed.
 **Examples:**
 ${examples.map((ex: string, i: number) => `${i + 1}. ${ex}`).join("\n")}`;
