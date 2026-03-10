@@ -38,6 +38,7 @@ export class DebugUIService implements IUIService {
   }
 
   private setupExportButton(): void {
+    if (!window.location.pathname.includes("/debug")) return;
     this.exportButton = document.createElement("button");
     this.exportButton.textContent = t("ui.exportLogs");
     this.exportButton.className = "export-logs-button";
