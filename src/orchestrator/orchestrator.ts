@@ -297,9 +297,15 @@ export class Orchestrator {
       const actions = await this.llmClient.getActions(transcript, state);
       Profiler.end(`orchestrator.llm.${context.depth}`);
 
-      Logger.robot("LLM returned actions:", actions);
+      if (Array.isArray(actions)) {
+        Logger.robot(
+          `LLM returned ${actions.length} action(s): ${actions.map((a) => a.action).join(", ")}`,
+        );
+      } else {
+        Logger.robot("LLM returned non-array response");
+      }
 
-      if (actions.length === 0) {
+      if (Array.isArray(actions) && actions.length === 0) {
         Logger.warn("No actions returned from LLM");
         await this.speechService.speak(t("llm.allRetriesFailed"));
         return { success: false, shouldAdvanceTurn: false };

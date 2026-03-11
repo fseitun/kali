@@ -113,6 +113,17 @@ export class DebugUIService implements IUIService {
     return null;
   }
 
+  private getLlmContextArgs(entry: LogEntry): string | null {
+    if (entry.category !== "llm") return null;
+    const args = entry.context?.args as unknown[] | undefined;
+    if (!args?.length) return null;
+    try {
+      return JSON.stringify(args, null, 2);
+    } catch {
+      return null;
+    }
+  }
+
   private renderEntry(entry: LogEntry): void {
     const time = new Date(entry.timestamp).toLocaleTimeString();
     const icon = getCategoryIcon(entry.category);
@@ -142,6 +153,14 @@ export class DebugUIService implements IUIService {
       const details = document.createElement("pre");
       details.className = "log-entry-prompt";
       details.textContent = fullPromptOrResponse;
+      wrap.appendChild(details);
+    }
+
+    const llmContextArgs = this.getLlmContextArgs(entry);
+    if (llmContextArgs) {
+      const details = document.createElement("pre");
+      details.className = "log-entry-details";
+      details.textContent = llmContextArgs;
       wrap.appendChild(details);
     }
 
