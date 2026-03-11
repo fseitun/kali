@@ -14,8 +14,8 @@ const NARRATION_EXAMPLES: Record<string, { good: string[]; bad: string[] }> = {
   "es-AR": {
     good: [
       "Estás en la 15, Sara en la 20. Te toca.",
-      "Alicia se movió a la 8 y subió una escalera hasta la 14. ¡Turno de Roberto!",
-      "Roberto está en la 25, Alicia en la 30. ¡Tu turno, Roberto!",
+      "Alicia se movió a la 8 y subió una escalera hasta la 14.",
+      "Avanzaste cuatro casilleros.",
     ],
     bad: [
       "game.name is Kalimba, game.turn is p1...",
@@ -25,8 +25,8 @@ const NARRATION_EXAMPLES: Record<string, { good: string[]; bad: string[] }> = {
   "en-US": {
     good: [
       "You're at 15, Sarah at 20. Your turn.",
-      "Alice moved to 8 and climbed a ladder to 14! Bob's turn.",
-      "Bob's at 25, Alice at 30. Your turn, Bob!",
+      "Alice moved to 8 and climbed a ladder to 14.",
+      "You moved four spaces.",
     ],
     bad: [
       "game.name is Kalimba, game.turn is p1...",

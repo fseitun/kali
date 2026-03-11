@@ -21,7 +21,8 @@ export const esAR = {
   game: {
     proactiveStart: "Empezamos. Te explico la situación.",
     turnAnnouncement:
-      "{name}, te toca. Estás en el casillero {position}. Decime qué sacaste o dónde caíste.",
+      "{name}, te toca. Estás en el casillero {position}. Tira el dado y decime qué sacaste.",
+    turnHandoff: "Ahora le toca a {name}.",
     turnAnnouncementWithDecision: "{name}, te toca. Estás en el casillero {position}. {prompt}",
     skipTurnAnnouncement: "{name}, saltás este turno.",
     readyToPlay: "¡Listos para jugar!",

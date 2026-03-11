@@ -21,7 +21,8 @@ export const enUS = {
   game: {
     proactiveStart: "Start the game and explain the current situation.",
     turnAnnouncement:
-      "{name}, it's your turn. You're at position {position}. Tell me what you rolled, or where you landed.",
+      "{name}, it's your turn. You're at position {position}. Roll the dice and tell me what you got.",
+    turnHandoff: "Now it's {name}'s turn.",
     turnAnnouncementWithDecision: "{name}, it's your turn. You're at position {position}. {prompt}",
     skipTurnAnnouncement: "{name}, you're skipping this turn.",
     readyToPlay: "Ready to play!",
