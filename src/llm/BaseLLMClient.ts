@@ -77,18 +77,21 @@ export abstract class BaseLLMClient implements LLMClient {
       Logger.warn("LLM returned empty actions on first attempt");
       return [];
     } catch (error) {
-      // One retry with error feedback
+      const isTransient = this.isTransientError(error);
       Logger.error("LLM attempt 1 failed:", error);
-      Logger.info("Retrying with error feedback...");
+      Logger.info(
+        isTransient ? "Retrying (transient error)..." : "Retrying with error feedback...",
+      );
 
-      if (this.isTransientError(error)) {
+      if (isTransient) {
         this.onRetry?.(1, 2);
         await this.delay(CONFIG.LLM.RETRY_DELAY_MS);
       }
 
       try {
-        const errorMessage = error instanceof Error ? error.message : String(error);
-        const retryTranscript = `[RETRY: Previous response failed - ${errorMessage}] Original command: "${transcript}"`;
+        const retryTranscript = isTransient
+          ? transcript
+          : `[RETRY: Previous response failed - ${error instanceof Error ? error.message : String(error)}] Original command: "${transcript}"`;
 
         const actions = await this.attemptLLMCall(retryTranscript, state);
 
