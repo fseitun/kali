@@ -36,6 +36,9 @@ A voice-first game moderator for kids to play board games independently. Uses sp
    # Or use Ollama (local, free; use llama3.2:1b for low resource usage)
    VITE_LLM_PROVIDER=ollama
    VITE_OLLAMA_MODEL=llama3.2:1b
+
+   # Optional: show export-logs button in production UI
+   VITE_SHOW_EXPORT_BUTTON=true
    ```
 
    When using Ollama, run `ollama run llama3.2:1b` in another terminal before starting the app.

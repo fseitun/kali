@@ -68,7 +68,7 @@ export const CONFIG = {
   },
 
   UI: {
-    MAX_TRANSCRIPTION_ENTRIES: 10,
+    SHOW_EXPORT_BUTTON: import.meta.env.VITE_SHOW_EXPORT_BUTTON === "true",
   },
 
   TTS: {
