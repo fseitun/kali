@@ -88,6 +88,8 @@ export interface ExecutionContext {
   skipDecisionPointEnforcement?: boolean;
   /** Set when power check fails and turn was advanced; app should announce next player. */
   turnAdvancedForRevenge?: { playerId: string; name: string; position: number };
+  /** Set when power check/revenge was handled; skip trailing NARRATE from LLM (orchestrator speaks pass/fail). */
+  skipTrailingNarrateForPowerCheck?: boolean;
 }
 
 export type ActionHandler = (action: PrimitiveAction, context: ExecutionContext) => Promise<void>;

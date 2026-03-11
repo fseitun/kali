@@ -425,13 +425,16 @@ export class Orchestrator {
 
         if (skipTrailingNarrate && action.action === "NARRATE") {
           Logger.info(
-            "Skipping movement NARRATE: square effect already narrated; avoids confusing player after riddle",
+            "Skipping NARRATE: square effect or power check already narrated by orchestrator",
           );
           continue;
         }
 
         skipTrailingNarrate = false;
         await this.executeAction(action, context);
+        if (action.action === "PLAYER_ANSWERED" && context.skipTrailingNarrateForPowerCheck) {
+          skipTrailingNarrate = true;
+        }
       } catch (error) {
         Logger.error("Failed to execute action:", action, error);
       }
@@ -466,13 +469,22 @@ export class Orchestrator {
 
   /**
    * If PLAYER_ANSWERED is a power-check roll, handles it.
-   * Returns false if not handled. Returns true if handled (win or revenge phase set).
-   * Returns { turnAdvanced } when power check failed and turn was advanced to next player.
+   * Returns false if not handled.
+   * Returns { handled: true, passed: true } on win.
+   * Returns { handled: true, passed: false, turnAdvanced? } on fail.
    */
   private async tryHandlePowerCheckAnswer(
     answer: string,
     context: ExecutionContext,
-  ): Promise<boolean | { turnAdvanced: { playerId: string; name: string; position: number } }> {
+  ): Promise<
+    | false
+    | { handled: true; passed: true }
+    | {
+        handled: true;
+        passed: false;
+        turnAdvanced?: { playerId: string; name: string; position: number };
+      }
+  > {
     const state = this.stateManager.getState();
     const game = state.game as Record<string, unknown> | undefined;
     const currentTurn = game?.turn as string | undefined;
@@ -528,21 +540,20 @@ export class Orchestrator {
         context,
       );
       this.checkAndApplyWinCondition(`players.${playerId}.position`);
-    } else {
-      if (pending.phase === "powerCheck") {
-        this.stateManager.set("game.pendingAnimalEncounter", {
-          ...pending,
-          phase: "revenge",
-        });
-        Logger.info(`Power check LOSE: phase→revenge, advancing turn to next player`);
-        const turnAdvanced = this.advanceTurnForPowerCheckLose();
-        if (turnAdvanced) {
-          return { turnAdvanced };
-        }
-      }
+      return { handled: true, passed: true };
     }
 
-    return true;
+    if (pending.phase === "powerCheck") {
+      this.stateManager.set("game.pendingAnimalEncounter", {
+        ...pending,
+        phase: "revenge",
+      });
+      Logger.info(`Power check LOSE: phase→revenge, advancing turn to next player`);
+      const turnAdvanced = this.advanceTurnForPowerCheckLose();
+      return { handled: true, passed: false, turnAdvanced: turnAdvanced ?? undefined };
+    }
+
+    return { handled: true, passed: false };
   }
 
   /**
@@ -818,9 +829,13 @@ export class Orchestrator {
         // Power check / revenge: orchestrator handles roll evaluation
         const powerCheckResult = await this.tryHandlePowerCheckAnswer(primitive.answer, context);
         if (powerCheckResult) {
-          if (typeof powerCheckResult === "object" && powerCheckResult.turnAdvanced) {
+          if ("turnAdvanced" in powerCheckResult && powerCheckResult.turnAdvanced) {
             context.turnAdvancedForRevenge = powerCheckResult.turnAdvanced;
           }
+          context.skipTrailingNarrateForPowerCheck = true;
+          const msg = powerCheckResult.passed ? t("game.powerCheckPass") : t("game.powerCheckFail");
+          this.statusIndicator.setState("speaking");
+          await this.speechService.speak(msg);
           break;
         }
 

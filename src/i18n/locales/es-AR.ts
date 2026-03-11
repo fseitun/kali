@@ -29,6 +29,8 @@ export const esAR = {
     moved: "{name} avanzó al casillero {position}.",
     winner: "¡{name} ganó! ¡Felicitaciones!",
     position: "Estás en el casillero {position}.",
+    powerCheckPass: "Pasaste.",
+    powerCheckFail: "No alcanzó.",
   },
   ui: {
     startButton: "Jugar",

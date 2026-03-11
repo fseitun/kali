@@ -77,9 +77,10 @@ describe("formatStateContext", () => {
     expect(result).toContain("POWER CHECK (fico)");
     expect(result).toContain("powerCheck");
     expect(result).toContain("PLAYER_ANSWERED");
-    expect(result).toContain("Orchestrator evaluates win/lose");
-    expect(result).toContain("¿alcanza?");
-    expect(result).toContain("is that enough");
+    expect(result).toContain("Do NOT NARRATE the roll");
+    expect(result).toContain("Orchestrator announces pass/fail");
+    expect(result).not.toContain("Sumás");
+    expect(result).not.toContain("confirm the roll");
   });
 
   it("shows REVENGE hint with anti-pattern when pendingAnimalEncounter phase=revenge", () => {
@@ -105,6 +106,7 @@ describe("formatStateContext", () => {
     expect(result).toContain("REVENGE (Alice)");
     expect(result).toContain("phase=revenge");
     expect(result).toContain("roll >= 4");
-    expect(result).toContain("is that enough");
+    expect(result).toContain("Do NOT NARRATE the roll");
+    expect(result).toContain("Orchestrator announces pass/fail");
   });
 });

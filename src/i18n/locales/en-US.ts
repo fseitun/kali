@@ -29,6 +29,8 @@ export const enUS = {
     moved: "{name} moved to {position}.",
     winner: "{name} won! Congratulations!",
     position: "You're at position {position}.",
+    powerCheckPass: "You passed.",
+    powerCheckFail: "No luck.",
   },
   ui: {
     startButton: "Start",
