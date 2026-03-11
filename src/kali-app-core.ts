@@ -18,6 +18,7 @@ import { StateManager } from "./state-manager";
 import { checkBrowserSupport } from "./utils/browser-support";
 import { validateConfig } from "./utils/config-validator";
 import { Logger } from "./utils/logger";
+import { acquireScreenWakeLock, releaseWakeLock } from "./utils/wake-lock";
 import type { WakeWordDetector } from "./wake-word";
 
 export class KaliAppCore {
@@ -183,6 +184,7 @@ ${examples.map((ex: string, i: number) => `${i + 1}. ${ex}`).join("\n")}`;
     });
 
     await this.wakeWordDetector.startListening();
+    await acquireScreenWakeLock();
     indicator.setState("listening");
   }
 
@@ -415,6 +417,7 @@ ${examples.map((ex: string, i: number) => `${i + 1}. ${ex}`).join("\n")}`;
   }
 
   async dispose(): Promise<void> {
+    await releaseWakeLock();
     if (this.wakeWordDetector) {
       await this.wakeWordDetector.destroy();
       this.wakeWordDetector = null;
