@@ -396,21 +396,15 @@ describe("Orchestrator Integration Tests", () => {
           lastRoll: 0,
         },
         players: {
-          p1: { id: "p1", name: "Alice", position: 0, pathChoice: null },
+          p1: { id: "p1", name: "Alice", position: 0, activeChoices: {} },
           p2: { id: "p2", name: "Bob", position: 0 },
         },
         board: {
           winPosition: 100,
           moves: {},
-          squares: {},
+          squares: { "0": { type: "empty", next: [1, 15] } },
         },
-        decisionPoints: [
-          {
-            position: 0,
-            requiredField: "pathChoice",
-            prompt: "Choose path A or B?",
-          },
-        ],
+        decisionPoints: [{ position: 0, prompt: "Choose path A or B?" }],
       };
 
       setupGame(initialState);
@@ -425,7 +419,7 @@ describe("Orchestrator Integration Tests", () => {
       const responses: PrimitiveAction[][] = [
         [
           { action: "PLAYER_ANSWERED", answer: "A" },
-          { action: "SET_STATE", path: "players.p1.pathChoice", value: "A" },
+          { action: "SET_STATE", path: "players.p1.activeChoices.0", value: 1 },
           { action: "NARRATE", text: "You chose path A!" },
         ],
         [
@@ -446,21 +440,15 @@ describe("Orchestrator Integration Tests", () => {
           lastRoll: 0,
         },
         players: {
-          p1: { id: "p1", name: "Alice", position: 0, pathChoice: null },
+          p1: { id: "p1", name: "Alice", position: 0, activeChoices: {} },
           p2: { id: "p2", name: "Bob", position: 0 },
         },
         board: {
           winPosition: 100,
           moves: {},
-          squares: {},
+          squares: { "0": { type: "empty", next: [1, 15] } },
         },
-        decisionPoints: [
-          {
-            position: 0,
-            requiredField: "pathChoice",
-            prompt: "Choose path A or B?",
-          },
-        ],
+        decisionPoints: [{ position: 0, prompt: "Choose path A or B?" }],
       };
 
       setupGame(initialState);
@@ -469,13 +457,13 @@ describe("Orchestrator Integration Tests", () => {
       await orchestrator.handleTranscript("I rolled a 3");
 
       const p1Position = stateManager.get("players.p1.position");
-      const pathChoice = stateManager.get("players.p1.pathChoice");
+      const activeChoices = stateManager.get("players.p1.activeChoices") as Record<string, number>;
 
-      expect(pathChoice).toBe("A");
+      expect(activeChoices?.["0"]).toBe(1);
       expect(p1Position).toBe(3);
     });
 
-    it("uses Path B (pathBSquares) when pathChoice is B and rolling from 0", async () => {
+    it("uses Path B (activeChoices) when choice 15 and rolling from 0", async () => {
       const responses: PrimitiveAction[][] = [
         [
           { action: "PLAYER_ROLLED", value: 4 },
@@ -485,10 +473,16 @@ describe("Orchestrator Integration Tests", () => {
 
       mockLLM = createScriptedLLM(responses);
 
-      const pathASquares = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14];
-      const pathBSquares = [
-        15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35,
-      ];
+      const squares: Record<string, { type: string; next?: number[]; prev?: number[] }> = {};
+      for (let i = 0; i <= 196; i++) {
+        squares[String(i)] = {
+          type: "empty",
+          next: i < 196 ? [i + 1] : [],
+          prev: i > 0 ? [i - 1] : [],
+        };
+      }
+      squares["0"] = { type: "empty", next: [1, 15], prev: [] };
+
       const initialState: GameState = {
         game: {
           name: "Kalimba",
@@ -499,15 +493,13 @@ describe("Orchestrator Integration Tests", () => {
           lastRoll: 0,
         },
         players: {
-          p1: { id: "p1", name: "Alice", position: 3, pathChoice: "A" },
-          p2: { id: "p2", name: "Pedro", position: 0, pathChoice: "B" },
+          p1: { id: "p1", name: "Alice", position: 3, activeChoices: { 0: 1 } },
+          p2: { id: "p2", name: "Pedro", position: 0, activeChoices: { 0: 15 } },
         },
         board: {
           winPosition: 196,
-          moves: { "14": 36, "35": 36 },
-          squares: {},
-          pathASquares,
-          pathBSquares,
+          moves: {},
+          squares,
         },
         decisionPoints: [],
       };
@@ -517,7 +509,7 @@ describe("Orchestrator Integration Tests", () => {
       await orchestrator.handleTranscript("4");
 
       const p2Position = stateManager.get("players.p2.position");
-      expect(p2Position).toBe(18); // pathBSquares[3] = 18 (4th square of Path B)
+      expect(p2Position).toBe(18); // 0→15→16→17→18 (4 steps)
     });
 
     it("rejects PLAYER_ANSWERED for path choice when current player has no pending decision", async () => {
@@ -532,11 +524,11 @@ describe("Orchestrator Integration Tests", () => {
           lastRoll: 0,
         },
         players: {
-          p1: { id: "p1", name: "Alice", position: 0, pathChoice: "A" },
-          p2: { id: "p2", name: "Bob", position: 0, pathChoice: null },
+          p1: { id: "p1", name: "Alice", position: 0, activeChoices: { 0: 1 } },
+          p2: { id: "p2", name: "Bob", position: 0, activeChoices: {} },
         },
         board: { winPosition: 100, moves: {}, squares: {} },
-        decisionPoints: [{ position: 0, requiredField: "pathChoice", prompt: "Choose A or B?" }],
+        decisionPoints: [{ position: 0, prompt: "Choose A or B?" }],
       };
 
       mockLLM = createScriptedLLM([]);
@@ -548,7 +540,9 @@ describe("Orchestrator Integration Tests", () => {
       ]);
 
       expect(result.success).toBe(false);
-      expect(stateManager.get("players.p2.pathChoice")).toBeNull();
+      expect(
+        (stateManager.get("players.p2.activeChoices") as Record<string, number>)?.["0"],
+      ).toBeUndefined();
     });
   });
 
@@ -580,7 +574,7 @@ describe("Orchestrator Integration Tests", () => {
           lastRoll: 0,
         },
         players: {
-          p1: { id: "p1", name: "Alice", position: 43, inverseMode: true },
+          p1: { id: "p1", name: "Alice", position: 43, inverseMode: false },
         },
         board: {
           winPosition: 196,

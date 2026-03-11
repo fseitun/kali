@@ -13,12 +13,19 @@
     {
       "description": "Intro; decision point triggers path choice (Path A)",
       "actions": [
-        { "action": "SET_STATE", "path": "players.p1.pathChoice", "value": "A" },
+        { "action": "PLAYER_ANSWERED", "answer": "A" },
         { "action": "NARRATE", "text": "Let's begin!" }
       ],
-      "expect": { "players.p1.pathChoice": "A" }
+      "expect": { "players.p1.activeChoices.0": 1 }
     },
     { "roll": 1 },
+    {
+      "description": "p2 chooses path",
+      "actions": [
+        { "action": "PLAYER_ANSWERED", "answer": "A" },
+        { "action": "NARRATE", "text": "Path A" }
+      ]
+    },
     {
       "description": "p2 lands on Halcón (+3 points)",
       "roll": 2,

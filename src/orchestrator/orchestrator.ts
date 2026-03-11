@@ -8,6 +8,7 @@ import { deepClone } from "../utils/deep-clone";
 import { Logger } from "../utils/logger";
 import { Profiler } from "../utils/profiler";
 import { BoardEffectsHandler } from "./board-effects-handler";
+import { computeNewPositionFromState } from "./board-traversal";
 import { DecisionPointEnforcer } from "./decision-point-enforcer";
 import { TurnManager } from "./turn-manager";
 import {
@@ -339,45 +340,40 @@ export class Orchestrator {
       return { success: false, shouldAdvanceTurn: false };
     }
 
-    const game = state.game as Record<string, unknown> | undefined;
-    const currentPlayer = game?.turn
-      ? (state.players as Record<string, Record<string, unknown>>)?.[game.turn as string]
-      : undefined;
-    const isPathChoiceAtStart =
-      currentPlayer?.position === 0 &&
-      (currentPlayer?.pathChoice === null || currentPlayer?.pathChoice === undefined) &&
+    const hasPendingDecisions = this.turnManager.hasPendingDecisions();
+    const isForkAnswerAtStart =
+      hasPendingDecisions &&
       actions.some((a) => a.action === "PLAYER_ANSWERED") &&
       !actions.some((a) => a.action === "PLAYER_ROLLED");
 
     const setStateActions = actions.filter((a) => a.action === "SET_STATE");
-    const allSetStateTargetPathChoice =
+    const activeChoicesPath = /^players\.\w+\.activeChoices\.\d+$/;
+    const allSetStateTargetForkChoice =
       setStateActions.length === 0 ||
       setStateActions.every(
         (a) =>
           typeof (a as { path?: string }).path === "string" &&
-          /^players\.\w+\.pathChoice$/.test((a as { path: string }).path),
+          activeChoicesPath.test((a as { path: string }).path),
       );
-    const onlyResolvedPathChoiceAtStart =
-      currentPlayer?.position === 0 &&
-      (currentPlayer?.pathChoice === null || currentPlayer?.pathChoice === undefined) &&
+    const onlyResolvedForkChoice =
+      hasPendingDecisions &&
       !actions.some((a) => a.action === "PLAYER_ROLLED") &&
       (actions.some((a) => a.action === "PLAYER_ANSWERED") ||
-        actions.some(
+        setStateActions.some(
           (a) =>
-            a.action === "SET_STATE" &&
             typeof (a as { path?: string }).path === "string" &&
-            /^players\.\w+\.pathChoice$/.test((a as { path: string }).path),
+            activeChoicesPath.test((a as { path: string }).path),
         )) &&
-      allSetStateTargetPathChoice;
+      allSetStateTargetForkChoice;
 
     const rawShouldAdvanceTurn = actions.some(
       (a) =>
         a.action === "PLAYER_ROLLED" ||
         a.action === "SET_STATE" ||
         a.action === "RESET_GAME" ||
-        (a.action === "PLAYER_ANSWERED" && !isPathChoiceAtStart),
+        (a.action === "PLAYER_ANSWERED" && !isForkAnswerAtStart),
     );
-    const shouldAdvanceTurn = rawShouldAdvanceTurn && !onlyResolvedPathChoiceAtStart;
+    const shouldAdvanceTurn = rawShouldAdvanceTurn && !onlyResolvedForkChoice;
 
     Logger.info("Actions validated, executing...");
     Profiler.start(`${profilerPrefix}.execution.${context.depth}`);
@@ -625,20 +621,19 @@ export class Orchestrator {
   }
 
   /**
-   * If current player has a pending decision point, returns the path and normalized value
-   * to apply the answer. Used to auto-set pathChoice etc. from PLAYER_ANSWERED.
-   * For branch decisions with positionOptions, also returns positionUpdate.
+   * If current player has a pending decision point, returns the path and value
+   * to apply the answer. Writes to activeChoices[position] = targetPosition.
+   * No position teleport; movement happens on roll.
    */
   private getDecisionPointApplyState(
     answer: string,
-  ): { path: string; value: string; positionUpdate?: number } | null {
+  ): { path: string; value: string | number } | null {
     const state = this.stateManager.getState();
     const game = state.game as Record<string, unknown> | undefined;
     const currentTurn = game?.turn as string | undefined;
     const decisionPoints = state.decisionPoints as
       | Array<{
           position: number;
-          requiredField: string;
           prompt: string;
           positionOptions?: Record<string, number>;
         }>
@@ -656,34 +651,29 @@ export class Orchestrator {
     const decisionPoint = decisionPoints.find((dp) => dp.position === position);
     if (!decisionPoint) return null;
 
-    const fieldValue = currentPlayer[decisionPoint.requiredField];
-    if (fieldValue !== null && fieldValue !== undefined) return null; // Already set
+    const choices = currentPlayer.activeChoices as Record<string, number> | undefined;
+    if (choices?.[String(position)] !== undefined) return null; // Already set
 
-    const path = `players.${currentTurn}.${decisionPoint.requiredField}`;
+    const path = `players.${currentTurn}.activeChoices.${position}`;
 
-    // Normalize pathChoice: "a", "A", "el A", "path a" -> "A"; "b"/"B" -> "B"
-    if (decisionPoint.requiredField === "pathChoice") {
+    // Position 0: "A" -> 1, "B" -> 15 (fall through to positionOptions if no match)
+    if (position === 0) {
       const first = answer.trim().charAt(0).toUpperCase();
-      const value = first === "A" || first === "B" ? first : answer.trim();
-      return { path, value };
+      if (first === "A") return { path, value: 1 };
+      if (first === "B") return { path, value: 15 };
     }
 
-    // Branch choice with positionOptions: match answer to a target position
+    // Branch choice with positionOptions: match answer to target position
     const options = decisionPoint.positionOptions;
     if (options) {
       const trimmed = answer.trim();
-      // Exact match or extract number from answer (e.g. "al 97" -> "97")
       const numMatch = trimmed.match(/\d+/);
       for (const [key, targetPos] of Object.entries(options)) {
-        if (trimmed === key || numMatch?.[0] === key) {
-          return { path, value: key, positionUpdate: targetPos };
-        }
+        if (trimmed === key || numMatch?.[0] === key) return { path, value: targetPos };
       }
-      // Fallback: use raw trimmed as value, no position update
-      return { path, value: trimmed };
     }
 
-    return { path, value: answer.trim() };
+    return null;
   }
 
   /**
@@ -716,36 +706,11 @@ export class Orchestrator {
   }
 
   /**
-   * Computes the new position after a dice roll.
-   * When at 0 with pathChoice A/B, uses pathASquares/pathBSquares to route correctly.
-   * Otherwise uses linear addition.
+   * Computes the new position after a dice roll using graph traversal.
    */
   private computeNewPosition(playerId: string, currentPosition: number, roll: number): number {
-    if (currentPosition !== 0) {
-      return currentPosition + roll;
-    }
-
     const state = this.stateManager.getState();
-    const board = state.board as
-      | {
-          pathASquares?: number[];
-          pathBSquares?: number[];
-        }
-      | undefined;
-    const player = (state.players as Record<string, Record<string, unknown>>)?.[playerId];
-    const pathChoice = player?.pathChoice as string | undefined;
-
-    if (pathChoice === "A" && Array.isArray(board?.pathASquares) && board.pathASquares.length > 0) {
-      const idx = Math.min(roll - 1, board.pathASquares.length - 1);
-      return board.pathASquares[idx];
-    }
-
-    if (pathChoice === "B" && Array.isArray(board?.pathBSquares) && board.pathBSquares.length > 0) {
-      const idx = Math.min(roll - 1, board.pathBSquares.length - 1);
-      return board.pathBSquares[idx];
-    }
-
-    return currentPosition + roll;
+    return computeNewPositionFromState(state, playerId, currentPosition, roll);
   }
 
   private async executeAction(
@@ -845,27 +810,15 @@ export class Orchestrator {
           break;
         }
 
-        // Auto-apply answer to current player's decision point if they have one pending.
+        // Auto-apply answer to current player's decision point (activeChoices[position] = target).
         const applyState = this.getDecisionPointApplyState(primitive.answer);
         if (applyState) {
           Logger.write(
             `Auto-applying PLAYER_ANSWERED to decision point: ${applyState.path} = ${JSON.stringify(applyState.value)}`,
           );
           this.stateManager.set(applyState.path, applyState.value);
-          if (typeof applyState.positionUpdate === "number") {
-            const playerId = applyState.path.match(/^players\.([^.]+)\./)?.[1];
-            const turn = (this.stateManager.getState().game as Record<string, unknown>)?.turn as
-              | string
-              | undefined;
-            const positionPath = `players.${playerId ?? turn ?? "p1"}.position`;
-            this.stateManager.set(positionPath, applyState.positionUpdate);
-            await this.boardEffectsHandler.checkAndApplyBoardMoves(positionPath);
-            await this.boardEffectsHandler.checkAndApplySquareEffects(positionPath, context);
-            this.checkAndApplyWinCondition(positionPath);
-          } else {
-            await this.boardEffectsHandler.checkAndApplyBoardMoves(applyState.path);
-            await this.boardEffectsHandler.checkAndApplySquareEffects(applyState.path, context);
-          }
+          await this.boardEffectsHandler.checkAndApplyBoardMoves(applyState.path);
+          await this.boardEffectsHandler.checkAndApplySquareEffects(applyState.path, context);
         }
         break;
       }

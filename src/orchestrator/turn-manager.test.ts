@@ -42,9 +42,7 @@ describe("TurnManager", () => {
     });
 
     it("should return false when player not at decision point position", () => {
-      stateManager.set("decisionPoints", [
-        { position: 10, requiredField: "pathChoice", prompt: "Choose path" },
-      ]);
+      stateManager.set("decisionPoints", [{ position: 10, prompt: "Choose path" }]);
       stateManager.set("players.p1.position", 5);
 
       const result = turnManager.hasPendingDecisions();
@@ -52,33 +50,26 @@ describe("TurnManager", () => {
     });
 
     it("should return true when player at decision point with null field", () => {
-      stateManager.set("decisionPoints", [
-        { position: 5, requiredField: "pathChoice", prompt: "Choose path" },
-      ]);
+      stateManager.set("decisionPoints", [{ position: 5, prompt: "Choose path" }]);
       stateManager.set("players.p1.position", 5);
-      stateManager.set("players.p1.pathChoice", null);
+      stateManager.set("players.p1.activeChoices", {});
 
       const result = turnManager.hasPendingDecisions();
       expect(result).toBe(true);
     });
 
     it("should return true when player at decision point with undefined field", () => {
-      stateManager.set("decisionPoints", [
-        { position: 5, requiredField: "pathChoice", prompt: "Choose path" },
-      ]);
+      stateManager.set("decisionPoints", [{ position: 5, prompt: "Choose path" }]);
       stateManager.set("players.p1.position", 5);
-      // Field is undefined (not set)
 
       const result = turnManager.hasPendingDecisions();
       expect(result).toBe(true);
     });
 
     it("should return false when decision point field is filled", () => {
-      stateManager.set("decisionPoints", [
-        { position: 5, requiredField: "pathChoice", prompt: "Choose path" },
-      ]);
+      stateManager.set("decisionPoints", [{ position: 5, prompt: "Choose path" }]);
       stateManager.set("players.p1.position", 5);
-      stateManager.set("players.p1.pathChoice", "A");
+      stateManager.set("players.p1.activeChoices", { 5: 6 });
 
       const result = turnManager.hasPendingDecisions();
       expect(result).toBe(false);
@@ -86,9 +77,7 @@ describe("TurnManager", () => {
 
     it("should return false when no current turn set", () => {
       stateManager.set("game.turn", null);
-      stateManager.set("decisionPoints", [
-        { position: 5, requiredField: "pathChoice", prompt: "Choose path" },
-      ]);
+      stateManager.set("decisionPoints", [{ position: 5, prompt: "Choose path" }]);
 
       const result = turnManager.hasPendingDecisions();
       expect(result).toBe(false);
@@ -184,11 +173,9 @@ describe("TurnManager", () => {
     });
 
     it("should block when current player has pending decisions", async () => {
-      stateManager.set("decisionPoints", [
-        { position: 0, requiredField: "pathChoice", prompt: "Choose path" },
-      ]);
+      stateManager.set("decisionPoints", [{ position: 0, prompt: "Choose path" }]);
       stateManager.set("players.p1.position", 0);
-      stateManager.set("players.p1.pathChoice", null);
+      stateManager.set("players.p1.activeChoices", {});
 
       const result = await turnManager.advanceTurn(false);
 
@@ -198,11 +185,9 @@ describe("TurnManager", () => {
     });
 
     it("should allow advancement when decision is resolved", async () => {
-      stateManager.set("decisionPoints", [
-        { position: 0, requiredField: "pathChoice", prompt: "Choose path" },
-      ]);
+      stateManager.set("decisionPoints", [{ position: 0, prompt: "Choose path" }]);
       stateManager.set("players.p1.position", 0);
-      stateManager.set("players.p1.pathChoice", "A"); // Decision filled
+      stateManager.set("players.p1.activeChoices", { 0: 1 }); // Decision filled
 
       const result = await turnManager.advanceTurn(false);
 

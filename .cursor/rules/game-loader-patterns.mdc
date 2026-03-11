@@ -56,7 +56,6 @@ Each game lives in `public/games/[game-name]/config.json`:
   "decisionPoints": [
     {
       "position": 0,
-      "requiredField": "pathChoice",
       "prompt": "Choose path A or B?"
     }
   ]

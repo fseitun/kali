@@ -235,14 +235,8 @@ describe("Orchestrator Authority - LLM Adversarial Tests", () => {
     });
 
     it("LLM cannot bypass decision points", async () => {
-      testState.decisionPoints = [
-        {
-          position: 10,
-          requiredField: "pathChoice",
-          prompt: "Choose A or B",
-        },
-      ];
-      (testState.players as any).p1.pathChoice = null;
+      testState.decisionPoints = [{ position: 10, prompt: "Choose A or B" }];
+      (testState.players as any).p1.activeChoices = {};
 
       mockLLM.getActions = vi.fn(async () => [
         { action: "SET_STATE", path: "players.p1.position", value: 15 },
@@ -276,24 +270,19 @@ describe("Orchestrator Authority - LLM Adversarial Tests", () => {
 
   describe("State Consistency - Validation Matches Execution", () => {
     it("validates sequential state changes correctly", async () => {
-      testState.decisionPoints = [
-        {
-          position: 10,
-          requiredField: "pathChoice",
-          prompt: "Choose A or B",
-        },
-      ];
-      (testState.players as any).p1.pathChoice = null;
+      testState.decisionPoints = [{ position: 10, prompt: "Choose A or B" }];
+      (testState.players as any).p1.activeChoices = {};
+      (testState.players as any).p1.position = 10;
 
       const actions: PrimitiveAction[] = [
-        { action: "SET_STATE", path: "players.p1.pathChoice", value: "A" },
+        { action: "SET_STATE", path: "players.p1.activeChoices", value: { 10: 11 } },
         { action: "PLAYER_ROLLED", value: 5 },
       ];
 
       const { success } = await orchestrator.testExecuteActions(actions);
 
       expect(success).toBe(true);
-      expect(mockStateManager.set).toHaveBeenCalledWith("players.p1.pathChoice", "A");
+      expect(mockStateManager.set).toHaveBeenCalledWith("players.p1.activeChoices", { 10: 11 });
       expect(mockStateManager.set).toHaveBeenCalledWith("players.p1.position", 15);
     });
 
@@ -403,14 +392,8 @@ describe("Orchestrator Authority - LLM Adversarial Tests", () => {
     });
 
     it("does not check decision points for turn advancement", async () => {
-      testState.decisionPoints = [
-        {
-          position: 10,
-          requiredField: "pathChoice",
-          prompt: "Choose A or B",
-        },
-      ];
-      (testState.players as any).p1.pathChoice = null;
+      testState.decisionPoints = [{ position: 10, prompt: "Choose A or B" }];
+      (testState.players as any).p1.activeChoices = {};
 
       const actions: PrimitiveAction[] = [{ action: "NARRATE", text: "Done" }];
 
@@ -581,14 +564,8 @@ describe("Orchestrator Authority - LLM Adversarial Tests", () => {
     });
 
     it("orchestrator validates before and enforces during execution", async () => {
-      testState.decisionPoints = [
-        {
-          position: 10,
-          requiredField: "pathChoice",
-          prompt: "Choose A or B",
-        },
-      ];
-      (testState.players as any).p1.pathChoice = null;
+      testState.decisionPoints = [{ position: 10, prompt: "Choose A or B" }];
+      (testState.players as any).p1.activeChoices = {};
 
       const actions: PrimitiveAction[] = [
         { action: "SET_STATE", path: "players.p1.position", value: 20 },
@@ -601,14 +578,8 @@ describe("Orchestrator Authority - LLM Adversarial Tests", () => {
 
     it("does not double-inject decision point when LLM returns NARRATE from nested flow", async () => {
       (testState.players as any).p1.position = 0;
-      (testState.players as any).p1.pathChoice = null;
-      testState.decisionPoints = [
-        {
-          position: 0,
-          requiredField: "pathChoice",
-          prompt: "¿Querés ir por el A o el B?",
-        },
-      ];
+      (testState.players as any).p1.activeChoices = {};
+      testState.decisionPoints = [{ position: 0, prompt: "¿Querés ir por el A o el B?" }];
 
       const getActionsCalls: string[] = [];
       mockLLM.getActions = vi.fn(async (transcript: string) => {

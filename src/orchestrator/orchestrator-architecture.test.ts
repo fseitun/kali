@@ -234,16 +234,8 @@ describe("Orchestrator Architecture - Authority Model", () => {
 
     it("advanceTurn() blocks when pending decisions exist", async () => {
       // Setup decision point
-      stateManager.set("decisionPoints", [
-        {
-          position: 0,
-          requiredField: "pathChoice",
-          prompt: "Choose A or B",
-        },
-      ]);
-
-      // Current player (p1) is at position 0 and needs to make a choice
-      stateManager.set("players.p1.pathChoice", null);
+      stateManager.set("decisionPoints", [{ position: 0, prompt: "Choose A or B" }]);
+      stateManager.set("players.p1.activeChoices", {});
 
       const nextPlayer = await orchestrator.advanceTurn();
 
@@ -257,16 +249,8 @@ describe("Orchestrator Architecture - Authority Model", () => {
 
     it("advanceTurn() allows advancement when decision is resolved", async () => {
       // Setup decision point
-      stateManager.set("decisionPoints", [
-        {
-          position: 0,
-          requiredField: "pathChoice",
-          prompt: "Choose A or B",
-        },
-      ]);
-
-      // Current player has made their choice
-      stateManager.set("players.p1.pathChoice", "A");
+      stateManager.set("decisionPoints", [{ position: 0, prompt: "Choose A or B" }]);
+      stateManager.set("players.p1.activeChoices", { 0: 1 });
 
       const nextPlayer = await orchestrator.advanceTurn();
 
@@ -292,15 +276,7 @@ describe("Orchestrator Architecture - Authority Model", () => {
     });
 
     it("hasPendingDecisions() returns false when player not at decision point", () => {
-      stateManager.set("decisionPoints", [
-        {
-          position: 10,
-          requiredField: "pathChoice",
-          prompt: "Choose A or B",
-        },
-      ]);
-
-      // Player at position 0, not 10
+      stateManager.set("decisionPoints", [{ position: 10, prompt: "Choose A or B" }]);
       stateManager.set("players.p1.position", 0);
 
       const hasPending = orchestrator.hasPendingDecisions();
@@ -308,32 +284,18 @@ describe("Orchestrator Architecture - Authority Model", () => {
     });
 
     it("hasPendingDecisions() returns true when player at decision point with null choice", () => {
-      stateManager.set("decisionPoints", [
-        {
-          position: 0,
-          requiredField: "pathChoice",
-          prompt: "Choose A or B",
-        },
-      ]);
-
+      stateManager.set("decisionPoints", [{ position: 0, prompt: "Choose A or B" }]);
       stateManager.set("players.p1.position", 0);
-      stateManager.set("players.p1.pathChoice", null);
+      stateManager.set("players.p1.activeChoices", {});
 
       const hasPending = orchestrator.hasPendingDecisions();
       expect(hasPending).toBe(true);
     });
 
     it("hasPendingDecisions() returns false when decision is resolved", () => {
-      stateManager.set("decisionPoints", [
-        {
-          position: 0,
-          requiredField: "pathChoice",
-          prompt: "Choose A or B",
-        },
-      ]);
-
+      stateManager.set("decisionPoints", [{ position: 0, prompt: "Choose A or B" }]);
       stateManager.set("players.p1.position", 0);
-      stateManager.set("players.p1.pathChoice", "A");
+      stateManager.set("players.p1.activeChoices", { 0: 1 });
 
       const hasPending = orchestrator.hasPendingDecisions();
       expect(hasPending).toBe(false);

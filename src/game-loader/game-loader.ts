@@ -1,6 +1,37 @@
+import type { SquareData } from "../orchestrator/types";
 import type { ISpeechService } from "../services/speech-service";
 import { Logger } from "../utils/logger";
 import type { GameModule } from "./types";
+
+/**
+ * Fills in default next/prev for board squares. Only defines topology for indices
+ * 0..boardLength; explicit squares keep their data but get defaults for missing next/prev.
+ * Used for sparse config: define only forks, merges, jumps; hydration fills the rest.
+ */
+function hydrateBoardTopology(
+  squares: Record<string, SquareData>,
+  boardLength: number = 196,
+): Record<string, SquareData> {
+  const result: Record<string, SquareData> = {};
+
+  for (let i = 0; i <= boardLength; i++) {
+    const key = String(i);
+    const existing = squares[key];
+    if (!existing) {
+      result[key] = {
+        type: "empty",
+        next: i < boardLength ? [i + 1] : [],
+        prev: i > 0 ? [i - 1] : [],
+      };
+    } else {
+      const sq = { ...existing };
+      if (!sq.next && i < boardLength) sq.next = [i + 1];
+      if (!sq.prev && i > 0) sq.prev = [i - 1];
+      result[key] = sq;
+    }
+  }
+  return result;
+}
 
 /**
  * Handles loading game modules from JSON files and their associated resources.
@@ -28,6 +59,16 @@ export class GameLoader {
       const module = (await response.json()) as GameModule;
 
       this.validateGameModule(module);
+
+      if (module.initialState?.board?.squares) {
+        const board = module.initialState.board as Record<string, unknown>;
+        const boardLength = typeof board.winPosition === "number" ? board.winPosition : 196;
+        const hydrated = hydrateBoardTopology(
+          board.squares as Record<string, SquareData>,
+          boardLength,
+        );
+        board.squares = hydrated;
+      }
 
       Logger.info(`Game module loaded: ${module.metadata.name}`);
       return module;

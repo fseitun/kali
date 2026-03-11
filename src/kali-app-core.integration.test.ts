@@ -159,6 +159,7 @@ describe("KaliAppCore Integration - Runtime Flows", () => {
       await core.initialize();
 
       const result = await core.testExecuteActions([
+        { action: "PLAYER_ANSWERED", answer: "A" },
         { action: "PLAYER_ROLLED", value: 2 },
         { action: "NARRATE", text: "Moving 2 spaces" },
       ]);

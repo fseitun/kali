@@ -21,7 +21,7 @@ export const SPECIAL_SQUARE_KINDS = [
 export type SpecialSquareKind = (typeof SPECIAL_SQUARE_KINDS)[number];
 
 /**
- * Derives the square kind from config data. Supports legacy `type`+`effect` and new `kind` field.
+ * Derives the square kind from config data. Prefers `kind` if present; otherwise derives from type/effect/item.
  */
 export function getSquareKind(squareData: Record<string, unknown>): SpecialSquareKind | null {
   const kind = squareData.kind as SpecialSquareKind | undefined;

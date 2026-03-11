@@ -23,7 +23,7 @@ export interface Player {
   id: string;
   name: string;
   position: number;
-  [key: string]: unknown; // Allow game-specific fields (pathChoice, instruments, etc.)
+  [key: string]: unknown; // Allow game-specific fields (activeChoices, instruments, etc.)
 }
 
 /**
@@ -38,6 +38,7 @@ export interface BoardConfig {
 
 /**
  * Square data for board squares.
+ * Graph topology: next/prev define edges; nextOnLanding/prevOnLanding apply only when the square is the final step of a roll.
  */
 export interface SquareData {
   type: string;
@@ -51,16 +52,23 @@ export interface SquareData {
   instrument?: string;
   heart?: boolean;
   inverseMode?: string;
+  /** Graph edges: next[pos] = squares reachable in forward direction (e.g. [97, 99] at fork) */
+  next?: number[];
+  /** Graph edges: prev[pos] = squares reachable in inverse direction */
+  prev?: number[];
+  /** Jump applied only when this square is the final step of a roll (e.g. 93→97) */
+  nextOnLanding?: number[];
+  /** Inverse-mode counterpart of nextOnLanding */
+  prevOnLanding?: number[];
   [key: string]: unknown; // Allow game-specific fields
 }
 
 /**
  * Decision points for player choices.
- * When positionOptions is set, the answer maps to a position and triggers a move.
+ * When positionOptions is set, the answer maps to a target position.
  */
 export interface DecisionPoint {
   position: number;
-  requiredField: string;
   prompt: string;
   /** Maps answer to target position for branch choices (e.g. 96 → 97 or 99) */
   positionOptions?: Record<string, number>;

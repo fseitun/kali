@@ -6,33 +6,32 @@ describe("formatStateContext", () => {
     const state = {
       game: { turn: "p1", phase: "PLAYING" },
       players: {
-        p1: { id: "p1", name: "Alice", position: 0, pathChoice: "A" },
-        p2: { id: "p2", name: "Bob", position: 0, pathChoice: null },
+        p1: { id: "p1", name: "Alice", position: 0, activeChoices: { 0: 1 } },
+        p2: { id: "p2", name: "Bob", position: 0, activeChoices: {} },
       },
-      decisionPoints: [{ position: 0, requiredField: "pathChoice", prompt: "Choose A or B?" }],
+      decisionPoints: [{ position: 0, prompt: "Choose A or B?" }],
     } as Record<string, unknown>;
 
     const result = formatStateContext(state);
 
-    // p1 has pathChoice set, so no DECISION for anyone. p2 has pathChoice=null but it's p1's turn - we should NOT show p2's decision
+    // p1 has activeChoices set, so no DECISION for anyone. p2 has no choice but it's p1's turn
     expect(result).not.toContain("DECISION (Bob)");
-    expect(result).not.toContain("pathChoice=null");
   });
 
   it("shows DECISION for current turn player when they have pending path choice", () => {
     const state = {
       game: { turn: "p1", phase: "PLAYING" },
       players: {
-        p1: { id: "p1", name: "Alice", position: 0, pathChoice: null },
-        p2: { id: "p2", name: "Bob", position: 0, pathChoice: null },
+        p1: { id: "p1", name: "Alice", position: 0, activeChoices: {} },
+        p2: { id: "p2", name: "Bob", position: 0, activeChoices: {} },
       },
-      decisionPoints: [{ position: 0, requiredField: "pathChoice", prompt: "Choose A or B?" }],
+      decisionPoints: [{ position: 0, prompt: "Choose A or B?" }],
     } as Record<string, unknown>;
 
     const result = formatStateContext(state);
 
     expect(result).toContain("DECISION (Alice)");
-    expect(result).toContain("pathChoice=null");
+    expect(result).toContain("activeChoices");
     expect(result).toContain("[current]");
     expect(result).not.toContain("DECISION (Bob)");
   });
@@ -41,10 +40,10 @@ describe("formatStateContext", () => {
     const state = {
       game: { turn: "p2", phase: "PLAYING" },
       players: {
-        p1: { id: "p1", name: "Alice", position: 3, pathChoice: "A" },
-        p2: { id: "p2", name: "Bob", position: 0, pathChoice: null },
+        p1: { id: "p1", name: "Alice", position: 3, activeChoices: { 0: 1 } },
+        p2: { id: "p2", name: "Bob", position: 0, activeChoices: {} },
       },
-      decisionPoints: [{ position: 0, requiredField: "pathChoice", prompt: "Choose A or B?" }],
+      decisionPoints: [{ position: 0, prompt: "Choose A or B?" }],
     } as Record<string, unknown>;
 
     const result = formatStateContext(state);
@@ -67,8 +66,8 @@ describe("formatStateContext", () => {
         },
       },
       players: {
-        p1: { id: "p1", name: "fico", position: 21, pathChoice: "B" },
-        p2: { id: "p2", name: "pedro", position: 6, pathChoice: "A" },
+        p1: { id: "p1", name: "fico", position: 21, activeChoices: { 0: 15 } },
+        p2: { id: "p2", name: "pedro", position: 6, activeChoices: { 0: 1 } },
       },
     } as Record<string, unknown>;
 

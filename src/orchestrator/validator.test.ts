@@ -149,12 +149,17 @@ describe("Validator - New Primitives", () => {
 
     it("rejects path choice A/B when current player has no pending path choice", () => {
       (mockState.players as Record<string, Record<string, unknown>>).p1.position = 0;
-      (mockState.players as Record<string, Record<string, unknown>>).p1.pathChoice = "A";
+      ((mockState.players as Record<string, Record<string, unknown>>).p1.activeChoices as Record<
+        string,
+        number
+      >) = { 0: 1 };
       (mockState.players as Record<string, Record<string, unknown>>).p2.position = 0;
-      (mockState.players as Record<string, Record<string, unknown>>).p2.pathChoice = null;
-      mockState.decisionPoints = [
-        { position: 0, requiredField: "pathChoice", prompt: "Choose A or B?" },
-      ];
+      ((mockState.players as Record<string, Record<string, unknown>>).p2.activeChoices as Record<
+        string,
+        number
+      >) = {};
+      mockState.decisionPoints = [{ position: 0, prompt: "Choose A or B?" }];
+      (mockState.game as Record<string, unknown>).turn = "p1";
 
       const actions = [{ action: "PLAYER_ANSWERED", answer: "B" }];
       const result = validateActions(
@@ -169,10 +174,11 @@ describe("Validator - New Primitives", () => {
 
     it("allows path choice when current player has pending path choice at position 0", () => {
       (mockState.players as Record<string, Record<string, unknown>>).p1.position = 0;
-      (mockState.players as Record<string, Record<string, unknown>>).p1.pathChoice = null;
-      mockState.decisionPoints = [
-        { position: 0, requiredField: "pathChoice", prompt: "Choose A or B?" },
-      ];
+      ((mockState.players as Record<string, Record<string, unknown>>).p1.activeChoices as Record<
+        string,
+        number
+      >) = {};
+      mockState.decisionPoints = [{ position: 0, prompt: "Choose A or B?" }];
 
       const actions = [{ action: "PLAYER_ANSWERED", answer: "A" }];
       const result = validateActions(
@@ -373,11 +379,10 @@ describe("Validator - New Primitives", () => {
       mockState.decisionPoints = [
         {
           position: 5,
-          requiredField: "pathChoice",
           prompt: "Choose your path: A or B?",
         },
       ];
-      (mockState.players as Record<string, Record<string, unknown>>).p1.pathChoice = null;
+      (mockState.players as Record<string, Record<string, unknown>>).p1.activeChoices = {};
     });
 
     it("blocks position changes when decision pending", () => {
@@ -389,11 +394,14 @@ describe("Validator - New Primitives", () => {
       );
       expect(result.valid).toBe(false);
       expect(result.error).toContain("Cannot move from position 5");
-      expect(result.error).toContain("must choose 'pathChoice' first");
+      expect(result.error).toContain("direction at fork");
     });
 
     it("allows position changes after decision is made", () => {
-      (mockState.players as Record<string, Record<string, unknown>>).p1.pathChoice = "A";
+      ((mockState.players as Record<string, Record<string, unknown>>).p1.activeChoices as Record<
+        string,
+        number
+      >) = { 5: 6 };
       const actions = [{ action: "SET_STATE", path: "players.p1.position", value: 10 }];
       const result = validateActions(
         actions,
@@ -403,25 +411,9 @@ describe("Validator - New Primitives", () => {
       expect(result.valid).toBe(true);
     });
 
-    it("validates correct requiredField (field-specific)", () => {
-      (mockState.players as Record<string, Record<string, unknown>>).p1.pathChoice = "A";
-      (mockState.decisionPoints as unknown as Record<string, unknown>[])[0].requiredField =
-        "otherChoice";
-      (mockState.players as Record<string, Record<string, unknown>>).p1.otherChoice = null;
-
-      const actions = [{ action: "SET_STATE", path: "players.p1.position", value: 10 }];
-      const result = validateActions(
-        actions,
-        mockState,
-        mockStateManager as unknown as StateManager,
-      );
-      expect(result.valid).toBe(false);
-      expect(result.error).toContain("must choose 'otherChoice' first");
-    });
-
     it("allows sequential decision then move (stateful validation)", () => {
       const actions = [
-        { action: "SET_STATE", path: "players.p1.pathChoice", value: "B" },
+        { action: "SET_STATE", path: "players.p1.activeChoices", value: { 5: 6 } },
         { action: "SET_STATE", path: "players.p1.position", value: 10 },
       ];
       const result = validateActions(
@@ -657,13 +649,13 @@ describe("Validator - New Primitives", () => {
       expect(result.valid).toBe(true);
     });
 
-    it("allows SET_STATE for pathChoice during square effect processing", () => {
+    it("allows SET_STATE for activeChoices during square effect processing", () => {
       const mockOrchestrator = {
         isProcessingEffect: () => true,
       } as any;
-      (mockState.players as Record<string, Record<string, unknown>>).p1.pathChoice = null;
+      (mockState.players as Record<string, Record<string, unknown>>).p1.activeChoices = {};
 
-      const actions = [{ action: "SET_STATE", path: "players.p1.pathChoice", value: "A" }];
+      const actions = [{ action: "SET_STATE", path: "players.p1.activeChoices", value: { 0: 1 } }];
       const result = validateActions(
         actions,
         mockState,

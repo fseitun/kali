@@ -41,11 +41,7 @@ export class DecisionPointEnforcer {
     }
 
     const decisionPoints = state.decisionPoints as
-      | Array<{
-          position: number;
-          requiredField: string;
-          prompt: string;
-        }>
+      | Array<{ position: number; prompt: string }>
       | undefined;
 
     if (!decisionPoints || decisionPoints.length === 0) {
@@ -72,10 +68,12 @@ export class DecisionPointEnforcer {
         return;
       }
 
-      const fieldValue = currentPlayer[decisionPoint.requiredField];
-      if (fieldValue === null || fieldValue === undefined) {
+      const choices = currentPlayer.activeChoices as Record<string, number> | undefined;
+      const hasChoice = choices?.[String(position)] !== undefined;
+
+      if (!hasChoice) {
         Logger.info(
-          `Orchestrator enforcing decision point for ${playerName} at position ${position}: ${decisionPoint.requiredField}`,
+          `Orchestrator enforcing decision point for ${playerName} at position ${position}`,
         );
 
         const newContext: ExecutionContext = {
@@ -84,7 +82,7 @@ export class DecisionPointEnforcer {
         };
 
         await this.processTranscriptFn(
-          `[SYSTEM: ${playerName} (${currentTurn}) is at position ${position} and MUST choose '${decisionPoint.requiredField}' before proceeding. Ask them: "${decisionPoint.prompt}"]`,
+          `[SYSTEM: ${playerName} (${currentTurn}) is at position ${position} and MUST choose direction at fork before proceeding. Ask them: "${decisionPoint.prompt}"]`,
           newContext,
         );
       }

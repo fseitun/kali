@@ -1,5 +1,6 @@
 import type { StateManager } from "../state-manager";
 import { deepClone } from "../utils/deep-clone";
+import { computeNewPositionFromState } from "./board-traversal";
 import type { Orchestrator } from "./orchestrator";
 import type { GameState, PrimitiveAction } from "./types";
 
@@ -8,12 +9,30 @@ export interface ValidationResult {
   error?: string;
 }
 
+function hasPendingDecisionsInState(state: GameState): boolean {
+  const game = state.game as Record<string, unknown> | undefined;
+  const currentTurn = game?.turn as string | undefined;
+  if (!currentTurn) return false;
+  const decisionPoints = state.decisionPoints as
+    | Array<{ position: number; prompt: string }>
+    | undefined;
+  if (!decisionPoints?.length) return false;
+  const players = state.players as Record<string, Record<string, unknown>> | undefined;
+  const currentPlayer = players?.[currentTurn];
+  if (!currentPlayer) return false;
+  const position = currentPlayer.position as number | undefined;
+  if (typeof position !== "number") return false;
+  const dp = decisionPoints.find((d) => d.position === position);
+  if (!dp) return false;
+  const choices = currentPlayer.activeChoices as Record<string, number> | undefined;
+  const hasChoice = choices?.[String(position)] !== undefined;
+  return !hasChoice;
+}
+
 /**
  * Simulates the effect of an action on mock state for stateful validation.
- * Only simulates state-changing actions (SET_STATE, PLAYER_ROLLED).
  * @param state - Mock state to apply action to
  * @param primitive - Action to simulate
- * @param stateManager - State manager for path operations
  * @returns Updated mock state
  */
 function applyActionToMockState(state: GameState, primitive: PrimitiveAction): GameState {
@@ -39,17 +58,59 @@ function applyActionToMockState(state: GameState, primitive: PrimitiveAction): G
       const lastPart = parts[parts.length - 1];
       current[lastPart] = primitive.value;
     } else if (primitive.action === "PLAYER_ROLLED" && "value" in primitive) {
-      // Simulate position change for current player
       const game = mockState.game;
-      const currentTurn = game.turn;
-
+      const currentTurn = game?.turn;
       if (currentTurn && typeof currentTurn === "string") {
-        const players = mockState.players;
-        const player = players[currentTurn];
-
+        const players = mockState.players as Record<string, Record<string, unknown>>;
+        const player = players?.[currentTurn];
         if (player && typeof player.position === "number") {
-          player.position += primitive.value;
+          player.position = computeNewPositionFromState(
+            mockState,
+            currentTurn,
+            player.position,
+            primitive.value,
+          );
         }
+      }
+    } else if (primitive.action === "PLAYER_ANSWERED" && "answer" in primitive) {
+      const game = mockState.game as Record<string, unknown>;
+      const currentTurn = game?.turn as string | undefined;
+      const decisionPoints = mockState.decisionPoints as
+        | Array<{
+            position: number;
+            positionOptions?: Record<string, number>;
+          }>
+        | undefined;
+      const players = mockState.players as Record<string, Record<string, unknown>>;
+      const player = currentTurn ? players?.[currentTurn] : undefined;
+      if (!currentTurn || !player || !decisionPoints?.length) return mockState;
+      const position = player.position as number | undefined;
+      if (typeof position !== "number") return mockState;
+      const dp = decisionPoints.find((d) => d.position === position);
+      if (!dp) return mockState;
+      const choices = (player.activeChoices ?? {}) as Record<string, number>;
+      if (choices[String(position)] !== undefined) return mockState;
+
+      const answer = primitive.answer.trim();
+      let target: number | null = null;
+      // Position 0: "A" -> 1, "B" -> 15 (fall through to positionOptions if no match)
+      if (position === 0) {
+        const first = answer.charAt(0).toUpperCase();
+        if (first === "A") target = 1;
+        if (first === "B") target = 15;
+      }
+      if (target === null && dp.positionOptions) {
+        const numMatch = answer.match(/\d+/);
+        for (const [key, val] of Object.entries(dp.positionOptions)) {
+          if (answer === key || numMatch?.[0] === key) {
+            target = val;
+            break;
+          }
+        }
+      }
+      if (target !== null) {
+        player.activeChoices ??= {};
+        (player.activeChoices as Record<string, number>)[String(position)] = target;
       }
     } else if (primitive.action === "RIDDLE_RESOLVED" && "correct" in primitive) {
       const game = mockState.game as Record<string, unknown>;
@@ -258,7 +319,9 @@ function validateDecisionBeforeMove(
     return { valid: true };
   }
 
-  const decisionPoints = state.decisionPoints;
+  const decisionPoints = state.decisionPoints as
+    | Array<{ position: number; prompt: string }>
+    | undefined;
 
   if (!decisionPoints || decisionPoints.length === 0) {
     return { valid: true };
@@ -270,12 +333,13 @@ function validateDecisionBeforeMove(
     return { valid: true };
   }
 
-  const fieldValue = player[decisionPoint.requiredField];
+  const choices = player.activeChoices as Record<string, number> | undefined;
+  const hasChoice = choices?.[String(currentPosition)] !== undefined;
 
-  if (fieldValue === null || fieldValue === undefined) {
+  if (!hasChoice) {
     return {
       valid: false,
-      error: `${actionType} at index ${index}: Cannot move from position ${currentPosition}. Player must choose '${decisionPoint.requiredField}' first. ${decisionPoint.prompt}`,
+      error: `${actionType} at index ${index}: Cannot move from position ${currentPosition}. Player must choose direction at fork first. ${decisionPoint.prompt}`,
     };
   }
 
@@ -286,12 +350,12 @@ function validateDecisionBeforeMove(
 const SQUARE_EFFECT_FORBIDDEN_PLAYER_KEYS = new Set(["skipTurns", "position"]);
 
 /**
- * Player state keys that may be SET_STATE during square effect: explicit user choices (pathChoice),
+ * Player state keys that may be SET_STATE during square effect: explicit user choices (activeChoices),
  * game-designed non-deterministic outcomes (bonusDiceNextTurn, inverseMode), rewards after riddle
  * (points, hearts for animal squares), and clearing items/instruments after use.
  */
 const SQUARE_EFFECT_ALLOWED_PLAYER_KEYS = new Set([
-  "pathChoice",
+  "activeChoices",
   "items",
   "instruments",
   "bonusDiceNextTurn",
@@ -320,7 +384,7 @@ function validateSquareEffectPathRestriction(
   if (!SQUARE_EFFECT_ALLOWED_PLAYER_KEYS.has(key)) {
     return {
       valid: false,
-      error: `SET_STATE at index ${index}: Path "${path}" is not allowed during square effect processing. Only explicit user-choice fields (e.g. pathChoice) are permitted.`,
+      error: `SET_STATE at index ${index}: Path "${path}" is not allowed during square effect processing. Only explicit user-choice fields (e.g. activeChoices) are permitted.`,
     };
   }
   return { valid: true };
@@ -434,6 +498,14 @@ function validatePlayerRolled(
     };
   }
 
+  const hasPending = hasPendingDecisionsInState(state);
+  if (hasPending) {
+    return {
+      valid: false,
+      error: `PLAYER_ROLLED at index ${index}: Cannot roll until direction is chosen at fork. Choose path/branch first.`,
+    };
+  }
+
   // When awaiting power check or revenge for animal encounter, roll values go via PLAYER_ANSWERED
   const game = state.game as Record<string, unknown> | undefined;
   const currentTurn = game?.turn as string | undefined;
@@ -479,14 +551,14 @@ function validatePlayerAnswered(
     }
   }
 
-  // Path choice answers (A/B) can only be applied when the current player has a pending path choice
+  // Path choice (A/B) can only be applied when at position 0 with pending fork choice
   const answer = ((action as { answer?: string }).answer ?? "").trim();
   const firstChar = answer.charAt(0).toUpperCase();
   if (firstChar !== "A" && firstChar !== "B") return { valid: true };
 
-  const pathChoiceDp = (
-    state.decisionPoints as Array<{ requiredField: string; position: number }> | undefined
-  )?.find((dp) => dp.requiredField === "pathChoice");
+  const pathChoiceDp = (state.decisionPoints as Array<{ position: number }> | undefined)?.find(
+    (dp) => dp.position === 0,
+  );
   if (!pathChoiceDp) return { valid: true };
 
   const game = state.game as Record<string, unknown> | undefined;
@@ -497,15 +569,15 @@ function validatePlayerAnswered(
   if (!currentTurn || !currentPlayer) return { valid: true };
 
   const position = currentPlayer.position as number | undefined;
-  const pathChoice = currentPlayer.pathChoice;
-  const atDecisionSquare = typeof position === "number" && position === pathChoiceDp.position;
-  const pathChoicePending = pathChoice === null || pathChoice === undefined;
-  const hasPendingPathChoice = atDecisionSquare && pathChoicePending;
+  const choices = currentPlayer.activeChoices as Record<string, number> | undefined;
+  const hasChoice = position !== undefined && choices?.[String(position)] !== undefined;
+  const atDecisionSquare = typeof position === "number" && position === 0;
+  const hasPendingPathChoice = atDecisionSquare && !hasChoice;
 
   if (!hasPendingPathChoice) {
     return {
       valid: false,
-      error: `PLAYER_ANSWERED at index ${index}: Path choice (A/B) can only be applied when the current turn player is at position ${pathChoiceDp.position} with pathChoice=null. Current player has no pending path choice.`,
+      error: `PLAYER_ANSWERED at index ${index}: Path choice (A/B) can only be applied when the current turn player is at position 0 with no fork choice. Current player has no pending path choice.`,
     };
   }
 

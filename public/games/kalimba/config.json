@@ -9,18 +9,15 @@
   "decisionPoints": [
     {
       "position": 0,
-      "requiredField": "pathChoice",
       "prompt": "¿Querés ir por el A (1-14, más corto) o el B (15-35, más largo)?"
     },
     {
       "position": 96,
-      "requiredField": "branch96Choice",
       "prompt": "¿Querés ir al 97 o al 99?",
       "positionOptions": { "97": 97, "99": 99 }
     },
     {
       "position": 101,
-      "requiredField": "branch101Choice",
       "prompt": "¿Querés ir al 102 o al 105?",
       "positionOptions": { "102": 102, "105": 105 }
     }
@@ -32,14 +29,14 @@
       "hidden": ["name", "lastAnswer", "playerOrder"]
     },
     "players": {
-      "primary": ["id", "position", "pathChoice"],
-      "secondary": ["hearts", "points", "instruments", "items", "skipTurns"],
-      "hidden": ["bonusDiceNextTurn", "inverseMode", "branch96Choice", "branch101Choice"]
+      "primary": ["id", "position"],
+      "secondary": ["hearts", "points", "instruments", "items", "skipTurns", "activeChoices"],
+      "hidden": ["bonusDiceNextTurn", "inverseMode"]
     },
     "board": {
       "primary": [],
       "secondary": [],
-      "hidden": ["winPosition", "magicDoorPosition", "pathASquares", "pathBSquares", "moves", "squares", "magicDoorTarget"]
+      "hidden": ["winPosition", "magicDoorPosition", "moves", "squares", "magicDoorTarget"]
     }
   },
   "initialState": {
@@ -64,7 +61,7 @@
         "items": [],
         "instruments": [],
         "bonusDiceNextTurn": false,
-        "pathChoice": null,
+        "activeChoices": {},
         "skipTurns": 0,
         "inverseMode": false
       },
@@ -77,7 +74,7 @@
         "items": [],
         "instruments": [],
         "bonusDiceNextTurn": false,
-        "pathChoice": null,
+        "activeChoices": {},
         "skipTurns": 0,
         "inverseMode": false
       }
@@ -86,17 +83,15 @@
       "winPosition": 196,
       "magicDoorPosition": 186,
       "magicDoorTarget": 6,
-      "pathASquares": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14],
-      "pathBSquares": [15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35],
       "moves": {
-        "14": 36,
-        "35": 36,
         "45": 82,
-        "82": 45,
-        "93": 97,
-        "141": 165
+        "82": 45
       },
       "squares": {
+        "0": {"type": "empty", "next": [1, 15]},
+        "14": {"type": "empty", "next": [36]},
+        "35": {"type": "empty", "next": [36]},
+        "36": {"type": "empty", "prev": [14, 35]},
         "2": {"type": "animal", "name": "Halcón", "power": 3, "points": 3, "habitat": "desierto"},
         "5": {"type": "animal", "name": "Cobra", "power": 4, "points": 4, "habitat": "desierto"},
         "7": {"type": "special", "name": "Águila", "effect": "roll2d6Advance", "power": 3, "points": 3, "habitat": "desierto", "instrument": "flauta del desierto"},
@@ -128,10 +123,13 @@
         "85": {"type": "hazard", "name": "Cae la noche", "effect": "checkTorch"},
         "87": {"type": "animal", "name": "Tortuga marina", "power": 2, "points": 2, "habitat": "océano"},
         "92": {"type": "animal", "name": "Orca Asesina", "power": 4, "points": 4, "habitat": "océano"},
+        "93": {"type": "empty", "next": [94], "nextOnLanding": [97]},
         "95": {"type": "hazard", "name": "Lluvias de meteoritos", "effect": "skipTurn"},
+        "96": {"type": "empty", "next": [97, 99]},
+        "98": {"type": "empty", "next": [101]},
         "97": {"type": "animal", "name": "Pingüino", "power": 2, "points": 2, "habitat": "ártico"},
         "100": {"type": "animal", "name": "Narval", "power": 2, "points": 2, "habitat": "ártico"},
-        "101": {"type": "animal", "name": "Morsa", "power": 3, "points": 3, "habitat": "ártico", "instrument": "campanas del ártico"},
+        "101": {"type": "animal", "name": "Morsa", "power": 3, "points": 3, "habitat": "ártico", "instrument": "campanas del ártico", "next": [102, 105]},
         "103": {"type": "special", "name": "Iceberg", "effect": "roll1d6Directional"},
         "105": {"type": "animal", "name": "Oso polar", "power": 4, "points": 4, "habitat": "ártico"},
         "106": {"type": "animal", "name": "Ballena azul", "power": 5, "points": 5, "habitat": "ártico"},
@@ -151,6 +149,7 @@
         "134": {"type": "animal", "name": "Cocodrilo", "power": 3, "points": 3, "habitat": "sabana"},
         "136": {"type": "hazard", "name": "Pantano", "effect": "skipTurn"},
         "140": {"type": "animal", "name": "Rinoceronte", "power": 3, "points": 3, "habitat": "sabana"},
+        "141": {"type": "empty", "next": [142], "nextOnLanding": [165]},
         "143": {"type": "hazard", "name": "Remolino", "effect": "skipTurn"},
         "145": {"type": "animal", "name": "Jirafa", "power": 2, "points": 2, "habitat": "sabana", "winJumpTo": 162},
         "148": {"type": "animal", "name": "Cocodrilo del Nilo", "power": 3, "points": 3, "habitat": "sabana"},
@@ -181,8 +180,8 @@
   "rules": {
     "objective": "Be the first player to reach square 196 (the Heart of Kalimba).",
     "mechanics": "**SQUARE TYPES (all board.squares entries are special squares):**\n\n• **animal** - COMBAT (Orchestrator owns phase and rewards):\n  - Phase riddle: Ask habitat riddle. When user answers → RIDDLE_RESOLVED { correct: true/false }. Do NOT SET_STATE game.pendingAnimalEncounter.\n  - RIDDLE_RESOLVED NARRATE MUST end with next step: correct=true → 'Tirá 2 dados para la prueba de poder'; correct=false → 'Tirá 1 dado para la prueba.'\n  - Phase powerCheck/revenge: User reports roll → PLAYER_ANSWERED with the number. Do NOT re-ask for the result — they just reported it. Orchestrator evaluates win/lose, applies rewards, advances position. When power check LOSE (phase→revenge), NARRATE MUST name the current player: {playerName}, revancha con 1 dado, necesitás X o más (X = animal power). Never say Próximo turno or Próximo jugador—it is the same player.\n\n• **hazard**:\n  - skipTurn: SET skipTurns=1\n  - checkTorch: If has torch, remove from items; else SET skipTurns=1\n  - checkAntiWasp: If has anti-wasp, remove from items; else SET skipTurns=1\n\n• **item**: Use SET_STATE to add item to items array\n\n• **portal**: Auto-handled by orchestrator. Updates inverseMode automatically.\n\n• **special**:\n  - jumpToLeader: Find leader position, SET current player to that position\n  - roll2d6Advance: Ask player to roll 2d6, they report with PLAYER_ROLLED\n  - roll1d6Directional/roll2d6Directional/roll3d6Directional: Ask for roll, SET position based on inverseMode\n  - magicDoorCheck: roll + hearts + (1 if scimitar) >= 6 to open. Overshooting 186 bounces back (orchestrator auto-applies)\n  - returnTo187: SET position=187\n  - win: SET winner and phase=FINISHED\n\n**INSTRUMENT SYSTEM:**\n\nBefore animal encounters, ask if player wants to use instrument (check players.X.instruments array).\n- Correct habitat: Auto-pass, collect all rewards, remove instrument\n- Wrong habitat: +2 bonus to power check, then remove instrument\n- Single use via SET_STATE to remove from array\n- Maximum 5 instruments per player\n\n**HEARTS SYSTEM:**\n\nMagical points that reduce magic door difficulty. Collected via SET_STATE when earning hearts. Formula: roll + player.hearts + (1 if scimitar in items) >= 6. Base difficulty is 6.\n\n**RIDDLE SYSTEM:**\n\nCreate habitat-themed riddles in Spanish. Difficulty scales 1-6. Accept flexible answers via PLAYER_ANSWERED. When evaluating RIDDLE_RESOLVED: The correct answer must logically match the riddle's clues. Example: 'se columpia con su cola, trepa árboles' implies mono (monkey), not jaguar. Accept synonyms (mono, mono aullador). Never invent a 'correct' answer that does not fit the riddle.\n\n**INVERSE MODE:**\n\nPlayer flag (players.X.inverseMode). Reverses directional effects. Auto-managed by orchestrator on portal teleports.\n\n**ITEMS:**\n\n• Antorcha (torch): Prevents skipTurn on night hazards\n• Traje anti-avispas: Prevents skipTurn on wasps\n• Cimitarra (scimitar): Counts as 1 heart for door",
-    "turnStructure": "**PLAYER TURN FLOW:**\n\n**ORCHESTRATOR ANNOUNCES TURN START**:\nAt the start of each turn, the orchestrator automatically announces: \"[PlayerName], it's your turn. You're at position X. Tell me what you rolled, or where you landed.\"\n\nYou DON'T announce turns - the orchestrator handles this.\n\n**YOUR JOB - Process User Actions:**\n\n1. **PATH CHOICE** (only at position 0 with pathChoice=null):\n   - Ask: \"¿Querés ir por el A (más corto) o el B (más largo)?\"\n   - User answers → { \"action\": \"PLAYER_ANSWERED\", \"answer\": \"A\" } (or \"B\")\n   - Orchestrator auto-sets pathChoice from the answer\n\n2. **Skip Turns**: If players.X.skipTurns > 0, orchestrator handles this automatically.\n\n3. **Bonus Dice**: If bonusDiceNextTurn=true, expect 2d6 (range 2-12). After movement, SET bonusDiceNextTurn=false.\n\n4. **Movement - Two Ways**:\n   - User says \"I rolled a 5\" → { \"action\": \"PLAYER_ROLLED\", \"value\": 5 }\n   - User says \"I'm at position 15\" → { \"action\": \"SET_STATE\", \"path\": \"players.p1.position\", \"value\": 15 }\n   - For PLAYER_ROLLED return ONLY PLAYER_ROLLED. Do NOT add NARRATE. Square effects narrate the encounter. Adding NARRATE (e.g. \"te moviste\") plays after the riddle and confuses the player.\n\n5. **Square Effects**: Orchestrator AUTO-DETECTS and injects encounters via [SYSTEM: ...] messages. Process them when received.\n\n6. **Turn Completion**: Orchestrator auto-advances turn after all effects complete. You never touch game.turn.\n\n7. **Win Check**: Orchestrator detects and sets winner automatically.\n\n**REMEMBER**: You translate user speech → primitives. Orchestrator does all math and turn management.",
-    "boardLayout": "**BOARD STRUCTURE:**\n\nThe game board has 196 squares with two starting paths that merge into a single path.\n\n**Starting Paths:**\n- Path A: Squares 1-14 (shorter)\n- Path B: Squares 15-35 (longer)\n- Both converge at 36\n- Square 96: choose 97 or 99\n- Square 101: choose 102 or 105\n\n**Key Positions:**\n- Start: Square 0\n- Path merge: Square 36\n- Magic Door: Square 186 (requires hearts to enter)\n- Victory: Square 196 (Corazón de Kalimba)\n\n**Portals:**\n- Square 45 (Portal Bosque-Océano) ↔ Square 82 (Portal Océano-Bosque)\n- Portal 45→82: Teleports forward, deactivates inverse mode\n- Portal 82→45: Teleports backward, activates inverse mode\n\n**Special Teleports (in board.moves):**\n- 14→36: Path A merge\n- 35→36: Path B merge\n- 45→82: Portal forward\n- 82→45: Portal backward\n- 93→97: Arctic zone jump\n- 141→165: Savanna shortcut\n- 145→162: Savanna alternate (only when you WIN the Jirafa encounter; orchestrator applies)\n\n**Habitat Zones (approximate ranges):**\n- Desierto (Desert): Squares 1-38\n- Bosque (Forest): Squares 39-71\n- Océano (Ocean): Squares 72-94\n- Ártico (Arctic): Squares 95-110\n- Amazonas (Amazon): Squares 111-127\n- Sabana (Savanna): Squares 128-167\n- India: Squares 168-185\n- Anaconda Path (final stretch): Squares 187-196\n\n**Square Details:** All square-specific data (animals, hazards, items, special effects) is stored in board.squares object with position as key. Reference this for exact square contents.",
+    "turnStructure": "**PLAYER TURN FLOW:**\n\n**ORCHESTRATOR ANNOUNCES TURN START**:\nAt the start of each turn, the orchestrator automatically announces: \"[PlayerName], it's your turn. You're at position X. Tell me what you rolled, or where you landed.\"\n\nYou DON'T announce turns - the orchestrator handles this.\n\n**YOUR JOB - Process User Actions:**\n\n1. **PATH/BRANCH CHOICE** (only at fork positions 0, 96, 101 when activeChoices not set):\n   - Ask the prompt for that position (e.g. at 0: \"¿Querés ir por el A o el B?\")\n   - User answers → { \"action\": \"PLAYER_ANSWERED\", \"answer\": \"A\" } (or \"B\", \"97\", \"99\", etc.)\n   - Orchestrator auto-sets activeChoices from the answer\n\n2. **Skip Turns**: If players.X.skipTurns > 0, orchestrator handles this automatically.\n\n3. **Bonus Dice**: If bonusDiceNextTurn=true, expect 2d6 (range 2-12). After movement, SET bonusDiceNextTurn=false.\n\n4. **Movement - Two Ways**:\n   - User says \"I rolled a 5\" → { \"action\": \"PLAYER_ROLLED\", \"value\": 5 }\n   - User says \"I'm at position 15\" → { \"action\": \"SET_STATE\", \"path\": \"players.p1.position\", \"value\": 15 }\n   - For PLAYER_ROLLED return ONLY PLAYER_ROLLED. Do NOT add NARRATE. Square effects narrate the encounter. Adding NARRATE (e.g. \"te moviste\") plays after the riddle and confuses the player.\n\n5. **Square Effects**: Orchestrator AUTO-DETECTS and injects encounters via [SYSTEM: ...] messages. Process them when received.\n\n6. **Turn Completion**: Orchestrator auto-advances turn after all effects complete. You never touch game.turn.\n\n7. **Win Check**: Orchestrator detects and sets winner automatically.\n\n**REMEMBER**: You translate user speech → primitives. Orchestrator does all math and turn management.",
+    "boardLayout": "**BOARD STRUCTURE:**\n\nThe game board has 196 squares with two starting paths that merge into a single path.\n\n**Starting Paths:**\n- Path A: Squares 1-14 (shorter)\n- Path B: Squares 15-35 (longer)\n- Both converge at 36\n- Square 96: choose 97 or 99\n- Square 101: choose 102 or 105\n\n**Key Positions:**\n- Start: Square 0\n- Path merge: Square 36\n- Magic Door: Square 186 (requires hearts to enter)\n- Victory: Square 196 (Corazón de Kalimba)\n\n**Portals:**\n- Square 45 (Portal Bosque-Océano) ↔ Square 82 (Portal Océano-Bosque)\n- Portal 45→82: Teleports forward, deactivates inverse mode\n- Portal 82→45: Teleports backward, activates inverse mode\n\n**Topology (graph):** Path A/B merge at 36, 93→97 and 141→165 on landing. **Special (board.moves):** 45↔82 portals. 145→162: only when you WIN Jirafa (orchestrator).\n\n**Habitat Zones (approximate ranges):**\n- Desierto (Desert): Squares 1-38\n- Bosque (Forest): Squares 39-71\n- Océano (Ocean): Squares 72-94\n- Ártico (Arctic): Squares 95-110\n- Amazonas (Amazon): Squares 111-127\n- Sabana (Savanna): Squares 128-167\n- India: Squares 168-185\n- Anaconda Path (final stretch): Squares 187-196\n\n**Square Details:** All square-specific data (animals, hazards, items, special effects) is stored in board.squares object with position as key. Reference this for exact square contents.",
     "examples": [
       "User: Quiero el más corto | You: [{ \"action\": \"PLAYER_ANSWERED\", \"answer\": \"A\" }, { \"action\": \"NARRATE\", \"text\": \"Elegiste el Camino A. Ahora tirá el dado.\" }]",
       "User: El más largo | You: [{ \"action\": \"PLAYER_ANSWERED\", \"answer\": \"B\" }, { \"action\": \"NARRATE\", \"text\": \"Elegiste el Camino B. Tirá el dado.\" }]",

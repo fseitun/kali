@@ -111,15 +111,13 @@ describe("Orchestrator - New Action Handlers", () => {
       expect(mockStateManager.set).toHaveBeenCalledWith("game.lastAnswer", "fight the dragon");
     });
 
-    it("auto-applies answer to pending pathChoice decision point", async () => {
+    it("auto-applies answer to pending fork decision point", async () => {
       (testState.players as any).p1.position = 0;
-      (testState.players as any).p1.pathChoice = null;
-      testState.decisionPoints = [
-        { position: 0, requiredField: "pathChoice", prompt: "Choose A or B?" },
-      ];
+      (testState.players as any).p1.activeChoices = {};
+      testState.decisionPoints = [{ position: 0, prompt: "Choose A or B?" }];
       mockStateManager.get = vi.fn((path: string) => {
         if (path === "players.p1.position") return 0;
-        if (path === "players.p1.pathChoice") return null;
+        if (path === "players.p1.activeChoices.0") return undefined;
         return undefined;
       });
 
@@ -128,18 +126,15 @@ describe("Orchestrator - New Action Handlers", () => {
       await orchestrator.testExecuteActions(actions);
 
       expect(mockStateManager.set).toHaveBeenCalledWith("game.lastAnswer", "a");
-      expect(mockStateManager.set).toHaveBeenCalledWith("players.p1.pathChoice", "A");
+      expect(mockStateManager.set).toHaveBeenCalledWith("players.p1.activeChoices.0", 1);
     });
 
     it("PLAYER_ANSWERED path choice at position 0 does not set shouldAdvanceTurn", async () => {
       (testState.players as any).p1.position = 0;
-      (testState.players as any).p1.pathChoice = null;
-      testState.decisionPoints = [
-        { position: 0, requiredField: "pathChoice", prompt: "Choose A or B?" },
-      ];
+      (testState.players as any).p1.activeChoices = {};
+      testState.decisionPoints = [{ position: 0, prompt: "Choose A or B?" }];
       mockStateManager.get = vi.fn((path: string) => {
         if (path === "players.p1.position") return 0;
-        if (path === "players.p1.pathChoice") return null;
         return undefined;
       });
 
@@ -151,22 +146,19 @@ describe("Orchestrator - New Action Handlers", () => {
       expect(result.shouldAdvanceTurn).toBe(false);
     });
 
-    it("PLAYER_ANSWERED + SET_STATE pathChoice at position 0 does not advance turn", async () => {
+    it("PLAYER_ANSWERED + SET_STATE activeChoices at position 0 does not advance turn", async () => {
       (testState.players as any).p1.position = 0;
-      (testState.players as any).p1.pathChoice = null;
-      testState.decisionPoints = [
-        { position: 0, requiredField: "pathChoice", prompt: "Choose A or B?" },
-      ];
+      (testState.players as any).p1.activeChoices = {};
+      testState.decisionPoints = [{ position: 0, prompt: "Choose A or B?" }];
       mockStateManager.get = vi.fn((path: string) => {
         if (path === "players.p1.position") return 0;
-        if (path === "players.p1.pathChoice") return null;
         return undefined;
       });
       (mockStateManager as any).pathExists = vi.fn(() => true);
 
       const actions: PrimitiveAction[] = [
         { action: "PLAYER_ANSWERED", answer: "B" },
-        { action: "SET_STATE", path: "players.p1.pathChoice", value: "B" },
+        { action: "SET_STATE", path: "players.p1.activeChoices.0", value: 15 },
         { action: "NARRATE", text: "Elegiste el Camino B. Tirá el dado." },
       ];
 

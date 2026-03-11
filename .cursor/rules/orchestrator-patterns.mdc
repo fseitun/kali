@@ -44,7 +44,7 @@ The orchestrator uses `isProcessing` to serialize LLM requests. See `architectur
 ## Turn Advancement Blocking
 
 Turns auto-advance, but are blocked when:
-- Current player has pending decisions (pathChoice, etc.)
+- Current player has pending decisions (activeChoices at forks, etc.)
 - Square effect is being processed
 - Game has a winner
 - Game is not in PLAYING phase
@@ -59,11 +59,11 @@ This is deterministic and happens BEFORE turn advancement.
 
 ## Decision Point Pattern
 
-If player lands on a position with `decisionPoints` entry:
-- Check if required field (e.g., `pathChoice`) is null
-- If null, inject synthetic LLM transcript to prompt decision
+If player lands on a position with `decisionPoints` entry (or graph fork: squares[pos].next.length > 1):
+- Check if `activeChoices[position]` is set
+- If not, inject synthetic LLM transcript to prompt decision
 - Block turn advancement until decision is made
-- Decision stored in player state
+- Decision stored as `activeChoices[position] = targetPosition`
 
 ## Synthetic Transcript Injection
 

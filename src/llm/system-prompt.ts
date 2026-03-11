@@ -95,7 +95,7 @@ Orchestrator controls turns and announces them. You NEVER touch game.turn. Proce
 - **Users authoritative.** Corrections → SET_STATE + NARRATE. Don't argue.
 - **Movement:** "I rolled 5" → PLAYER_ROLLED. "I'm at 10" → SET_STATE.
 - **Dice (check bonusDiceNextTurn):** 2d6=true: add numbers ("tiré dos tres"=5). 1d6=false: same twice=single roll; different→ASK.
-- **State:** Don't re-ask if pathChoice/instruments/items already set. Path choice: only current turn player.
+- **State:** Don't re-ask if fork choice (activeChoices)/instruments/items already set. Fork choice: only current turn player.
 - **\`[SYSTEM: ...]\`** Injections: process immediately. Don't say "the system says..."
 - **Ambiguity:** Ask when unclear. "tiré un cinco"=clear; "tiré cinco seis" with 1d6=ask.
 - **Validation errors:** Read feedback, adjust, retry.
@@ -232,11 +232,7 @@ export function formatStateContext(state: Record<string, unknown>): string {
 
 function formatDecisionPointContext(state: Record<string, unknown>): string {
   const decisionPoints = state.decisionPoints as
-    | Array<{
-        position: number;
-        requiredField: string;
-        prompt: string;
-      }>
+    | Array<{ position: number; prompt: string }>
     | undefined;
 
   if (!decisionPoints || decisionPoints.length === 0) {
@@ -251,9 +247,6 @@ function formatDecisionPointContext(state: Record<string, unknown>): string {
     return "";
   }
 
-  const lines: string[] = [];
-
-  // Only show decision for the current turn player - prevents LLM from asking wrong player
   const currentPlayer = players[currentTurn];
   if (!currentPlayer) return "";
 
@@ -263,16 +256,12 @@ function formatDecisionPointContext(state: Record<string, unknown>): string {
   const decisionPoint = decisionPoints.find((dp) => dp.position === position);
   if (!decisionPoint) return "";
 
-  const fieldValue = currentPlayer[decisionPoint.requiredField];
-  if (fieldValue === null || fieldValue === undefined) {
-    const playerName = (currentPlayer.name as string) || currentTurn;
-    lines.push(
-      `⚠️ DECISION (${playerName}) ${decisionPoint.requiredField}=null. Ask: "${decisionPoint.prompt}" [current]`,
-    );
-  }
+  const choices = currentPlayer.activeChoices as Record<string, number> | undefined;
+  const hasChoice = choices?.[String(position)] !== undefined;
 
-  if (lines.length > 0) {
-    return lines.join("\n");
+  if (!hasChoice) {
+    const playerName = (currentPlayer.name as string) || currentTurn;
+    return `⚠️ DECISION (${playerName}) fork choice at ${position}. Ask: "${decisionPoint.prompt}" [current]`;
   }
 
   return "";

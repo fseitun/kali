@@ -27,7 +27,7 @@ The system is built on a clear separation of concerns between deterministic cont
 
 The orchestrator doesn't interpret language. It enforces rules:
 
-- "Player must choose `pathChoice` before moving"
+- "Player must choose at forks (activeChoices) before rolling"
 - "Can't modify Player 2's state when it's Player 1's turn"
 - "Can't advance turn to a player with unfulfilled decisions"
 
@@ -72,16 +72,17 @@ A perfect example of this separation:
 "decisionPoints": [
   {
     "position": 0,
-    "requiredField": "pathChoice",
     "prompt": "¿Querés ir por el A o el B?"
   }
 ]
 ```
 
+Graph topology defines forks via `squares[pos].next` (or `prev` in inverse mode). Decisions store `activeChoices[position] = targetPosition`.
+
 ### Orchestrator Enforces
 
-- Detects when player lands on position 0
-- Checks if `pathChoice` is null
+- Detects when player is at a fork (squares[pos].next.length > 1)
+- Checks if `activeChoices[position]` is set
 - **Blocks turn advancement** if choice not made
 - Validation fails with clear error message
 
@@ -90,7 +91,7 @@ A perfect example of this separation:
 - Receives state context with decision warnings
 - Hears user say "quiero el más largo"
 - Returns: `PLAYER_ANSWERED` with answer "B"
-- Orchestrator validates, applies to pathChoice, and proceeds
+- Orchestrator validates, sets activeChoices[position], and proceeds
 
 ### Result: Deterministic Flow + Natural Language
 
@@ -214,7 +215,7 @@ Warns LLM about constraints without relying on it to enforce:
 ```typescript
 // In system-prompt.ts
 ⚠️ DECISION REQUIRED for Santiago (p2):
-  Field: pathChoice (currently null)
+  Field: activeChoices (currently {})
   You CANNOT advance turn to this player until they make this choice.
 ```
 
@@ -259,7 +260,7 @@ await this.processTranscript(
 **Pattern applies to:**
 
 - Square effects after position changes
-- Decision point requirements (pathChoice, etc.)
+- Decision point requirements (activeChoices at forks, etc.)
 - Any rule that MUST be enforced
 
 This is the mechanism that makes the orchestrator truly authoritative while keeping the LLM flexible.

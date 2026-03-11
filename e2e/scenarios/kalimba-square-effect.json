@@ -15,7 +15,7 @@
         "position": 0,
         "hearts": 0,
         "points": 0,
-        "pathChoice": "A",
+        "activeChoices": { "0": 1 },
         "skipTurns": 0
       },
       "p2": {
@@ -24,7 +24,7 @@
         "position": 0,
         "hearts": 0,
         "points": 0,
-        "pathChoice": "A",
+        "activeChoices": { "0": 1 },
         "skipTurns": 0
       }
     }

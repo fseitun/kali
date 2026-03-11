@@ -31,11 +31,7 @@ export class TurnManager {
     }
 
     const decisionPoints = state.decisionPoints as
-      | Array<{
-          position: number;
-          requiredField: string;
-          prompt: string;
-        }>
+      | Array<{ position: number; prompt: string }>
       | undefined;
 
     if (!decisionPoints || decisionPoints.length === 0) {
@@ -61,8 +57,9 @@ export class TurnManager {
         return null;
       }
 
-      const fieldValue = currentPlayer[decisionPoint.requiredField];
-      if (fieldValue === null || fieldValue === undefined) {
+      const choices = currentPlayer.activeChoices as Record<string, number> | undefined;
+      const hasChoice = choices?.[String(position)] !== undefined;
+      if (!hasChoice) {
         return decisionPoint.prompt;
       }
 
@@ -103,11 +100,7 @@ export class TurnManager {
     }
 
     const decisionPoints = state.decisionPoints as
-      | Array<{
-          position: number;
-          requiredField: string;
-          prompt: string;
-        }>
+      | Array<{ position: number; prompt: string }>
       | undefined;
 
     if (!decisionPoints || decisionPoints.length === 0) {
@@ -133,8 +126,9 @@ export class TurnManager {
         return false;
       }
 
-      const fieldValue = currentPlayer[decisionPoint.requiredField];
-      return fieldValue === null || fieldValue === undefined;
+      const choices = currentPlayer.activeChoices as Record<string, number> | undefined;
+      const hasChoice = choices?.[String(position)] !== undefined;
+      return !hasChoice;
     } catch (error) {
       Logger.error("Error checking pending decisions:", error);
       return false;
