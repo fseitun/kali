@@ -37,7 +37,8 @@ export const esAR = {
     startButton: "Jugar",
     stopButton: "Parar",
     startKali: "Iniciar Kali",
-    installButton: "Instalar",
+    iosInstallHint:
+      "Instalá esta app en tu iPhone: tocá el ícono Compartir abajo y elegí 'Agregar a la pantalla de inicio'.",
     clickToStart: 'Hacé clic en "Iniciar Kali" para comenzar',
     initializationFailed: "Error al inicializar",
     listeningForCommand: "Esperando comando...",

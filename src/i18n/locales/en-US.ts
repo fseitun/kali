@@ -37,7 +37,8 @@ export const enUS = {
     startButton: "Start",
     stopButton: "Stop",
     startKali: "Start Kali",
-    installButton: "Install",
+    iosInstallHint:
+      "Install this web app on your iPhone: tap the Share icon below and select 'Add to Home Screen'.",
     clickToStart: 'Click "Start Kali" to begin voice interaction',
     initializationFailed: "Initialization failed",
     listeningForCommand: "Listening for command...",

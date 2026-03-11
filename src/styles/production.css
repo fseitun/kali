@@ -9,6 +9,6 @@
 }
 
 .production-ui #start-button,
-.production-ui #install-button {
+.production-ui .ios-install-hint {
   margin-top: 2rem;
 }

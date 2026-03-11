@@ -9,19 +9,10 @@ import { SpeechService } from "./services/speech-service";
 import { initLogBuffer } from "./utils/log-buffer";
 import { Logger } from "./utils/logger";
 
-/**
- * Non-standard event; only Chromium-based browsers. Used to trigger native PWA install prompt.
- * @see https://developer.mozilla.org/en-US/docs/Web/API/BeforeInstallPromptEvent
- */
-interface BeforeInstallPromptEvent extends Event {
-  prompt(): Promise<{ outcome: "accepted" | "dismissed"; platform: string }>;
-}
-
 class KaliApp {
   private core: KaliAppCore;
   private uiService: ProductionUIService;
   private speechService: SpeechService;
-  private installPrompt: BeforeInstallPromptEvent | null = null;
   private static instance: KaliApp | null = null;
 
   constructor() {
@@ -40,7 +31,7 @@ class KaliApp {
     this.core = new KaliAppCore(this.uiService, this.speechService);
 
     this.setupStartButton(startButton);
-    this.setupInstallPrompt();
+    this.setupIosInstallHint();
     this.setupExportButton();
   }
 
@@ -80,30 +71,15 @@ class KaliApp {
     document.body.appendChild(exportButton);
   }
 
-  private setupInstallPrompt(): void {
+  private setupIosInstallHint(): void {
     if (this.isAlreadyInstalled()) return;
+    if (!this.isIos()) return;
 
-    const installButton = document.getElementById("install-button") as HTMLButtonElement | null;
-    if (!installButton) return;
+    const hint = document.getElementById("ios-install-hint");
+    if (!hint) return;
 
-    window.addEventListener("beforeinstallprompt", (e: Event) => {
-      e.preventDefault();
-      this.installPrompt = e as BeforeInstallPromptEvent;
-      installButton.textContent = t("ui.installButton");
-      installButton.hidden = false;
-    });
-
-    installButton.addEventListener("click", async () => {
-      if (!this.installPrompt) return;
-      await this.installPrompt.prompt();
-      this.installPrompt = null;
-      installButton.hidden = true;
-    });
-
-    window.addEventListener("appinstalled", () => {
-      this.installPrompt = null;
-      installButton.hidden = true;
-    });
+    hint.textContent = t("ui.iosInstallHint");
+    hint.hidden = false;
   }
 
   private isAlreadyInstalled(): boolean {
@@ -111,6 +87,10 @@ class KaliApp {
       window.matchMedia("(display-mode: standalone)").matches ||
       (navigator as { standalone?: boolean }).standalone === true
     );
+  }
+
+  private isIos(): boolean {
+    return /iPad|iPhone|iPod/.test(navigator.userAgent);
   }
 
   private setupStartButton(startButton: HTMLButtonElement): void {
