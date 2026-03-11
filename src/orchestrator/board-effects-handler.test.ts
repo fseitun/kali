@@ -170,6 +170,17 @@ describe("BoardEffectsHandler", () => {
       expect(mockProcessTranscript).not.toHaveBeenCalled();
     });
 
+    it("should do nothing for hydrated topology-only squares (type: empty)", async () => {
+      stateManager.set("board.squares", {
+        "5": { type: "empty", next: [6], prev: [4] },
+      });
+      stateManager.set("players.p1.position", 5);
+
+      await boardEffectsHandler.checkAndApplySquareEffects("players.p1.position", baseContext);
+
+      expect(mockProcessTranscript).not.toHaveBeenCalled();
+    });
+
     it("should trigger processTranscript callback for square with effects", async () => {
       const squareData = {
         type: "encounter",

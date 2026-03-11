@@ -180,57 +180,59 @@ export class BoardEffectsHandler {
     }
 
     const squareData = squares[position.toString()];
-    if (squareData && Object.keys(squareData).length > 0) {
-      const kind = getSquareKind(squareData);
-      const squareName = (squareData.name as string) || "unknown";
-      const match = path.match(/^players\.([^.]+)\.position$/);
-      const playerId = match?.[1] ?? "";
-      const power = (squareData.power as number) ?? 0;
+    if (!squareData || squareData.type === "empty" || Object.keys(squareData).length === 0) {
+      return;
+    }
 
-      Logger.info(
-        `🎯 Orchestrator enforcing square effect at position ${position}: ${kind ?? "unknown"} (${squareName})`,
-      );
+    const kind = getSquareKind(squareData);
+    const squareName = (squareData.name as string) || "unknown";
+    const match = path.match(/^players\.([^.]+)\.position$/);
+    const playerId = match?.[1] ?? "";
+    const power = (squareData.power as number) ?? 0;
 
-      if (isAnimalEncounterKind(kind) && playerId) {
-        const habitat = squareData.habitat as string | undefined;
-        this.stateManager.set("game.pendingAnimalEncounter", {
-          position,
-          power,
-          playerId,
-          phase: "riddle",
-          riddleHint: typeof habitat === "string" ? habitat : undefined,
-        });
-      }
+    Logger.info(
+      `🎯 Orchestrator enforcing square effect at position ${position}: ${kind ?? "unknown"} (${squareName})`,
+    );
 
-      const applied = this.applyDeterministicSquareEffects(path, squareData);
-      const appliedText = applied.length > 0 ? ` Orchestrator applied: ${applied.join(", ")}.` : "";
+    if (isAnimalEncounterKind(kind) && playerId) {
+      const habitat = squareData.habitat as string | undefined;
+      this.stateManager.set("game.pendingAnimalEncounter", {
+        position,
+        power,
+        playerId,
+        phase: "riddle",
+        riddleHint: typeof habitat === "string" ? habitat : undefined,
+      });
+    }
 
-      const newContext: ExecutionContext = {
-        depth: context.depth + 1,
-        maxDepth: context.maxDepth,
-      };
+    const applied = this.applyDeterministicSquareEffects(path, squareData);
+    const appliedText = applied.length > 0 ? ` Orchestrator applied: ${applied.join(", ")}.` : "";
 
-      const squareInfo = JSON.stringify(squareData);
-      let transcript: string;
-      if (isAnimalEncounterKind(kind)) {
-        transcript =
-          `[SYSTEM: Current player just landed on animal square ${position} (${squareName}, power ${power}). ` +
-          `phase=riddle. Ask a habitat-themed riddle. When user answers, return RIDDLE_RESOLVED { correct: true/false }. ` +
-          `When phase is powerCheck or revenge, user reports roll → use PLAYER_ANSWERED with the number. Orchestrator owns all phase transitions and rewards. ` +
-          `Square data: ${squareInfo}]`;
-      } else {
-        transcript =
-          applied.length > 0
-            ? `[SYSTEM: Current player just landed on square ${position} (${squareName}).${appliedText} Narrate this encounter. Square data for flavour: ${squareInfo}]`
-            : `[SYSTEM: Current player just landed on square ${position} (${squareName}). Narrate this encounter. Do not change game state. Square data for flavour: ${squareInfo}]`;
-      }
+    const newContext: ExecutionContext = {
+      depth: context.depth + 1,
+      maxDepth: context.maxDepth,
+    };
 
-      this.isProcessingSquareEffect = true;
-      try {
-        await this.processTranscriptFn(transcript, newContext);
-      } finally {
-        this.isProcessingSquareEffect = false;
-      }
+    const squareInfo = JSON.stringify(squareData);
+    let transcript: string;
+    if (isAnimalEncounterKind(kind)) {
+      transcript =
+        `[SYSTEM: Current player just landed on animal square ${position} (${squareName}, power ${power}). ` +
+        `phase=riddle. Ask a habitat-themed riddle. When user answers, return RIDDLE_RESOLVED { correct: true/false }. ` +
+        `When phase is powerCheck or revenge, user reports roll → use PLAYER_ANSWERED with the number. Orchestrator owns all phase transitions and rewards. ` +
+        `Square data: ${squareInfo}]`;
+    } else {
+      transcript =
+        applied.length > 0
+          ? `[SYSTEM: Current player just landed on square ${position} (${squareName}).${appliedText} Narrate this encounter. Square data for flavour: ${squareInfo}]`
+          : `[SYSTEM: Current player just landed on square ${position} (${squareName}). Narrate this encounter. Do not change game state. Square data for flavour: ${squareInfo}]`;
+    }
+
+    this.isProcessingSquareEffect = true;
+    try {
+      await this.processTranscriptFn(transcript, newContext);
+    } finally {
+      this.isProcessingSquareEffect = false;
     }
   }
 }
