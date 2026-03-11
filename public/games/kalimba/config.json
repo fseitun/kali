@@ -6,22 +6,6 @@
     "minPlayers": 2,
     "maxPlayers": 6
   },
-  "decisionPoints": [
-    {
-      "position": 0,
-      "prompt": "¿Querés ir por el A (1-14, más corto) o el B (15-35, más largo)?"
-    },
-    {
-      "position": 96,
-      "prompt": "¿Querés ir al 97 o al 99?",
-      "positionOptions": { "97": 97, "99": 99 }
-    },
-    {
-      "position": 101,
-      "prompt": "¿Querés ir al 102 o al 105?",
-      "positionOptions": { "102": 102, "105": 105 }
-    }
-  ],
   "stateDisplay": {
     "game": {
       "primary": ["turn", "phase"],

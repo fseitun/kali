@@ -5,6 +5,7 @@ import { vi } from "vitest";
 import type { StatusIndicator } from "../src/components/status-indicator";
 import type { GameModule } from "../src/game-loader/types";
 import { MockLLMClient } from "../src/llm/MockLLMClient";
+import { inferDecisionPoints } from "../src/orchestrator/decision-point-inference";
 import { Orchestrator } from "../src/orchestrator/orchestrator";
 import { GamePhase } from "../src/orchestrator/types";
 import type { GameState, PrimitiveAction } from "../src/orchestrator/types";
@@ -15,8 +16,8 @@ import type { Scenario, ScenarioStep } from "./scenario-types";
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const PROJECT_ROOT = path.resolve(__dirname, "..");
 
-/** Game config may have top-level decisionPoints (e.g. Kalimba) not in initialState. */
-type GameConfig = GameModule & { decisionPoints?: unknown; stateDisplay?: unknown };
+/** Game config may have stateDisplay at top level. */
+type GameConfig = GameModule & { stateDisplay?: unknown };
 
 /**
  * Loads a game config from public/games/{gameId}/config.json.
@@ -30,7 +31,7 @@ function loadGameConfig(gameId: string): GameConfig {
 /**
  * Builds initial state by merging scenario overrides onto the game's initialState.
  * Nested objects (game, players, board) are merged so partial overrides work.
- * Top-level decisionPoints and stateDisplay (e.g. Kalimba) are merged from config.
+ * Top-level stateDisplay is merged from config. decisionPoints are inferred from board.
  */
 function buildInitialState(game: GameConfig, scenario: Scenario): GameState {
   const base = game.initialState as Record<string, unknown>;
@@ -49,8 +50,9 @@ function buildInitialState(game: GameConfig, scenario: Scenario): GameState {
   const hasBoardOverride = overrides.board !== undefined;
   if (hasBoardOverride) merged.board = overrides.board;
 
-  const decisionPoints = overrides.decisionPoints ?? game.decisionPoints;
-  if (decisionPoints !== undefined) merged.decisionPoints = decisionPoints;
+  const board = merged.board as { squares?: Record<string, { next?: number[] }> } | undefined;
+  const decisionPoints = inferDecisionPoints(board);
+  if (decisionPoints.length) merged.decisionPoints = decisionPoints;
 
   const hasStateDisplay = game.stateDisplay !== undefined;
   if (hasStateDisplay) merged.stateDisplay = game.stateDisplay;

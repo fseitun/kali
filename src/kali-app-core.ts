@@ -9,6 +9,7 @@ import type { LLMClient } from "./llm/LLMClient";
 import { MockLLMClient } from "./llm/MockLLMClient";
 import { OllamaClient } from "./llm/OllamaClient";
 import { OpenRouterClient } from "./llm/OpenRouterClient";
+import { inferDecisionPoints } from "./orchestrator/decision-point-inference";
 import { NameCollector } from "./orchestrator/name-collector";
 import { Orchestrator } from "./orchestrator/orchestrator";
 import { GamePhase, type PrimitiveAction } from "./orchestrator/types";
@@ -102,8 +103,9 @@ export class KaliAppCore {
     this.stateManager = new StateManager();
     this.stateManager.init(this.gameModule.initialState);
 
-    if (this.gameModule.decisionPoints?.length) {
-      this.stateManager.set("decisionPoints", this.gameModule.decisionPoints);
+    const decisionPoints = inferDecisionPoints(this.gameModule.initialState.board);
+    if (decisionPoints.length) {
+      this.stateManager.set("decisionPoints", decisionPoints);
     }
 
     if (this.gameModule.stateDisplay) {
@@ -116,9 +118,7 @@ export class KaliAppCore {
 
     const initialState = {
       ...this.gameModule.initialState,
-      ...(this.gameModule.decisionPoints?.length
-        ? { decisionPoints: this.gameModule.decisionPoints }
-        : {}),
+      ...(decisionPoints.length ? { decisionPoints } : {}),
     };
     const indicator = this.uiService.getStatusIndicator();
     this.orchestrator = new Orchestrator(
@@ -213,8 +213,9 @@ ${examples.map((ex: string, i: number) => `${i + 1}. ${ex}`).join("\n")}`;
     } catch (error) {
       Logger.error(`Error handling saved game: ${error}. Starting fresh.`);
       this.stateManager.resetState(this.gameModule.initialState);
-      if (this.gameModule.decisionPoints?.length) {
-        this.stateManager.set("decisionPoints", this.gameModule.decisionPoints);
+      const decisionPoints = inferDecisionPoints(this.gameModule.initialState.board);
+      if (decisionPoints.length) {
+        this.stateManager.set("decisionPoints", decisionPoints);
       }
       await this.runNameCollection();
       return true;

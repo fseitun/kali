@@ -52,15 +52,13 @@ Each game lives in `public/games/[game-name]/config.json`:
   "soundEffects": {
     "roll": "/games/[game-name]/sounds/roll.mp3",
     "win": "/games/[game-name]/sounds/win.mp3"
-  },
-  "decisionPoints": [
-    {
-      "position": 0,
-      "prompt": "Choose path A or B?"
-    }
-  ]
+  }
 }
 ```
+
+## Decision Points
+
+Decision points (forks) are inferred from `board.squares`: any square with `next.length > 1` becomes a decision point. No config needed.
 
 ## How Games Are Loaded
 
