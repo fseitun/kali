@@ -1,3 +1,8 @@
+html {
+  overflow: hidden;
+  overscroll-behavior: none;
+}
+
 :root {
   --bg-color: #000000;
   --text-color: #ffffff;
@@ -16,6 +21,8 @@ body {
   background: var(--bg-color);
   color: var(--text-color);
   min-height: 100vh;
+  min-height: 100svh;
+  overflow: hidden;
   display: flex;
   align-items: center;
   justify-content: center;
