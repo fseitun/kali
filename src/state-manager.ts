@@ -44,7 +44,7 @@ export class StateManager {
    * @param state - The new state
    */
   setState(state: GameState): void {
-    this.state = state;
+    this.state = deepClone(state);
   }
 
   /**

@@ -551,34 +551,56 @@ function validatePlayerAnswered(
     }
   }
 
-  // Path choice (A/B) can only be applied when at position 0 with pending fork choice
   const answer = ((action as { answer?: string }).answer ?? "").trim();
-  const firstChar = answer.charAt(0).toUpperCase();
-  if (firstChar !== "A" && firstChar !== "B") return { valid: true };
-
-  const pathChoiceDp = (state.decisionPoints as Array<{ position: number }> | undefined)?.find(
-    (dp) => dp.position === 0,
-  );
-  if (!pathChoiceDp) return { valid: true };
-
   const game = state.game as Record<string, unknown> | undefined;
   const currentTurn = game?.turn as string | undefined;
   const currentPlayer = (state.players as Record<string, Record<string, unknown>> | undefined)?.[
     currentTurn ?? ""
   ];
-  if (!currentTurn || !currentPlayer) return { valid: true };
+  const decisionPoints = state.decisionPoints as
+    | Array<{ position: number; positionOptions?: Record<string, number> }>
+    | undefined;
 
+  if (!currentTurn || !currentPlayer) return { valid: true };
   const position = currentPlayer.position as number | undefined;
   const choices = currentPlayer.activeChoices as Record<string, number> | undefined;
-  const hasChoice = position !== undefined && choices?.[String(position)] !== undefined;
-  const atDecisionSquare = typeof position === "number" && position === 0;
-  const hasPendingPathChoice = atDecisionSquare && !hasChoice;
+  const hasChoiceAt = (pos: number): boolean => choices?.[String(pos)] !== undefined;
 
-  if (!hasPendingPathChoice) {
-    return {
-      valid: false,
-      error: `PLAYER_ANSWERED at index ${index}: Path choice (A/B) can only be applied when the current turn player is at position 0 with no fork choice. Current player has no pending path choice.`,
-    };
+  // Path choice (A/B) can only be applied when at position 0 with pending fork choice
+  const firstChar = answer.charAt(0).toUpperCase();
+  if (firstChar === "A" || firstChar === "B") {
+    const pathChoiceDp = decisionPoints?.find((dp) => dp.position === 0);
+    if (!pathChoiceDp) return { valid: true };
+    const atDecisionSquare = typeof position === "number" && position === 0;
+    const hasPendingPathChoice = atDecisionSquare && !hasChoiceAt(0);
+    if (!hasPendingPathChoice) {
+      return {
+        valid: false,
+        error: `PLAYER_ANSWERED at index ${index}: Path choice (A/B) can only be applied when the current turn player is at position 0 with no fork choice. Current player has no pending path choice.`,
+      };
+    }
+    return { valid: true };
+  }
+
+  // positionOptions answers (e.g. "97", "99", "102", "105") can only be applied when at that fork with pending choice
+  if (!decisionPoints?.length) return { valid: true };
+  const numMatch = answer.match(/\d+/);
+  for (const dp of decisionPoints) {
+    const options = dp.positionOptions;
+    if (!options) continue;
+    const matchesOption = Object.keys(options).some(
+      (key) => answer === key || numMatch?.[0] === key,
+    );
+    if (!matchesOption) continue;
+    const atFork = typeof position === "number" && position === dp.position;
+    const hasPending = atFork && !hasChoiceAt(dp.position);
+    if (!hasPending) {
+      return {
+        valid: false,
+        error: `PLAYER_ANSWERED at index ${index}: Fork choice (${Object.keys(options).join("/")}) can only be applied when the current turn player is at position ${dp.position} with no fork choice. Current player has no pending choice at that position.`,
+      };
+    }
+    return { valid: true };
   }
 
   return { valid: true };
