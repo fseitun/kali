@@ -83,7 +83,6 @@ Helper functions:
 - `logger.ts` - Logging utility
 - `profiler.ts` - Performance profiling
 - `name-helper.ts` - Name transcription error correction
-- `deep-clone.ts` - Deep cloning utility
 
 ## Configuration & Entry Points
 

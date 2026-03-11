@@ -1,5 +1,4 @@
 import type { GameState } from "./orchestrator/types";
-import { deepClone } from "./utils/deep-clone";
 import { Logger } from "./utils/logger";
 
 /**
@@ -27,7 +26,7 @@ export class StateManager {
    * @throws Error if no initial state provided
    */
   init(initialState: GameState): void {
-    this.state = deepClone(initialState);
+    this.state = structuredClone(initialState);
     Logger.init("Initialized game state:", initialState);
   }
 
@@ -44,7 +43,7 @@ export class StateManager {
    * @param state - The new state
    */
   setState(state: GameState): void {
-    this.state = deepClone(state);
+    this.state = structuredClone(state);
   }
 
   /**
@@ -52,7 +51,7 @@ export class StateManager {
    * @param initialState - The state to reset to
    */
   resetState(initialState: GameState): void {
-    this.state = deepClone(initialState);
+    this.state = structuredClone(initialState);
     Logger.info("Game state reset");
   }
 
@@ -114,7 +113,7 @@ export class StateManager {
 
   private setByPath(obj: GameState, path: string, value: unknown): GameState {
     const parts = path.split(".");
-    const newState = deepClone(obj);
+    const newState = structuredClone(obj);
 
     let current: Record<string, unknown> = newState as Record<string, unknown>;
 

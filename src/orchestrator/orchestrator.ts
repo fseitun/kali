@@ -4,7 +4,6 @@ import type { LLMClient } from "../llm/LLMClient";
 import { formatStateContext } from "../llm/system-prompt";
 import type { ISpeechService } from "../services/speech-service";
 import type { StateManager } from "../state-manager";
-import { deepClone } from "../utils/deep-clone";
 import { Logger } from "../utils/logger";
 import { Profiler } from "../utils/profiler";
 import { BoardEffectsHandler } from "./board-effects-handler";
@@ -216,7 +215,7 @@ export class Orchestrator {
 
     playerNames.forEach((name, index) => {
       const playerId = `p${index + 1}`;
-      const player = deepClone(playerTemplate);
+      const player = structuredClone(playerTemplate);
       player.id = playerId;
       player.name = name;
       player.position = 0;

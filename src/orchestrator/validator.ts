@@ -1,5 +1,4 @@
 import type { StateManager } from "../state-manager";
-import { deepClone } from "../utils/deep-clone";
 import { computeNewPositionFromState } from "./board-traversal";
 import type { Orchestrator } from "./orchestrator";
 import type { GameState, PrimitiveAction } from "./types";
@@ -36,7 +35,7 @@ function hasPendingDecisionsInState(state: GameState): boolean {
  * @returns Updated mock state
  */
 function applyActionToMockState(state: GameState, primitive: PrimitiveAction): GameState {
-  const mockState = deepClone(state);
+  const mockState = structuredClone(state);
 
   try {
     if (primitive.action === "SET_STATE" && "path" in primitive && "value" in primitive) {
@@ -156,7 +155,7 @@ export function validateActions(
     };
   }
 
-  let mockState = deepClone(state);
+  let mockState = structuredClone(state);
 
   for (let i = 0; i < actions.length; i++) {
     const action = actions[i];
