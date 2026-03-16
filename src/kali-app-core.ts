@@ -280,11 +280,17 @@ ${examples.map((ex: string, i: number) => `${i + 1}. ${ex}`).join("\n")}`;
         this.gameModule.metadata,
       );
 
+      const decisionPoints = inferDecisionPoints(this.gameModule.initialState.board);
+      const hasDecisionAtStart = decisionPoints.some((dp) => dp.position === 0);
+
       this.uiService.setTranscriptInputEnabled?.(true);
 
-      const playerNames = await nameCollector.collectNames((handler) => {
-        this.currentNameHandler = handler;
-      });
+      const playerNames = await nameCollector.collectNames(
+        (handler) => {
+          this.currentNameHandler = handler;
+        },
+        { skipReadyMessage: hasDecisionAtStart },
+      );
 
       this.currentNameHandler = null;
       if (this.wakeWordDetector) {

@@ -37,9 +37,13 @@ export class NameCollector {
   /**
    * Runs the complete name collection flow.
    * @param onTranscript - Callback to receive transcriptions from speech recognition
+   * @param options - Optional: skipReadyMessage true to skip "Arranquemos. X, vos empezás." when the first turn will announce immediately (e.g. fork at 0)
    * @returns Promise that resolves with array of collected player names in turn order
    */
-  async collectNames(onTranscript: (handler: (text: string) => void) => void): Promise<string[]> {
+  async collectNames(
+    onTranscript: (handler: (text: string) => void) => void,
+    options?: { skipReadyMessage?: boolean },
+  ): Promise<string[]> {
     try {
       Logger.info("Starting name collection phase");
 
@@ -60,7 +64,9 @@ export class NameCollector {
 
       await this.resolveConflicts(onTranscript);
 
-      await this.speechService.speak(t("setup.ready", { name: this.collectedNames[0] }));
+      if (!options?.skipReadyMessage) {
+        await this.speechService.speak(t("setup.ready", { name: this.collectedNames[0] }));
+      }
 
       return this.collectedNames;
     } catch (error) {
