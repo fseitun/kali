@@ -486,6 +486,68 @@ export class Orchestrator {
   }
 
   /**
+   * Handles ASK_RIDDLE: stores riddle text, four options, and correct letter in pendingAnimalEncounter.
+   * LLM should follow with NARRATE to speak the riddle and options.
+   */
+  private async handleAskRiddle(primitive: {
+    action: "ASK_RIDDLE";
+    text: string;
+    options: [string, string, string, string];
+    correctLetter: "A" | "B" | "C" | "D";
+  }): Promise<void> {
+    const state = this.stateManager.getState();
+    const game = state.game as Record<string, unknown> | undefined;
+    const pending = game?.pendingAnimalEncounter as Record<string, unknown> | null | undefined;
+    if (pending?.phase !== "riddle") {
+      return;
+    }
+    if (
+      !Array.isArray(primitive.options) ||
+      primitive.options.length !== 4 ||
+      !["A", "B", "C", "D"].includes(primitive.correctLetter)
+    ) {
+      Logger.warn(
+        `ASK_RIDDLE ignored: need options length 4 and correctLetter A-D, got ${primitive.options?.length ?? 0}, ${primitive.correctLetter}`,
+      );
+      return;
+    }
+    this.stateManager.set("game.pendingAnimalEncounter", {
+      ...pending,
+      riddlePrompt: primitive.text,
+      riddleOptions: primitive.options,
+      correctLetter: primitive.correctLetter,
+    } as Record<string, unknown>);
+    Logger.info(`Ask riddle stored; correctLetter=${primitive.correctLetter}`);
+  }
+
+  /**
+   * If PLAYER_ANSWERED is a riddle choice (phase=riddle with correctLetter set), resolves and returns result.
+   * Otherwise returns false.
+   */
+  private async tryHandleRiddleAnswer(
+    answer: string,
+    _context: ExecutionContext,
+  ): Promise<false | { correct: boolean }> {
+    const state = this.stateManager.getState();
+    const game = state.game as Record<string, unknown> | undefined;
+    const currentTurn = game?.turn as string | undefined;
+    const pending = game?.pendingAnimalEncounter as
+      | { phase?: string; playerId?: string; correctLetter?: string }
+      | null
+      | undefined;
+    if (pending?.phase !== "riddle" || pending.playerId !== currentTurn || !pending.correctLetter) {
+      return false;
+    }
+    const letter = answer.trim().charAt(0).toUpperCase();
+    if (!["A", "B", "C", "D"].includes(letter)) {
+      return false;
+    }
+    const correct = letter === pending.correctLetter;
+    await this.handleRiddleResolved({ action: "RIDDLE_RESOLVED", correct });
+    return { correct };
+  }
+
+  /**
    * If PLAYER_ANSWERED is a power-check roll, handles it.
    * Returns false if not handled.
    * Returns { handled: true, passed: true } on win.
@@ -804,6 +866,11 @@ export class Orchestrator {
         break;
       }
 
+      case "ASK_RIDDLE": {
+        await this.handleAskRiddle(primitive);
+        break;
+      }
+
       case "RIDDLE_RESOLVED": {
         await this.handleRiddleResolved(primitive);
         break;
@@ -812,6 +879,16 @@ export class Orchestrator {
       case "PLAYER_ANSWERED": {
         Logger.info(`Player answered: "${primitive.answer}"`);
         this.stateManager.set("game.lastAnswer", primitive.answer);
+
+        // Riddle phase with structured options: orchestrator resolves A/B/C/D
+        const riddleResult = await this.tryHandleRiddleAnswer(primitive.answer, context);
+        if (riddleResult) {
+          context.skipTrailingNarrateForPowerCheck = true;
+          const msg = riddleResult.correct ? t("game.riddleCorrect") : t("game.riddleIncorrect");
+          this.statusIndicator.setState("speaking");
+          await this.speechService.speak(msg);
+          break;
+        }
 
         // Power check / revenge: orchestrator handles roll evaluation
         const powerCheckResult = await this.tryHandlePowerCheckAnswer(primitive.answer, context);

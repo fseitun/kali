@@ -265,6 +265,140 @@ describe("Validator - New Primitives", () => {
     });
   });
 
+  describe("ASK_RIDDLE", () => {
+    it("accepts valid ASK_RIDDLE with four options and correctLetter", () => {
+      const stateWithRiddle = {
+        ...mockState,
+        game: {
+          ...mockState.game,
+          pendingAnimalEncounter: {
+            position: 5,
+            power: 3,
+            playerId: "p1",
+            phase: "riddle",
+          },
+        },
+      };
+      const actions = [
+        {
+          action: "ASK_RIDDLE",
+          text: "Where does the penguin live?",
+          options: ["Desert", "Ocean", "Arctic", "Forest"],
+          correctLetter: "C",
+        },
+      ];
+      const result = validateActions(
+        actions,
+        stateWithRiddle,
+        mockStateManager as unknown as StateManager,
+      );
+      expect(result.valid).toBe(true);
+    });
+
+    it("rejects ASK_RIDDLE with wrong options length", () => {
+      const stateWithRiddle = {
+        ...mockState,
+        game: {
+          ...mockState.game,
+          pendingAnimalEncounter: { position: 5, power: 3, playerId: "p1", phase: "riddle" },
+        },
+      };
+      const actions = [
+        {
+          action: "ASK_RIDDLE",
+          text: "Q?",
+          options: ["A", "B", "C"],
+          correctLetter: "A",
+        },
+      ];
+      const result = validateActions(
+        actions,
+        stateWithRiddle,
+        mockStateManager as unknown as StateManager,
+      );
+      expect(result.valid).toBe(false);
+      expect(result.error).toContain("options");
+    });
+
+    it("rejects ASK_RIDDLE with invalid correctLetter", () => {
+      const stateWithRiddle = {
+        ...mockState,
+        game: {
+          ...mockState.game,
+          pendingAnimalEncounter: { position: 5, power: 3, playerId: "p1", phase: "riddle" },
+        },
+      };
+      const actions = [
+        {
+          action: "ASK_RIDDLE",
+          text: "Q?",
+          options: ["A", "B", "C", "D"],
+          correctLetter: "X",
+        },
+      ];
+      const result = validateActions(
+        actions,
+        stateWithRiddle,
+        mockStateManager as unknown as StateManager,
+      );
+      expect(result.valid).toBe(false);
+      expect(result.error).toContain("correctLetter");
+    });
+  });
+
+  describe("PLAYER_ANSWERED during riddle phase", () => {
+    it("allows A/B/C/D when pending riddle has correctLetter (not at position 0)", () => {
+      const stateWithRiddle = {
+        ...mockState,
+        game: {
+          ...mockState.game,
+          pendingAnimalEncounter: {
+            position: 5,
+            power: 3,
+            playerId: "p1",
+            phase: "riddle",
+            correctLetter: "B",
+            riddleOptions: ["Desert", "Ocean", "Arctic", "Forest"],
+          },
+        },
+      };
+      (mockState.players as Record<string, Record<string, unknown>>).p1.position = 5;
+      for (const letter of ["A", "B", "C", "D"]) {
+        const result = validateActions(
+          [{ action: "PLAYER_ANSWERED", answer: letter }],
+          stateWithRiddle,
+          mockStateManager as unknown as StateManager,
+        );
+        expect(result.valid).toBe(true);
+      }
+    });
+
+    it("rejects non-A/B/C/D during riddle phase with correctLetter", () => {
+      const stateWithRiddle = {
+        ...mockState,
+        game: {
+          ...mockState.game,
+          pendingAnimalEncounter: {
+            position: 5,
+            power: 3,
+            playerId: "p1",
+            phase: "riddle",
+            correctLetter: "B",
+          },
+        },
+      };
+      (mockState.players as Record<string, Record<string, unknown>>).p1.position = 5;
+      const result = validateActions(
+        [{ action: "PLAYER_ANSWERED", answer: "E" }],
+        stateWithRiddle,
+        mockStateManager as unknown as StateManager,
+      );
+      expect(result.valid).toBe(false);
+      expect(result.errorCode).toBe("invalidAnswer");
+      expect(result.error).toContain("A, B, C, or D");
+    });
+  });
+
   describe("Old Primitives Rejection", () => {
     it("rejects ADD_STATE", () => {
       const actions = [{ action: "ADD_STATE", path: "players.p1.position", value: 5 }];

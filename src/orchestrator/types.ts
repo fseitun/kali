@@ -116,6 +116,7 @@ export type PrimitiveAction =
   | SetStateAction
   | PlayerRolledAction
   | PlayerAnsweredAction
+  | AskRiddleAction
   | RiddleResolvedAction;
 
 /**
@@ -166,6 +167,18 @@ export interface PlayerRolledAction {
 export interface PlayerAnsweredAction {
   action: "PLAYER_ANSWERED";
   answer: string;
+}
+
+/**
+ * Asks a structured riddle with exactly four options (A–D) during an animal encounter.
+ * Orchestrator stores options and correctLetter; when user answers with PLAYER_ANSWERED "A"|"B"|"C"|"D",
+ * orchestrator resolves correctness. The correct answer may be any topic, not necessarily the square's animal/habitat.
+ */
+export interface AskRiddleAction {
+  action: "ASK_RIDDLE";
+  text: string;
+  options: [string, string, string, string];
+  correctLetter: "A" | "B" | "C" | "D";
 }
 
 /**

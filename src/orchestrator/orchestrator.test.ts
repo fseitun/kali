@@ -169,6 +169,105 @@ describe("Orchestrator - New Action Handlers", () => {
     });
   });
 
+  describe("ASK_RIDDLE", () => {
+    it("stores riddle text, options, and correctLetter in pendingAnimalEncounter", async () => {
+      (testState.game as any).pendingAnimalEncounter = {
+        position: 5,
+        power: 3,
+        playerId: "p1",
+        phase: "riddle",
+      };
+      mockStateManager.get = vi.fn((path: string) => {
+        if (path === "game.pendingAnimalEncounter")
+          return (testState.game as any).pendingAnimalEncounter;
+        if (path === "game.turn") return "p1";
+        if (path === "players.p1.position") return 5;
+        return undefined;
+      });
+
+      const actions: PrimitiveAction[] = [
+        {
+          action: "ASK_RIDDLE",
+          text: "Where does the penguin live?",
+          options: ["Desert", "Ocean", "Arctic", "Forest"],
+          correctLetter: "C",
+        },
+      ];
+
+      await orchestrator.testExecuteActions(actions);
+
+      expect(mockStateManager.set).toHaveBeenCalledWith(
+        "game.pendingAnimalEncounter",
+        expect.objectContaining({
+          phase: "riddle",
+          riddlePrompt: "Where does the penguin live?",
+          riddleOptions: ["Desert", "Ocean", "Arctic", "Forest"],
+          correctLetter: "C",
+        }),
+      );
+    });
+  });
+
+  describe("PLAYER_ANSWERED riddle phase", () => {
+    it("resolves correct riddle choice and transitions to powerCheck", async () => {
+      (testState.game as any).pendingAnimalEncounter = {
+        position: 5,
+        power: 3,
+        playerId: "p1",
+        phase: "riddle",
+        correctLetter: "B",
+      };
+      mockStateManager.get = vi.fn((path: string) => {
+        if (path === "game.pendingAnimalEncounter")
+          return (testState.game as any).pendingAnimalEncounter;
+        if (path === "game.turn") return "p1";
+        if (path === "players.p1.position") return 5;
+        return undefined;
+      });
+
+      const actions: PrimitiveAction[] = [{ action: "PLAYER_ANSWERED", answer: "B" }];
+
+      await orchestrator.testExecuteActions(actions);
+
+      expect(mockStateManager.set).toHaveBeenCalledWith(
+        "game.pendingAnimalEncounter",
+        expect.objectContaining({
+          phase: "powerCheck",
+          riddleCorrect: true,
+        }),
+      );
+    });
+
+    it("resolves wrong riddle choice and transitions to powerCheck with riddleCorrect false", async () => {
+      (testState.game as any).pendingAnimalEncounter = {
+        position: 5,
+        power: 3,
+        playerId: "p1",
+        phase: "riddle",
+        correctLetter: "C",
+      };
+      mockStateManager.get = vi.fn((path: string) => {
+        if (path === "game.pendingAnimalEncounter")
+          return (testState.game as any).pendingAnimalEncounter;
+        if (path === "game.turn") return "p1";
+        if (path === "players.p1.position") return 5;
+        return undefined;
+      });
+
+      const actions: PrimitiveAction[] = [{ action: "PLAYER_ANSWERED", answer: "A" }];
+
+      await orchestrator.testExecuteActions(actions);
+
+      expect(mockStateManager.set).toHaveBeenCalledWith(
+        "game.pendingAnimalEncounter",
+        expect.objectContaining({
+          phase: "powerCheck",
+          riddleCorrect: false,
+        }),
+      );
+    });
+  });
+
   describe("Board Mechanics - Orchestrator Control", () => {
     it("auto-applies ladder after position change", async () => {
       testState.board = {

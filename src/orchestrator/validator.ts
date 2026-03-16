@@ -88,6 +88,25 @@ function applyActionToMockState(state: GameState, primitive: PrimitiveAction): G
     } else if (primitive.action === "PLAYER_ANSWERED" && "answer" in primitive) {
       const game = mockState.game as Record<string, unknown>;
       const currentTurn = game?.turn as string | undefined;
+      const pending = game?.pendingAnimalEncounter as
+        | { phase?: string; playerId?: string; correctLetter?: string }
+        | null
+        | undefined;
+      const answer = primitive.answer.trim();
+      const letter = answer.charAt(0).toUpperCase();
+      if (
+        pending?.phase === "riddle" &&
+        pending.playerId === currentTurn &&
+        pending.correctLetter &&
+        ["A", "B", "C", "D"].includes(letter)
+      ) {
+        game.pendingAnimalEncounter = {
+          ...pending,
+          phase: "powerCheck",
+          riddleCorrect: letter === pending.correctLetter,
+        };
+        return mockState;
+      }
       const decisionPoints = mockState.decisionPoints as
         | Array<{
             position: number;
@@ -104,7 +123,6 @@ function applyActionToMockState(state: GameState, primitive: PrimitiveAction): G
       const choices = (player.activeChoices ?? {}) as Record<string, number>;
       if (choices[String(position)] !== undefined) return mockState;
 
-      const answer = primitive.answer.trim();
       let target: number | null = null;
       // Position 0: "A" -> 1, "B" -> 15 (fall through to positionOptions if no match)
       if (position === 0) {
@@ -124,6 +142,21 @@ function applyActionToMockState(state: GameState, primitive: PrimitiveAction): G
       if (target !== null) {
         player.activeChoices ??= {};
         (player.activeChoices as Record<string, number>)[String(position)] = target;
+      }
+    } else if (
+      primitive.action === "ASK_RIDDLE" &&
+      "options" in primitive &&
+      "correctLetter" in primitive
+    ) {
+      const game = mockState.game as Record<string, unknown>;
+      const pending = game?.pendingAnimalEncounter as Record<string, unknown> | null | undefined;
+      if (pending?.phase === "riddle") {
+        game.pendingAnimalEncounter = {
+          ...pending,
+          riddlePrompt: (primitive as { text?: string }).text,
+          riddleOptions: (primitive as { options: unknown }).options,
+          correctLetter: (primitive as { correctLetter: string }).correctLetter,
+        };
       }
     } else if (primitive.action === "RIDDLE_RESOLVED" && "correct" in primitive) {
       const game = mockState.game as Record<string, unknown>;
@@ -232,6 +265,8 @@ function validateAction(
       return validatePlayerRolled(primitive, state, index, orchestrator);
     case "PLAYER_ANSWERED":
       return validatePlayerAnswered(primitive, state, index);
+    case "ASK_RIDDLE":
+      return validateAskRiddle(primitive, state, index);
     case "RIDDLE_RESOLVED":
       return validateRiddleResolved(primitive, state, index, orchestrator);
     default:
@@ -612,6 +647,24 @@ function validatePlayerAnswered(
     | undefined;
 
   if (!currentTurn || !currentPlayer) return { valid: true };
+
+  // Riddle phase with structured options: A/B/C/D is a riddle choice (before path-choice rule)
+  const pending = game?.pendingAnimalEncounter as
+    | { phase?: string; playerId?: string; correctLetter?: string }
+    | null
+    | undefined;
+  const riddleLetter = answer.charAt(0).toUpperCase();
+  if (pending?.phase === "riddle" && pending.playerId === currentTurn && pending.correctLetter) {
+    if (["A", "B", "C", "D"].includes(riddleLetter)) {
+      return { valid: true };
+    }
+    return {
+      valid: false,
+      error: `PLAYER_ANSWERED at index ${index}: During riddle phase, answer must be one of A, B, C, or D. Got "${answer.trim().slice(0, 20)}".`,
+      errorCode: "invalidAnswer",
+    };
+  }
+
   const position = currentPlayer.position as number | undefined;
   const choices = currentPlayer.activeChoices as Record<string, number> | undefined;
   const hasChoiceAt = (pos: number): boolean => choices?.[String(pos)] !== undefined;
@@ -655,6 +708,41 @@ function validatePlayerAnswered(
     return { valid: true };
   }
 
+  return { valid: true };
+}
+
+function validateAskRiddle(
+  action: PrimitiveAction,
+  _state: GameState,
+  index: number,
+): ValidationResult {
+  const actionRecord = action as unknown as Record<string, unknown>;
+  const textValidation = validateField(actionRecord, "text", "string", "ASK_RIDDLE", index);
+  if (!textValidation.valid) return textValidation;
+  if (!Array.isArray(actionRecord.options) || actionRecord.options.length !== 4) {
+    return {
+      valid: false,
+      error: `ASK_RIDDLE at index ${index}: options must be an array of exactly 4 strings`,
+      errorCode: "invalidActionFormat",
+    };
+  }
+  for (let i = 0; i < 4; i++) {
+    if (typeof actionRecord.options[i] !== "string") {
+      return {
+        valid: false,
+        error: `ASK_RIDDLE at index ${index}: options[${i}] must be a string`,
+        errorCode: "invalidActionFormat",
+      };
+    }
+  }
+  const letter = actionRecord.correctLetter;
+  if (letter !== "A" && letter !== "B" && letter !== "C" && letter !== "D") {
+    return {
+      valid: false,
+      error: `ASK_RIDDLE at index ${index}: correctLetter must be "A", "B", "C", or "D"`,
+      errorCode: "invalidActionFormat",
+    };
+  }
   return { valid: true };
 }
 

@@ -30,6 +30,8 @@ export const esAR = {
     position: "Estás en el casillero {position}.",
     powerCheckPass: "Pasaste.",
     powerCheckFail: "No alcanzó.",
+    riddleCorrect: "¡Correcto! Tirá 2 dados para la prueba de poder.",
+    riddleIncorrect: "No acertaste. Tirá 1 dado para la prueba.",
   },
   ui: {
     startButton: "Jugar",

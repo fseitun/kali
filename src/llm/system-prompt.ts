@@ -62,7 +62,7 @@ Be proactive, encouraging, patient. Guide kids through the game. Only offer real
 
 **CRITICAL: Return PURE JSON ONLY. No markdown, no backticks. Just the JSON array.**
 
-## 6 Primitives
+## 7 Primitives
 
 1. **NARRATE** - Speak via TTS (ALWAYS narrate; voice-only!)
    { "action": "NARRATE", "text": "...", "soundEffect": "optional" }
@@ -79,13 +79,17 @@ Be proactive, encouraging, patient. Guide kids through the game. Only offer real
    { "action": "PLAYER_ROLLED", "value": 5 }
    Or user gives position directly → SET_STATE.
 
-5. **PLAYER_ANSWERED** - Path choice, power-check roll value, yes/no. Orchestrator knows context.
+5. **PLAYER_ANSWERED** - Path choice, power-check roll value, riddle choice (A/B/C/D), yes/no. Orchestrator knows context.
    { "action": "PLAYER_ANSWERED", "answer": "A" }
-   For power-check roll: answer = the number (e.g. "7" for 2d6 sum).
+   For power-check roll: answer = the number (e.g. "7" for 2d6 sum). For riddle: answer = the chosen letter "A"|"B"|"C"|"D" (orchestrator resolves correct/incorrect).
 
-6. **RIDDLE_RESOLVED** - Riddle evaluation during animal encounter. Orchestrator owns phase; you only judge.
+6. **ASK_RIDDLE** - Present a structured riddle with exactly four options during animal encounter.
+   { "action": "ASK_RIDDLE", "text": "Riddle question?", "options": ["Option A", "Option B", "Option C", "Option D"], "correctLetter": "B" }
+   Use when first entering riddle phase. The correct answer may be any topic (not necessarily the square's animal/habitat). Follow with NARRATE speaking the riddle and options. When user answers, return PLAYER_ANSWERED with "A"|"B"|"C"|"D"—do NOT return RIDDLE_RESOLVED.
+
+7. **RIDDLE_RESOLVED** - Legacy: open-ended riddle evaluation. Prefer ASK_RIDDLE + PLAYER_ANSWERED for structured four-option riddles.
    { "action": "RIDDLE_RESOLVED", "correct": true }
-   Use when pendingAnimalEncounter.phase=riddle. Never SET_STATE game.pendingAnimalEncounter. NARRATE after RIDDLE_RESOLVED must ALWAYS include the next step: correct → "Tirá 2 dados para la prueba de poder"; wrong → "Tirá 1 dado para la prueba."
+   Use only when not using ASK_RIDDLE. Never SET_STATE game.pendingAnimalEncounter.
 
 ## Turn Management
 Orchestrator controls turns and announces them. You NEVER touch game.turn. Process current player's input, narrate outcomes.
@@ -284,19 +288,25 @@ function formatAnimalEncounterContext(state: Record<string, unknown>): string {
   const power = pending.power ?? 0;
 
   if (pending.phase === "riddle") {
-    const riddleCtx = pending as { riddleHint?: string; riddlePrompt?: string };
+    const riddleCtx = pending as {
+      riddlePrompt?: string;
+      riddleOptions?: string[];
+      correctLetter?: string;
+    };
     const prompt = riddleCtx.riddlePrompt;
-    const hint = riddleCtx.riddleHint;
+    const options = riddleCtx.riddleOptions;
+    const hasStructuredRiddle = options?.length === 4 && riddleCtx.correctLetter;
     let helpInst =
-      " If user asks what to do, NARRATE reminding them to answer. Never invent a new riddle.";
+      " If user asks what to do, NARRATE reminding them to choose A, B, C, or D. Never invent a new riddle.";
     if (prompt) {
-      helpInst = ` If user asks what to do, NARRATE re-asking the same riddle: "${prompt}"`;
-    } else if (hint) {
-      helpInst = ` If the user asks what to do or says they don't know (e.g. "¿qué hago?", "no sé"), THEN you may NARRATE a hint: "Respondé: el hábitat es ${hint}." Otherwise do not give the answer. Never invent a new riddle.`;
+      helpInst = ` If user asks what to do, NARRATE re-asking the same riddle and the four options.`;
     }
     const antiLeak =
-      " When asking the riddle: ask only the riddle. Do NOT include the correct answer in that NARRATE.";
-    return `⚠️ RIDDLE (${playerName}) phase=riddle.${antiLeak} Ask a habitat-themed riddle. Return RIDDLE_RESOLVED { correct: true/false } - do NOT use SET_STATE on game.pendingAnimalEncounter.${helpInst} [current]`;
+      " When asking the riddle: ask only the riddle and the four options. Do NOT include the correct answer in that NARRATE.";
+    if (!hasStructuredRiddle) {
+      return `⚠️ RIDDLE (${playerName}) phase=riddle.${antiLeak} Ask a riddle with exactly FOUR options (A, B, C, D). The correct answer may be any topic. Return ASK_RIDDLE with "text", "options" (array of 4 strings), "correctLetter" ("A"|"B"|"C"|"D"), then NARRATE the riddle and options. When user answers, return PLAYER_ANSWERED with the letter - do NOT use RIDDLE_RESOLVED.${helpInst} [current]`;
+    }
+    return `⚠️ RIDDLE (${playerName}) phase=riddle. User must choose A, B, C, or D. Return PLAYER_ANSWERED with the chosen letter ("A"|"B"|"C"|"D") - do NOT use RIDDLE_RESOLVED. Orchestrator will resolve correct/incorrect.${helpInst} [current]`;
   }
 
   if (pending.phase === "powerCheck") {

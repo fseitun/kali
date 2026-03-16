@@ -297,7 +297,11 @@ describe("BoardEffectsHandler", () => {
 
       expect(stateManager.get("players.p1.points")).toBe(0);
       expect(mockProcessTranscript).toHaveBeenCalledWith(
-        expect.stringContaining("RIDDLE_RESOLVED"),
+        expect.stringContaining("ASK_RIDDLE"),
+        expect.anything(),
+      );
+      expect(mockProcessTranscript).toHaveBeenCalledWith(
+        expect.stringMatching(/four options|FOUR options/i),
         expect.anything(),
       );
       expect(stateManager.get("game.pendingAnimalEncounter")).toEqual({

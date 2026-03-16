@@ -30,6 +30,8 @@ export const enUS = {
     position: "You're at position {position}.",
     powerCheckPass: "You passed.",
     powerCheckFail: "No luck.",
+    riddleCorrect: "Correct! Roll 2 dice for the power check.",
+    riddleIncorrect: "Wrong. Roll 1 die for the power check.",
   },
   ui: {
     startButton: "Start",
