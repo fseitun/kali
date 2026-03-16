@@ -310,7 +310,11 @@ function formatAnimalEncounterContext(state: Record<string, unknown>): string {
     if (!hasStructuredRiddle) {
       return `⚠️ RIDDLE (${playerName}) phase=riddle.${antiLeak} Ask a riddle with exactly FOUR options (A, B, C, D). The riddle MUST be about the animal kingdom (e.g. animals, habitats, behavior, diet, classification). Return ASK_RIDDLE with "text", "options" (array of 4 strings), "correctLetter" ("A"|"B"|"C"|"D"), then NARRATE the riddle and options. When user answers, return PLAYER_ANSWERED with the letter - do NOT use RIDDLE_RESOLVED.${helpInst} [current]`;
     }
-    return `⚠️ RIDDLE (${playerName}) phase=riddle. User must choose A, B, C, or D. Return PLAYER_ANSWERED with the chosen letter ("A"|"B"|"C"|"D") - do NOT use RIDDLE_RESOLVED. Orchestrator will resolve correct/incorrect.${helpInst} [current]`;
+    const optionsList = options?.join(", ") ?? "";
+    const mapInst =
+      optionsList &&
+      ` Current options: ${optionsList}. Map user words (e.g. "la hormiga", "hormiga", "la A") to that letter and return PLAYER_ANSWERED with "A"|"B"|"C"|"D".`;
+    return `⚠️ RIDDLE (${playerName}) phase=riddle. User must choose A, B, C, or D. Return PLAYER_ANSWERED with the chosen letter ("A"|"B"|"C"|"D") - do NOT use RIDDLE_RESOLVED. Orchestrator will resolve correct/incorrect.${mapInst}${helpInst} [current]`;
   }
 
   if (pending.phase === "powerCheck") {

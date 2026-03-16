@@ -340,19 +340,59 @@ export class Orchestrator {
             Logger.robot(
               `LLM retry returned ${retryActions.length} action(s): ${retryActions.map((a) => a.action).join(", ")}`,
             );
-            return await this.runValidatedActions(retryActions, context, "orchestrator");
+            const normalizedRetry = this.normalizeRiddleAnswerFromTranscript(
+              retryActions,
+              transcript,
+            );
+            return await this.runValidatedActions(normalizedRetry, context, "orchestrator");
           }
         }
         Logger.warn("No actions returned from LLM");
         await this.speechService.speak(t("llm.allRetriesFailed"));
         return { success: false, shouldAdvanceTurn: false };
       }
-      return await this.runValidatedActions(actions, context, "orchestrator");
+      const normalizedActions = this.normalizeRiddleAnswerFromTranscript(actions, transcript);
+      return await this.runValidatedActions(normalizedActions, context, "orchestrator");
     } catch (error) {
       Logger.error("Orchestrator error:", error);
       await this.speechService.speak(t("errors.somethingWentWrong"));
       return { success: false, shouldAdvanceTurn: false };
     }
+  }
+
+  /**
+   * When in riddle phase with structured options, resolve the user's transcript to a letter.
+   * If the transcript maps to a letter (e.g. "la hormiga" → A), replace the first PLAYER_ANSWERED
+   * answer with that letter so correctness is based on what the user said, not the LLM's mapping.
+   */
+  private normalizeRiddleAnswerFromTranscript(
+    actions: PrimitiveAction[],
+    transcript: string,
+  ): PrimitiveAction[] {
+    const state = this.stateManager.getState();
+    const game = state.game as Record<string, unknown> | undefined;
+    const pending = game?.pendingAnimalEncounter as
+      | { phase?: string; riddleOptions?: string[]; correctLetter?: string }
+      | null
+      | undefined;
+    if (
+      pending?.phase !== "riddle" ||
+      !Array.isArray(pending.riddleOptions) ||
+      pending.riddleOptions.length !== 4 ||
+      !pending.correctLetter
+    ) {
+      return actions;
+    }
+    const firstIndex = actions.findIndex((a) => a.action === "PLAYER_ANSWERED");
+    if (firstIndex === -1) return actions;
+    const letterFromTranscript = resolveRiddleAnswerToLetter(transcript, pending.riddleOptions);
+    if (letterFromTranscript === null) return actions;
+    return actions.map((a, i) => {
+      if (i === firstIndex && a.action === "PLAYER_ANSWERED" && "answer" in a) {
+        return { ...a, answer: letterFromTranscript };
+      }
+      return a;
+    });
   }
 
   private async runValidatedActions(

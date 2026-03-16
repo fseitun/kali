@@ -297,6 +297,37 @@ describe("Orchestrator - New Action Handlers", () => {
         }),
       );
     });
+
+    it("prefers transcript over LLM answer: user said 'la hormiga' (A), LLM returned D → riddleCorrect true", async () => {
+      (testState.game as any).pendingAnimalEncounter = {
+        position: 5,
+        power: 3,
+        playerId: "p1",
+        phase: "riddle",
+        correctLetter: "A",
+        riddleOptions: ["A) Hormiga", "B) Elefante", "C) Puma", "D) Delfín"],
+      };
+      mockStateManager.getState = vi.fn(() => testState);
+      mockStateManager.get = vi.fn((path: string) => {
+        if (path === "game.pendingAnimalEncounter")
+          return (testState.game as any).pendingAnimalEncounter;
+        if (path === "game.turn") return "p1";
+        if (path === "players.p1.position") return 5;
+        return undefined;
+      });
+      mockLLM.getActions = vi.fn(async () => [{ action: "PLAYER_ANSWERED", answer: "D" }]) as any;
+
+      const result = await orchestrator.handleTranscript("la hormiga");
+
+      expect(result.success).toBe(true);
+      expect(mockStateManager.set).toHaveBeenCalledWith(
+        "game.pendingAnimalEncounter",
+        expect.objectContaining({
+          phase: "powerCheck",
+          riddleCorrect: true,
+        }),
+      );
+    });
   });
 
   describe("Board Mechanics - Orchestrator Control", () => {
