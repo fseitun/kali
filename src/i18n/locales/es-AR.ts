@@ -59,6 +59,13 @@ export const esAR = {
   errors: {
     validationFailed: "Disculpá, no te entendí.",
     invalidDiceRoll: "Ese número no se puede sacar con el dado. Tirá de nuevo.",
+    chooseForkFirst: "Elegí la dirección en la bifurcación primero, después tirá.",
+    resolveSquareEffectFirst: "Terminá lo que pasa en esta casilla primero.",
+    wrongPhaseForRoll: "Ese número no es lo que necesito ahora.",
+    invalidAnswer: "No entendí bien. Intentá de nuevo.",
+    wrongTurn: "No es tu turno para cambiar eso.",
+    setStateForbidden: "No puedo cambiar eso por vos.",
+    pathNotAllowed: "Ese movimiento no está permitido ahora.",
     microphoneAccess: "No puedo acceder al micrófono.",
     modelDownload: "Error al descargar el modelo.",
     ttsNotSupported: "El sistema de voz no es compatible.",

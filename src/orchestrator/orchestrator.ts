@@ -19,6 +19,19 @@ import {
 } from "./types";
 import { validateActions } from "./validator";
 
+/** Maps validation errorCode to i18n key; fallback to errors.validationFailed for unknown/missing. */
+const VALIDATION_ERROR_I18N: Record<string, string> = {
+  invalidDiceRoll: "errors.invalidDiceRoll",
+  chooseForkFirst: "errors.chooseForkFirst",
+  resolveSquareEffectFirst: "errors.resolveSquareEffectFirst",
+  wrongPhaseForRoll: "errors.wrongPhaseForRoll",
+  invalidAnswer: "errors.invalidAnswer",
+  wrongTurn: "errors.wrongTurn",
+  setStateForbidden: "errors.setStateForbidden",
+  pathNotAllowed: "errors.pathNotAllowed",
+  invalidActionFormat: "errors.validationFailed",
+};
+
 /**
  * Core orchestrator that processes voice transcripts through LLM,
  * validates generated actions, and executes them on game state.
@@ -335,11 +348,11 @@ export class Orchestrator {
 
     if (!validation.valid) {
       Logger.error("Validation failed:", validation.error);
-      const message =
-        validation.errorCode === "invalidDiceRoll"
-          ? t("errors.invalidDiceRoll")
-          : t("errors.validationFailed");
-      await this.speechService.speak(message);
+      const i18nKey =
+        validation.errorCode && VALIDATION_ERROR_I18N[validation.errorCode]
+          ? VALIDATION_ERROR_I18N[validation.errorCode]
+          : "errors.validationFailed";
+      await this.speechService.speak(t(i18nKey));
       return { success: false, shouldAdvanceTurn: false };
     }
 

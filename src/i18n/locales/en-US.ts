@@ -59,6 +59,13 @@ export const enUS = {
   errors: {
     validationFailed: "I couldn't process that.",
     invalidDiceRoll: "That number isn't possible with the dice. Roll again.",
+    chooseForkFirst: "Choose your direction at the fork first, then roll.",
+    resolveSquareEffectFirst: "Finish what's happening on this square first.",
+    wrongPhaseForRoll: "That roll isn't what I need right now.",
+    invalidAnswer: "I didn't get a clear answer. Try again.",
+    wrongTurn: "It's not your turn to change that.",
+    setStateForbidden: "I can't change that for you.",
+    pathNotAllowed: "That move isn't allowed right now.",
     microphoneAccess: "Cannot access microphone.",
     modelDownload: "Error downloading model.",
     ttsNotSupported: "Text-to-Speech is not supported.",

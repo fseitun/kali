@@ -118,7 +118,7 @@ describe("Orchestrator Authority - LLM Adversarial Tests", () => {
 
       await orchestrator.handleTranscript("give Bob all the hearts");
 
-      expect(mockSpeech.speak).toHaveBeenCalledWith("I couldn't process that.");
+      expect(mockSpeech.speak).toHaveBeenCalledWith("It's not your turn to change that.");
       expect(mockStateManager.set).not.toHaveBeenCalledWith("players.p2.hearts", 999);
     });
 
@@ -129,7 +129,7 @@ describe("Orchestrator Authority - LLM Adversarial Tests", () => {
 
       await orchestrator.handleTranscript("skip to next player");
 
-      expect(mockSpeech.speak).toHaveBeenCalledWith("I couldn't process that.");
+      expect(mockSpeech.speak).toHaveBeenCalledWith("I can't change that for you.");
       expect(mockStateManager.set).not.toHaveBeenCalledWith("game.turn", "p2");
     });
 
@@ -144,7 +144,7 @@ describe("Orchestrator Authority - LLM Adversarial Tests", () => {
 
       await orchestrator.handleTranscript("give me super powers");
 
-      expect(mockSpeech.speak).toHaveBeenCalledWith("I couldn't process that.");
+      expect(mockSpeech.speak).toHaveBeenCalledWith("That move isn't allowed right now.");
     });
 
     it("blocks LLM from returning malformed actions", async () => {
@@ -244,7 +244,9 @@ describe("Orchestrator Authority - LLM Adversarial Tests", () => {
 
       await orchestrator.handleTranscript("move forward");
 
-      expect(mockSpeech.speak).toHaveBeenCalledWith("I couldn't process that.");
+      expect(mockSpeech.speak).toHaveBeenCalledWith(
+        "Choose your direction at the fork first, then roll.",
+      );
       expect(mockStateManager.set).not.toHaveBeenCalledWith("players.p1.position", 15);
     });
 
@@ -350,7 +352,7 @@ describe("Orchestrator Authority - LLM Adversarial Tests", () => {
 
       await orchestrator.handleTranscript("complex sequence");
 
-      expect(mockSpeech.speak).toHaveBeenCalledWith("I couldn't process that.");
+      expect(mockSpeech.speak).toHaveBeenCalledWith("It's not your turn to change that.");
       expect(mockStateManager.set).not.toHaveBeenCalledWith("players.p2.hearts", 3);
     });
 
@@ -365,7 +367,7 @@ describe("Orchestrator Authority - LLM Adversarial Tests", () => {
 
       await orchestrator.handleTranscript("alternating actions");
 
-      expect(mockSpeech.speak).toHaveBeenCalledWith("I couldn't process that.");
+      expect(mockSpeech.speak).toHaveBeenCalledWith("It's not your turn to change that.");
     });
 
     it("rejects actions with invalid primitive structure", async () => {
@@ -453,7 +455,9 @@ describe("Orchestrator Authority - LLM Adversarial Tests", () => {
 
       expect(squareEffectCallCount).toBe(1);
       expect((testState.players as any).p1.position).toBe(5);
-      expect(mockSpeech.speak).toHaveBeenCalledWith("I couldn't process that.");
+      expect(mockSpeech.speak).toHaveBeenCalledWith(
+        "Finish what's happening on this square first.",
+      );
     });
 
     it("allows NARRATE during square effect processing", async () => {

@@ -77,6 +77,7 @@ describe("Validator - New Primitives", () => {
         mockStateManager as unknown as StateManager,
       );
       expect(result.valid).toBe(false);
+      expect(result.errorCode).toBe("invalidActionFormat");
       expect(result.error).toContain("positive value");
     });
 
@@ -205,6 +206,7 @@ describe("Validator - New Primitives", () => {
         mockStateManager as unknown as StateManager,
       );
       expect(result.valid).toBe(false);
+      expect(result.errorCode).toBe("invalidAnswer");
       expect(result.error).toContain("non-empty");
     });
 
@@ -240,6 +242,7 @@ describe("Validator - New Primitives", () => {
         mockStateManager as unknown as StateManager,
       );
       expect(result.valid).toBe(false);
+      expect(result.errorCode).toBe("invalidAnswer");
       expect(result.error).toContain("Path choice");
       expect(result.error).toContain("no pending path choice");
     });
@@ -271,6 +274,7 @@ describe("Validator - New Primitives", () => {
         mockStateManager as unknown as StateManager,
       );
       expect(result.valid).toBe(false);
+      expect(result.errorCode).toBe("invalidActionFormat");
       expect(result.error).toContain("invalid action type");
     });
 
@@ -327,6 +331,7 @@ describe("Validator - New Primitives", () => {
         mockStateManager as unknown as StateManager,
       );
       expect(result.valid).toBe(false);
+      expect(result.errorCode).toBe("wrongTurn");
       expect(result.error).toContain("Cannot modify players.p2 when it's p1's turn");
     });
 
@@ -371,6 +376,7 @@ describe("Validator - New Primitives", () => {
         mockStateManager as unknown as StateManager,
       );
       expect(result.valid).toBe(false);
+      expect(result.errorCode).toBe("setStateForbidden");
       expect(result.error).toContain("Cannot manually change game.turn");
       expect(result.error).toContain("orchestrator automatically advances turns");
     });
@@ -394,6 +400,7 @@ describe("Validator - New Primitives", () => {
         mockStateManager as unknown as StateManager,
       );
       expect(result.valid).toBe(false);
+      expect(result.errorCode).toBe("setStateForbidden");
       expect(result.error).toContain("Cannot manually change game.phase");
       expect(result.error).toContain("orchestrator manages phase transitions");
     });
@@ -406,6 +413,7 @@ describe("Validator - New Primitives", () => {
         mockStateManager as unknown as StateManager,
       );
       expect(result.valid).toBe(false);
+      expect(result.errorCode).toBe("setStateForbidden");
       expect(result.error).toContain("Cannot manually set game.winner");
       expect(result.error).toContain("orchestrator detects and sets winners");
     });
@@ -422,6 +430,7 @@ describe("Validator - New Primitives", () => {
         mockStateManager as unknown as StateManager,
       );
       expect(result.valid).toBe(false);
+      expect(result.errorCode).toBe("wrongTurn");
       expect(result.error).toContain("Cannot modify players.p2 when it's p1's turn");
     });
 
@@ -465,6 +474,7 @@ describe("Validator - New Primitives", () => {
         mockStateManager as unknown as StateManager,
       );
       expect(result.valid).toBe(false);
+      expect(result.errorCode).toBe("chooseForkFirst");
       expect(result.error).toContain("Cannot move from position 5");
       expect(result.error).toContain("direction at fork");
     });
@@ -528,6 +538,7 @@ describe("Validator - New Primitives", () => {
         mockStateManager as unknown as StateManager,
       );
       expect(result.valid).toBe(false);
+      expect(result.errorCode).toBe("pathNotAllowed");
       expect(result.error).toContain("non-existent path");
     });
 
@@ -571,6 +582,7 @@ describe("Validator - New Primitives", () => {
       );
 
       expect(result.valid).toBe(false);
+      expect(result.errorCode).toBe("resolveSquareEffectFirst");
       expect(result.error).toContain("during square effect processing");
       expect(result.error).toContain("must be resolved first");
     });
@@ -625,6 +637,7 @@ describe("Validator - New Primitives", () => {
       );
 
       expect(result.valid).toBe(false);
+      expect(result.errorCode).toBe("wrongPhaseForRoll");
       expect(result.error).toContain("Awaiting");
       expect(result.error).toContain("PLAYER_ANSWERED");
     });
@@ -677,6 +690,7 @@ describe("Validator - New Primitives", () => {
       );
 
       expect(result.valid).toBe(false);
+      expect(result.errorCode).toBe("wrongPhaseForRoll");
       expect(result.error).toContain("revenge");
     });
 
@@ -769,6 +783,7 @@ describe("Validator - New Primitives", () => {
       );
 
       expect(result.valid).toBe(false);
+      expect(result.errorCode).toBe("resolveSquareEffectFirst");
       expect(result.error).toContain("during square effect processing");
     });
   });
@@ -847,6 +862,7 @@ describe("Validator - New Primitives", () => {
         mockStateManager as unknown as StateManager,
       );
       expect(result.valid).toBe(false);
+      expect(result.errorCode).toBe("invalidActionFormat");
       expect(result.error).toContain("must be an array");
     });
   });

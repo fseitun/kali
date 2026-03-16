@@ -10,6 +10,18 @@ export interface ValidationResult {
   errorCode?: string;
 }
 
+/**
+ * Stable error codes for validation failures. Used by orchestrator to pick i18n keys.
+ * - invalidDiceRoll: dice value out of range (1–6 or 2–12)
+ * - chooseForkFirst: move/roll not allowed until direction chosen at fork
+ * - resolveSquareEffectFirst: action not allowed during square effect
+ * - wrongPhaseForRoll: roll in wrong phase (e.g. animal encounter via PLAYER_ANSWERED)
+ * - invalidAnswer: empty or context-wrong answer
+ * - wrongTurn: modifying state of non-current player
+ * - setStateForbidden: SET_STATE on orchestrator-owned game state
+ * - pathNotAllowed: path not allowed or non-existent
+ * - invalidActionFormat: schema/format issues (missing/invalid fields, invalid action type)
+ */
 function hasPendingDecisionsInState(state: GameState): boolean {
   const game = state.game as Record<string, unknown> | undefined;
   const currentTurn = game?.turn as string | undefined;
@@ -154,6 +166,7 @@ export function validateActions(
     return {
       valid: false,
       error: "Actions must be an array",
+      errorCode: "invalidActionFormat",
     };
   }
 
@@ -165,6 +178,7 @@ export function validateActions(
       return {
         valid: false,
         error: `Action at index ${i} is not an object`,
+        errorCode: "invalidActionFormat",
       };
     }
     const result = validateAction(
@@ -195,6 +209,7 @@ function validateAction(
     return {
       valid: false,
       error: `Action at index ${index} is not an object`,
+      errorCode: "invalidActionFormat",
     };
   }
 
@@ -202,6 +217,7 @@ function validateAction(
     return {
       valid: false,
       error: `Action at index ${index} missing 'action' field`,
+      errorCode: "invalidActionFormat",
     };
   }
 
@@ -222,6 +238,7 @@ function validateAction(
       return {
         valid: false,
         error: `Action at index ${index} has invalid action type: ${(primitive as { action: string }).action}`,
+        errorCode: "invalidActionFormat",
       };
   }
 }
@@ -239,6 +256,7 @@ function validateField(
       return {
         valid: false,
         error: `${actionType} at index ${index} missing '${fieldName}' field`,
+        errorCode: "invalidActionFormat",
       };
     }
     return { valid: true };
@@ -248,6 +266,7 @@ function validateField(
     return {
       valid: false,
       error: `${actionType} at index ${index} has invalid '${fieldName}' field type`,
+      errorCode: "invalidActionFormat",
     };
   }
 
@@ -285,6 +304,7 @@ function validateTurnOwnership(
     return {
       valid: false,
       error: `${actionType} at index ${index}: Cannot modify players.${playerId} when it's ${currentTurn}'s turn. Modify players.${currentTurn} instead.`,
+      errorCode: "wrongTurn",
     };
   }
 
@@ -341,6 +361,7 @@ function validateDecisionBeforeMove(
     return {
       valid: false,
       error: `${actionType} at index ${index}: Cannot move from position ${currentPosition}. Player must choose direction at fork first. ${decisionPoint.prompt}`,
+      errorCode: "chooseForkFirst",
     };
   }
 
@@ -380,12 +401,14 @@ function validateSquareEffectPathRestriction(
     return {
       valid: false,
       error: `SET_STATE at index ${index}: Cannot set players.*.${key} during square effect processing. The orchestrator applies game-rule state; use NARRATE only.`,
+      errorCode: "resolveSquareEffectFirst",
     };
   }
   if (!SQUARE_EFFECT_ALLOWED_PLAYER_KEYS.has(key)) {
     return {
       valid: false,
       error: `SET_STATE at index ${index}: Path "${path}" is not allowed during square effect processing. Only explicit user-choice fields (e.g. activeChoices) are permitted.`,
+      errorCode: "resolveSquareEffectFirst",
     };
   }
   return { valid: true };
@@ -406,6 +429,7 @@ function validateSetState(
     return {
       valid: false,
       error: `SET_STATE at index ${index} missing 'value' field`,
+      errorCode: "invalidActionFormat",
     };
   }
 
@@ -425,6 +449,7 @@ function validateSetState(
         return {
           valid: false,
           error: `SET_STATE at index ${index}: Cannot manually change game.turn. The orchestrator automatically advances turns when all effects are complete. Remove this action and let the orchestrator handle turn advancement.`,
+          errorCode: "setStateForbidden",
         };
       }
     }
@@ -433,6 +458,7 @@ function validateSetState(
       return {
         valid: false,
         error: `SET_STATE at index ${index}: Cannot manually change game.phase via SET_STATE. The orchestrator manages phase transitions.`,
+        errorCode: "setStateForbidden",
       };
     }
 
@@ -440,6 +466,7 @@ function validateSetState(
       return {
         valid: false,
         error: `SET_STATE at index ${index}: Cannot manually set game.winner via SET_STATE. The orchestrator detects and sets winners.`,
+        errorCode: "setStateForbidden",
       };
     }
 
@@ -447,6 +474,7 @@ function validateSetState(
       return {
         valid: false,
         error: `SET_STATE at index ${index}: Cannot set game.pendingAnimalEncounter. The orchestrator owns encounter state. Use RIDDLE_RESOLVED or PLAYER_ANSWERED with roll value.`,
+        errorCode: "setStateForbidden",
       };
     }
 
@@ -465,6 +493,7 @@ function validateSetState(
       return {
         valid: false,
         error: `SET_STATE at index ${index} references non-existent path: ${action.path}`,
+        errorCode: "pathNotAllowed",
       };
     }
   }
@@ -488,6 +517,7 @@ function validatePlayerRolled(
       return {
         valid: false,
         error: `PLAYER_ROLLED at index ${index} requires positive value, got ${action.value}`,
+        errorCode: "invalidActionFormat",
       };
     }
   }
@@ -496,6 +526,7 @@ function validatePlayerRolled(
     return {
       valid: false,
       error: `PLAYER_ROLLED at index ${index}: Cannot roll dice during square effect processing. The square effect must be resolved first (fight/flee decision, etc.).`,
+      errorCode: "resolveSquareEffectFirst",
     };
   }
 
@@ -504,6 +535,7 @@ function validatePlayerRolled(
     return {
       valid: false,
       error: `PLAYER_ROLLED at index ${index}: Cannot roll until direction is chosen at fork. Choose path/branch first.`,
+      errorCode: "chooseForkFirst",
     };
   }
 
@@ -521,6 +553,7 @@ function validatePlayerRolled(
     return {
       valid: false,
       error: `PLAYER_ROLLED at index ${index}: Awaiting ${pending?.phase} roll for animal encounter. Use PLAYER_ANSWERED with the roll value, not PLAYER_ROLLED.`,
+      errorCode: "wrongPhaseForRoll",
     };
   }
 
@@ -563,6 +596,7 @@ function validatePlayerAnswered(
       return {
         valid: false,
         error: `PLAYER_ANSWERED at index ${index} requires non-empty answer`,
+        errorCode: "invalidAnswer",
       };
     }
   }
@@ -593,6 +627,7 @@ function validatePlayerAnswered(
       return {
         valid: false,
         error: `PLAYER_ANSWERED at index ${index}: Path choice (A/B) can only be applied when the current turn player is at position 0 with no fork choice. Current player has no pending path choice.`,
+        errorCode: "invalidAnswer",
       };
     }
     return { valid: true };
@@ -614,6 +649,7 @@ function validatePlayerAnswered(
       return {
         valid: false,
         error: `PLAYER_ANSWERED at index ${index}: Fork choice (${Object.keys(options).join("/")}) can only be applied when the current turn player is at position ${dp.position} with no fork choice. Current player has no pending choice at that position.`,
+        errorCode: "invalidAnswer",
       };
     }
     return { valid: true };
@@ -649,6 +685,7 @@ function validateRiddleResolved(
     return {
       valid: false,
       error: `RIDDLE_RESOLVED at index ${index}: No pending riddle for current player. Only use when phase=riddle.`,
+      errorCode: "wrongPhaseForRoll",
     };
   }
 
@@ -656,6 +693,7 @@ function validateRiddleResolved(
     return {
       valid: false,
       error: `RIDDLE_RESOLVED at index ${index}: Expected phase=riddle, got phase=${pending.phase}. Use PLAYER_ANSWERED for power-check roll.`,
+      errorCode: "wrongPhaseForRoll",
     };
   }
 
