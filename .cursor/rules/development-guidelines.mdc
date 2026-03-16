@@ -5,6 +5,10 @@ alwaysApply: true
 
 # Development Guidelines
 
+## Pre-release / Backward compatibility
+
+The project is not released. **Backward compatibility is not a requirement.** Do not preserve backward compatibility with previous APIs, state shapes, or file formats. Prefer straightforward changes and clean design over compatibility layers or migration paths.
+
 ## Code Quality Standards
 
 - Write clean, canonical, and DRY code
