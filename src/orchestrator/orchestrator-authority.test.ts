@@ -613,6 +613,7 @@ describe("Orchestrator Authority - LLM Adversarial Tests", () => {
         power: 5,
         playerId: "p1",
         phase: "powerCheck",
+        riddleCorrect: true, // 2d6 so answer 7 is valid (2–12)
       };
       (testState.players as any).p1.position = 10;
       (testState.board as any).squares = {

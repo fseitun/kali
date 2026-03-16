@@ -449,7 +449,7 @@ describe("Validator - New Primitives", () => {
   });
 
   describe("PLAYER_ANSWERED during powerCheck phase", () => {
-    it("allows numeric answer 1 when pendingAnimalEncounter is powerCheck for current player", () => {
+    it("rejects numeric answer 1 when powerCheck with 2d6 (riddleCorrect true)", () => {
       const stateWithPowerCheck = {
         ...mockState,
         game: {
@@ -481,10 +481,12 @@ describe("Validator - New Primitives", () => {
         mockStateManager as unknown as StateManager,
         mockOrchestrator,
       );
-      expect(result.valid).toBe(true);
+      expect(result.valid).toBe(false);
+      expect(result.errorCode).toBe("invalidDiceRoll");
+      expect(result.error).toMatch(/2-12|2d6/);
     });
 
-    it("allows numeric answer 7 when pendingAnimalEncounter is powerCheck for current player", () => {
+    it("allows numeric answer 1 when powerCheck with 1d6 (riddleCorrect false)", () => {
       const stateWithPowerCheck = {
         ...mockState,
         game: {
@@ -495,6 +497,42 @@ describe("Validator - New Primitives", () => {
             power: 4,
             playerId: "p1",
             phase: "powerCheck",
+            riddleCorrect: false,
+          },
+        },
+        players: {
+          ...mockState.players,
+          p1: {
+            ...(mockState.players as Record<string, Record<string, unknown>>).p1,
+            position: 16,
+            activeChoices: { 0: 1 },
+          },
+        },
+        decisionPoints: [
+          { position: 0, prompt: "Choose path?", positionOptions: { "1": 1, "15": 15 } },
+        ],
+      } as unknown as GameState;
+      const result = validateActions(
+        [{ action: "PLAYER_ANSWERED", answer: "1" }],
+        stateWithPowerCheck,
+        mockStateManager as unknown as StateManager,
+        mockOrchestrator,
+      );
+      expect(result.valid).toBe(true);
+    });
+
+    it("allows numeric answer 7 when pendingAnimalEncounter is powerCheck with 2d6 (riddleCorrect true)", () => {
+      const stateWithPowerCheck = {
+        ...mockState,
+        game: {
+          ...mockState.game,
+          turn: "p1",
+          pendingAnimalEncounter: {
+            position: 16,
+            power: 4,
+            playerId: "p1",
+            phase: "powerCheck",
+            riddleCorrect: true,
           },
         },
         players: {
@@ -515,6 +553,41 @@ describe("Validator - New Primitives", () => {
         mockOrchestrator,
       );
       expect(result.valid).toBe(true);
+    });
+
+    it("rejects numeric answer 7 when revenge (1d6 only)", () => {
+      const stateWithRevenge = {
+        ...mockState,
+        game: {
+          ...mockState.game,
+          turn: "p1",
+          pendingAnimalEncounter: {
+            position: 16,
+            power: 5,
+            playerId: "p1",
+            phase: "revenge",
+          },
+        },
+        players: {
+          ...mockState.players,
+          p1: {
+            ...(mockState.players as Record<string, Record<string, unknown>>).p1,
+            position: 16,
+          },
+        },
+        decisionPoints: [
+          { position: 0, prompt: "Choose path?", positionOptions: { "1": 1, "15": 15 } },
+        ],
+      } as unknown as GameState;
+      const result = validateActions(
+        [{ action: "PLAYER_ANSWERED", answer: "7" }],
+        stateWithRevenge,
+        mockStateManager as unknown as StateManager,
+        mockOrchestrator,
+      );
+      expect(result.valid).toBe(false);
+      expect(result.errorCode).toBe("invalidDiceRoll");
+      expect(result.error).toMatch(/1-6|1d6/);
     });
 
     it("allows numeric answer during revenge phase for current player", () => {

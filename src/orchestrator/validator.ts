@@ -687,16 +687,30 @@ function validatePlayerAnswered(
     };
   }
 
-  // Power check / revenge: numeric roll (1–12) for current player's pending encounter — accept before fork-choice logic
+  // Power check / revenge: numeric roll; range depends on dice (2d6 vs 1d6). Reject impossible values.
+  const pendingWithRiddle = pending as
+    | { phase?: string; playerId?: string; riddleCorrect?: boolean }
+    | null
+    | undefined;
   if (
-    (pending?.phase === "powerCheck" || pending?.phase === "revenge") &&
-    pending.playerId === currentTurn
+    (pendingWithRiddle?.phase === "powerCheck" || pendingWithRiddle?.phase === "revenge") &&
+    pendingWithRiddle.playerId === currentTurn
   ) {
     const rollStr = answer.trim().replace(/\D/g, "") || answer.trim();
     const roll = parseInt(rollStr, 10);
-    if (!Number.isNaN(roll) && roll >= 1 && roll <= 12) {
+    if (Number.isNaN(roll)) return { valid: true }; // non-numeric falls through to other rules
+    const is2d6 =
+      pendingWithRiddle.phase === "powerCheck" && pendingWithRiddle.riddleCorrect === true;
+    const minRoll = is2d6 ? 2 : 1;
+    const maxRoll = is2d6 ? 12 : 6;
+    if (roll >= minRoll && roll <= maxRoll) {
       return { valid: true };
     }
+    return {
+      valid: false,
+      error: `PLAYER_ANSWERED at index ${index}: Roll must be ${minRoll}-${maxRoll} (${is2d6 ? "2d6" : "1d6"}), got ${roll}.`,
+      errorCode: "invalidDiceRoll",
+    };
   }
 
   const position = currentPlayer.position as number | undefined;
