@@ -52,6 +52,8 @@ export class Orchestrator {
   private isProcessing = false;
   private initialState: GameState;
   private readonly defaultContext: ExecutionContext = { depth: 0, maxDepth: 5 };
+  /** Last NARRATE text spoken; passed to LLM so short replies (sí/no, number) can be interpreted as answers to that question. */
+  private lastNarration = "";
 
   constructor(
     private llmClient: LLMClient,
@@ -314,7 +316,8 @@ export class Orchestrator {
       const state = this.stateManager.getState();
       Logger.state("Current state:\n" + formatStateContext(state as Record<string, unknown>));
       Profiler.start(`orchestrator.llm.${context.depth}`);
-      const actions = await this.llmClient.getActions(transcript, state);
+      const lastBotUtterance = this.lastNarration !== "" ? this.lastNarration : undefined;
+      const actions = await this.llmClient.getActions(transcript, state, lastBotUtterance);
       Profiler.end(`orchestrator.llm.${context.depth}`);
 
       if (Array.isArray(actions)) {
@@ -335,7 +338,11 @@ export class Orchestrator {
           await this.speechService.speak(t("llm.retrying"));
           const retryState = this.stateManager.getState();
           Profiler.start(`orchestrator.llm.retry.${context.depth}`);
-          const retryActions = await this.llmClient.getActions(transcript, retryState);
+          const retryActions = await this.llmClient.getActions(
+            transcript,
+            retryState,
+            lastBotUtterance,
+          );
           Profiler.end(`orchestrator.llm.retry.${context.depth}`);
           if (Array.isArray(retryActions) && retryActions.length > 0) {
             Logger.robot(
@@ -962,6 +969,9 @@ export class Orchestrator {
             ...pending,
             riddlePrompt: primitive.text,
           } as Record<string, unknown>);
+        }
+        if (primitive.text) {
+          this.lastNarration = primitive.text;
         }
         this.statusIndicator.setState("speaking");
         if (primitive.soundEffect) {

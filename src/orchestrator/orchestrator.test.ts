@@ -549,6 +549,37 @@ describe("Orchestrator - New Action Handlers", () => {
       expect(result.success).toBe(true);
       expect(result.shouldAdvanceTurn).toBe(true);
     });
+
+    it("passes last NARRATE as lastBotUtterance when user confirms (roll clarification)", async () => {
+      const confirmationQuestion = "¿Tiraste un 3, Federico?";
+      mockLLM.getActions = vi.fn(
+        async (transcript: string, _state: GameState, lastBot?: string) => {
+          if (transcript === "tiene un tres") {
+            return [{ action: "NARRATE", text: confirmationQuestion }];
+          }
+          if (transcript === "sí" && lastBot === confirmationQuestion) {
+            return [{ action: "PLAYER_ROLLED", value: 3 }];
+          }
+          return [];
+        },
+      ) as any;
+
+      await orchestrator.handleTranscript("tiene un tres");
+      expect(mockLLM.getActions).toHaveBeenCalledTimes(1);
+      expect(mockLLM.getActions).toHaveBeenLastCalledWith(
+        "tiene un tres",
+        expect.any(Object),
+        undefined,
+      );
+
+      await orchestrator.handleTranscript("sí");
+      expect(mockLLM.getActions).toHaveBeenCalledTimes(2);
+      expect(mockLLM.getActions).toHaveBeenLastCalledWith(
+        "sí",
+        expect.any(Object),
+        confirmationQuestion,
+      );
+    });
   });
 
   describe("Processing Lock - Concurrency Protection", () => {

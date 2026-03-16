@@ -25,7 +25,11 @@ export class MockLLMClient implements LLMClient {
     Logger.info("MockLLMClient: Game rules set (ignored)");
   }
 
-  async getActions(transcript: string, state: GameState): Promise<PrimitiveAction[]> {
+  async getActions(
+    transcript: string,
+    state: GameState,
+    _lastBotUtterance?: string,
+  ): Promise<PrimitiveAction[]> {
     this.callCount++;
     Logger.info(`MockLLMClient call #${this.callCount}: "${transcript}"`);
     Logger.state("Current state:", state);

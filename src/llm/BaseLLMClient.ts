@@ -55,7 +55,11 @@ export abstract class BaseLLMClient implements LLMClient {
     Logger.info("System prompt updated with game rules");
   }
 
-  async getActions(transcript: string, state: GameState): Promise<PrimitiveAction[]> {
+  async getActions(
+    transcript: string,
+    state: GameState,
+    lastBotUtterance?: string,
+  ): Promise<PrimitiveAction[]> {
     if (!this.systemPrompt) {
       throw new Error("Game rules not set. Call setGameRules() first.");
     }
@@ -67,7 +71,7 @@ export abstract class BaseLLMClient implements LLMClient {
 
     // First attempt
     try {
-      const actions = await this.attemptLLMCall(transcript, state);
+      const actions = await this.attemptLLMCall(transcript, state, lastBotUtterance);
 
       if (actions.length > 0) {
         this.recordTranscript(transcript);
@@ -93,7 +97,7 @@ export abstract class BaseLLMClient implements LLMClient {
           ? transcript
           : `[RETRY: Previous response failed - ${error instanceof Error ? error.message : String(error)}] Original command: "${transcript}"`;
 
-        const actions = await this.attemptLLMCall(retryTranscript, state);
+        const actions = await this.attemptLLMCall(retryTranscript, state, lastBotUtterance);
 
         if (actions.length > 0) {
           this.recordTranscript(transcript);
@@ -110,9 +114,17 @@ export abstract class BaseLLMClient implements LLMClient {
     }
   }
 
-  private async attemptLLMCall(transcript: string, state: GameState): Promise<PrimitiveAction[]> {
+  private async attemptLLMCall(
+    transcript: string,
+    state: GameState,
+    lastBotUtterance?: string,
+  ): Promise<PrimitiveAction[]> {
     const stateContext = formatStateContext(state as Record<string, unknown>);
-    const userMessage = `${stateContext}\n\nUser Command: "${transcript}"`;
+    const contextLine =
+      lastBotUtterance != null && lastBotUtterance !== ""
+        ? `Last thing Kali said: "${lastBotUtterance}"\n\n`
+        : "";
+    const userMessage = `${stateContext}\n\n${contextLine}User Command: "${transcript}"`;
     const fullPrompt = `${this.systemPrompt}\n\n${userMessage}`;
 
     this.logPrompt("getActions", fullPrompt);

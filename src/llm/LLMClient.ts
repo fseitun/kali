@@ -14,9 +14,14 @@ export interface LLMClient {
    * Sends a transcript and current state to the LLM and returns primitive actions.
    * @param transcript - The user's voice command
    * @param state - The current game state
+   * @param lastBotUtterance - Optional. Last thing Kali said (e.g. a clarification question). When present, the LLM can interpret short replies (sí/no, a number) as answers to that question.
    * @returns Array of primitive actions to execute
    */
-  getActions(transcript: string, state: GameState): Promise<PrimitiveAction[]>;
+  getActions(
+    transcript: string,
+    state: GameState,
+    lastBotUtterance?: string,
+  ): Promise<PrimitiveAction[]>;
 
   /**
    * Extracts a person's name from conversational text.

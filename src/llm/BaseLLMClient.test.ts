@@ -7,8 +7,11 @@ class TestLLMClient extends BaseLLMClient {
   public responseQueue: string[] = [];
   public callCount = 0;
   public throwOnFirstCall?: Error;
+  /** Last prompt passed to makeApiCall (for assertions). */
+  public lastPrompt = "";
 
-  async makeApiCall(_prompt: string): Promise<{ content: string }> {
+  async makeApiCall(prompt: string): Promise<{ content: string }> {
+    this.lastPrompt = prompt;
     this.callCount++;
     if (this.callCount === 1 && this.throwOnFirstCall) {
       const err = this.throwOnFirstCall;
@@ -195,6 +198,25 @@ describe("LLM - Pure JSON Parsing", () => {
 
       expect(actions).toHaveLength(1);
       expect(client.callCount).toBe(1);
+    });
+
+    it("getActions includes lastBotUtterance in prompt when provided", async () => {
+      client.responseQueue = ['[{"action":"PLAYER_ROLLED","value":3}]'];
+
+      await client.getActions("sí", mockState, "¿Tiraste un 3, Federico?");
+
+      expect(client.lastPrompt).toContain('Last thing Kali said: "¿Tiraste un 3, Federico?"');
+      expect(client.lastPrompt).toContain('User Command: "sí"');
+    });
+
+    it("getActions omits lastBotUtterance line when not provided", async () => {
+      client.responseQueue = ['[{"action":"NARRATE","text":"Hi"}]'];
+
+      await client.getActions("hello", mockState);
+
+      // Injected context line is "Last thing Kali said: \"...\""; rule text only mentions the phrase in quotes, so assert the injected pattern (colon + quote) is absent
+      expect(client.lastPrompt).not.toContain('Last thing Kali said: "');
+      expect(client.lastPrompt).toContain('User Command: "hello"');
     });
 
     it("retry logic uses same state (no mutation)", async () => {
