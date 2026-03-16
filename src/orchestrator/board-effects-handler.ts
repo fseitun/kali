@@ -214,9 +214,12 @@ export class BoardEffectsHandler {
     const squareInfo = JSON.stringify(squareData);
     let transcript: string;
     if (isAnimalEncounterKind(kind)) {
+      const vowels = ["A", "E", "I", "O", "U"];
+      const vowel = vowels[Math.floor(Math.random() * vowels.length)];
       transcript =
         `[SYSTEM: Current player just landed on animal square ${position} (${squareName}, power ${power}). ` +
         `phase=riddle. Ask a riddle with exactly FOUR options (A, B, C, D). The riddle MUST be about the animal kingdom (e.g. animals, habitats, behavior, diet, classification); it does NOT have to be this square's animal or habitat. ` +
+        `The correct answer must contain the letter ${vowel}. ` +
         `Return ASK_RIDDLE with "text", "options" (array of 4 strings), and "correctLetter" ("A"|"B"|"C"|"D"), then NARRATE the same riddle and options for the user. ` +
         `When the user answers (by letter or option), return PLAYER_ANSWERED with the chosen letter ("A"|"B"|"C"|"D"). ` +
         `When phase is powerCheck or revenge, user reports roll → use PLAYER_ANSWERED with the number. Orchestrator owns all phase transitions and rewards. ` +
