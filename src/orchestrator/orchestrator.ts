@@ -324,6 +324,24 @@ export class Orchestrator {
       }
 
       if (Array.isArray(actions) && actions.length === 0) {
+        const canAutoRetryRiddle =
+          this.boardEffectsHandler.isProcessingEffect() && this.isRiddlePhaseWithNoRiddleStored();
+        if (canAutoRetryRiddle) {
+          Logger.info(
+            "Auto-unblock: retrying riddle request once (0 actions during square effect)",
+          );
+          await this.speechService.speak(t("llm.retrying"));
+          const retryState = this.stateManager.getState();
+          Profiler.start(`orchestrator.llm.retry.${context.depth}`);
+          const retryActions = await this.llmClient.getActions(transcript, retryState);
+          Profiler.end(`orchestrator.llm.retry.${context.depth}`);
+          if (Array.isArray(retryActions) && retryActions.length > 0) {
+            Logger.robot(
+              `LLM retry returned ${retryActions.length} action(s): ${retryActions.map((a) => a.action).join(", ")}`,
+            );
+            return await this.runValidatedActions(retryActions, context, "orchestrator");
+          }
+        }
         Logger.warn("No actions returned from LLM");
         await this.speechService.speak(t("llm.allRetriesFailed"));
         return { success: false, shouldAdvanceTurn: false };
@@ -723,6 +741,24 @@ export class Orchestrator {
       const next = Array.isArray(current) ? [...current, instrument] : [instrument];
       this.stateManager.set(`players.${playerId}.instruments`, next);
     }
+  }
+
+  /**
+   * True when we are in riddle phase but no full riddle is stored (ASK_RIDDLE never succeeded).
+   * Used to auto-retry once when square-effect LLM returns 0 actions.
+   */
+  private isRiddlePhaseWithNoRiddleStored(): boolean {
+    const state = this.stateManager.getState();
+    const game = state.game as Record<string, unknown> | undefined;
+    const pending = game?.pendingAnimalEncounter as
+      | { phase?: string; riddleOptions?: unknown[]; correctLetter?: string }
+      | null
+      | undefined;
+    if (pending?.phase !== "riddle") return false;
+    const options = pending.riddleOptions;
+    const hasStructuredRiddle =
+      Array.isArray(options) && options.length === 4 && pending.correctLetter;
+    return !hasStructuredRiddle;
   }
 
   /**

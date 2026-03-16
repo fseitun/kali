@@ -296,13 +296,16 @@ function formatAnimalEncounterContext(state: Record<string, unknown>): string {
     const prompt = riddleCtx.riddlePrompt;
     const options = riddleCtx.riddleOptions;
     const hasStructuredRiddle = options?.length === 4 && riddleCtx.correctLetter;
-    let helpInst =
-      " If user asks what to do, NARRATE reminding them to choose A, B, C, or D. Never invent a new riddle.";
-    if (prompt) {
-      helpInst = ` If user asks what to do, NARRATE re-asking the same riddle and the four options.`;
-    }
     const antiLeak =
       " When asking the riddle: ask only the riddle and the four options. Do NOT include the correct answer in that NARRATE.";
+    let helpInst: string;
+    if (hasStructuredRiddle && prompt) {
+      helpInst =
+        " If user asks what to do, NARRATE re-asking the same riddle and the four options.";
+    } else {
+      helpInst =
+        " If user asks what to do or says they didn't hear, you MUST return ASK_RIDDLE (text, options, correctLetter) followed by NARRATE speaking that same riddle and options. Do NOT return only a NARRATE saying 'choose A, B, C or D' without speaking the actual riddle.";
+    }
     if (!hasStructuredRiddle) {
       return `⚠️ RIDDLE (${playerName}) phase=riddle.${antiLeak} Ask a riddle with exactly FOUR options (A, B, C, D). The correct answer may be any topic. Return ASK_RIDDLE with "text", "options" (array of 4 strings), "correctLetter" ("A"|"B"|"C"|"D"), then NARRATE the riddle and options. When user answers, return PLAYER_ANSWERED with the letter - do NOT use RIDDLE_RESOLVED.${helpInst} [current]`;
     }
