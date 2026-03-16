@@ -94,7 +94,7 @@ export function areNamesSimilar(name1: string, name2: string): boolean {
   }
 
   const distance = levenshteinDistance(lower1, lower2);
-  return distance <= 2 || distance / maxLength < 0.3;
+  return distance <= 1 || (distance <= 2 && distance / maxLength < 0.45);
 }
 
 /**

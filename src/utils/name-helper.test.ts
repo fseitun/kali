@@ -105,6 +105,7 @@ describe("name-helper", () => {
       expect(areNamesSimilar("Alice", "Bob")).toBe(false);
       expect(areNamesSimilar("Charlie", "David")).toBe(false);
       expect(areNamesSimilar("Eve", "Frank")).toBe(false);
+      expect(areNamesSimilar("fede", "pepe")).toBe(false);
     });
 
     it("should handle identical names", () => {
