@@ -69,6 +69,7 @@ export const esAR = {
     microphoneAccess: "No puedo acceder al micrófono.",
     modelDownload: "Error al descargar el modelo.",
     ttsNotSupported: "El sistema de voz no es compatible.",
+    somethingWentWrong: "Algo salió mal. Por favor intentá de nuevo.",
   },
   llm: {
     retrying: "Dejame intentar de nuevo...",

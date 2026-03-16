@@ -32,9 +32,10 @@ export class StateManager {
 
   /**
    * Retrieves the current game state.
-   * @returns The complete game state object
+   * Must not be mutated; all state mutations go through the orchestrator (set, setState, resetState).
+   * @returns The complete game state object (read-only view)
    */
-  getState(): GameState {
+  getState(): Readonly<GameState> {
     return this.state;
   }
 

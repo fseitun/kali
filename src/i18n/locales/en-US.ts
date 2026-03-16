@@ -69,6 +69,7 @@ export const enUS = {
     microphoneAccess: "Cannot access microphone.",
     modelDownload: "Error downloading model.",
     ttsNotSupported: "Text-to-Speech is not supported.",
+    somethingWentWrong: "Something went wrong. Please try again.",
   },
   llm: {
     retrying: "Let me try that again...",

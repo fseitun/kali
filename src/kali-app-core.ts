@@ -417,6 +417,11 @@ ${examples.map((ex: string, i: number) => `${i + 1}. ${ex}`).join("\n")}`;
     );
   }
 
+  /**
+   * Disposes the app and releases resources.
+   * Note: If a transcript is in flight (handleTranscription → handleTranscript), it may still
+   * complete after destroy(); there is no shared-memory race, only ordering/UX (e.g. UI state).
+   */
   async dispose(): Promise<void> {
     await releaseWakeLock();
     if (this.wakeWordDetector) {

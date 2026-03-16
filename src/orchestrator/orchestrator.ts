@@ -85,6 +85,17 @@ export class Orchestrator {
   }
 
   /**
+   * Tries to acquire the processing lock. Must be called synchronously before any await.
+   * Prevents TOCTOU: check and set are in one place so two concurrent callers cannot both pass.
+   * @returns true if lock was acquired, false if already processing
+   */
+  private tryAcquireProcessing(): boolean {
+    if (this.isProcessing) return false;
+    this.isProcessing = true;
+    return true;
+  }
+
+  /**
    * Checks if the orchestrator is currently processing a square effect.
    * Used by validator to block inappropriate actions during effect resolution.
    * @returns true if processing square effect, false otherwise
@@ -117,12 +128,10 @@ export class Orchestrator {
     shouldAdvanceTurn: boolean;
     turnAdvancedForRevenge?: { playerId: string; name: string; position: number };
   }> {
-    if (this.isProcessing) {
+    if (!this.tryAcquireProcessing()) {
       Logger.warn("Orchestrator busy, ignoring new request");
       return { success: false, shouldAdvanceTurn: false };
     }
-
-    this.isProcessing = true;
     this.statusIndicator.setState("processing");
     Profiler.start("orchestrator.total");
 
@@ -151,12 +160,10 @@ export class Orchestrator {
     shouldAdvanceTurn: boolean;
     turnAdvancedForRevenge?: { playerId: string; name: string; position: number };
   }> {
-    if (this.isProcessing) {
+    if (!this.tryAcquireProcessing()) {
       Logger.warn("Orchestrator busy, ignoring test request");
       return { success: false, shouldAdvanceTurn: false };
     }
-
-    this.isProcessing = true;
     this.statusIndicator.setState("processing");
     Profiler.start("orchestrator.test");
 
@@ -192,12 +199,10 @@ export class Orchestrator {
     shouldAdvanceTurn: boolean;
     turnAdvancedForRevenge?: { playerId: string; name: string; position: number };
   }> {
-    if (this.isProcessing) {
+    if (!this.tryAcquireProcessing()) {
       Logger.warn("Orchestrator busy, ignoring primitive execution request");
       return { success: false, shouldAdvanceTurn: false };
     }
-
-    this.isProcessing = true;
     this.statusIndicator.setState("processing");
     Profiler.start("orchestrator.primitives.total");
 
@@ -326,6 +331,7 @@ export class Orchestrator {
       return await this.runValidatedActions(actions, context, "orchestrator");
     } catch (error) {
       Logger.error("Orchestrator error:", error);
+      await this.speechService.speak(t("errors.somethingWentWrong"));
       return { success: false, shouldAdvanceTurn: false };
     }
   }

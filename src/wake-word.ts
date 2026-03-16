@@ -277,6 +277,8 @@ export class WakeWordDetector {
 
   /**
    * Cleans up resources: stops microphone, closes audio context, terminates recognizer.
+   * If onTranscription was already invoked, the main thread may still be processing that
+   * transcript; no shared-memory race (postMessage only), just ordering.
    */
   async destroy(): Promise<void> {
     await this.stopListening();
