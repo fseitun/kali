@@ -16,7 +16,6 @@ The project is not released. **Backward compatibility is not a requirement.** Do
 - Add comments ONLY when they add significant value
 - Use strict TypeScript with all compiler warnings enabled
 - Follow ESLint rules for code quality
-- **After making code changes (or completing plans/agent work), run `npm run full-check`**. If it fails: fix the reported errors and run it again until it passes—unless the failures are clearly in code you did not modify (pre-existing). In that case, you may complete and report the pre-existing failures to the user instead of iterating.
 
 ## JSDoc Documentation
 
@@ -41,10 +40,7 @@ JSDoc should include:
 
 ## Testing Requirements
 
-Run before committing:
-```bash
-npm run full-check   # lint:fix, type-check, test, format
-```
+When to run checks and fix: see the **Full-check after agentic changes** rule.
 
 ### Test File Standards
 

@@ -1,0 +1,12 @@
+---
+description: Agent must run full-check after code changes and fix until it passes.
+alwaysApply: true
+---
+
+# Full-check after agentic changes
+
+After making **any** code changes or completing plans/agent work, you **must** run `npm run full-check`.
+
+- If it fails: fix the reported errors and run again until it passes.
+- Exception: if failures are clearly in code you did not modify (pre-existing), complete the task and report those failures to the user instead of iterating.
+- Do not consider the task done without full-check passing (or an explicit report of pre-existing failures).
