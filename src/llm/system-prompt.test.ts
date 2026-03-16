@@ -1,5 +1,18 @@
 import { describe, it, expect } from "vitest";
-import { formatStateContext } from "./system-prompt";
+import { formatStateContext, SYSTEM_PROMPT } from "./system-prompt";
+
+describe("SYSTEM_PROMPT", () => {
+  it("includes guidance rule: when user asks what to do, NARRATE only and do not emit primitives", () => {
+    expect(SYSTEM_PROMPT).toContain("Guidance requests");
+    expect(SYSTEM_PROMPT).toMatch(
+      /what should I do|what do I do next|help|I'm stuck|what are my options/,
+    );
+    expect(SYSTEM_PROMPT).toContain("respond only with NARRATE");
+    expect(SYSTEM_PROMPT).toContain(
+      "Do not emit PLAYER_ROLLED, PLAYER_ANSWERED, or SET_STATE for them",
+    );
+  });
+});
 
 describe("formatStateContext", () => {
   it("only shows DECISION for current turn player", () => {
@@ -31,7 +44,9 @@ describe("formatStateContext", () => {
     const result = formatStateContext(state);
 
     expect(result).toContain("DECISION (Alice)");
-    expect(result).toContain("activeChoices");
+    expect(result).toContain("Choose A or B?");
+    expect(result).toContain("If user asks what to do or for help");
+    expect(result).toContain("do NOT emit PLAYER_ANSWERED");
     expect(result).toContain("[current]");
     expect(result).not.toContain("DECISION (Bob)");
   });
@@ -107,5 +122,8 @@ describe("formatStateContext", () => {
     expect(result).toContain("roll >= 4");
     expect(result).toContain("Do NOT NARRATE the roll");
     expect(result).toContain("Orchestrator announces pass/fail");
+    expect(result).toContain("If user asks what to do");
+    expect(result).toContain("roll one die and report the number");
+    expect(result).toContain("need 4 or more");
   });
 });

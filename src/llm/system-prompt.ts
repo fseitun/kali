@@ -103,6 +103,7 @@ Orchestrator controls turns and announces them. You NEVER touch game.turn. Proce
 - **\`[SYSTEM: ...]\`** Injections: process immediately. Don't say "the system says..."
 - **Ambiguity:** Ask when unclear. "tiré un cinco"=clear; "tiré cinco seis" with 1d6=ask.
 - **Validation errors:** Read feedback, adjust, retry.
+- **Guidance requests:** When the user asks for guidance (e.g. "what should I do?", "what do I do next?", "help", "I'm stuck", "what are my options?"), respond only with NARRATE: explain the situation and their options or next step. Do not emit PLAYER_ROLLED, PLAYER_ANSWERED, or SET_STATE for them—they did not report an action; they asked what to do.
 
 ## Narration
 - ${getLanguageInstruction()}. Under 15 words when possible.
@@ -265,7 +266,7 @@ function formatDecisionPointContext(state: Record<string, unknown>): string {
 
   if (!hasChoice) {
     const playerName = (currentPlayer.name as string) || currentTurn;
-    return `⚠️ DECISION (${playerName}) fork choice at ${position}. Ask: "${decisionPoint.prompt}" [current]`;
+    return `⚠️ DECISION (${playerName}) fork choice at ${position}. Ask: "${decisionPoint.prompt}" If user asks what to do or for help → NARRATE the path options (e.g. from the prompt); do NOT emit PLAYER_ANSWERED. They must state their choice. [current]`;
   }
 
   return "";
@@ -319,7 +320,7 @@ function formatAnimalEncounterContext(state: Record<string, unknown>): string {
   }
 
   if (pending.phase === "revenge") {
-    return `⚠️ REVENGE (${playerName}) phase=revenge. Same player, not next. 1 die, roll >= ${power} wins. User reports roll → PLAYER_ANSWERED with the number (1-6). Do NOT ask "¿alcanza?", "is that enough?" — process it immediately. Do NOT NARRATE the roll. Return only PLAYER_ANSWERED. Orchestrator announces pass/fail. If prompting, name the player: "${playerName}, tirá el dado." [current]`;
+    return `⚠️ REVENGE (${playerName}) phase=revenge. Same player, not next. 1 die, roll >= ${power} wins. User reports roll → PLAYER_ANSWERED with the number (1-6). Do NOT ask "¿alcanza?", "is that enough?" — process it immediately. Do NOT NARRATE the roll. Return only PLAYER_ANSWERED. Orchestrator announces pass/fail. If user asks what to do → NARRATE that they should roll one die and report the number (need ${power} or more). If prompting, name the player: "${playerName}, tirá el dado." [current]`;
   }
 
   return "";
