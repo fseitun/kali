@@ -10,7 +10,7 @@ export default defineConfig({
     ...(process.env.VITEST === "true"
       ? { "import.meta.env.VITE_LLM_PROVIDER": JSON.stringify("mock") }
       : {}),
-    "import.meta.env.VITE_BUILD_ID": JSON.stringify(process.env.VERCEL_GIT_COMMIT_SHA ?? "dev"),
+    "import.meta.env.VITE_BUILD_ID": JSON.stringify("latest"),
   },
   plugins: [
     {
