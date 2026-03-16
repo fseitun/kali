@@ -174,7 +174,7 @@ export interface PlayerAnsweredAction {
 /**
  * Asks a structured riddle with exactly four options (A–D) during an animal encounter.
  * Orchestrator stores options and correctLetter; when user answers with PLAYER_ANSWERED "A"|"B"|"C"|"D",
- * orchestrator resolves correctness. The correct answer may be any topic, not necessarily the square's animal/habitat.
+ * orchestrator resolves correctness. The riddle MUST be about the animal kingdom (e.g. animals, habitats, behavior, diet, classification); it does not have to be this square's animal/habitat.
  */
 export interface AskRiddleAction {
   action: "ASK_RIDDLE";

@@ -85,7 +85,7 @@ Be proactive, encouraging, patient. Guide kids through the game. Only offer real
 
 6. **ASK_RIDDLE** - Present a structured riddle with exactly four options during animal encounter.
    { "action": "ASK_RIDDLE", "text": "Riddle question?", "options": ["Option A", "Option B", "Option C", "Option D"], "correctLetter": "B" }
-   Use when first entering riddle phase. The correct answer may be any topic (not necessarily the square's animal/habitat). Follow with NARRATE speaking the riddle and options. When user answers, return PLAYER_ANSWERED with "A"|"B"|"C"|"D"—do NOT return RIDDLE_RESOLVED.
+   Use when first entering riddle phase. The riddle MUST be about the animal kingdom (e.g. animals, habitats, behavior, diet, classification); it does NOT have to be the square's animal/habitat. Follow with NARRATE speaking the riddle and options. When user answers, return PLAYER_ANSWERED with "A"|"B"|"C"|"D"—do NOT return RIDDLE_RESOLVED.
 
 7. **RIDDLE_RESOLVED** - Legacy: open-ended riddle evaluation. Prefer ASK_RIDDLE + PLAYER_ANSWERED for structured four-option riddles.
    { "action": "RIDDLE_RESOLVED", "correct": true }
@@ -308,7 +308,7 @@ function formatAnimalEncounterContext(state: Record<string, unknown>): string {
         " If user asks what to do or says they didn't hear, you MUST return ASK_RIDDLE (text, options, correctLetter) followed by NARRATE speaking that same riddle and options. Do NOT return only a NARRATE saying 'choose A, B, C or D' without speaking the actual riddle.";
     }
     if (!hasStructuredRiddle) {
-      return `⚠️ RIDDLE (${playerName}) phase=riddle.${antiLeak} Ask a riddle with exactly FOUR options (A, B, C, D). The correct answer may be any topic. Return ASK_RIDDLE with "text", "options" (array of 4 strings), "correctLetter" ("A"|"B"|"C"|"D"), then NARRATE the riddle and options. When user answers, return PLAYER_ANSWERED with the letter - do NOT use RIDDLE_RESOLVED.${helpInst} [current]`;
+      return `⚠️ RIDDLE (${playerName}) phase=riddle.${antiLeak} Ask a riddle with exactly FOUR options (A, B, C, D). The riddle MUST be about the animal kingdom (e.g. animals, habitats, behavior, diet, classification). Return ASK_RIDDLE with "text", "options" (array of 4 strings), "correctLetter" ("A"|"B"|"C"|"D"), then NARRATE the riddle and options. When user answers, return PLAYER_ANSWERED with the letter - do NOT use RIDDLE_RESOLVED.${helpInst} [current]`;
     }
     return `⚠️ RIDDLE (${playerName}) phase=riddle. User must choose A, B, C, or D. Return PLAYER_ANSWERED with the chosen letter ("A"|"B"|"C"|"D") - do NOT use RIDDLE_RESOLVED. Orchestrator will resolve correct/incorrect.${helpInst} [current]`;
   }
