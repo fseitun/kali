@@ -17,8 +17,11 @@ export const CONFIG = {
   LOCALE: (import.meta.env.VITE_LOCALE ?? "es-AR") as "es-AR" | "en-US",
 
   WAKE_WORD: {
-    TEXT: ["kali", "cali", "calli", "kaly", "caly"],
+    /** Canonical spellings and common ASR misrecognitions (kali/calli/callie etc.) */
+    TEXT: ["kali", "cali", "calli", "kaly", "caly", "callie", "callee", "kari"],
     TRANSCRIPTION_TIMEOUT_MS: 5000,
+    /** Max Levenshtein distance for per-word fuzzy match (e.g. "callie" -> "kali") */
+    FUZZY_MAX_EDIT_DISTANCE: 1,
   },
 
   MODEL: {

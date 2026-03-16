@@ -10,6 +10,7 @@ import { CONFIG } from "./config";
 import { ModelManager } from "./model-manager";
 import { isMobileDevice } from "./utils/browser-support";
 import { Logger } from "./utils/logger";
+import { isWakeWordMatch } from "./wake-word-utils";
 
 interface ExtendedMediaTrackConstraints extends MediaTrackConstraints {
   sampleRate?: number;
@@ -192,10 +193,12 @@ export class WakeWordDetector {
     const text = result.text ?? result.partial ?? "";
     if (!text.trim()) return;
 
-    const lowerText = text.toLowerCase();
-
     if (this.state === DetectorState.LISTENING_FOR_WAKE_WORD) {
-      const wakeWordDetected = CONFIG.WAKE_WORD.TEXT.some((word) => lowerText.includes(word));
+      const wakeWordDetected = isWakeWordMatch(
+        text,
+        CONFIG.WAKE_WORD.TEXT,
+        CONFIG.WAKE_WORD.FUZZY_MAX_EDIT_DISTANCE,
+      );
 
       if (this.onRawTranscription) {
         this.onRawTranscription(text, wakeWordDetected ? text : "...", wakeWordDetected);
