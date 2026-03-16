@@ -108,6 +108,23 @@ function applyActionToMockState(state: GameState, primitive: PrimitiveAction): G
         };
         return mockState;
       }
+      // Power check / revenge: numeric answer clears pending and advances position for mock
+      if (
+        (pending?.phase === "powerCheck" || pending?.phase === "revenge") &&
+        pending.playerId === currentTurn
+      ) {
+        const rollStr = answer.replace(/\D/g, "").trim() || answer.trim();
+        const roll = parseInt(rollStr, 10);
+        if (!isNaN(roll) && roll >= 1 && roll <= 12) {
+          game.pendingAnimalEncounter = null;
+          const playersMap = mockState.players as Record<string, Record<string, unknown>>;
+          const player = currentTurn ? playersMap?.[currentTurn] : undefined;
+          if (player && typeof player.position === "number") {
+            player.position = player.position + roll;
+          }
+          return mockState;
+        }
+      }
       const decisionPoints = mockState.decisionPoints as
         | Array<{
             position: number;

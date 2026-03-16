@@ -9,6 +9,7 @@ import { Profiler } from "../utils/profiler";
 import { BoardEffectsHandler } from "./board-effects-handler";
 import { computeNewPositionFromState } from "./board-traversal";
 import { DecisionPointEnforcer } from "./decision-point-enforcer";
+import { reorderPowerCheckBeforeRoll } from "./reorder-power-check";
 import { resolveRiddleAnswerToLetter } from "./riddle-answer";
 import { TurnManager } from "./turn-manager";
 import {
@@ -457,8 +458,10 @@ export class Orchestrator {
     const shouldAdvanceTurn = rawShouldAdvanceTurn && !onlyResolvedForkChoice;
 
     Logger.info("Actions validated, executing...");
+    const actionsToRun =
+      context.depth === 0 ? reorderPowerCheckBeforeRoll(actions, state) : actions;
     Profiler.start(`${profilerPrefix}.execution.${context.depth}`);
-    await this.executeActions(actions, context);
+    await this.executeActions(actionsToRun, context);
     Profiler.end(`${profilerPrefix}.execution.${context.depth}`);
     if (context.depth === 0) {
       Logger.info("Actions executed successfully");
@@ -691,6 +694,10 @@ export class Orchestrator {
     const squareData = squares[position.toString()];
 
     if (win) {
+      // Speak pass before square effects so "Pasaste" is never after square narration (e.g. plants)
+      this.statusIndicator.setState("speaking");
+      await this.speechService.speak(t("game.powerCheckPass"));
+
       const currentPos = this.stateManager.get(`players.${playerId}.position`) as number;
       const winJumpTo = squareData?.winJumpTo as number | undefined;
       const newPosition = typeof winJumpTo === "number" ? winJumpTo : currentPos + roll;
@@ -710,6 +717,8 @@ export class Orchestrator {
     }
 
     if (pending.phase === "powerCheck") {
+      this.statusIndicator.setState("speaking");
+      await this.speechService.speak(t("game.powerCheckFail"));
       this.stateManager.set("game.pendingAnimalEncounter", {
         ...pending,
         phase: "revenge",
@@ -1025,16 +1034,13 @@ export class Orchestrator {
           break;
         }
 
-        // Power check / revenge: orchestrator handles roll evaluation
+        // Power check / revenge: orchestrator handles roll evaluation (speaks pass/fail inside handler)
         const powerCheckResult = await this.tryHandlePowerCheckAnswer(primitive.answer, context);
         if (powerCheckResult) {
           if ("turnAdvanced" in powerCheckResult && powerCheckResult.turnAdvanced) {
             context.turnAdvancedForRevenge = powerCheckResult.turnAdvanced;
           }
           context.skipTrailingNarrateForPowerCheck = true;
-          const msg = powerCheckResult.passed ? t("game.powerCheckPass") : t("game.powerCheckFail");
-          this.statusIndicator.setState("speaking");
-          await this.speechService.speak(msg);
           break;
         }
 

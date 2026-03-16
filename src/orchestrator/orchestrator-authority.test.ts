@@ -605,4 +605,56 @@ describe("Orchestrator Authority - LLM Adversarial Tests", () => {
       expect(getActionsCalls[1]).toContain("[SYSTEM:");
     });
   });
+
+  describe("Power check before square effect - narration order", () => {
+    it("speaks powerCheckPass before square-effect narration when batch has PLAYER_ANSWERED then PLAYER_ROLLED", async () => {
+      (testState.game as any).pendingAnimalEncounter = {
+        position: 10,
+        power: 5,
+        playerId: "p1",
+        phase: "powerCheck",
+      };
+      (testState.players as any).p1.position = 10;
+      (testState.board as any).squares = {
+        "10": { type: "animal", name: "Cobra", power: 5 },
+        "17": { type: "hazard", name: "Carnivorous plants", skipTurn: true },
+      };
+
+      mockStateManager.getState = vi.fn(() => testState);
+      mockStateManager.get = vi.fn((path: string) => {
+        const parts = path.split(".");
+        let current: unknown = testState;
+        for (const part of parts) {
+          current = (current as Record<string, unknown>)[part];
+        }
+        return current;
+      });
+      mockStateManager.set = vi.fn(async (path: string, value: unknown) => {
+        if (path === "players.p1.position") {
+          (testState.players as any).p1.position = value as number;
+        }
+        if (path === "game.pendingAnimalEncounter") {
+          (testState.game as any).pendingAnimalEncounter = value;
+        }
+      });
+
+      mockLLM.getActions = vi.fn(async (transcript: string) => {
+        if (transcript.includes("[SYSTEM: Current player just landed")) {
+          return [{ action: "NARRATE", text: "You fell into carnivorous plants!" }];
+        }
+        return [];
+      });
+
+      const actions: PrimitiveAction[] = [
+        { action: "PLAYER_ANSWERED", answer: "7" },
+        { action: "PLAYER_ROLLED", value: 2 },
+      ];
+
+      const { success } = await orchestrator.testExecuteActions(actions);
+
+      expect(success).toBe(true);
+      expect(mockSpeech.speak).toHaveBeenNthCalledWith(1, "You passed.");
+      expect(mockSpeech.speak).toHaveBeenNthCalledWith(2, "You fell into carnivorous plants!");
+    });
+  });
 });
