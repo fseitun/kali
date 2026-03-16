@@ -160,7 +160,7 @@ class KaliDebugApp {
       const text = input.value.trim();
       if (!text) return;
 
-      Logger.user("User entered:", text);
+      Logger.user(`Transcript: ${text}`);
 
       if (!this.core.canAcceptTranscript()) {
         Logger.warn("Kali not initialized");
