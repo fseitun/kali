@@ -45,7 +45,7 @@ export class Logger {
     );
   }
 
-  private static formatForLegacy(message: string, ...args: unknown[]): string {
+  private static formatMessageForUI(message: string, ...args: unknown[]): string {
     const serialize = (a: unknown): string =>
       a instanceof Error ? (a.stack ?? `${a.name}: ${a.message}`) : JSON.stringify(a);
     return args.length > 0 ? `${message} ${args.map(serialize).join(" ")}` : message;
@@ -60,7 +60,7 @@ export class Logger {
     Logger.pushToBuffer(level, category, message, args);
 
     if (Logger.uiService) {
-      Logger.uiService.log(Logger.formatForLegacy(message, ...args));
+      Logger.uiService.log(Logger.formatMessageForUI(message, ...args));
     }
   }
 

@@ -186,14 +186,14 @@ function applyActionToMockState(state: GameState, primitive: PrimitiveAction): G
  * @param actions - The actions array to validate
  * @param state - Current game state for path validation
  * @param stateManager - State manager for path operations
- * @param orchestrator - Orchestrator instance for context checking (optional for backward compatibility)
+ * @param orchestrator - Orchestrator instance for context checking
  * @returns Validation result with error message if invalid
  */
 export function validateActions(
   actions: unknown,
   state: GameState,
   stateManager: StateManager,
-  orchestrator?: Orchestrator,
+  orchestrator: Orchestrator,
 ): ValidationResult {
   if (!Array.isArray(actions)) {
     return {
@@ -236,7 +236,7 @@ function validateAction(
   state: GameState,
   stateManager: StateManager,
   index: number,
-  orchestrator?: Orchestrator,
+  orchestrator: Orchestrator,
 ): ValidationResult {
   if (!primitive || typeof primitive !== "object") {
     return {
@@ -424,9 +424,9 @@ const SQUARE_EFFECT_ALLOWED_PLAYER_KEYS = new Set([
 function validateSquareEffectPathRestriction(
   path: string,
   index: number,
-  orchestrator?: Orchestrator,
+  orchestrator: Orchestrator,
 ): ValidationResult {
-  if (!orchestrator?.isProcessingEffect()) return { valid: true };
+  if (!orchestrator.isProcessingEffect()) return { valid: true };
 
   const playerMatch = path.match(/^players\.([^.]+)\.(.+)$/);
   if (!playerMatch) return { valid: true };
@@ -454,7 +454,7 @@ function validateSetState(
   state: GameState,
   stateManager: StateManager,
   index: number,
-  orchestrator?: Orchestrator,
+  orchestrator: Orchestrator,
 ): ValidationResult {
   const actionRecord = action as unknown as Record<string, unknown>;
   const pathValidation = validateField(actionRecord, "path", "string", "SET_STATE", index);
@@ -540,7 +540,7 @@ function validatePlayerRolled(
   action: PrimitiveAction,
   state: GameState,
   index: number,
-  orchestrator?: Orchestrator,
+  orchestrator: Orchestrator,
 ): ValidationResult {
   const actionRecord = action as unknown as Record<string, unknown>;
   const valueValidation = validateField(actionRecord, "value", "number", "PLAYER_ROLLED", index);
@@ -557,7 +557,7 @@ function validatePlayerRolled(
     }
   }
 
-  if (orchestrator?.isProcessingEffect()) {
+  if (orchestrator.isProcessingEffect()) {
     return {
       valid: false,
       error: `PLAYER_ROLLED at index ${index}: Cannot roll dice during square effect processing. The square effect must be resolved first (fight/flee decision, etc.).`,
@@ -750,7 +750,7 @@ function validateRiddleResolved(
   action: PrimitiveAction,
   state: GameState,
   index: number,
-  _orchestrator?: Orchestrator,
+  _orchestrator: Orchestrator,
 ): ValidationResult {
   const actionRecord = action as unknown as Record<string, unknown>;
   const correctValidation = validateField(

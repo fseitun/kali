@@ -10,6 +10,7 @@ type MockStateManager = Pick<StateManager, "pathExists" | "getByPath">;
 describe("Validator - New Primitives", () => {
   let mockState: GameState;
   let mockStateManager: MockStateManager;
+  let mockOrchestrator: any;
 
   beforeEach(() => {
     mockState = {
@@ -56,6 +57,8 @@ describe("Validator - New Primitives", () => {
         return current;
       },
     };
+
+    mockOrchestrator = { isProcessingEffect: () => false } as any;
   });
 
   describe("PLAYER_ROLLED", () => {
@@ -65,6 +68,7 @@ describe("Validator - New Primitives", () => {
         actions,
         mockState,
         mockStateManager as unknown as StateManager,
+        mockOrchestrator,
       );
       expect(result.valid).toBe(true);
     });
@@ -75,6 +79,7 @@ describe("Validator - New Primitives", () => {
         actions,
         mockState,
         mockStateManager as unknown as StateManager,
+        mockOrchestrator,
       );
       expect(result.valid).toBe(false);
       expect(result.errorCode).toBe("invalidActionFormat");
@@ -87,6 +92,7 @@ describe("Validator - New Primitives", () => {
         actions,
         mockState,
         mockStateManager as unknown as StateManager,
+        mockOrchestrator,
       );
       expect(result.valid).toBe(false);
       expect(result.error).toContain("positive value");
@@ -98,6 +104,7 @@ describe("Validator - New Primitives", () => {
         actions,
         mockState,
         mockStateManager as unknown as StateManager,
+        mockOrchestrator,
       );
       expect(result.valid).toBe(false);
       expect(result.error).toContain("missing");
@@ -109,6 +116,7 @@ describe("Validator - New Primitives", () => {
         actions,
         mockState,
         mockStateManager as unknown as StateManager,
+        mockOrchestrator,
       );
       expect(result.valid).toBe(false);
       expect(result.error).toContain("type");
@@ -120,6 +128,7 @@ describe("Validator - New Primitives", () => {
         actions,
         mockState,
         mockStateManager as unknown as StateManager,
+        mockOrchestrator,
       );
       expect(result.valid).toBe(false);
       expect(result.errorCode).toBe("invalidDiceRoll");
@@ -132,6 +141,7 @@ describe("Validator - New Primitives", () => {
         actions,
         mockState,
         mockStateManager as unknown as StateManager,
+        mockOrchestrator,
       );
       expect(result.valid).toBe(false);
       expect(result.errorCode).toBe("invalidDiceRoll");
@@ -144,6 +154,7 @@ describe("Validator - New Primitives", () => {
         actions,
         mockState,
         mockStateManager as unknown as StateManager,
+        mockOrchestrator,
       );
       expect(result.valid).toBe(false);
       expect(result.errorCode).toBe("invalidDiceRoll");
@@ -158,6 +169,7 @@ describe("Validator - New Primitives", () => {
         actions,
         mockState,
         mockStateManager as unknown as StateManager,
+        mockOrchestrator,
       );
       expect(result.valid).toBe(false);
       expect(result.errorCode).toBe("invalidDiceRoll");
@@ -170,6 +182,7 @@ describe("Validator - New Primitives", () => {
         actions,
         mockState,
         mockStateManager as unknown as StateManager,
+        mockOrchestrator,
       );
       expect(result.valid).toBe(true);
     });
@@ -181,6 +194,7 @@ describe("Validator - New Primitives", () => {
         actions,
         mockState,
         mockStateManager as unknown as StateManager,
+        mockOrchestrator,
       );
       expect(result.valid).toBe(true);
       delete (mockState.players as Record<string, Record<string, unknown>>).p1.bonusDiceNextTurn;
@@ -194,6 +208,7 @@ describe("Validator - New Primitives", () => {
         actions,
         mockState,
         mockStateManager as unknown as StateManager,
+        mockOrchestrator,
       );
       expect(result.valid).toBe(true);
     });
@@ -204,6 +219,7 @@ describe("Validator - New Primitives", () => {
         actions,
         mockState,
         mockStateManager as unknown as StateManager,
+        mockOrchestrator,
       );
       expect(result.valid).toBe(false);
       expect(result.errorCode).toBe("invalidAnswer");
@@ -216,6 +232,7 @@ describe("Validator - New Primitives", () => {
         actions,
         mockState,
         mockStateManager as unknown as StateManager,
+        mockOrchestrator,
       );
       expect(result.valid).toBe(false);
       expect(result.error).toContain("missing");
@@ -240,6 +257,7 @@ describe("Validator - New Primitives", () => {
         actions,
         mockState,
         mockStateManager as unknown as StateManager,
+        mockOrchestrator,
       );
       expect(result.valid).toBe(false);
       expect(result.errorCode).toBe("invalidAnswer");
@@ -260,6 +278,7 @@ describe("Validator - New Primitives", () => {
         actions,
         mockState,
         mockStateManager as unknown as StateManager,
+        mockOrchestrator,
       );
       expect(result.valid).toBe(true);
     });
@@ -291,6 +310,7 @@ describe("Validator - New Primitives", () => {
         actions,
         stateWithRiddle,
         mockStateManager as unknown as StateManager,
+        mockOrchestrator,
       );
       expect(result.valid).toBe(true);
     });
@@ -315,6 +335,7 @@ describe("Validator - New Primitives", () => {
         actions,
         stateWithRiddle,
         mockStateManager as unknown as StateManager,
+        mockOrchestrator,
       );
       expect(result.valid).toBe(false);
       expect(result.error).toContain("options");
@@ -340,6 +361,7 @@ describe("Validator - New Primitives", () => {
         actions,
         stateWithRiddle,
         mockStateManager as unknown as StateManager,
+        mockOrchestrator,
       );
       expect(result.valid).toBe(false);
       expect(result.error).toContain("correctLetter");
@@ -368,6 +390,7 @@ describe("Validator - New Primitives", () => {
           [{ action: "PLAYER_ANSWERED", answer: letter }],
           stateWithRiddle,
           mockStateManager as unknown as StateManager,
+          mockOrchestrator,
         );
         expect(result.valid).toBe(true);
       }
@@ -392,6 +415,7 @@ describe("Validator - New Primitives", () => {
         [{ action: "PLAYER_ANSWERED", answer: "E" }],
         stateWithRiddle,
         mockStateManager as unknown as StateManager,
+        mockOrchestrator,
       );
       expect(result.valid).toBe(false);
       expect(result.errorCode).toBe("invalidAnswer");
@@ -406,6 +430,7 @@ describe("Validator - New Primitives", () => {
         actions,
         mockState,
         mockStateManager as unknown as StateManager,
+        mockOrchestrator,
       );
       expect(result.valid).toBe(false);
       expect(result.errorCode).toBe("invalidActionFormat");
@@ -418,6 +443,7 @@ describe("Validator - New Primitives", () => {
         actions,
         mockState,
         mockStateManager as unknown as StateManager,
+        mockOrchestrator,
       );
       expect(result.valid).toBe(false);
       expect(result.error).toContain("invalid action type");
@@ -429,6 +455,7 @@ describe("Validator - New Primitives", () => {
         actions,
         mockState,
         mockStateManager as unknown as StateManager,
+        mockOrchestrator,
       );
       expect(result.valid).toBe(false);
       expect(result.error).toContain("invalid action type");
@@ -440,6 +467,7 @@ describe("Validator - New Primitives", () => {
         actions,
         mockState,
         mockStateManager as unknown as StateManager,
+        mockOrchestrator,
       );
       expect(result.valid).toBe(false);
       expect(result.error).toContain("invalid action type");
@@ -453,6 +481,7 @@ describe("Validator - New Primitives", () => {
         actions,
         mockState,
         mockStateManager as unknown as StateManager,
+        mockOrchestrator,
       );
       expect(result.valid).toBe(true);
     });
@@ -463,6 +492,7 @@ describe("Validator - New Primitives", () => {
         actions,
         mockState,
         mockStateManager as unknown as StateManager,
+        mockOrchestrator,
       );
       expect(result.valid).toBe(false);
       expect(result.errorCode).toBe("wrongTurn");
@@ -475,6 +505,7 @@ describe("Validator - New Primitives", () => {
         actions,
         mockState,
         mockStateManager as unknown as StateManager,
+        mockOrchestrator,
       );
       expect(result.valid).toBe(true);
     });
@@ -487,6 +518,7 @@ describe("Validator - New Primitives", () => {
         actions,
         mockState,
         mockStateManager as unknown as StateManager,
+        mockOrchestrator,
       );
       expect(result.valid).toBe(false);
       expect(result.error).toContain("Cannot modify players.p2 when it's p1's turn");
@@ -498,6 +530,7 @@ describe("Validator - New Primitives", () => {
         actions,
         mockState,
         mockStateManager as unknown as StateManager,
+        mockOrchestrator,
       );
       expect(result.valid).toBe(true);
     });
@@ -508,6 +541,7 @@ describe("Validator - New Primitives", () => {
         actions,
         mockState,
         mockStateManager as unknown as StateManager,
+        mockOrchestrator,
       );
       expect(result.valid).toBe(false);
       expect(result.errorCode).toBe("setStateForbidden");
@@ -522,6 +556,7 @@ describe("Validator - New Primitives", () => {
         actions,
         mockState,
         mockStateManager as unknown as StateManager,
+        mockOrchestrator,
       );
       expect(result.valid).toBe(true);
     });
@@ -532,6 +567,7 @@ describe("Validator - New Primitives", () => {
         actions,
         mockState,
         mockStateManager as unknown as StateManager,
+        mockOrchestrator,
       );
       expect(result.valid).toBe(false);
       expect(result.errorCode).toBe("setStateForbidden");
@@ -545,6 +581,7 @@ describe("Validator - New Primitives", () => {
         actions,
         mockState,
         mockStateManager as unknown as StateManager,
+        mockOrchestrator,
       );
       expect(result.valid).toBe(false);
       expect(result.errorCode).toBe("setStateForbidden");
@@ -562,6 +599,7 @@ describe("Validator - New Primitives", () => {
         actions,
         mockState,
         mockStateManager as unknown as StateManager,
+        mockOrchestrator,
       );
       expect(result.valid).toBe(false);
       expect(result.errorCode).toBe("wrongTurn");
@@ -584,6 +622,7 @@ describe("Validator - New Primitives", () => {
         actions,
         mockState,
         mockStateManager as unknown as StateManager,
+        mockOrchestrator,
       );
       expect(result.valid).toBe(true);
     });
@@ -606,6 +645,7 @@ describe("Validator - New Primitives", () => {
         actions,
         mockState,
         mockStateManager as unknown as StateManager,
+        mockOrchestrator,
       );
       expect(result.valid).toBe(false);
       expect(result.errorCode).toBe("chooseForkFirst");
@@ -623,6 +663,7 @@ describe("Validator - New Primitives", () => {
         actions,
         mockState,
         mockStateManager as unknown as StateManager,
+        mockOrchestrator,
       );
       expect(result.valid).toBe(true);
     });
@@ -636,6 +677,7 @@ describe("Validator - New Primitives", () => {
         actions,
         mockState,
         mockStateManager as unknown as StateManager,
+        mockOrchestrator,
       );
       expect(result.valid).toBe(true);
     });
@@ -647,6 +689,7 @@ describe("Validator - New Primitives", () => {
         actions,
         mockState,
         mockStateManager as unknown as StateManager,
+        mockOrchestrator,
       );
       expect(result.valid).toBe(true);
     });
@@ -658,6 +701,7 @@ describe("Validator - New Primitives", () => {
         actions,
         mockState,
         mockStateManager as unknown as StateManager,
+        mockOrchestrator,
       );
       expect(result.valid).toBe(true);
     });
@@ -670,6 +714,7 @@ describe("Validator - New Primitives", () => {
         actions,
         mockState,
         mockStateManager as unknown as StateManager,
+        mockOrchestrator,
       );
       expect(result.valid).toBe(false);
       expect(result.errorCode).toBe("pathNotAllowed");
@@ -685,6 +730,7 @@ describe("Validator - New Primitives", () => {
         actions,
         mockState,
         mockStateManager as unknown as StateManager,
+        mockOrchestrator,
       );
       expect(result.valid).toBe(true);
     });
@@ -696,6 +742,7 @@ describe("Validator - New Primitives", () => {
         actions,
         mockState,
         mockStateManager as unknown as StateManager,
+        mockOrchestrator,
       );
       expect(result.valid).toBe(false);
     });
@@ -737,17 +784,6 @@ describe("Validator - New Primitives", () => {
       expect(result.valid).toBe(true);
     });
 
-    it("allows PLAYER_ROLLED when no orchestrator provided (backward compatibility)", () => {
-      const actions = [{ action: "PLAYER_ROLLED", value: 4 }];
-      const result = validateActions(
-        actions,
-        mockState,
-        mockStateManager as unknown as StateManager,
-      );
-
-      expect(result.valid).toBe(true);
-    });
-
     it("blocks PLAYER_ROLLED when pendingAnimalEncounter powerCheck for current player", () => {
       const stateWithPending = {
         ...mockState,
@@ -768,6 +804,7 @@ describe("Validator - New Primitives", () => {
         actions,
         stateWithPending,
         mockStateManager as unknown as StateManager,
+        mockOrchestrator,
       );
 
       expect(result.valid).toBe(false);
@@ -796,6 +833,7 @@ describe("Validator - New Primitives", () => {
         actions,
         stateWithPending,
         mockStateManager as unknown as StateManager,
+        mockOrchestrator,
       );
 
       expect(result.valid).toBe(true);
@@ -821,6 +859,7 @@ describe("Validator - New Primitives", () => {
         actions,
         stateWithPending,
         mockStateManager as unknown as StateManager,
+        mockOrchestrator,
       );
 
       expect(result.valid).toBe(false);
@@ -848,6 +887,7 @@ describe("Validator - New Primitives", () => {
         actions,
         stateWithPending,
         mockStateManager as unknown as StateManager,
+        mockOrchestrator,
       );
 
       expect(result.valid).toBe(true);
@@ -929,6 +969,7 @@ describe("Validator - New Primitives", () => {
         actions,
         mockState,
         mockStateManager as unknown as StateManager,
+        mockOrchestrator,
       );
       expect(result.valid).toBe(true);
     });
@@ -939,6 +980,7 @@ describe("Validator - New Primitives", () => {
         actions,
         mockState,
         mockStateManager as unknown as StateManager,
+        mockOrchestrator,
       );
       expect(result.valid).toBe(false);
       expect(result.error).toContain("not an object");
@@ -950,6 +992,7 @@ describe("Validator - New Primitives", () => {
         actions,
         mockState,
         mockStateManager as unknown as StateManager,
+        mockOrchestrator,
       );
       expect(result.valid).toBe(false);
       expect(result.error).toContain("not an object");
@@ -968,6 +1011,7 @@ describe("Validator - New Primitives", () => {
         actions,
         mockState,
         mockStateManager as unknown as StateManager,
+        mockOrchestrator,
       );
       expect(result.valid).toBe(true);
     });
@@ -982,6 +1026,7 @@ describe("Validator - New Primitives", () => {
         actions,
         mockState,
         mockStateManager as unknown as StateManager,
+        mockOrchestrator,
       );
       expect(result.valid).toBe(false);
       expect(result.error).toContain("index 1");
@@ -994,6 +1039,7 @@ describe("Validator - New Primitives", () => {
         actions as unknown as unknown[],
         mockState,
         mockStateManager as unknown as StateManager,
+        mockOrchestrator,
       );
       expect(result.valid).toBe(false);
       expect(result.errorCode).toBe("invalidActionFormat");
