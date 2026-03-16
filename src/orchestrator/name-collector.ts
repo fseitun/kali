@@ -20,7 +20,6 @@ import {
 export class NameCollector {
   private collectedNames: string[] = [];
   private playerCount = 0;
-  private timeoutHandle: number | null = null;
   private minPlayers: number;
   private maxPlayers: number;
 
@@ -76,10 +75,6 @@ export class NameCollector {
     return new Promise<number>((resolve) => {
       const handler = async (text: string): Promise<void> => {
         Logger.info(`Player count handler received: "${text}"`);
-        if (this.timeoutHandle) {
-          clearTimeout(this.timeoutHandle);
-          this.timeoutHandle = null;
-        }
 
         const analysis = await this.llmClient.analyzeResponse(
           text,
@@ -95,7 +90,6 @@ export class NameCollector {
               max: this.maxPlayers,
             }),
           );
-          this.setupTimeout(() => resolve(this.minPlayers), 10000);
           return;
         }
 
@@ -120,16 +114,10 @@ export class NameCollector {
               max: this.maxPlayers,
             }),
           );
-          this.setupTimeout(() => resolve(this.minPlayers), 10000);
         }
       };
 
       onTranscript(handler);
-      this.setupTimeout(async () => {
-        Logger.info("Player count timeout - no response received");
-        await this.speechService.speak(t("setup.playerCountTimeout", { count: this.minPlayers }));
-        resolve(this.minPlayers);
-      }, 10000);
 
       void this.speechService.speak(
         t("setup.playerCount", { min: this.minPlayers, max: this.maxPlayers }),
@@ -142,14 +130,8 @@ export class NameCollector {
     onTranscript: (handler: (text: string) => void) => void,
   ): Promise<string> {
     return new Promise<string>((resolve) => {
-      let attempts = 0;
-
       const handler = async (text: string): Promise<void> => {
         Logger.info(`Name handler for player ${playerNumber} received: "${text}"`);
-        if (this.timeoutHandle) {
-          clearTimeout(this.timeoutHandle);
-          this.timeoutHandle = null;
-        }
 
         const analysis = await this.llmClient.analyzeResponse(text, "expecting person name");
         if (!analysis.isOnTopic) {
@@ -157,10 +139,6 @@ export class NameCollector {
             Logger.info(`LLM debug: ${analysis.urgentMessage}`);
           }
           await this.speechService.speak(t("setup.playerName", { number: playerNumber }));
-          this.setupTimeout(
-            () => this.handleNameTimeout(playerNumber, resolve, onTranscript),
-            10000,
-          );
           return;
         }
 
@@ -177,38 +155,14 @@ export class NameCollector {
           }
         }
 
-        attempts++;
-        if (attempts < 2) {
-          await this.speechService.speak(t("setup.extractionFailed"));
-          await this.speechService.speak(t("setup.playerName", { number: playerNumber }));
-          this.setupTimeout(
-            () => this.handleNameTimeout(playerNumber, resolve, onTranscript),
-            10000,
-          );
-        } else {
-          await this.handleNameTimeout(playerNumber, resolve, onTranscript);
-        }
+        await this.speechService.speak(t("setup.extractionFailed"));
+        await this.speechService.speak(t("setup.playerName", { number: playerNumber }));
       };
 
       onTranscript(handler);
-      this.setupTimeout(async () => {
-        Logger.info(`Name timeout for player ${playerNumber} - no valid response`);
-        await this.handleNameTimeout(playerNumber, resolve, onTranscript);
-      }, 10000);
 
       void this.speechService.speak(t("setup.playerName", { number: playerNumber }));
     });
-  }
-
-  private async handleNameTimeout(
-    playerNumber: number,
-    resolve: (value: string) => void,
-    _onTranscript?: (handler: (text: string) => void) => void,
-  ): Promise<void> {
-    const kindName = generateNickname(`Player${playerNumber}`, this.collectedNames);
-
-    await this.speechService.speak(t("setup.nameTimeout", { name: kindName }));
-    resolve(kindName);
   }
 
   private async resolveConflicts(
@@ -242,15 +196,7 @@ export class NameCollector {
     await this.speechService.speak(t("setup.allNamesReady", { names: allNames }));
 
     await new Promise<void>((resolve) => {
-      const handler = (): void => {
-        if (this.timeoutHandle) {
-          clearTimeout(this.timeoutHandle);
-        }
-        resolve();
-      };
-
-      onTranscript(handler);
-      this.setupTimeout(() => resolve(), 3000);
+      onTranscript(() => resolve());
     });
   }
 
@@ -262,10 +208,6 @@ export class NameCollector {
     return new Promise<string>((resolve) => {
       const handler = async (text: string): Promise<void> => {
         Logger.info(`Conflict resolution handler received: "${text}"`);
-        if (this.timeoutHandle) {
-          clearTimeout(this.timeoutHandle);
-          this.timeoutHandle = null;
-        }
 
         const analysis = await this.llmClient.analyzeResponse(
           text,
@@ -276,7 +218,6 @@ export class NameCollector {
             Logger.info(`LLM debug: ${analysis.urgentMessage}`);
           }
           await this.speechService.speak(t("setup.nameConflict", { name: original, suggestion }));
-          this.setupTimeout(() => resolve(suggestion), 10000);
           return;
         }
 
@@ -293,10 +234,6 @@ export class NameCollector {
       };
 
       onTranscript(handler);
-      this.setupTimeout(() => {
-        Logger.info("Conflict resolution timeout - using suggestion");
-        resolve(suggestion);
-      }, 10000);
     });
   }
 
@@ -307,10 +244,6 @@ export class NameCollector {
   ): Promise<void> {
     const handler = async (text: string): Promise<void> => {
       Logger.info(`Alternative name handler received: "${text}"`);
-      if (this.timeoutHandle) {
-        clearTimeout(this.timeoutHandle);
-        this.timeoutHandle = null;
-      }
 
       const analysis = await this.llmClient.analyzeResponse(
         text,
@@ -321,10 +254,6 @@ export class NameCollector {
           Logger.info(`LLM debug: ${analysis.urgentMessage}`);
         }
         await this.speechService.speak(t("setup.nameConflictAlternative"));
-        this.setupTimeout(() => {
-          const kindName = generateNickname(fallback, this.collectedNames);
-          resolve(kindName);
-        }, 10000);
         return;
       }
 
@@ -345,18 +274,5 @@ export class NameCollector {
     };
 
     onTranscript(handler);
-    this.setupTimeout(async () => {
-      Logger.info("Alternative name timeout - using fallback");
-      const kindName = generateNickname(fallback, this.collectedNames);
-      await this.speechService.speak(t("setup.nameConflictFallback", { name: kindName }));
-      resolve(kindName);
-    }, 10000);
-  }
-
-  private setupTimeout(callback: () => void, ms: number): void {
-    if (this.timeoutHandle) {
-      clearTimeout(this.timeoutHandle);
-    }
-    this.timeoutHandle = window.setTimeout(callback, ms);
   }
 }
