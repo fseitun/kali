@@ -71,10 +71,16 @@ class KaliDebugApp {
     const llmIndicator = document.getElementById("llm-indicator");
     if (llmIndicator) llmIndicator.textContent = getLLMDisplayLabel();
 
+    const versionNoticeMessage = document.getElementById("version-notice-message");
+    const versionRefresh = document.getElementById("version-refresh");
+    if (versionNoticeMessage) versionNoticeMessage.textContent = t("ui.versionNoticeMessage");
+    if (versionRefresh) versionRefresh.textContent = t("ui.versionRefreshButton");
+
     const versionCurrent = document.getElementById("version-current");
     if (versionCurrent) {
-      versionCurrent.textContent = CONFIG.BUILD_ID;
-      versionCurrent.title = `Build: ${CONFIG.BUILD_ID}`;
+      const buildLabel = t("ui.buildLabel");
+      versionCurrent.textContent = `${buildLabel}${CONFIG.BUILD_ID}`;
+      versionCurrent.title = `${buildLabel}${CONFIG.BUILD_ID}`;
     }
 
     // eslint-disable-next-line no-console -- build id for DevTools when verifying deployed version

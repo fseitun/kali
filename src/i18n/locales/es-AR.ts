@@ -46,6 +46,9 @@ export const esAR = {
     wakeWordReady: 'Decí "{wakeWord}" para despertarme',
     savedGameDetected: 'Partida guardada. Decí "{wakeWord}, seguir" o "{wakeWord}, juego nuevo"',
     exportLogs: "📁 Exportar",
+    versionNoticeMessage: "Hay una nueva versión.",
+    versionRefreshButton: "Actualizar",
+    buildLabel: "Versión: ",
     status: {
       initializing: "Iniciando...",
       loading: "Cargando modelo...",

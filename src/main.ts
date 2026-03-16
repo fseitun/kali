@@ -129,11 +129,16 @@ class KaliApp {
 document.addEventListener("DOMContentLoaded", () => {
   // eslint-disable-next-line no-console -- build id for DevTools when verifying deployed version
   console.log("Kali build:", CONFIG.BUILD_ID);
+  const versionNoticeMessage = document.getElementById("version-notice-message");
+  const versionRefresh = document.getElementById("version-refresh");
+  if (versionNoticeMessage) versionNoticeMessage.textContent = t("ui.versionNoticeMessage");
+  if (versionRefresh) versionRefresh.textContent = t("ui.versionRefreshButton");
   setupVersionRefreshPrompt();
   const versionCurrent = document.getElementById("version-current");
   if (versionCurrent) {
-    versionCurrent.textContent = `Build: ${CONFIG.BUILD_ID}`;
-    versionCurrent.title = `Build: ${CONFIG.BUILD_ID}`;
+    const buildLabel = t("ui.buildLabel");
+    versionCurrent.textContent = `${buildLabel}${CONFIG.BUILD_ID}`;
+    versionCurrent.title = `${buildLabel}${CONFIG.BUILD_ID}`;
   }
   new KaliApp();
 });

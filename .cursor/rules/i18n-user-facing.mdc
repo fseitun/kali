@@ -1,0 +1,18 @@
+---
+description: All user-facing text must use i18n; never add hardcoded strings in HTML or TS
+globs: "**/*.ts", "**/*.html"
+---
+
+# i18n for user-facing text
+
+When adding or changing **user-facing text** (UI labels, messages, errors, placeholders, button text, etc.) in HTML or TypeScript:
+
+- **Use the project i18n system:** `t(key)` from `src/i18n` with a key under an existing namespace (`ui.*`, `errors.*`, `setup.*`, `game.*`, `llm.*`).
+- **Add the key and string to all locale files:** [src/i18n/locales/en-US.ts](src/i18n/locales/en-US.ts) and [src/i18n/locales/es-AR.ts](src/i18n/locales/es-AR.ts).
+
+Do **not**:
+
+- Add hardcoded user-visible strings in HTML or TS.
+- Add a string in only one locale file.
+
+Fill UI elements from JavaScript using `t()` at init (or when locale changes) rather than putting user-facing copy directly in HTML.

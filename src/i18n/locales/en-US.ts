@@ -46,6 +46,9 @@ export const enUS = {
     wakeWordReady: 'Say "{wakeWord}" to wake me up',
     savedGameDetected: 'Saved game detected. Say "{wakeWord}, continue" or "{wakeWord}, new game"',
     exportLogs: "📁 Export",
+    versionNoticeMessage: "New version available.",
+    versionRefreshButton: "Refresh",
+    buildLabel: "Build: ",
     status: {
       initializing: "Initializing...",
       loading: "Loading model...",
