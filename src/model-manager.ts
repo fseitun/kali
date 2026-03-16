@@ -11,6 +11,9 @@ import { Logger } from "./utils/logger";
 export class ModelManager {
   private static instance: ModelManager | null = null;
 
+  /** Shared promise for in-flight download; deduplicates concurrent getModel() calls. */
+  private inFlight: Promise<string> | null = null;
+
   private constructor() {}
 
   /**
@@ -35,8 +38,14 @@ export class ModelManager {
       return cachedModel;
     }
 
-    Logger.download("Downloading Vosk model...");
-    return await this.downloadAndCacheModel(onProgress);
+    if (!this.inFlight) {
+      Logger.download("Downloading Vosk model...");
+      const promise = this.downloadAndCacheModel(onProgress);
+      this.inFlight = promise.finally(() => {
+        this.inFlight = null;
+      });
+    }
+    return this.inFlight;
   }
 
   private async getCachedModel(): Promise<string | null> {

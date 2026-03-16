@@ -4,11 +4,17 @@ import "./i18n";
 import { CONFIG } from "./config";
 import { t } from "./i18n";
 import { KaliAppCore } from "./kali-app-core";
+import { ModelManager } from "./model-manager";
 import { setupVersionRefreshPrompt } from "./pwa-register";
 import { ProductionUIService } from "./services/production-ui-service";
 import { SpeechService } from "./services/speech-service";
 import { initLogBuffer } from "./utils/log-buffer";
 import { Logger } from "./utils/logger";
+
+// Start Vosk model download immediately; huge asset, don't delay (production entry only).
+void ModelManager.getInstance()
+  .getModel()
+  .then((url) => URL.revokeObjectURL(url));
 
 class KaliApp {
   private core: KaliAppCore;
