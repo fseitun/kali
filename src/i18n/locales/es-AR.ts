@@ -58,6 +58,7 @@ export const esAR = {
   },
   errors: {
     validationFailed: "Disculpá, no te entendí.",
+    invalidDiceRoll: "Ese número no se puede sacar con el dado. Tirá de nuevo.",
     microphoneAccess: "No puedo acceder al micrófono.",
     modelDownload: "Error al descargar el modelo.",
     ttsNotSupported: "El sistema de voz no es compatible.",

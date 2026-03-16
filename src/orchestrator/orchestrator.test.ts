@@ -84,11 +84,11 @@ describe("Orchestrator - New Action Handlers", () => {
     });
 
     it("calculates new position correctly", async () => {
-      const actions: PrimitiveAction[] = [{ action: "PLAYER_ROLLED", value: 10 }];
+      const actions: PrimitiveAction[] = [{ action: "PLAYER_ROLLED", value: 5 }];
 
       await orchestrator.testExecuteActions(actions);
 
-      expect(mockStateManager.set).toHaveBeenCalledWith("players.p1.position", 15);
+      expect(mockStateManager.set).toHaveBeenCalledWith("players.p1.position", 10);
     });
   });
 

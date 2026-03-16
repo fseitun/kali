@@ -335,7 +335,11 @@ export class Orchestrator {
 
     if (!validation.valid) {
       Logger.error("Validation failed:", validation.error);
-      await this.speechService.speak(t("errors.validationFailed"));
+      const message =
+        validation.errorCode === "invalidDiceRoll"
+          ? t("errors.invalidDiceRoll")
+          : t("errors.validationFailed");
+      await this.speechService.speak(message);
       return { success: false, shouldAdvanceTurn: false };
     }
 

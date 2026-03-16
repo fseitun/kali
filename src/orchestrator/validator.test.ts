@@ -112,6 +112,78 @@ describe("Validator - New Primitives", () => {
       expect(result.valid).toBe(false);
       expect(result.error).toContain("type");
     });
+
+    it("rejects value 77 (impossible roll, 1d6)", () => {
+      const actions = [{ action: "PLAYER_ROLLED", value: 77 }];
+      const result = validateActions(
+        actions,
+        mockState,
+        mockStateManager as unknown as StateManager,
+      );
+      expect(result.valid).toBe(false);
+      expect(result.errorCode).toBe("invalidDiceRoll");
+      expect(result.error).toContain("1-6");
+    });
+
+    it("rejects value > 6 when 1d6", () => {
+      const actions = [{ action: "PLAYER_ROLLED", value: 7 }];
+      const result = validateActions(
+        actions,
+        mockState,
+        mockStateManager as unknown as StateManager,
+      );
+      expect(result.valid).toBe(false);
+      expect(result.errorCode).toBe("invalidDiceRoll");
+    });
+
+    it("rejects value > 12 when 2d6", () => {
+      (mockState.players as Record<string, Record<string, unknown>>).p1.bonusDiceNextTurn = true;
+      const actions = [{ action: "PLAYER_ROLLED", value: 13 }];
+      const result = validateActions(
+        actions,
+        mockState,
+        mockStateManager as unknown as StateManager,
+      );
+      expect(result.valid).toBe(false);
+      expect(result.errorCode).toBe("invalidDiceRoll");
+      expect(result.error).toContain("2-12");
+      delete (mockState.players as Record<string, Record<string, unknown>>).p1.bonusDiceNextTurn;
+    });
+
+    it("rejects value 1 when 2d6 (min is 2)", () => {
+      (mockState.players as Record<string, Record<string, unknown>>).p1.bonusDiceNextTurn = true;
+      const actions = [{ action: "PLAYER_ROLLED", value: 1 }];
+      const result = validateActions(
+        actions,
+        mockState,
+        mockStateManager as unknown as StateManager,
+      );
+      expect(result.valid).toBe(false);
+      expect(result.errorCode).toBe("invalidDiceRoll");
+      delete (mockState.players as Record<string, Record<string, unknown>>).p1.bonusDiceNextTurn;
+    });
+
+    it("accepts value 6 with 1d6", () => {
+      const actions = [{ action: "PLAYER_ROLLED", value: 6 }];
+      const result = validateActions(
+        actions,
+        mockState,
+        mockStateManager as unknown as StateManager,
+      );
+      expect(result.valid).toBe(true);
+    });
+
+    it("accepts value 12 with 2d6 (bonusDiceNextTurn)", () => {
+      (mockState.players as Record<string, Record<string, unknown>>).p1.bonusDiceNextTurn = true;
+      const actions = [{ action: "PLAYER_ROLLED", value: 12 }];
+      const result = validateActions(
+        actions,
+        mockState,
+        mockStateManager as unknown as StateManager,
+      );
+      expect(result.valid).toBe(true);
+      delete (mockState.players as Record<string, Record<string, unknown>>).p1.bonusDiceNextTurn;
+    });
   });
 
   describe("PLAYER_ANSWERED", () => {

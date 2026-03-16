@@ -58,6 +58,7 @@ export const enUS = {
   },
   errors: {
     validationFailed: "I couldn't process that.",
+    invalidDiceRoll: "That number isn't possible with the dice. Roll again.",
     microphoneAccess: "Cannot access microphone.",
     modelDownload: "Error downloading model.",
     ttsNotSupported: "Text-to-Speech is not supported.",
