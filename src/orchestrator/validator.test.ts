@@ -448,6 +448,108 @@ describe("Validator - New Primitives", () => {
     });
   });
 
+  describe("PLAYER_ANSWERED during powerCheck phase", () => {
+    it("allows numeric answer 1 when pendingAnimalEncounter is powerCheck for current player", () => {
+      const stateWithPowerCheck = {
+        ...mockState,
+        game: {
+          ...mockState.game,
+          turn: "p1",
+          pendingAnimalEncounter: {
+            position: 16,
+            power: 4,
+            playerId: "p1",
+            phase: "powerCheck",
+            riddleCorrect: true,
+          },
+        },
+        players: {
+          ...mockState.players,
+          p1: {
+            ...(mockState.players as Record<string, Record<string, unknown>>).p1,
+            position: 16,
+            activeChoices: { 0: 1 },
+          },
+        },
+        decisionPoints: [
+          { position: 0, prompt: "Choose path?", positionOptions: { "1": 1, "15": 15 } },
+        ],
+      } as unknown as GameState;
+      const result = validateActions(
+        [{ action: "PLAYER_ANSWERED", answer: "1" }],
+        stateWithPowerCheck,
+        mockStateManager as unknown as StateManager,
+        mockOrchestrator,
+      );
+      expect(result.valid).toBe(true);
+    });
+
+    it("allows numeric answer 7 when pendingAnimalEncounter is powerCheck for current player", () => {
+      const stateWithPowerCheck = {
+        ...mockState,
+        game: {
+          ...mockState.game,
+          turn: "p1",
+          pendingAnimalEncounter: {
+            position: 16,
+            power: 4,
+            playerId: "p1",
+            phase: "powerCheck",
+          },
+        },
+        players: {
+          ...mockState.players,
+          p1: {
+            ...(mockState.players as Record<string, Record<string, unknown>>).p1,
+            position: 16,
+          },
+        },
+        decisionPoints: [
+          { position: 0, prompt: "Choose path?", positionOptions: { "1": 1, "15": 15 } },
+        ],
+      } as unknown as GameState;
+      const result = validateActions(
+        [{ action: "PLAYER_ANSWERED", answer: "7" }],
+        stateWithPowerCheck,
+        mockStateManager as unknown as StateManager,
+        mockOrchestrator,
+      );
+      expect(result.valid).toBe(true);
+    });
+
+    it("allows numeric answer during revenge phase for current player", () => {
+      const stateWithRevenge = {
+        ...mockState,
+        game: {
+          ...mockState.game,
+          pendingAnimalEncounter: {
+            position: 16,
+            power: 5,
+            playerId: "p1",
+            phase: "revenge",
+          },
+        },
+        players: {
+          ...mockState.players,
+          p1: {
+            ...(mockState.players as Record<string, Record<string, unknown>>).p1,
+            position: 16,
+          },
+        },
+        decisionPoints: [
+          { position: 0, prompt: "Choose path?", positionOptions: { "1": 1, "15": 15 } },
+        ],
+      } as unknown as GameState;
+      const result = validateActions(
+        [{ action: "PLAYER_ANSWERED", answer: "3" }],
+        stateWithRevenge,
+        mockStateManager as unknown as StateManager,
+        mockOrchestrator,
+      );
+      expect(result.valid).toBe(true);
+    });
+  });
+
   describe("Old Primitives Rejection", () => {
     it("rejects ADD_STATE", () => {
       const actions = [{ action: "ADD_STATE", path: "players.p1.position", value: 5 }];

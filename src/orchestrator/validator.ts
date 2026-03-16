@@ -687,6 +687,18 @@ function validatePlayerAnswered(
     };
   }
 
+  // Power check / revenge: numeric roll (1–12) for current player's pending encounter — accept before fork-choice logic
+  if (
+    (pending?.phase === "powerCheck" || pending?.phase === "revenge") &&
+    pending.playerId === currentTurn
+  ) {
+    const rollStr = answer.trim().replace(/\D/g, "") || answer.trim();
+    const roll = parseInt(rollStr, 10);
+    if (!Number.isNaN(roll) && roll >= 1 && roll <= 12) {
+      return { valid: true };
+    }
+  }
+
   const position = currentPlayer.position as number | undefined;
   const choices = currentPlayer.activeChoices as Record<string, number> | undefined;
   const hasChoiceAt = (pos: number): boolean => choices?.[String(pos)] !== undefined;
