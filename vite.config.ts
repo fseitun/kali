@@ -106,6 +106,8 @@ export default defineConfig({
   ],
   build: {
     target: "esnext",
+    // Vosk chunk is ~6 MB (WASM/speech); loaded on demand when user uses voice, not in debug.
+    chunkSizeWarningLimit: 6144,
     rollupOptions: {
       input: {
         main: "./index.html",
@@ -113,6 +115,7 @@ export default defineConfig({
       },
       output: {
         manualChunks(id) {
+          // Intentionally large; loaded on demand via dynamic import in kali-app-core (voice only).
           if (id.includes("vosk-browser")) return "vosk";
           if (
             id.includes("debug.ts") ||
