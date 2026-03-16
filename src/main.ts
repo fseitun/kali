@@ -4,6 +4,7 @@ import "./i18n";
 import { CONFIG } from "./config";
 import { t } from "./i18n";
 import { KaliAppCore } from "./kali-app-core";
+import { setupVersionRefreshPrompt } from "./pwa-register";
 import { ProductionUIService } from "./services/production-ui-service";
 import { SpeechService } from "./services/speech-service";
 import { initLogBuffer } from "./utils/log-buffer";
@@ -120,6 +121,9 @@ class KaliApp {
 }
 
 document.addEventListener("DOMContentLoaded", () => {
+  // eslint-disable-next-line no-console -- build id for DevTools when verifying deployed version
+  console.log("Kali build:", CONFIG.BUILD_ID);
+  setupVersionRefreshPrompt();
   new KaliApp();
 });
 

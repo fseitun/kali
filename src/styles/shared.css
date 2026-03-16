@@ -88,6 +88,30 @@ body {
   line-height: 1.5;
 }
 
+.version-notice {
+  font-size: 0.9rem;
+  opacity: 0.9;
+  margin-top: 1rem;
+}
+
+.version-notice button {
+  margin-left: 0.5rem;
+  padding: 0.25rem 0.75rem;
+  background: var(--accent-color);
+  color: var(--bg-color);
+  border: none;
+  border-radius: 4px;
+  font-family: inherit;
+  cursor: pointer;
+}
+
+.build-id {
+  font-size: 0.4em;
+  opacity: 0.7;
+  font-weight: normal;
+  margin-left: 0.25em;
+}
+
 @keyframes hmr-pulse {
   0%,
   100% {

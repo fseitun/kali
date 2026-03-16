@@ -4,6 +4,7 @@ import "./i18n";
 import { CONFIG } from "./config";
 import { t } from "./i18n";
 import { KaliAppCore } from "./kali-app-core";
+import { setupVersionRefreshPrompt } from "./pwa-register";
 import { DebugUIService } from "./services/debug-ui-service";
 import { NoOpSpeechService } from "./services/no-op-speech-service";
 import {
@@ -69,6 +70,16 @@ class KaliDebugApp {
 
     const llmIndicator = document.getElementById("llm-indicator");
     if (llmIndicator) llmIndicator.textContent = getLLMDisplayLabel();
+
+    const buildIdEl = document.getElementById("build-id");
+    if (buildIdEl) {
+      buildIdEl.textContent = CONFIG.BUILD_ID;
+      buildIdEl.title = `Build: ${CONFIG.BUILD_ID}`;
+    }
+
+    // eslint-disable-next-line no-console -- build id for DevTools when verifying deployed version
+    console.log("Kali build:", CONFIG.BUILD_ID);
+    setupVersionRefreshPrompt();
 
     this.setupLogOptions();
     this.setupStartButton(startButton);

@@ -6,12 +6,12 @@ import type { ManifestEntry } from "workbox-build";
 type ManifestTransformEntry = ManifestEntry & { size: number };
 
 export default defineConfig({
-  define:
-    process.env.VITEST === "true"
-      ? {
-          "import.meta.env.VITE_LLM_PROVIDER": JSON.stringify("mock"),
-        }
-      : undefined,
+  define: {
+    ...(process.env.VITEST === "true"
+      ? { "import.meta.env.VITE_LLM_PROVIDER": JSON.stringify("mock") }
+      : {}),
+    "import.meta.env.VITE_BUILD_ID": JSON.stringify(process.env.VERCEL_GIT_COMMIT_SHA ?? "dev"),
+  },
   plugins: [
     {
       name: "debug-route-rewrite",
@@ -25,7 +25,7 @@ export default defineConfig({
       },
     },
     VitePWA({
-      registerType: "autoUpdate",
+      registerType: "prompt",
       workbox: {
         globPatterns: ["**/*.{js,css,html,ico,png,svg}"],
         navigateFallback: null,

@@ -1,4 +1,6 @@
 export const CONFIG = {
+  BUILD_ID: import.meta.env.VITE_BUILD_ID ?? "dev",
+
   LLM: {
     RETRY_DELAY_MS: 1_500,
     REQUEST_TIMEOUT_MS: 20_000,
