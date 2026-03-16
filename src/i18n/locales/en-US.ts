@@ -12,7 +12,7 @@ export const enUS = {
     nameConflictPerfect: "Perfect!",
     nameConflictAlternative: "What would you like to be called instead?",
     nameConflictFallback: "Let's go with {name}.",
-    allNamesReady: "Excellent! We have {names}. Ready to play?",
+    allNamesReady: "Excellent! We have {names}. Let's go!",
     ready: "Perfect! Let's begin. {name}, you go first.",
     extractionFailed: "I didn't catch that.",
   },

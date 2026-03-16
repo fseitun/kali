@@ -12,7 +12,7 @@ export const esAR = {
     nameConflictPerfect: "¡Listo!",
     nameConflictAlternative: "¿Cómo preferís que te llamara?",
     nameConflictFallback: "Bueno, seguimos con {name}.",
-    allNamesReady: "¡Genial! Ya estamos: {names}. ¿Listos para jugar?",
+    allNamesReady: "¡Genial! Ya estamos: {names}. ¡Arrancamos!",
     ready: "¡Perfecto! Arranquemos. {name}, vos empezás.",
     extractionFailed: "No te escuché bien.",
   },

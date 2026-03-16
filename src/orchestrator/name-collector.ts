@@ -200,10 +200,6 @@ export class NameCollector {
 
     const allNames = this.collectedNames.join(", ").replace(/, ([^,]*)$/, " y $1");
     await this.speechService.speak(t("setup.allNamesReady", { names: allNames }));
-
-    await new Promise<void>((resolve) => {
-      onTranscript(() => resolve());
-    });
   }
 
   private async waitForConfirmation(
