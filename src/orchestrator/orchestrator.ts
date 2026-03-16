@@ -409,7 +409,12 @@ export class Orchestrator {
     // When depth > 0, we're in a nested call from a previous enforcement or board effect;
     // we just executed the LLM's response (e.g. asking the question). Don't re-inject.
     // Skip when skipDecisionPointEnforcement (e.g. proactive start already asked).
-    if (context.depth === 0 && !context.skipDecisionPointEnforcement) {
+    // Skip when we just narrated the decision ask (avoids duplicate "path A or B" question).
+    if (
+      context.depth === 0 &&
+      !context.skipDecisionPointEnforcement &&
+      !context.justNarratedDecisionAsk
+    ) {
       await this.decisionPointEnforcer.enforceDecisionPoints(context);
     }
 
@@ -454,8 +459,24 @@ export class Orchestrator {
           continue;
         }
 
+        // Skip NARRATE that is exactly the decision prompt when we already narrated the decision ask
+        if (action.action === "NARRATE") {
+          const dp = this.getCurrentDecisionPoint();
+          if (action.text?.trim() === dp?.prompt && context.justNarratedDecisionAsk) {
+            Logger.info("Skipping redundant NARRATE: same as decision prompt (already asked)");
+            continue;
+          }
+        }
+
         skipTrailingNarrate = false;
         await this.executeAction(action, context);
+        if (action.action === "NARRATE") {
+          const dp = this.getCurrentDecisionPoint();
+          const text = action.text;
+          if (dp && text && this.narrateCoversDecision(text, dp.position, dp.prompt)) {
+            context.justNarratedDecisionAsk = true;
+          }
+        }
         if (action.action === "PLAYER_ANSWERED" && context.skipTrailingNarrateForPowerCheck) {
           skipTrailingNarrate = true;
         }
@@ -702,6 +723,37 @@ export class Orchestrator {
       const next = Array.isArray(current) ? [...current, instrument] : [instrument];
       this.stateManager.set(`players.${playerId}.instruments`, next);
     }
+  }
+
+  /**
+   * Returns the current decision point (position + prompt) if the current player is at a fork
+   * without a choice. Used to detect "NARRATE covers decision" and skip redundant prompt.
+   */
+  private getCurrentDecisionPoint(): { position: number; prompt: string } | null {
+    const prompt = this.turnManager.getPendingDecisionPrompt();
+    if (!prompt) return null;
+    const state = this.stateManager.getState();
+    const game = state.game as Record<string, unknown> | undefined;
+    const currentTurn = game?.turn as string | undefined;
+    const players = state.players as Record<string, Record<string, unknown>> | undefined;
+    const currentPlayer = currentTurn ? players?.[currentTurn] : undefined;
+    const position = currentPlayer?.position as number | undefined;
+    if (typeof position !== "number") return null;
+    return { position, prompt };
+  }
+
+  /**
+   * True when NARRATE text already asks for the given decision (exact prompt or path A/B wording at 0).
+   */
+  private narrateCoversDecision(text: string, position: number, prompt: string): boolean {
+    const t = (text ?? "").trim();
+    if (t.includes(prompt)) return true;
+    if (position === 0) {
+      const hasA = t.includes("camino A") || t.includes("por el A");
+      const hasB = t.includes("camino B") || t.includes("por el B");
+      if (hasA && hasB) return true;
+    }
+    return false;
   }
 
   /**

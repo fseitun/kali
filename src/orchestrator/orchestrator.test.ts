@@ -574,6 +574,45 @@ describe("Orchestrator - New Action Handlers", () => {
     });
   });
 
+  describe("Decision-point ask undupe", () => {
+    const decisionPrompt = "¿Querés ir por el A o por el B?";
+    const longNarrate =
+      "Federico, estás en el inicio. ¿Querés ir por el camino A, que es más corto, o por el B, que es más largo?";
+
+    beforeEach(() => {
+      (testState.players as any).p1.position = 0;
+      (testState.players as any).p1.activeChoices = {};
+      testState.decisionPoints = [{ position: 0, prompt: decisionPrompt }];
+      mockStateManager.getState = vi.fn(() => testState);
+      mockStateManager.get = vi.fn((path: string) => {
+        if (path === "players.p1.position") return 0;
+        return undefined;
+      });
+    });
+
+    it("does not call enforceDecisionPoints after NARRATE that covers decision (only one LLM call)", async () => {
+      mockLLM.getActions = vi.fn().mockResolvedValue([{ action: "NARRATE", text: longNarrate }]);
+
+      await orchestrator.handleTranscript("que tengo que hacer");
+
+      expect(mockLLM.getActions).toHaveBeenCalledTimes(1);
+      expect(mockSpeech.speak).toHaveBeenCalledTimes(1);
+      expect(mockSpeech.speak).toHaveBeenCalledWith(longNarrate);
+    });
+
+    it("speaks only once when batch has covering NARRATE then exact prompt NARRATE", async () => {
+      const actions: PrimitiveAction[] = [
+        { action: "NARRATE", text: longNarrate },
+        { action: "NARRATE", text: decisionPrompt },
+      ];
+
+      await orchestrator.testExecuteActions(actions);
+
+      expect(mockSpeech.speak).toHaveBeenCalledTimes(1);
+      expect(mockSpeech.speak).toHaveBeenCalledWith(longNarrate);
+    });
+  });
+
   describe("RESET_GAME", () => {
     beforeEach(() => {
       testState.players = {
