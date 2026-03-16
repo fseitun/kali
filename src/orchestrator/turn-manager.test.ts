@@ -102,6 +102,7 @@ describe("TurnManager", () => {
         playerId: "p2",
         name: "Bob",
         position: 5,
+        skippedPlayers: [],
       });
 
       // Verify state was updated
@@ -118,6 +119,7 @@ describe("TurnManager", () => {
         playerId: "p1",
         name: "Alice",
         position: 0,
+        skippedPlayers: [],
       });
       expect((stateManager.getState().game as Record<string, unknown>).turn).toBe("p1");
     });
@@ -217,13 +219,13 @@ describe("TurnManager", () => {
       expect(result?.playerId).toBe("p99");
     });
 
-    it("should skip next player when they have skipTurns and return skippedPlayer", async () => {
+    it("should skip next player when they have skipTurns and return skippedPlayers", async () => {
       stateManager.set("players.p2.skipTurns", 1);
 
       const result = await turnManager.advanceTurn(false);
 
       expect(result?.playerId).toBe("p3");
-      expect(result?.skippedPlayer).toEqual({ playerId: "p2", name: "Bob" });
+      expect(result?.skippedPlayers).toEqual([{ playerId: "p2", name: "Bob" }]);
       expect((stateManager.getState().game as Record<string, unknown>).turn).toBe("p3");
       expect(stateManager.get("players.p2.skipTurns")).toBe(0);
     });
@@ -235,6 +237,10 @@ describe("TurnManager", () => {
       const result = await turnManager.advanceTurn(false);
 
       expect(result?.playerId).toBe("p1");
+      expect(result?.skippedPlayers).toEqual([
+        { playerId: "p2", name: "Bob" },
+        { playerId: "p3", name: "Carol" },
+      ]);
       expect((stateManager.getState().game as Record<string, unknown>).turn).toBe("p1");
       expect(stateManager.get("players.p2.skipTurns")).toBe(0);
       expect(stateManager.get("players.p3.skipTurns")).toBe(0);

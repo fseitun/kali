@@ -369,12 +369,8 @@ ${examples.map((ex: string, i: number) => `${i + 1}. ${ex}`).join("\n")}`;
 
     if (result) {
       const nextPlayer = result;
-      if (nextPlayer.skippedPlayer) {
-        await this.speechService.speak(
-          t("game.skipTurnAnnouncement", {
-            name: nextPlayer.skippedPlayer.name,
-          }),
-        );
+      for (const skipped of nextPlayer.skippedPlayers) {
+        await this.speechService.speak(t("game.skipTurnAnnouncement", { name: skipped.name }));
       }
       const pendingPrompt = this.orchestrator.getPendingDecisionPrompt();
       const message = pendingPrompt

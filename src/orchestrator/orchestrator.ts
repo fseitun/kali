@@ -284,13 +284,13 @@ export class Orchestrator {
   /**
    * Advances to the next player's turn.
    * AUTHORITY: Only the orchestrator can advance turns.
-   * @returns The next player's ID and details, or null if unable to advance. Includes skippedPlayer when a player was skipped.
+   * @returns The next player's ID and details, or null if unable to advance. Includes skippedPlayers (all skipped in order).
    */
   async advanceTurn(): Promise<{
     playerId: string;
     name: string;
     position: number;
-    skippedPlayer?: { playerId: string; name: string };
+    skippedPlayers: Array<{ playerId: string; name: string }>;
   } | null> {
     return await this.turnManager.advanceTurn(this.boardEffectsHandler.isProcessingEffect());
   }
