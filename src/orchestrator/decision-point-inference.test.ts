@@ -19,7 +19,7 @@ describe("inferDecisionPoints", () => {
     expect(inferDecisionPoints(board)).toEqual([]);
   });
 
-  it("infers fork at position 0 with A/B prompt", () => {
+  it("infers fork at position 0 with izquierda/derecha prompt", () => {
     const board: BoardConfig = {
       squares: {
         "0": { type: "empty", next: [1, 15] },
@@ -29,7 +29,7 @@ describe("inferDecisionPoints", () => {
     expect(result).toHaveLength(1);
     expect(result[0]).toEqual({
       position: 0,
-      prompt: "¿Querés ir por el A o por el B?",
+      prompt: "¿Querés ir por la izquierda o por la derecha?",
       positionOptions: { "1": 1, "15": 15 },
     });
   });

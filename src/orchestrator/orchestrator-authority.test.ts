@@ -583,13 +583,17 @@ describe("Orchestrator Authority - LLM Adversarial Tests", () => {
     it("does not double-inject decision point when LLM returns NARRATE from nested flow", async () => {
       (testState.players as any).p1.position = 0;
       (testState.players as any).p1.activeChoices = {};
-      testState.decisionPoints = [{ position: 0, prompt: "¿Querés ir por el A o el B?" }];
+      testState.decisionPoints = [
+        { position: 0, prompt: "¿Querés ir por la izquierda o por la derecha?" },
+      ];
 
       const getActionsCalls: string[] = [];
       mockLLM.getActions = vi.fn(async (transcript: string) => {
         getActionsCalls.push(transcript);
         if (transcript.includes("[SYSTEM:")) {
-          return [{ action: "NARRATE", text: "Fico, ¿querés ir por el A o el B?" }];
+          return [
+            { action: "NARRATE", text: "Fico, ¿querés ir por la izquierda o por la derecha?" },
+          ];
         }
         return [{ action: "NARRATE", text: "Dale, Fico, contame qué onda." }];
       });

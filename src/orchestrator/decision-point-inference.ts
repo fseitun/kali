@@ -20,7 +20,9 @@ export function inferDecisionPoints(board: BoardConfig | undefined): DecisionPoi
     for (const n of next) positionOptions[String(n)] = n;
 
     const prompt =
-      position === 0 ? "¿Querés ir por el A o por el B?" : `¿Querés ir al ${next.join(" o al ")}?`;
+      position === 0
+        ? "¿Querés ir por la izquierda o por la derecha?"
+        : `¿Querés ir al ${next.join(" o al ")}?`;
 
     result.push({ position, prompt, positionOptions });
   }
