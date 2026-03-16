@@ -703,6 +703,26 @@ class StateManager {
 
 ---
 
+### PWA Manifest: Screenshots & Square Icons 🎨
+
+**Value: 3/10 | Complexity: 2/10 | Ratio: 1.5 | Priority: Low**
+
+**Problem:** Richer PWA install UI warnings: no screenshot with `form_factor: wide` (desktop), no screenshot for narrow/unset (mobile); icons at `/icon-192.svg` and `/icon-512.svg` fail to load in production; many OS require at least one square (raster) icon.
+
+**Implementation:**
+
+- Add `screenshots` to manifest: one with `form_factor: "wide"` (desktop), one with `form_factor: "narrow"` or unset (mobile); add `public/screenshot-wide.png` and `public/screenshot-narrow.png` (real app screenshots).
+- Add square PNG icons: `public/icon-192.png` and `public/icon-512.png` (or generate from existing SVGs); add PNG entries to `manifest.icons` in `vite.config.ts` and `public/manifest.json`.
+- Ensure icon/screenshot paths work in production (root-relative, assets in `public/`).
+
+**Files:**
+
+- `vite.config.ts` (VitePWA `manifest.icons` and `manifest.screenshots`)
+- `public/manifest.json`
+- `public/` (new: `icon-192.png`, `icon-512.png`, `screenshot-wide.png`, `screenshot-narrow.png`)
+
+---
+
 ### Revisit: Vosk Model Source (alphacephei CDN) 🔄
 
 **Value: 6/10 | Complexity: 3/10 | Ratio: 2.0**
