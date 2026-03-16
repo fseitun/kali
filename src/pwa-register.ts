@@ -22,8 +22,10 @@ export function initPwaRefreshPrompt(showPrompt: (reload: () => void) => void): 
 export function setupVersionRefreshPrompt(): void {
   initPwaRefreshPrompt((reload) => {
     const notice = document.getElementById("version-notice");
+    const versionCurrent = document.getElementById("version-current");
     const refreshBtn = document.getElementById("version-refresh");
     if (notice) notice.hidden = false;
+    if (versionCurrent) versionCurrent.hidden = true;
     refreshBtn?.addEventListener("click", () => reload(), { once: true });
   });
 }

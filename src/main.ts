@@ -130,6 +130,11 @@ document.addEventListener("DOMContentLoaded", () => {
   // eslint-disable-next-line no-console -- build id for DevTools when verifying deployed version
   console.log("Kali build:", CONFIG.BUILD_ID);
   setupVersionRefreshPrompt();
+  const versionCurrent = document.getElementById("version-current");
+  if (versionCurrent) {
+    versionCurrent.textContent = `Build: ${CONFIG.BUILD_ID}`;
+    versionCurrent.title = `Build: ${CONFIG.BUILD_ID}`;
+  }
   new KaliApp();
 });
 
