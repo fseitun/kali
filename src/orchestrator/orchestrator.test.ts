@@ -266,6 +266,37 @@ describe("Orchestrator - New Action Handlers", () => {
         }),
       );
     });
+
+    it("resolves option text (miércoles) to letter A and marks riddleCorrect true", async () => {
+      (testState.game as any).pendingAnimalEncounter = {
+        position: 5,
+        power: 3,
+        playerId: "p1",
+        phase: "riddle",
+        correctLetter: "A",
+        riddleOptions: ["A) Miércoles", "B) Jueves", "C) Lunes", "D) Sábado"],
+      };
+      mockStateManager.getState = vi.fn(() => testState);
+      mockStateManager.get = vi.fn((path: string) => {
+        if (path === "game.pendingAnimalEncounter")
+          return (testState.game as any).pendingAnimalEncounter;
+        if (path === "game.turn") return "p1";
+        if (path === "players.p1.position") return 5;
+        return undefined;
+      });
+
+      const actions: PrimitiveAction[] = [{ action: "PLAYER_ANSWERED", answer: "miércoles" }];
+
+      await orchestrator.testExecuteActions(actions);
+
+      expect(mockStateManager.set).toHaveBeenCalledWith(
+        "game.pendingAnimalEncounter",
+        expect.objectContaining({
+          phase: "powerCheck",
+          riddleCorrect: true,
+        }),
+      );
+    });
   });
 
   describe("Board Mechanics - Orchestrator Control", () => {

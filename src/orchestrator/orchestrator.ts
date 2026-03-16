@@ -9,6 +9,7 @@ import { Profiler } from "../utils/profiler";
 import { BoardEffectsHandler } from "./board-effects-handler";
 import { computeNewPositionFromState } from "./board-traversal";
 import { DecisionPointEnforcer } from "./decision-point-enforcer";
+import { resolveRiddleAnswerToLetter } from "./riddle-answer";
 import { TurnManager } from "./turn-manager";
 import {
   GamePhase,
@@ -577,14 +578,14 @@ export class Orchestrator {
     const game = state.game as Record<string, unknown> | undefined;
     const currentTurn = game?.turn as string | undefined;
     const pending = game?.pendingAnimalEncounter as
-      | { phase?: string; playerId?: string; correctLetter?: string }
+      | { phase?: string; playerId?: string; correctLetter?: string; riddleOptions?: string[] }
       | null
       | undefined;
     if (pending?.phase !== "riddle" || pending.playerId !== currentTurn || !pending.correctLetter) {
       return false;
     }
-    const letter = answer.trim().charAt(0).toUpperCase();
-    if (!["A", "B", "C", "D"].includes(letter)) {
+    const letter = resolveRiddleAnswerToLetter(answer, pending.riddleOptions);
+    if (letter === null) {
       return false;
     }
     const correct = letter === pending.correctLetter;

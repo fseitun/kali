@@ -421,6 +421,31 @@ describe("Validator - New Primitives", () => {
       expect(result.errorCode).toBe("invalidAnswer");
       expect(result.error).toContain("A, B, C, or D");
     });
+
+    it("allows option text (e.g. miércoles) when it matches one of riddleOptions and correctLetter is A", () => {
+      const stateWithRiddle = {
+        ...mockState,
+        game: {
+          ...mockState.game,
+          pendingAnimalEncounter: {
+            position: 5,
+            power: 3,
+            playerId: "p1",
+            phase: "riddle",
+            correctLetter: "A",
+            riddleOptions: ["A) Miércoles", "B) Jueves", "C) Lunes", "D) Sábado"],
+          },
+        },
+      };
+      (mockState.players as Record<string, Record<string, unknown>>).p1.position = 5;
+      const result = validateActions(
+        [{ action: "PLAYER_ANSWERED", answer: "miércoles" }],
+        stateWithRiddle,
+        mockStateManager as unknown as StateManager,
+        mockOrchestrator,
+      );
+      expect(result.valid).toBe(true);
+    });
   });
 
   describe("Old Primitives Rejection", () => {

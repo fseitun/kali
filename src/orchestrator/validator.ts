@@ -1,6 +1,7 @@
 import type { StateManager } from "../state-manager";
 import { computeNewPositionFromState } from "./board-traversal";
 import type { Orchestrator } from "./orchestrator";
+import { resolveRiddleAnswerToLetter } from "./riddle-answer";
 import type { GameState, PrimitiveAction } from "./types";
 
 export interface ValidationResult {
@@ -89,16 +90,16 @@ function applyActionToMockState(state: GameState, primitive: PrimitiveAction): G
       const game = mockState.game as Record<string, unknown>;
       const currentTurn = game?.turn as string | undefined;
       const pending = game?.pendingAnimalEncounter as
-        | { phase?: string; playerId?: string; correctLetter?: string }
+        | { phase?: string; playerId?: string; correctLetter?: string; riddleOptions?: string[] }
         | null
         | undefined;
       const answer = primitive.answer.trim();
-      const letter = answer.charAt(0).toUpperCase();
+      const letter = resolveRiddleAnswerToLetter(answer, pending?.riddleOptions);
       if (
         pending?.phase === "riddle" &&
         pending.playerId === currentTurn &&
         pending.correctLetter &&
-        ["A", "B", "C", "D"].includes(letter)
+        letter !== null
       ) {
         game.pendingAnimalEncounter = {
           ...pending,
@@ -650,12 +651,16 @@ function validatePlayerAnswered(
 
   // Riddle phase with structured options: A/B/C/D is a riddle choice (before path-choice rule)
   const pending = game?.pendingAnimalEncounter as
-    | { phase?: string; playerId?: string; correctLetter?: string }
+    | { phase?: string; playerId?: string; correctLetter?: string; riddleOptions?: string[] }
     | null
     | undefined;
-  const riddleLetter = answer.charAt(0).toUpperCase();
   if (pending?.phase === "riddle" && pending.playerId === currentTurn && pending.correctLetter) {
+    const riddleLetter = answer.charAt(0).toUpperCase();
     if (["A", "B", "C", "D"].includes(riddleLetter)) {
+      return { valid: true };
+    }
+    const resolved = resolveRiddleAnswerToLetter(answer, pending.riddleOptions);
+    if (resolved !== null) {
       return { valid: true };
     }
     return {
