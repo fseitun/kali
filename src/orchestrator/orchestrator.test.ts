@@ -62,6 +62,7 @@ describe("Orchestrator - New Action Handlers", () => {
     mockLLM = {
       getActions: vi.fn(async () => []),
       setGameRules: vi.fn(),
+      validateRiddleAnswer: vi.fn(async () => ({ correct: false })),
     } as unknown as LLMClient;
 
     orchestrator = new Orchestrator(
@@ -170,7 +171,7 @@ describe("Orchestrator - New Action Handlers", () => {
   });
 
   describe("ASK_RIDDLE", () => {
-    it("stores riddle text, options, and correctLetter in pendingAnimalEncounter", async () => {
+    it("stores riddle text, options, correctOption and optional synonyms in pendingAnimalEncounter", async () => {
       (testState.game as any).pendingAnimalEncounter = {
         position: 5,
         power: 3,
@@ -190,7 +191,8 @@ describe("Orchestrator - New Action Handlers", () => {
           action: "ASK_RIDDLE",
           text: "Where does the penguin live?",
           options: ["Desert", "Ocean", "Arctic", "Forest"],
-          correctLetter: "C",
+          correctOption: "Arctic",
+          correctOptionSynonyms: ["polo", "frío"],
         },
       ];
 
@@ -202,21 +204,24 @@ describe("Orchestrator - New Action Handlers", () => {
           phase: "riddle",
           riddlePrompt: "Where does the penguin live?",
           riddleOptions: ["Desert", "Ocean", "Arctic", "Forest"],
-          correctLetter: "C",
+          correctOption: "Arctic",
+          correctOptionSynonyms: ["polo", "frío"],
         }),
       );
     });
   });
 
   describe("PLAYER_ANSWERED riddle phase", () => {
-    it("resolves correct riddle choice and transitions to powerCheck", async () => {
+    it("resolves correct riddle choice (strict match) and transitions to powerCheck", async () => {
       (testState.game as any).pendingAnimalEncounter = {
         position: 5,
         power: 3,
         playerId: "p1",
         phase: "riddle",
-        correctLetter: "B",
+        correctOption: "Ocean",
+        riddleOptions: ["Desert", "Ocean", "Arctic", "Forest"],
       };
+      mockStateManager.getState = vi.fn(() => testState);
       mockStateManager.get = vi.fn((path: string) => {
         if (path === "game.pendingAnimalEncounter")
           return (testState.game as any).pendingAnimalEncounter;
@@ -225,7 +230,7 @@ describe("Orchestrator - New Action Handlers", () => {
         return undefined;
       });
 
-      const actions: PrimitiveAction[] = [{ action: "PLAYER_ANSWERED", answer: "B" }];
+      const actions: PrimitiveAction[] = [{ action: "PLAYER_ANSWERED", answer: "Ocean" }];
 
       await orchestrator.testExecuteActions(actions);
 
@@ -238,14 +243,16 @@ describe("Orchestrator - New Action Handlers", () => {
       );
     });
 
-    it("resolves wrong riddle choice and transitions to powerCheck with riddleCorrect false", async () => {
+    it("resolves wrong riddle choice: strict false then LLM says false", async () => {
       (testState.game as any).pendingAnimalEncounter = {
         position: 5,
         power: 3,
         playerId: "p1",
         phase: "riddle",
-        correctLetter: "C",
+        correctOption: "Arctic",
+        riddleOptions: ["Desert", "Ocean", "Arctic", "Forest"],
       };
+      mockStateManager.getState = vi.fn(() => testState);
       mockStateManager.get = vi.fn((path: string) => {
         if (path === "game.pendingAnimalEncounter")
           return (testState.game as any).pendingAnimalEncounter;
@@ -253,8 +260,9 @@ describe("Orchestrator - New Action Handlers", () => {
         if (path === "players.p1.position") return 5;
         return undefined;
       });
+      (mockLLM as any).validateRiddleAnswer = vi.fn(async () => ({ correct: false }));
 
-      const actions: PrimitiveAction[] = [{ action: "PLAYER_ANSWERED", answer: "A" }];
+      const actions: PrimitiveAction[] = [{ action: "PLAYER_ANSWERED", answer: "Desert" }];
 
       await orchestrator.testExecuteActions(actions);
 
@@ -267,13 +275,13 @@ describe("Orchestrator - New Action Handlers", () => {
       );
     });
 
-    it("resolves option text (miércoles) to letter A and marks riddleCorrect true", async () => {
+    it("resolves option text (miércoles) and marks riddleCorrect true via strict match", async () => {
       (testState.game as any).pendingAnimalEncounter = {
         position: 5,
         power: 3,
         playerId: "p1",
         phase: "riddle",
-        correctLetter: "A",
+        correctOption: "A) Miércoles",
         riddleOptions: ["A) Miércoles", "B) Jueves", "C) Lunes", "D) Sábado"],
       };
       mockStateManager.getState = vi.fn(() => testState);
@@ -298,13 +306,13 @@ describe("Orchestrator - New Action Handlers", () => {
       );
     });
 
-    it("prefers transcript over LLM answer: user said 'la hormiga' (A), LLM returned D → riddleCorrect true", async () => {
+    it("prefers transcript over LLM answer: user said 'la hormiga', LLM returned wrong option → riddleCorrect true", async () => {
       (testState.game as any).pendingAnimalEncounter = {
         position: 5,
         power: 3,
         playerId: "p1",
         phase: "riddle",
-        correctLetter: "A",
+        correctOption: "A) Hormiga",
         riddleOptions: ["A) Hormiga", "B) Elefante", "C) Puma", "D) Delfín"],
       };
       mockStateManager.getState = vi.fn(() => testState);
@@ -315,7 +323,9 @@ describe("Orchestrator - New Action Handlers", () => {
         if (path === "players.p1.position") return 5;
         return undefined;
       });
-      mockLLM.getActions = vi.fn(async () => [{ action: "PLAYER_ANSWERED", answer: "D" }]) as any;
+      mockLLM.getActions = vi.fn(async () => [
+        { action: "PLAYER_ANSWERED", answer: "D) Delfín" },
+      ]) as any;
 
       const result = await orchestrator.handleTranscript("la hormiga");
 

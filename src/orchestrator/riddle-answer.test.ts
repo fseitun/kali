@@ -1,24 +1,50 @@
 import { describe, it, expect } from "vitest";
-import { resolveRiddleAnswerToLetter } from "./riddle-answer";
+import { resolveRiddleAnswerToOption, isStrictRiddleCorrect } from "./riddle-answer";
 
-describe("resolveRiddleAnswerToLetter", () => {
+describe("resolveRiddleAnswerToOption", () => {
   const animalOptions = ["A) Hormiga", "B) Elefante", "C) Puma", "D) Delfín"];
 
-  it("resolves 'la hormiga' to A (user says option text)", () => {
-    expect(resolveRiddleAnswerToLetter("la hormiga", animalOptions)).toBe("A");
+  it("resolves 'la hormiga' to the first option text", () => {
+    expect(resolveRiddleAnswerToOption("la hormiga", animalOptions)).toBe("A) Hormiga");
   });
 
-  it("resolves 'hormiga' to A", () => {
-    expect(resolveRiddleAnswerToLetter("hormiga", animalOptions)).toBe("A");
+  it("resolves 'hormiga' to the first option", () => {
+    expect(resolveRiddleAnswerToOption("hormiga", animalOptions)).toBe("A) Hormiga");
   });
 
-  it("resolves single letter A to A", () => {
-    expect(resolveRiddleAnswerToLetter("A", animalOptions)).toBe("A");
+  it("resolves 'cangrejo' to the option containing Cangrejo (index 1)", () => {
+    const options = ["A. Ballena", "B. Cangrejo", "C. Paloma", "D. Murciélago"];
+    expect(resolveRiddleAnswerToOption("cangrejo", options)).toBe("B. Cangrejo");
   });
 
   it("returns null when options are missing or wrong length", () => {
-    expect(resolveRiddleAnswerToLetter("la hormiga", undefined)).toBe(null);
-    expect(resolveRiddleAnswerToLetter("la hormiga", [])).toBe(null);
-    expect(resolveRiddleAnswerToLetter("la hormiga", ["A) Hormiga"])).toBe(null);
+    expect(resolveRiddleAnswerToOption("la hormiga", undefined)).toBe(null);
+    expect(resolveRiddleAnswerToOption("la hormiga", [])).toBe(null);
+    expect(resolveRiddleAnswerToOption("la hormiga", ["A) Hormiga"])).toBe(null);
+  });
+});
+
+describe("isStrictRiddleCorrect", () => {
+  const options = ["A. Ballena", "B. Cangrejo", "C. Paloma", "D. Murciélago"];
+  const correctOption = "B. Cangrejo";
+
+  it("returns true when answer matches correct option text", () => {
+    expect(isStrictRiddleCorrect("cangrejo", options, correctOption)).toBe(true);
+    expect(isStrictRiddleCorrect("B. Cangrejo", options, correctOption)).toBe(true);
+  });
+
+  it("returns false when answer matches wrong option", () => {
+    expect(isStrictRiddleCorrect("ballena", options, correctOption)).toBe(false);
+    expect(isStrictRiddleCorrect("Paloma", options, correctOption)).toBe(false);
+  });
+
+  it("returns true when answer matches a synonym of correct option", () => {
+    const synonyms = ["crustáceo", "cangrejos"];
+    expect(isStrictRiddleCorrect("crustáceo", options, correctOption, synonyms)).toBe(true);
+    expect(isStrictRiddleCorrect("cangrejos", options, correctOption, synonyms)).toBe(true);
+  });
+
+  it("returns false when no match and no synonyms", () => {
+    expect(isStrictRiddleCorrect("nada", options, correctOption)).toBe(false);
   });
 });

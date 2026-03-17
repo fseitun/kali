@@ -7,7 +7,7 @@ import type { LLMClient } from "./LLMClient";
 import { buildSystemPrompt, formatStateContext } from "./system-prompt";
 import type { ApiCallOptions, ApiCallResult } from "./types";
 
-type PromptPurpose = "getActions" | "extractName" | "analyzeResponse";
+type PromptPurpose = "getActions" | "extractName" | "analyzeResponse" | "validateRiddleAnswer";
 
 export abstract class BaseLLMClient implements LLMClient {
   protected systemPrompt: string = "";
@@ -228,6 +228,53 @@ JSON:`;
     } catch (error) {
       Logger.error("analyzeResponse error:", error);
       return { isOnTopic: true };
+    }
+  }
+
+  async validateRiddleAnswer(
+    userAnswer: string,
+    options: [string, string, string, string],
+    correctOption: string,
+  ): Promise<{ correct: boolean }> {
+    try {
+      const optionsList = options.map((o, i) => `${i + 1}. ${o}`).join("\n");
+      const prompt = `Eres un juez de respuestas a una pregunta de trivia. Idioma: español (Argentina).
+
+Opciones de la pregunta (exactamente 4):
+${optionsList}
+
+La opción correcta es: "${correctOption}"
+
+El usuario respondió: "${userAnswer}"
+
+¿La respuesta del usuario es correcta? Considera sinónimos, paráfrasis y expresiones equivalentes. Responde ÚNICAMENTE con un JSON válido: {"correct": true} o {"correct": false}. Sin explicación.
+
+JSON:`;
+
+      this.logPrompt("validateRiddleAnswer", prompt);
+      const apiResult = await this.makeApiCall(prompt, {
+        temperature: 0.2,
+        maxTokens: 20,
+        responseFormatJson: true,
+      });
+
+      const content = apiResult.content;
+      if (content) this.logPromptResponse("validateRiddleAnswer", content);
+
+      const markdownMatch = content.match(/```(?:json)?\s*\n?([\s\S]*?)\n?```/);
+      const jsonString = markdownMatch ? markdownMatch[1].trim() : content.trim();
+
+      const parseResult = safeParse(jsonString);
+      if (!parseResult.success) {
+        Logger.error("Invalid JSON in validateRiddleAnswer:", parseResult.error);
+        return { correct: false };
+      }
+
+      const parsed = parseResult.data as { correct?: boolean };
+      return { correct: parsed.correct === true };
+    } catch (error) {
+      Logger.error("validateRiddleAnswer error:", error);
+      return { correct: false };
     }
   }
 

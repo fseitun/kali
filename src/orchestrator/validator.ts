@@ -1,7 +1,7 @@
 import type { StateManager } from "../state-manager";
 import { computeNewPositionFromState } from "./board-traversal";
 import type { Orchestrator } from "./orchestrator";
-import { resolveRiddleAnswerToLetter } from "./riddle-answer";
+import { isStrictRiddleCorrect } from "./riddle-answer";
 import type { GameState, PrimitiveAction } from "./types";
 
 export interface ValidationResult {
@@ -90,21 +90,33 @@ function applyActionToMockState(state: GameState, primitive: PrimitiveAction): G
       const game = mockState.game as Record<string, unknown>;
       const currentTurn = game?.turn as string | undefined;
       const pending = game?.pendingAnimalEncounter as
-        | { phase?: string; playerId?: string; correctLetter?: string; riddleOptions?: string[] }
+        | {
+            phase?: string;
+            playerId?: string;
+            correctOption?: string;
+            correctOptionSynonyms?: string[];
+            riddleOptions?: string[];
+          }
         | null
         | undefined;
       const answer = primitive.answer.trim();
-      const letter = resolveRiddleAnswerToLetter(answer, pending?.riddleOptions);
       if (
         pending?.phase === "riddle" &&
         pending.playerId === currentTurn &&
-        pending.correctLetter &&
-        letter !== null
+        pending.correctOption &&
+        Array.isArray(pending.riddleOptions) &&
+        pending.riddleOptions.length === 4
       ) {
+        const correct = isStrictRiddleCorrect(
+          answer,
+          pending.riddleOptions,
+          pending.correctOption,
+          pending.correctOptionSynonyms,
+        );
         game.pendingAnimalEncounter = {
           ...pending,
           phase: "powerCheck",
-          riddleCorrect: letter === pending.correctLetter,
+          riddleCorrect: correct,
         };
         return mockState;
       }
@@ -164,16 +176,25 @@ function applyActionToMockState(state: GameState, primitive: PrimitiveAction): G
     } else if (
       primitive.action === "ASK_RIDDLE" &&
       "options" in primitive &&
-      "correctLetter" in primitive
+      "correctOption" in primitive
     ) {
       const game = mockState.game as Record<string, unknown>;
       const pending = game?.pendingAnimalEncounter as Record<string, unknown> | null | undefined;
       if (pending?.phase === "riddle") {
+        const p = primitive as {
+          text?: string;
+          options: unknown;
+          correctOption: string;
+          correctOptionSynonyms?: string[];
+        };
         game.pendingAnimalEncounter = {
           ...pending,
-          riddlePrompt: (primitive as { text?: string }).text,
-          riddleOptions: (primitive as { options: unknown }).options,
-          correctLetter: (primitive as { correctLetter: string }).correctLetter,
+          riddlePrompt: p.text,
+          riddleOptions: p.options,
+          correctOption: p.correctOption,
+          ...(Array.isArray(p.correctOptionSynonyms) && p.correctOptionSynonyms.length > 0
+            ? { correctOptionSynonyms: p.correctOptionSynonyms }
+            : {}),
         };
       }
     } else if (primitive.action === "RIDDLE_RESOLVED" && "correct" in primitive) {
@@ -666,25 +687,20 @@ function validatePlayerAnswered(
 
   if (!currentTurn || !currentPlayer) return { valid: true };
 
-  // Riddle phase with structured options: A/B/C/D is a riddle choice (before path-choice rule)
+  // Riddle phase with structured options: accept any non-empty answer; orchestrator does strict match then LLM
   const pending = game?.pendingAnimalEncounter as
-    | { phase?: string; playerId?: string; correctLetter?: string; riddleOptions?: string[] }
+    | { phase?: string; playerId?: string; correctOption?: string; riddleOptions?: string[] }
     | null
     | undefined;
-  if (pending?.phase === "riddle" && pending.playerId === currentTurn && pending.correctLetter) {
-    const riddleLetter = answer.charAt(0).toUpperCase();
-    if (["A", "B", "C", "D"].includes(riddleLetter)) {
-      return { valid: true };
+  if (pending?.phase === "riddle" && pending.playerId === currentTurn && pending.correctOption) {
+    if (!answer) {
+      return {
+        valid: false,
+        error: `PLAYER_ANSWERED at index ${index}: requires non-empty answer`,
+        errorCode: "invalidAnswer",
+      };
     }
-    const resolved = resolveRiddleAnswerToLetter(answer, pending.riddleOptions);
-    if (resolved !== null) {
-      return { valid: true };
-    }
-    return {
-      valid: false,
-      error: `PLAYER_ANSWERED at index ${index}: During riddle phase, answer must be one of A, B, C, or D. Got "${answer.trim().slice(0, 20)}".`,
-      errorCode: "invalidAnswer",
-    };
+    return { valid: true };
   }
 
   // Power check / revenge: numeric roll; range depends on dice (2d6 vs 1d6). Reject impossible values.
@@ -783,11 +799,22 @@ function validateAskRiddle(
       };
     }
   }
-  const letter = actionRecord.correctLetter;
-  if (letter !== "A" && letter !== "B" && letter !== "C" && letter !== "D") {
+  const correctOption = actionRecord.correctOption;
+  if (typeof correctOption !== "string" || !correctOption.trim()) {
     return {
       valid: false,
-      error: `ASK_RIDDLE at index ${index}: correctLetter must be "A", "B", "C", or "D"`,
+      error: `ASK_RIDDLE at index ${index}: correctOption must be a non-empty string (one of the four options)`,
+      errorCode: "invalidActionFormat",
+    };
+  }
+  if (
+    "correctOptionSynonyms" in actionRecord &&
+    actionRecord.correctOptionSynonyms !== undefined &&
+    !Array.isArray(actionRecord.correctOptionSynonyms)
+  ) {
+    return {
+      valid: false,
+      error: `ASK_RIDDLE at index ${index}: correctOptionSynonyms must be an array of strings if present`,
       errorCode: "invalidActionFormat",
     };
   }

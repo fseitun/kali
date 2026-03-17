@@ -285,7 +285,7 @@ describe("Validator - New Primitives", () => {
   });
 
   describe("ASK_RIDDLE", () => {
-    it("accepts valid ASK_RIDDLE with four options and correctLetter", () => {
+    it("accepts valid ASK_RIDDLE with four options and correctOption", () => {
       const stateWithRiddle = {
         ...mockState,
         game: {
@@ -303,7 +303,33 @@ describe("Validator - New Primitives", () => {
           action: "ASK_RIDDLE",
           text: "Where does the penguin live?",
           options: ["Desert", "Ocean", "Arctic", "Forest"],
-          correctLetter: "C",
+          correctOption: "Arctic",
+        },
+      ];
+      const result = validateActions(
+        actions,
+        stateWithRiddle,
+        mockStateManager as unknown as StateManager,
+        mockOrchestrator,
+      );
+      expect(result.valid).toBe(true);
+    });
+
+    it("accepts ASK_RIDDLE with optional correctOptionSynonyms", () => {
+      const stateWithRiddle = {
+        ...mockState,
+        game: {
+          ...mockState.game,
+          pendingAnimalEncounter: { position: 5, power: 3, playerId: "p1", phase: "riddle" },
+        },
+      };
+      const actions = [
+        {
+          action: "ASK_RIDDLE",
+          text: "Q?",
+          options: ["Ballena", "Cangrejo", "Paloma", "Murciélago"],
+          correctOption: "Cangrejo",
+          correctOptionSynonyms: ["crustáceo", "cangrejos"],
         },
       ];
       const result = validateActions(
@@ -328,7 +354,7 @@ describe("Validator - New Primitives", () => {
           action: "ASK_RIDDLE",
           text: "Q?",
           options: ["A", "B", "C"],
-          correctLetter: "A",
+          correctOption: "A",
         },
       ];
       const result = validateActions(
@@ -341,7 +367,7 @@ describe("Validator - New Primitives", () => {
       expect(result.error).toContain("options");
     });
 
-    it("rejects ASK_RIDDLE with invalid correctLetter", () => {
+    it("rejects ASK_RIDDLE with missing or empty correctOption", () => {
       const stateWithRiddle = {
         ...mockState,
         game: {
@@ -354,7 +380,7 @@ describe("Validator - New Primitives", () => {
           action: "ASK_RIDDLE",
           text: "Q?",
           options: ["A", "B", "C", "D"],
-          correctLetter: "X",
+          correctOption: "",
         },
       ];
       const result = validateActions(
@@ -364,12 +390,12 @@ describe("Validator - New Primitives", () => {
         mockOrchestrator,
       );
       expect(result.valid).toBe(false);
-      expect(result.error).toContain("correctLetter");
+      expect(result.error).toContain("correctOption");
     });
   });
 
   describe("PLAYER_ANSWERED during riddle phase", () => {
-    it("allows A/B/C/D when pending riddle has correctLetter (not at position 0)", () => {
+    it("allows any non-empty answer when pending riddle has correctOption", () => {
       const stateWithRiddle = {
         ...mockState,
         game: {
@@ -379,24 +405,22 @@ describe("Validator - New Primitives", () => {
             power: 3,
             playerId: "p1",
             phase: "riddle",
-            correctLetter: "B",
+            correctOption: "Ocean",
             riddleOptions: ["Desert", "Ocean", "Arctic", "Forest"],
           },
         },
       };
       (mockState.players as Record<string, Record<string, unknown>>).p1.position = 5;
-      for (const letter of ["A", "B", "C", "D"]) {
-        const result = validateActions(
-          [{ action: "PLAYER_ANSWERED", answer: letter }],
-          stateWithRiddle,
-          mockStateManager as unknown as StateManager,
-          mockOrchestrator,
-        );
-        expect(result.valid).toBe(true);
-      }
+      const result = validateActions(
+        [{ action: "PLAYER_ANSWERED", answer: "Ocean" }],
+        stateWithRiddle,
+        mockStateManager as unknown as StateManager,
+        mockOrchestrator,
+      );
+      expect(result.valid).toBe(true);
     });
 
-    it("rejects non-A/B/C/D during riddle phase with correctLetter", () => {
+    it("allows paraphrase/synonym (orchestrator will validate)", () => {
       const stateWithRiddle = {
         ...mockState,
         game: {
@@ -406,23 +430,48 @@ describe("Validator - New Primitives", () => {
             power: 3,
             playerId: "p1",
             phase: "riddle",
-            correctLetter: "B",
+            correctOption: "Cangrejo",
+            riddleOptions: ["Ballena", "Cangrejo", "Paloma", "Murciélago"],
           },
         },
       };
       (mockState.players as Record<string, Record<string, unknown>>).p1.position = 5;
       const result = validateActions(
-        [{ action: "PLAYER_ANSWERED", answer: "E" }],
+        [{ action: "PLAYER_ANSWERED", answer: "crustáceo" }],
+        stateWithRiddle,
+        mockStateManager as unknown as StateManager,
+        mockOrchestrator,
+      );
+      expect(result.valid).toBe(true);
+    });
+
+    it("rejects empty answer during riddle phase", () => {
+      const stateWithRiddle = {
+        ...mockState,
+        game: {
+          ...mockState.game,
+          pendingAnimalEncounter: {
+            position: 5,
+            power: 3,
+            playerId: "p1",
+            phase: "riddle",
+            correctOption: "B",
+            riddleOptions: ["A", "B", "C", "D"],
+          },
+        },
+      };
+      (mockState.players as Record<string, Record<string, unknown>>).p1.position = 5;
+      const result = validateActions(
+        [{ action: "PLAYER_ANSWERED", answer: "   " }],
         stateWithRiddle,
         mockStateManager as unknown as StateManager,
         mockOrchestrator,
       );
       expect(result.valid).toBe(false);
       expect(result.errorCode).toBe("invalidAnswer");
-      expect(result.error).toContain("A, B, C, or D");
     });
 
-    it("allows option text (e.g. miércoles) when it matches one of riddleOptions and correctLetter is A", () => {
+    it("allows option text (e.g. miércoles) when it matches one of riddleOptions", () => {
       const stateWithRiddle = {
         ...mockState,
         game: {
@@ -432,7 +481,7 @@ describe("Validator - New Primitives", () => {
             power: 3,
             playerId: "p1",
             phase: "riddle",
-            correctLetter: "A",
+            correctOption: "A) Miércoles",
             riddleOptions: ["A) Miércoles", "B) Jueves", "C) Lunes", "D) Sábado"],
           },
         },

@@ -79,13 +79,13 @@ Be proactive, encouraging, patient. Guide kids through the game. Only offer real
    { "action": "PLAYER_ROLLED", "value": 5 }
    Or user gives position directly → SET_STATE.
 
-5. **PLAYER_ANSWERED** - Path choice, power-check roll value, riddle choice (A/B/C/D), yes/no. Orchestrator knows context.
-   { "action": "PLAYER_ANSWERED", "answer": "A" }
-   For power-check roll: answer = the number (e.g. "7" for 2d6 sum). For riddle: answer = the chosen letter "A"|"B"|"C"|"D" (orchestrator resolves correct/incorrect).
+5. **PLAYER_ANSWERED** - Path choice, power-check roll value, riddle choice, yes/no. Orchestrator knows context.
+   { "action": "PLAYER_ANSWERED", "answer": "..." }
+   For power-check roll: answer = the number (e.g. "7" for 2d6 sum). For riddle: answer = what the user said (option text or paraphrase); orchestrator does strict match then LLM validation.
 
 6. **ASK_RIDDLE** - Present a structured riddle with exactly four options during animal encounter.
-   { "action": "ASK_RIDDLE", "text": "Riddle question?", "options": ["Option A", "Option B", "Option C", "Option D"], "correctLetter": "B" }
-   Use when first entering riddle phase. The riddle MUST be about the animal kingdom (e.g. animals, habitats, behavior, diet, classification); it does NOT have to be the square's animal/habitat. Follow with NARRATE speaking the riddle and options. When user answers, return PLAYER_ANSWERED with "A"|"B"|"C"|"D"—do NOT return RIDDLE_RESOLVED.
+   { "action": "ASK_RIDDLE", "text": "Riddle question?", "options": ["Option 1", "Option 2", "Option 3", "Option 4"], "correctOption": "Option 2", "correctOptionSynonyms": ["synonym"] }
+   Use when first entering riddle phase. The riddle MUST be about the animal kingdom (e.g. animals, habitats, behavior, diet, classification); it does NOT have to be the square's animal/habitat. correctOption must be the exact text of one of the four options. Optionally include correctOptionSynonyms (array of strings) for common ways to say the correct option. Follow with NARRATE speaking the riddle and options. When user answers, return PLAYER_ANSWERED with what they said—do NOT return RIDDLE_RESOLVED.
 
 7. **RIDDLE_RESOLVED** - Legacy: open-ended riddle evaluation. Prefer ASK_RIDDLE + PLAYER_ANSWERED for structured four-option riddles.
    { "action": "RIDDLE_RESOLVED", "correct": true }
@@ -294,11 +294,11 @@ function formatAnimalEncounterContext(state: Record<string, unknown>): string {
     const riddleCtx = pending as {
       riddlePrompt?: string;
       riddleOptions?: string[];
-      correctLetter?: string;
+      correctOption?: string;
     };
     const prompt = riddleCtx.riddlePrompt;
     const options = riddleCtx.riddleOptions;
-    const hasStructuredRiddle = options?.length === 4 && riddleCtx.correctLetter;
+    const hasStructuredRiddle = options?.length === 4 && riddleCtx.correctOption;
     const antiLeak =
       " When asking the riddle: ask only the riddle and the four options. Do NOT include the correct answer in that NARRATE.";
     let helpInst: string;
@@ -307,16 +307,16 @@ function formatAnimalEncounterContext(state: Record<string, unknown>): string {
         " If user asks what to do, NARRATE re-asking the same riddle and the four options.";
     } else {
       helpInst =
-        " If user asks what to do or says they didn't hear, you MUST return ASK_RIDDLE (text, options, correctLetter) followed by NARRATE speaking that same riddle and options. Do NOT return only a NARRATE saying 'choose A, B, C or D' without speaking the actual riddle.";
+        " If user asks what to do or says they didn't hear, you MUST return ASK_RIDDLE (text, options, correctOption, optional correctOptionSynonyms) followed by NARRATE speaking that same riddle and options. Do NOT return only a NARRATE saying 'choose an option' without speaking the actual riddle.";
     }
     if (!hasStructuredRiddle) {
-      return `⚠️ RIDDLE (${playerName}) phase=riddle.${antiLeak} Ask a riddle with exactly FOUR options (A, B, C, D). The riddle MUST be about the animal kingdom (e.g. animals, habitats, behavior, diet, classification). Return ASK_RIDDLE with "text", "options" (array of 4 strings), "correctLetter" ("A"|"B"|"C"|"D"), then NARRATE the riddle and options. When user answers, return PLAYER_ANSWERED with the letter - do NOT use RIDDLE_RESOLVED.${helpInst} [current]`;
+      return `⚠️ RIDDLE (${playerName}) phase=riddle.${antiLeak} Ask a riddle with exactly FOUR options. The riddle MUST be about the animal kingdom (e.g. animals, habitats, behavior, diet, classification). Return ASK_RIDDLE with "text", "options" (array of 4 strings), "correctOption" (exact text of the correct option), optionally "correctOptionSynonyms" (array of synonyms). Then NARRATE the riddle and options. When user answers, return PLAYER_ANSWERED with what they said - do NOT use RIDDLE_RESOLVED.${helpInst} [current]`;
     }
     const optionsList = options?.join(", ") ?? "";
     const mapInst =
       optionsList &&
-      ` Current options: ${optionsList}. Map user words (e.g. "la hormiga", "hormiga", "la A") to that letter and return PLAYER_ANSWERED with "A"|"B"|"C"|"D".`;
-    return `⚠️ RIDDLE (${playerName}) phase=riddle. User must choose A, B, C, or D. Return PLAYER_ANSWERED with the chosen letter ("A"|"B"|"C"|"D") - do NOT use RIDDLE_RESOLVED. Orchestrator will resolve correct/incorrect.${mapInst}${helpInst} [current]`;
+      ` Current options: ${optionsList}. Return PLAYER_ANSWERED with the user's answer (option text or what they said).`;
+    return `⚠️ RIDDLE (${playerName}) phase=riddle. User must choose one of the four options. Return PLAYER_ANSWERED with what the user said - do NOT use RIDDLE_RESOLVED. Orchestrator resolves correct/incorrect (strict match then LLM).${mapInst}${helpInst} [current]`;
   }
 
   if (pending.phase === "powerCheck") {

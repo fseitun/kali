@@ -1,41 +1,33 @@
 /**
- * Resolves a riddle answer (letter or option text) to a single letter "A"|"B"|"C"|"D".
- * Used so that when the user (or LLM) says the option word (e.g. "miércoles") instead of
- * the letter ("A"), the pipeline still accepts and scores the answer.
+ * Resolves a riddle answer to a matched option text (or null).
+ * Used for strict match: user/LLM says option word or synonym; we match against the four options.
+ * No letters or indices — option text only.
  */
-const LETTERS = ["A", "B", "C", "D"] as const;
-export type RiddleLetter = (typeof LETTERS)[number];
 
 /**
  * Strip optional leading "A) ", "B) ", etc. from option text, then trim and lowercase.
  */
-function normalizeOptionText(option: string): string {
-  const stripped = option.replace(/^[A-Da-d]\)\s*/i, "").trim();
+export function normalizeOptionText(option: string): string {
+  const stripped = option.replace(/^[A-Da-d][.)]\s*/i, "").trim();
   return stripped.toLowerCase();
 }
 
 /**
- * Resolve user answer to a riddle letter using stored options.
- * - If answer is already a single letter A–D (or starts with one), return it.
- * - Else match answer against riddleOptions (after stripping "A) ", etc.): if exactly one
- *   option matches (equals or contains), return that option's letter; otherwise null.
+ * Resolve user answer to the matched option text (one of riddleOptions), or null.
+ * Matches against the four options (normalized: equals or contains).
+ * Returns the actual option string that matched (from riddleOptions), or null if no single match.
  */
-export function resolveRiddleAnswerToLetter(
+export function resolveRiddleAnswerToOption(
   answer: string,
   riddleOptions: string[] | undefined,
-): RiddleLetter | null {
+): string | null {
   const trimmed = answer.trim();
   if (!trimmed) return null;
-
-  const firstChar = trimmed.charAt(0).toUpperCase();
-  if (LETTERS.includes(firstChar as RiddleLetter)) {
-    return firstChar as RiddleLetter;
-  }
 
   if (!Array.isArray(riddleOptions) || riddleOptions.length !== 4) return null;
 
   const normalizedAnswer = trimmed.toLowerCase();
-  let matchedIndex: number | null = null;
+  let matchedOption: string | null = null;
 
   for (let i = 0; i < 4; i++) {
     const opt = riddleOptions[i];
@@ -45,11 +37,52 @@ export function resolveRiddleAnswerToLetter(
     const answerContainsOption = normalizedAnswer.includes(normalizedOpt);
     const optionContainsAnswer = normalizedOpt.includes(normalizedAnswer);
     if (equals || answerContainsOption || optionContainsAnswer) {
-      if (matchedIndex !== null) return null;
-      matchedIndex = i;
+      if (matchedOption !== null) return null;
+      matchedOption = opt;
     }
   }
 
-  if (matchedIndex === null) return null;
-  return LETTERS[matchedIndex];
+  return matchedOption;
+}
+
+/**
+ * Strict correctness: true if the answer matches the correct option or one of its synonyms (no LLM).
+ * - Match answer to the four options; if matched option (normalized) === correctOption (normalized) → true.
+ * - If correctOptionSynonyms present, also check whether answer (normalized) equals or is contained in any synonym (normalized) → true.
+ */
+export function isStrictRiddleCorrect(
+  answer: string,
+  riddleOptions: string[] | undefined,
+  correctOption: string,
+  correctOptionSynonyms?: string[],
+): boolean {
+  const trimmed = answer.trim();
+  if (!trimmed) return false;
+
+  const normalizedAnswer = trimmed.toLowerCase();
+  const normalizedCorrect = normalizeOptionText(correctOption);
+
+  // Match to one of the four options
+  const matchedOption = resolveRiddleAnswerToOption(answer, riddleOptions);
+  if (matchedOption !== null && normalizeOptionText(matchedOption) === normalizedCorrect) {
+    return true;
+  }
+
+  // Match to correctOptionSynonyms
+  if (Array.isArray(correctOptionSynonyms)) {
+    for (const syn of correctOptionSynonyms) {
+      if (typeof syn !== "string") continue;
+      const normalizedSyn = syn.trim().toLowerCase();
+      if (!normalizedSyn) continue;
+      if (
+        normalizedAnswer === normalizedSyn ||
+        normalizedAnswer.includes(normalizedSyn) ||
+        normalizedSyn.includes(normalizedAnswer)
+      ) {
+        return true;
+      }
+    }
+  }
+
+  return false;
 }

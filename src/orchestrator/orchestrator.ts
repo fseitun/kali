@@ -10,7 +10,7 @@ import { BoardEffectsHandler } from "./board-effects-handler";
 import { computeNewPositionFromState } from "./board-traversal";
 import { DecisionPointEnforcer } from "./decision-point-enforcer";
 import { reorderPowerCheckBeforeRoll } from "./reorder-power-check";
-import { resolveRiddleAnswerToLetter } from "./riddle-answer";
+import { resolveRiddleAnswerToOption, isStrictRiddleCorrect } from "./riddle-answer";
 import { TurnManager } from "./turn-manager";
 import {
   GamePhase,
@@ -369,9 +369,8 @@ export class Orchestrator {
   }
 
   /**
-   * When in riddle phase with structured options, resolve the user's transcript to a letter.
-   * If the transcript maps to a letter (e.g. "la hormiga" → A), replace the first PLAYER_ANSWERED
-   * answer with that letter so correctness is based on what the user said, not the LLM's mapping.
+   * When in riddle phase with structured options, resolve the user's transcript to the matched option text.
+   * If the transcript matches one of the four options, replace the first PLAYER_ANSWERED answer with that option text.
    */
   private normalizeRiddleAnswerFromTranscript(
     actions: PrimitiveAction[],
@@ -380,24 +379,24 @@ export class Orchestrator {
     const state = this.stateManager.getState();
     const game = state.game as Record<string, unknown> | undefined;
     const pending = game?.pendingAnimalEncounter as
-      | { phase?: string; riddleOptions?: string[]; correctLetter?: string }
+      | { phase?: string; riddleOptions?: string[]; correctOption?: string }
       | null
       | undefined;
     if (
       pending?.phase !== "riddle" ||
       !Array.isArray(pending.riddleOptions) ||
       pending.riddleOptions.length !== 4 ||
-      !pending.correctLetter
+      !pending.correctOption
     ) {
       return actions;
     }
     const firstIndex = actions.findIndex((a) => a.action === "PLAYER_ANSWERED");
     if (firstIndex === -1) return actions;
-    const letterFromTranscript = resolveRiddleAnswerToLetter(transcript, pending.riddleOptions);
-    if (letterFromTranscript === null) return actions;
+    const optionFromTranscript = resolveRiddleAnswerToOption(transcript, pending.riddleOptions);
+    if (optionFromTranscript === null) return actions;
     return actions.map((a, i) => {
       if (i === firstIndex && a.action === "PLAYER_ANSWERED" && "answer" in a) {
-        return { ...a, answer: letterFromTranscript };
+        return { ...a, answer: optionFromTranscript };
       }
       return a;
     });
@@ -582,14 +581,15 @@ export class Orchestrator {
   }
 
   /**
-   * Handles ASK_RIDDLE: stores riddle text, four options, and correct letter in pendingAnimalEncounter.
+   * Handles ASK_RIDDLE: stores riddle text, four options, correct option, and optional synonyms in pendingAnimalEncounter.
    * LLM should follow with NARRATE to speak the riddle and options.
    */
   private async handleAskRiddle(primitive: {
     action: "ASK_RIDDLE";
     text: string;
     options: [string, string, string, string];
-    correctLetter: "A" | "B" | "C" | "D";
+    correctOption: string;
+    correctOptionSynonyms?: string[];
   }): Promise<void> {
     const state = this.stateManager.getState();
     const game = state.game as Record<string, unknown> | undefined;
@@ -600,10 +600,11 @@ export class Orchestrator {
     if (
       !Array.isArray(primitive.options) ||
       primitive.options.length !== 4 ||
-      !["A", "B", "C", "D"].includes(primitive.correctLetter)
+      typeof primitive.correctOption !== "string" ||
+      !primitive.correctOption.trim()
     ) {
       Logger.warn(
-        `ASK_RIDDLE ignored: need options length 4 and correctLetter A-D, got ${primitive.options?.length ?? 0}, ${primitive.correctLetter}`,
+        `ASK_RIDDLE ignored: need options length 4 and non-empty correctOption, got ${primitive.options?.length ?? 0}, correctOption=${String(primitive.correctOption ?? "").slice(0, 20)}`,
       );
       return;
     }
@@ -611,13 +612,19 @@ export class Orchestrator {
       ...pending,
       riddlePrompt: primitive.text,
       riddleOptions: primitive.options,
-      correctLetter: primitive.correctLetter,
+      correctOption: primitive.correctOption,
+      ...(Array.isArray(primitive.correctOptionSynonyms) &&
+      primitive.correctOptionSynonyms.length > 0
+        ? { correctOptionSynonyms: primitive.correctOptionSynonyms }
+        : {}),
     } as Record<string, unknown>);
-    Logger.info(`Ask riddle stored; correctLetter=${primitive.correctLetter}`);
+    Logger.info(
+      `Ask riddle stored; correctOption=${primitive.correctOption.slice(0, 30)}${primitive.correctOptionSynonyms?.length ? `, synonyms=${primitive.correctOptionSynonyms.length}` : ""}`,
+    );
   }
 
   /**
-   * If PLAYER_ANSWERED is a riddle choice (phase=riddle with correctLetter set), resolves and returns result.
+   * If PLAYER_ANSWERED is a riddle choice (phase=riddle with correctOption set): strict match first, then LLM if false.
    * Otherwise returns false.
    */
   private async tryHandleRiddleAnswer(
@@ -628,19 +635,47 @@ export class Orchestrator {
     const game = state.game as Record<string, unknown> | undefined;
     const currentTurn = game?.turn as string | undefined;
     const pending = game?.pendingAnimalEncounter as
-      | { phase?: string; playerId?: string; correctLetter?: string; riddleOptions?: string[] }
+      | {
+          phase?: string;
+          playerId?: string;
+          correctOption?: string;
+          correctOptionSynonyms?: string[];
+          riddleOptions?: string[];
+        }
       | null
       | undefined;
-    if (pending?.phase !== "riddle" || pending.playerId !== currentTurn || !pending.correctLetter) {
+    if (
+      pending?.phase !== "riddle" ||
+      pending.playerId !== currentTurn ||
+      !pending.correctOption ||
+      !Array.isArray(pending.riddleOptions) ||
+      pending.riddleOptions.length !== 4
+    ) {
       return false;
     }
-    const letter = resolveRiddleAnswerToLetter(answer, pending.riddleOptions);
-    if (letter === null) {
-      return false;
+
+    // Strict JS first: option text + synonyms
+    if (
+      isStrictRiddleCorrect(
+        answer,
+        pending.riddleOptions,
+        pending.correctOption,
+        pending.correctOptionSynonyms,
+      )
+    ) {
+      await this.handleRiddleResolved({ action: "RIDDLE_RESOLVED", correct: true });
+      return { correct: true };
     }
-    const correct = letter === pending.correctLetter;
-    await this.handleRiddleResolved({ action: "RIDDLE_RESOLVED", correct });
-    return { correct };
+
+    // Strict said false: ask LLM to validate (synonyms/paraphrases)
+    const options = pending.riddleOptions as [string, string, string, string];
+    const result = await this.llmClient.validateRiddleAnswer(
+      answer,
+      options,
+      pending.correctOption,
+    );
+    await this.handleRiddleResolved({ action: "RIDDLE_RESOLVED", correct: result.correct });
+    return { correct: result.correct };
   }
 
   /**
@@ -808,13 +843,13 @@ export class Orchestrator {
     const state = this.stateManager.getState();
     const game = state.game as Record<string, unknown> | undefined;
     const pending = game?.pendingAnimalEncounter as
-      | { phase?: string; riddleOptions?: unknown[]; correctLetter?: string }
+      | { phase?: string; riddleOptions?: unknown[]; correctOption?: string }
       | null
       | undefined;
     if (pending?.phase !== "riddle") return false;
     const options = pending.riddleOptions;
     const hasStructuredRiddle =
-      Array.isArray(options) && options.length === 4 && pending.correctLetter;
+      Array.isArray(options) && options.length === 4 && pending.correctOption;
     return !hasStructuredRiddle;
   }
 
