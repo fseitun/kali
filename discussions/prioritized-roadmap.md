@@ -264,26 +264,27 @@ _(Value/Complexity ratio; higher = better ROI)_
 
 **Value: 4/10 | Complexity: 4/10 | Ratio: 1.0**
 
-**Problem:** Currently hardcoded to Spanish (Argentina). Need runtime language selection.
+**Problem:** Runtime locale is already supported via `locale-manager` (es-AR / en-US, persisted in localStorage, fallback from `CONFIG.LOCALE`). What's missing is **voice-activated language selection at setup** (and optionally the voice command "Kali, speak English" / "Kali, cambiar a español").
 
 **Implementation:**
 
 - Voice-activated language selection on first launch
 - "Choose your language: Spanish or English" / "Elegí tu idioma: Español o Inglés"
-- Store language preference in IndexedDB
-- Update `CONFIG.LOCALE` dynamically
+- Store language preference (e.g. localStorage; `locale-manager` already uses `kali-locale` key and reads on startup) or IndexedDB. New work is the setup/voice flow and optionally syncing i18n with persisted locale.
+- Update `CONFIG.LOCALE` dynamically (or rely on persisted locale)
 - Reload i18n translations
 - Update LLM system prompt based on selected language
 - Wake word "Kali" works phonetically in both languages
 
 **Files:**
 
+- `src/locale-manager.ts` (already persists/reads locale)
 - `src/i18n/index.ts`
 - `src/orchestrator/name-collector.ts` (add language selection phase)
 - `src/config.ts`
-- `src/state-manager.ts` (persist language choice)
+- `src/state-manager.ts` (persist language choice if moving to shared state)
 
-**Status:** i18n infrastructure exists, just needs UI flow
+**Status:** i18n and locale-manager infrastructure exist, just needs setup/voice flow
 
 ---
 
@@ -344,13 +345,13 @@ _(Value/Complexity ratio; higher = better ROI)_
 
 **Context:** Follow-up to Orchestrator Authority Phase 1 and 2.
 
-**Problem:** Magic door formula, returnTo187, jumpToLeader are LLM-driven. Config has misleading instructions (e.g. "SET winner"). heartsRequiredForDoor is misnamed.
+**Problem:** Magic door formula, returnTo187, jumpToLeader are LLM-driven. Config has misleading instructions (e.g. "SET winner"). Current config uses `magicDoorPosition` and `magicDoorTarget`; any hearts/difficulty threshold could be added or renamed (e.g. to `magicDoorBaseDifficulty`) as a planned config cleanup.
 
 **Implementation:**
 
 - Magic door: orchestrator evaluates formula when player at 186 reports roll
 - returnTo187, jumpToLeader: orchestrator-applied from square effects
-- Fix config: remove "SET winner" from instructions; fix heartsRequiredForDoor → magicDoorBaseDifficulty
+- Fix config: remove "SET winner" from instructions; add or rename hearts/difficulty key to `magicDoorBaseDifficulty` if applicable (current keys: `magicDoorPosition`, `magicDoorTarget`)
 
 **Files:**
 
