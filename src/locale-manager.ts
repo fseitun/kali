@@ -12,6 +12,10 @@ const TTS_LANG_MAP: Record<SupportedLocale, string> = {
 const runtimeLocale: SupportedLocale = loadStoredLocale();
 
 function loadStoredLocale(): SupportedLocale {
+  const envLocale = import.meta.env.VITE_LOCALE;
+  if (envLocale != null && String(envLocale).trim() !== "") {
+    return CONFIG.LOCALE;
+  }
   try {
     const stored = localStorage.getItem(STORAGE_KEY);
     if (stored && SUPPORTED_LOCALES.includes(stored as SupportedLocale)) {
@@ -24,7 +28,7 @@ function loadStoredLocale(): SupportedLocale {
 }
 
 /**
- * Returns the current runtime locale, determined at startup from localStorage or CONFIG.LOCALE.
+ * Returns the current runtime locale: env (VITE_LOCALE) if set, else localStorage, else CONFIG default.
  */
 export function getLocale(): SupportedLocale {
   return runtimeLocale;

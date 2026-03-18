@@ -192,7 +192,7 @@ describe("i18n", () => {
       expect(debugVersionLine("latest")).toBe("Up to date · Build: latest");
     });
 
-    it("uses Spanish when locale is es-AR (debug entrypoint must set en-US)", () => {
+    it("uses Spanish when locale is es-AR", () => {
       setLocale("es-AR");
       expect(debugVersionLine("latest")).toBe("Al día · Versión: latest");
     });

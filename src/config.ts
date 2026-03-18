@@ -23,7 +23,14 @@ export const CONFIG = {
     | "deepinfra"
     | "mock",
 
-  LOCALE: (import.meta.env.VITE_LOCALE ?? "es-AR") as "es-AR" | "en-US",
+  /** Locale from env (VITE_LOCALE). Use "es", "es-AR", "en", "en-US"; default "es-AR". */
+  LOCALE: (() => {
+    const raw = import.meta.env.VITE_LOCALE ?? "es-AR";
+    const s = String(raw).trim().toLowerCase();
+    if (s === "es" || s === "es-ar") return "es-AR";
+    if (s === "en" || s === "en-us") return "en-US";
+    return raw as string as "es-AR" | "en-US";
+  })(),
 
   WAKE_WORD: {
     /** Canonical spellings and common ASR misrecognitions (kali/calli/callie etc.) */
