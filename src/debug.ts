@@ -96,19 +96,7 @@ class KaliDebugApp {
     const container = document.getElementById("log-categories");
     if (!container) return;
 
-    const defaultEnabled = new Set([
-      "actions",
-      "brain",
-      "general",
-      "init",
-      "llm",
-      "narration",
-      "prompt",
-      "state",
-      "transcription",
-      "user",
-      "voice",
-    ]);
+    const defaultEnabled = new Set(["user", "narration"]);
 
     for (const { id, label, icon } of getLogCategories()) {
       const enabled = defaultEnabled.has(id);
