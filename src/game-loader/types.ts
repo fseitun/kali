@@ -20,6 +20,8 @@ export interface GameRules {
   turnStructure: string;
   boardLayout: string;
   examples: string[];
+  /** Optional short summary for NARRATE explanations (2-3 sentences). Not sent as full rules. */
+  summary?: string;
 }
 
 /**

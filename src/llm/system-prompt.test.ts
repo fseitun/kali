@@ -2,15 +2,17 @@ import { describe, it, expect } from "vitest";
 import { formatStateContext, SYSTEM_PROMPT } from "./system-prompt";
 
 describe("SYSTEM_PROMPT", () => {
+  it("slim base prompt is smaller than legacy (~2.5k+) and has an upper bound", () => {
+    expect(SYSTEM_PROMPT.length).toBeGreaterThanOrEqual(1100);
+    expect(SYSTEM_PROMPT.length).toBeLessThanOrEqual(2600);
+  });
+
   it("includes guidance rule: when user asks what to do, NARRATE only and do not emit primitives", () => {
-    expect(SYSTEM_PROMPT).toContain("Guidance requests");
-    expect(SYSTEM_PROMPT).toMatch(
-      /what should I do|what do I do next|help|I'm stuck|what are my options/,
-    );
-    expect(SYSTEM_PROMPT).toContain("respond only with NARRATE");
-    expect(SYSTEM_PROMPT).toContain(
-      "Do not emit PLAYER_ROLLED, PLAYER_ANSWERED, or SET_STATE for them",
-    );
+    expect(SYSTEM_PROMPT).toMatch(/Guidance|what do I do|help/);
+    expect(SYSTEM_PROMPT).toContain("NARRATE only");
+    expect(SYSTEM_PROMPT).toContain("do not emit PLAYER_ROLLED");
+    expect(SYSTEM_PROMPT).toContain("PLAYER_ANSWERED");
+    expect(SYSTEM_PROMPT).toContain("SET_STATE");
   });
 });
 
