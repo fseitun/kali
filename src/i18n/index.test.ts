@@ -182,6 +182,22 @@ describe("i18n", () => {
     });
   });
 
+  describe("debug UI version line", () => {
+    function debugVersionLine(buildId: string): string {
+      return `${t("ui.upToDate")} · ${t("ui.buildLabel")}${buildId}`;
+    }
+
+    it("uses English when locale is en-US", () => {
+      setLocale("en-US");
+      expect(debugVersionLine("latest")).toBe("Up to date · Build: latest");
+    });
+
+    it("uses Spanish when locale is es-AR (debug entrypoint must set en-US)", () => {
+      setLocale("es-AR");
+      expect(debugVersionLine("latest")).toBe("Al día · Versión: latest");
+    });
+  });
+
   describe("edge cases", () => {
     it("should handle empty key", () => {
       expect(t("")).toBe("");

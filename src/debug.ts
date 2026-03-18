@@ -2,7 +2,7 @@ import "./styles/shared.css";
 import "./styles/debug.css";
 import "./i18n";
 import { CONFIG } from "./config";
-import { t } from "./i18n";
+import { setLocale, t } from "./i18n";
 import { KaliAppCore } from "./kali-app-core";
 import { setupVersionRefreshPrompt } from "./pwa-register";
 import { DebugUIService } from "./services/debug-ui-service";
@@ -13,6 +13,8 @@ import {
   setLogCategoryEnabled,
 } from "./utils/debug-options";
 import { Logger } from "./utils/logger";
+
+setLocale("en-US");
 
 function getLLMDisplayLabel(): string {
   switch (CONFIG.LLM_PROVIDER) {
