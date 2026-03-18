@@ -128,4 +128,46 @@ describe("formatStateContext", () => {
     expect(result).toContain("roll one die and report the number");
     expect(result).toContain("need 4 or more");
   });
+
+  it("without forLog truncates nested objects to {...}", () => {
+    const state = {
+      game: {
+        turn: "p2",
+        phase: "PLAYING",
+        pendingAnimalEncounter: { phase: "powerCheck", power: 7, playerId: "p2" },
+      },
+      players: {
+        p1: { id: "p1", position: 32, points: 5, activeChoices: { 32: 99 }, name: "fico" },
+        p2: { id: "p2", position: 26, points: 3, activeChoices: {}, name: "pepe" },
+      },
+    } as Record<string, unknown>;
+
+    const result = formatStateContext(state);
+
+    expect(result).toContain("pendingAnimalEncounter={...}");
+    expect(result).toContain("activeChoices={...}");
+  });
+
+  it("with forLog: true expands pendingAnimalEncounter and activeChoices", () => {
+    const state = {
+      game: {
+        turn: "p2",
+        phase: "PLAYING",
+        pendingAnimalEncounter: { phase: "powerCheck", power: 7, playerId: "p2" },
+      },
+      players: {
+        p1: { id: "p1", position: 32, points: 5, activeChoices: { 32: 99 }, name: "fico" },
+        p2: { id: "p2", position: 26, points: 3, activeChoices: {}, name: "pepe" },
+      },
+    } as Record<string, unknown>;
+
+    const result = formatStateContext(state, { forLog: true });
+
+    expect(result).toContain("phase=powerCheck");
+    expect(result).toContain("power=7");
+    expect(result).toContain("playerId=p2");
+    expect(result).not.toContain("pendingAnimalEncounter={...}");
+    expect(result).toContain("32=99");
+    expect(result).not.toMatch(/activeChoices=\{\s*\.\.\.\s*\}/);
+  });
 });

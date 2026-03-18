@@ -314,7 +314,9 @@ export class Orchestrator {
       Logger.brain(`Orchestrator processing: ${transcript} (depth: ${context.depth})`);
 
       const state = this.stateManager.getState();
-      Logger.state("Current state:\n" + formatStateContext(state as Record<string, unknown>));
+      Logger.state(
+        "Current state:\n" + formatStateContext(state as Record<string, unknown>, { forLog: true }),
+      );
       Profiler.start(`orchestrator.llm.${context.depth}`);
       const lastBotUtterance = this.lastNarration !== "" ? this.lastNarration : undefined;
       const actions = await this.llmClient.getActions(transcript, state, lastBotUtterance);
@@ -413,7 +415,9 @@ export class Orchestrator {
     turnAdvancedForRevenge?: { playerId: string; name: string; position: number };
   }> {
     const state = this.stateManager.getState();
-    Logger.state("Current state:\n" + formatStateContext(state as Record<string, unknown>));
+    Logger.state(
+      "Current state:\n" + formatStateContext(state as Record<string, unknown>, { forLog: true }),
+    );
 
     Profiler.start(`${profilerPrefix}.validation.${context.depth}`);
     const validation = validateActions(actions, state, this.stateManager, this);
@@ -475,7 +479,9 @@ export class Orchestrator {
     }
     Logger.state(
       "Current state (after actions):\n" +
-        formatStateContext(this.stateManager.getState() as Record<string, unknown>),
+        formatStateContext(this.stateManager.getState() as Record<string, unknown>, {
+          forLog: true,
+        }),
     );
 
     // Only enforce decision points for top-level (user-initiated) flows.

@@ -98,6 +98,8 @@ interface StateDisplayMetadata {
   board?: StateDisplayConfig;
 }
 
+const LOG_FORMAT_MAX_DEPTH = 2;
+
 function formatFieldValue(value: unknown): string {
   if (value === null || value === undefined) return "null";
   if (Array.isArray(value)) {
@@ -107,7 +109,31 @@ function formatFieldValue(value: unknown): string {
   return String(value);
 }
 
-function formatObjectFields(obj: Record<string, unknown>, config?: StateDisplayConfig): string[] {
+function formatFieldValueForLog(value: unknown, depth: number, maxDepth: number): string {
+  if (value === null || value === undefined) return "null";
+  if (Array.isArray(value)) {
+    if (value.length === 0) return "[]";
+    const formatted = value.map((v) => formatFieldValueForLog(v, depth + 1, maxDepth)).join(", ");
+    return `[${formatted}]`;
+  }
+  if (typeof value === "object") {
+    if (depth >= maxDepth) return "{...}";
+    const entries = Object.entries(value as Record<string, unknown>)
+      .filter(([key]) => key !== "stateDisplay")
+      .map(([k, v]) => `${k}=${formatFieldValueForLog(v, depth + 1, maxDepth)}`);
+    return `{ ${entries.join(", ")} }`;
+  }
+  return String(value);
+}
+
+type ValueFormatter = (value: unknown, depth: number) => string;
+
+function formatObjectFields(
+  obj: Record<string, unknown>,
+  config?: StateDisplayConfig,
+  valueFormatter?: ValueFormatter,
+): string[] {
+  const format = valueFormatter ?? ((v: unknown) => formatFieldValue(v));
   const fields: string[] = [];
   const processed = new Set<string>();
 
@@ -119,7 +145,7 @@ function formatObjectFields(obj: Record<string, unknown>, config?: StateDisplayC
       if (hiddenSet.has(key)) continue;
       processed.add(key);
       const value = obj[key];
-      fields.push(`${key}=${formatFieldValue(value)}`);
+      fields.push(`${key}=${format(value, 0)}`);
     }
 
     for (const key of secondary) {
@@ -128,7 +154,7 @@ function formatObjectFields(obj: Record<string, unknown>, config?: StateDisplayC
       const value = obj[key];
       if (value !== null && value !== undefined && value !== 0 && value !== false && value !== "") {
         if (Array.isArray(value) && value.length === 0) continue;
-        fields.push(`${key}=${formatFieldValue(value)}`);
+        fields.push(`${key}=${format(value, 0)}`);
       }
     }
 
@@ -137,14 +163,14 @@ function formatObjectFields(obj: Record<string, unknown>, config?: StateDisplayC
       const value = obj[key];
       if (value !== null && value !== undefined && value !== 0 && value !== false && value !== "") {
         if (Array.isArray(value) && value.length === 0) continue;
-        fields.push(`${key}=${formatFieldValue(value)}`);
+        fields.push(`${key}=${format(value, 0)}`);
       }
     }
   } else {
     for (const [key, value] of Object.entries(obj)) {
       if (value !== null && value !== undefined && value !== 0 && value !== false && value !== "") {
         if (Array.isArray(value) && value.length === 0) continue;
-        fields.push(`${key}=${formatFieldValue(value)}`);
+        fields.push(`${key}=${format(value, 0)}`);
       }
     }
   }
@@ -152,26 +178,39 @@ function formatObjectFields(obj: Record<string, unknown>, config?: StateDisplayC
   return fields;
 }
 
+export interface FormatStateContextOptions {
+  forLog?: boolean;
+}
+
 /**
  * Formats game state into a concise, human-readable context for the LLM.
  * Uses game-specific stateDisplay metadata if available, otherwise shows all fields.
  * @param state - The game state object
+ * @param options - When forLog is true, nested objects are expanded for terminal readability
  * @returns Formatted state string
  */
-export function formatStateContext(state: Record<string, unknown>): string {
+export function formatStateContext(
+  state: Record<string, unknown>,
+  options?: FormatStateContextOptions,
+): string {
+  const forLog = options?.forLog === true;
+  const valueFormatter: ValueFormatter | undefined = forLog
+    ? (v, depth) => formatFieldValueForLog(v, depth, LOG_FORMAT_MAX_DEPTH)
+    : undefined;
+
   const parts: string[] = [];
   const displayConfig = state.stateDisplay as StateDisplayMetadata | undefined;
 
   const game = state.game as Record<string, unknown> | undefined;
   if (game) {
-    const fields = formatObjectFields(game, displayConfig?.game);
+    const fields = formatObjectFields(game, displayConfig?.game, valueFormatter);
     if (fields.length > 0) parts.push(`Game: ${fields.join(", ")}`);
   }
 
   const players = state.players as Record<string, Record<string, unknown>> | undefined;
   if (players) {
     const playerParts = Object.entries(players).map(([id, player]) => {
-      const fields = formatObjectFields(player, displayConfig?.players);
+      const fields = formatObjectFields(player, displayConfig?.players, valueFormatter);
       return `${id}:${fields.join(",")}`;
     });
     if (playerParts.length > 0) parts.push(`Players: ${playerParts.join(" | ")}`);
@@ -179,7 +218,7 @@ export function formatStateContext(state: Record<string, unknown>): string {
 
   const board = state.board as Record<string, unknown> | undefined;
   if (board) {
-    const fields = formatObjectFields(board, displayConfig?.board);
+    const fields = formatObjectFields(board, displayConfig?.board, valueFormatter);
     if (fields.length > 0) parts.push(`Board: ${fields.join(", ")}`);
   }
 
