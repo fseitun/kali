@@ -1,18 +1,22 @@
+import { parsePositiveIntEnv } from "./utils/parse-positive-int-env";
+
 export const CONFIG = {
   BUILD_ID: import.meta.env.VITE_BUILD_ID ?? "dev",
 
   LLM: {
     RETRY_DELAY_MS: 1_500,
     /** Default timeout for LLM calls (extractName, analyzeResponse, etc.). Override via VITE_LLM_REQUEST_TIMEOUT_MS. */
-    REQUEST_TIMEOUT_MS:
-      import.meta.env.VITE_LLM_REQUEST_TIMEOUT_MS != null
-        ? Number(import.meta.env.VITE_LLM_REQUEST_TIMEOUT_MS)
-        : 60_000,
+    REQUEST_TIMEOUT_MS: parsePositiveIntEnv(
+      import.meta.env.VITE_LLM_REQUEST_TIMEOUT_MS as string | undefined,
+      60_000,
+      "VITE_LLM_REQUEST_TIMEOUT_MS",
+    ),
     /** Longer timeout for getActions (heavy prompts). Override via VITE_LLM_GET_ACTIONS_TIMEOUT_MS. */
-    GET_ACTIONS_TIMEOUT_MS:
-      import.meta.env.VITE_LLM_GET_ACTIONS_TIMEOUT_MS != null
-        ? Number(import.meta.env.VITE_LLM_GET_ACTIONS_TIMEOUT_MS)
-        : 90_000,
+    GET_ACTIONS_TIMEOUT_MS: parsePositiveIntEnv(
+      import.meta.env.VITE_LLM_GET_ACTIONS_TIMEOUT_MS as string | undefined,
+      90_000,
+      "VITE_LLM_GET_ACTIONS_TIMEOUT_MS",
+    ),
   },
 
   LLM_PROVIDER: (import.meta.env.VITE_LLM_PROVIDER ?? "gemini") as
