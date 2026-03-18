@@ -2,6 +2,7 @@
 // @ts-nocheck - Adversarial tests intentionally use malformed data
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import type { StatusIndicator } from "../components/status-indicator";
+import { t } from "../i18n";
 import type { LLMClient } from "../llm/LLMClient";
 import type { SpeechService } from "../services/speech-service";
 import type { StateManager } from "../state-manager";
@@ -588,6 +589,37 @@ describe("Orchestrator - New Action Handlers", () => {
         "sí",
         expect.any(Object),
         confirmationQuestion,
+      );
+    });
+
+    it("passes riddleIncorrect as lastBotUtterance after wrong riddle answer", async () => {
+      (testState.game as any).pendingAnimalEncounter = {
+        position: 5,
+        power: 3,
+        playerId: "p1",
+        phase: "riddle",
+        correctOption: "Arctic",
+        riddleOptions: ["Desert", "Ocean", "Arctic", "Forest"],
+      };
+      mockStateManager.getState = vi.fn(() => testState);
+      mockStateManager.get = vi.fn((path: string) => {
+        if (path === "game.pendingAnimalEncounter")
+          return (testState.game as any).pendingAnimalEncounter;
+        if (path === "game.turn") return "p1";
+        if (path === "players.p1.position") return 5;
+        return undefined;
+      });
+      (mockLLM as any).validateRiddleAnswer = vi.fn(async () => ({ correct: false }));
+      mockLLM.getActions = vi.fn(async () => []) as any;
+
+      await orchestrator.testExecuteActions([{ action: "PLAYER_ANSWERED", answer: "Desert" }]);
+
+      await orchestrator.handleTranscript("3");
+
+      expect(mockLLM.getActions).toHaveBeenLastCalledWith(
+        "3",
+        expect.any(Object),
+        t("game.riddleIncorrect"),
       );
     });
   });

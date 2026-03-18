@@ -745,8 +745,10 @@ export class Orchestrator {
 
     if (win) {
       // Speak pass before square effects so "Pasaste" is never after square narration (e.g. plants)
+      const passMsg = t("game.powerCheckPass");
+      this.lastNarration = passMsg;
       this.statusIndicator.setState("speaking");
-      await this.speechService.speak(t("game.powerCheckPass"));
+      await this.speechService.speak(passMsg);
 
       const currentPos = this.stateManager.get(`players.${playerId}.position`) as number;
       const winJumpTo = squareData?.winJumpTo as number | undefined;
@@ -767,8 +769,10 @@ export class Orchestrator {
     }
 
     if (pending.phase === "powerCheck") {
+      const failMsg = t("game.powerCheckFail");
+      this.lastNarration = failMsg;
       this.statusIndicator.setState("speaking");
-      await this.speechService.speak(t("game.powerCheckFail"));
+      await this.speechService.speak(failMsg);
       this.stateManager.set("game.pendingAnimalEncounter", {
         ...pending,
         phase: "revenge",
@@ -1089,6 +1093,7 @@ export class Orchestrator {
         if (riddleResult) {
           context.skipTrailingNarrateForPowerCheck = true;
           const msg = riddleResult.correct ? t("game.riddleCorrect") : t("game.riddleIncorrect");
+          this.lastNarration = msg;
           this.statusIndicator.setState("speaking");
           await this.speechService.speak(msg);
           break;
