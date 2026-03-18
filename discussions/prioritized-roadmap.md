@@ -134,21 +134,27 @@ _(Value/Complexity ratio; higher = better ROI)_
 
 **Implementation:**
 
-- Pass system messages through LLM for natural rephrasing
-- Cache rephrased messages to avoid redundant API calls
-- Add "personality" to Kali's voice
-- Especially important for kids
+- Pass all hardcoded narration (i18n, system messages) through the LLM before speaking for natural, friendly rephrasing.
+- Cache up to N variations per text (configurable, default 5); rotate to avoid repetition.
+- Add "personality" to Kali's voice; especially important for kids.
+- Extend `LLMClient` with `rephraseNarration(text: string, locale: string): Promise<string>` — same meaning, preserve placeholders (e.g. `{name}`, `{position}`), rephrase as if talking to kids.
+- Implement in `GeminiClient` and `OllamaClient` with a focused prompt (no state context).
+- New service: `src/services/narration-rephrasing-service.ts` — cache `Map<string, string[]>`, rotate variations, fall back to original on LLM failure/timeout.
+- `SpeechService.speak()` calls rephrasing service before speaking; fallback transparent to user.
+- Config in `src/config.ts`: `NARRATION: { MAX_VARIATIONS: 5, ENABLE_REPHRASING: true }`.
+
+**Edge cases:** LLM timeout or malformed output → fall back to original; validate placeholders and fall back if broken; cache session-only.
 
 **Files:**
 
 - `src/services/narration-rephrasing-service.ts` (new)
 - `src/llm/LLMClient.ts` (add rephraseNarration method)
-- `src/llm/GeminiClient.ts` (implement rephrasing)
-- `src/llm/OllamaClient.ts` (implement rephrasing)
+- `src/llm/GeminiClient.ts`, `src/llm/OllamaClient.ts` (implement rephrasing)
 - `src/services/speech-service.ts` (integrate rephrasing service)
 - `src/config.ts` (add narration config)
+- `src/kali-app-core.ts`, `src/main.ts`, `src/debug.ts` (wire rephrasing service)
 
-**Status:** Planned in `discussions/llm-narration-rephrasing.md` - ready to implement
+**Status:** Ready to implement
 
 ---
 
