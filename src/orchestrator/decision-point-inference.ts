@@ -16,13 +16,14 @@ export function inferDecisionPoints(board: BoardConfig | undefined): DecisionPoi
     const position = parseInt(key, 10);
     if (Number.isNaN(position)) continue;
 
+    const sortedNext = [...next].sort((a, b) => a - b);
     const positionOptions: Record<string, number> = {};
-    for (const n of next) positionOptions[String(n)] = n;
+    for (const n of sortedNext) positionOptions[String(n)] = n;
 
     const prompt =
       position === 0
         ? "¿Querés ir por la izquierda o por la derecha?"
-        : `¿Querés ir al ${next.join(" o al ")}?`;
+        : `¿Querés ir al ${sortedNext.join(" o al ")}?`;
 
     result.push({ position, prompt, positionOptions });
   }

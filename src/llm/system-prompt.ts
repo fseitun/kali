@@ -209,10 +209,16 @@ export function formatStateContext(
 
   const players = state.players as Record<string, Record<string, unknown>> | undefined;
   if (players) {
-    const playerParts = Object.entries(players).map(([id, player]) => {
-      const fields = formatObjectFields(player, displayConfig?.players, valueFormatter);
-      return `${id}:${fields.join(",")}`;
-    });
+    const playerOrder = game?.playerOrder as string[] | undefined;
+    const order =
+      Array.isArray(playerOrder) && playerOrder.length > 0 ? playerOrder : Object.keys(players);
+    const playerParts = order
+      .filter((id) => players[id] != null)
+      .map((id) => {
+        const player = players[id];
+        const fields = formatObjectFields(player, displayConfig?.players, valueFormatter);
+        return `${id}:${fields.join(",")}`;
+      });
     if (playerParts.length > 0) parts.push(`Players: ${playerParts.join(" | ")}`);
   }
 

@@ -129,6 +129,24 @@ describe("formatStateContext", () => {
     expect(result).toContain("need 4 or more");
   });
 
+  it("orders players by game.playerOrder when present", () => {
+    const state = {
+      game: { turn: "p1", phase: "PLAYING", playerOrder: ["p2", "p1"] },
+      players: {
+        p1: { id: "p1", name: "Alice", position: 0 },
+        p2: { id: "p2", name: "Bob", position: 0 },
+      },
+    } as Record<string, unknown>;
+
+    const result = formatStateContext(state);
+
+    const playersIndex = result.indexOf("Players:");
+    expect(playersIndex).toBeGreaterThanOrEqual(0);
+    const afterPlayers = result.slice(playersIndex);
+    expect(afterPlayers).toMatch(/Players: p2:.*\|.*p1:/);
+    expect(afterPlayers).not.toMatch(/Players: p1:.*\|.*p2:/);
+  });
+
   it("without forLog truncates nested objects to {...}", () => {
     const state = {
       game: {

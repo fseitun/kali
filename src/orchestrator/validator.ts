@@ -765,7 +765,11 @@ function validatePlayerAnswered(
     if (!hasPending) {
       return {
         valid: false,
-        error: `PLAYER_ANSWERED at index ${index}: Fork choice (${Object.keys(options).join("/")}) can only be applied when the current turn player is at position ${dp.position} with no fork choice. Current player has no pending choice at that position.`,
+        error: `PLAYER_ANSWERED at index ${index}: Fork choice (${Object.keys(options)
+          .sort((a, b) => Number(a) - Number(b))
+          .join(
+            "/",
+          )}) can only be applied when the current turn player is at position ${dp.position} with no fork choice. Current player has no pending choice at that position.`,
         errorCode: "invalidAnswer",
       };
     }

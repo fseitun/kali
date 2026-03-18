@@ -49,6 +49,18 @@ describe("inferDecisionPoints", () => {
     });
   });
 
+  it("sorts next options so prompt and positionOptions order are deterministic", () => {
+    const board: BoardConfig = {
+      squares: {
+        "96": { type: "empty", next: [99, 97] },
+      },
+    };
+    const result = inferDecisionPoints(board);
+    expect(result).toHaveLength(1);
+    expect(result[0].prompt).toBe("¿Querés ir al 97 o al 99?");
+    expect(result[0].positionOptions).toEqual({ "97": 97, "99": 99 });
+  });
+
   it("infers multiple forks sorted by position", () => {
     const board: BoardConfig = {
       squares: {
