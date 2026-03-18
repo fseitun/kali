@@ -34,7 +34,8 @@ export class OpenRouterClient extends BaseLLMClient {
         : [{ role: "user" as const, content: prompt }];
 
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), CONFIG.LLM.REQUEST_TIMEOUT_MS);
+    const timeoutMs = options.timeoutMs ?? CONFIG.LLM.REQUEST_TIMEOUT_MS;
+    const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
     let response: Response;
     try {
       response = await fetch(CONFIG.OPENROUTER.API_URL, {

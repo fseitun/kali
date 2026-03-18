@@ -3,7 +3,16 @@ export const CONFIG = {
 
   LLM: {
     RETRY_DELAY_MS: 1_500,
-    REQUEST_TIMEOUT_MS: 30_000,
+    /** Default timeout for LLM calls (extractName, analyzeResponse, etc.). Override via VITE_LLM_REQUEST_TIMEOUT_MS. */
+    REQUEST_TIMEOUT_MS:
+      import.meta.env.VITE_LLM_REQUEST_TIMEOUT_MS != null
+        ? Number(import.meta.env.VITE_LLM_REQUEST_TIMEOUT_MS)
+        : 60_000,
+    /** Longer timeout for getActions (heavy prompts). Override via VITE_LLM_GET_ACTIONS_TIMEOUT_MS. */
+    GET_ACTIONS_TIMEOUT_MS:
+      import.meta.env.VITE_LLM_GET_ACTIONS_TIMEOUT_MS != null
+        ? Number(import.meta.env.VITE_LLM_GET_ACTIONS_TIMEOUT_MS)
+        : 90_000,
   },
 
   LLM_PROVIDER: (import.meta.env.VITE_LLM_PROVIDER ?? "gemini") as

@@ -357,6 +357,7 @@ export class Orchestrator {
         }
         Logger.warn("No actions returned from LLM");
         await this.speechService.speak(t("llm.allRetriesFailed"));
+        // Turn not advanced; user can say something again to trigger a fresh getActions.
         return { success: false, shouldAdvanceTurn: false };
       }
       const normalizedActions = this.normalizeRiddleAnswerFromTranscript(actions, transcript);

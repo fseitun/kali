@@ -17,6 +17,8 @@ export interface ApiCallOptions {
   contextParts?: ContextParts;
   /** When true, pass response_format: { type: "json_object" } for supported providers */
   responseFormatJson?: boolean;
+  /** Override request timeout for this call (ms). Used for getActions which can need longer. */
+  timeoutMs?: number;
 }
 
 /**

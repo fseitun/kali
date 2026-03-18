@@ -9,7 +9,8 @@ import type { ApiCallOptions, ApiCallResult } from "./types";
 export class GroqClient extends BaseLLMClient {
   async makeApiCall(prompt: string, options: ApiCallOptions): Promise<ApiCallResult> {
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), CONFIG.LLM.REQUEST_TIMEOUT_MS);
+    const timeoutMs = options.timeoutMs ?? CONFIG.LLM.REQUEST_TIMEOUT_MS;
+    const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
     let response: Response;
     try {
       response = await fetch(CONFIG.GROQ.API_URL, {

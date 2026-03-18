@@ -50,9 +50,13 @@ export class GeminiClient extends BaseLLMClient {
     return this.generateUncached(prompt, options);
   }
 
-  private async fetchWithTimeout(url: string, init: RequestInit): Promise<Response> {
+  private async fetchWithTimeout(
+    url: string,
+    init: RequestInit,
+    timeoutMs: number = CONFIG.LLM.REQUEST_TIMEOUT_MS,
+  ): Promise<Response> {
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), CONFIG.LLM.REQUEST_TIMEOUT_MS);
+    const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
     try {
       const response = await fetch(url, { ...init, signal: controller.signal });
       return response;
@@ -70,21 +74,26 @@ export class GeminiClient extends BaseLLMClient {
     userMessage: string,
     options: ApiCallOptions,
   ): Promise<ApiCallResult> {
-    const response = await this.fetchWithTimeout(CONFIG.GEMINI.API_URL, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "X-goog-api-key": CONFIG.GEMINI.API_KEY,
-      },
-      body: JSON.stringify({
-        cachedContent: this.cachedContentName,
-        contents: [{ parts: [{ text: userMessage }] }],
-        generationConfig: {
-          temperature: options.temperature ?? 0.7,
-          maxOutputTokens: options.maxTokens ?? 512,
+    const timeoutMs = options.timeoutMs ?? CONFIG.LLM.REQUEST_TIMEOUT_MS;
+    const response = await this.fetchWithTimeout(
+      CONFIG.GEMINI.API_URL,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-goog-api-key": CONFIG.GEMINI.API_KEY,
         },
-      }),
-    });
+        body: JSON.stringify({
+          cachedContent: this.cachedContentName,
+          contents: [{ parts: [{ text: userMessage }] }],
+          generationConfig: {
+            temperature: options.temperature ?? 0.7,
+            maxOutputTokens: options.maxTokens ?? 512,
+          },
+        }),
+      },
+      timeoutMs,
+    );
     if (!response.ok) {
       const errorText = await response.text();
       throw new Error(`Gemini API error: ${response.status} ${response.statusText}\n${errorText}`);
@@ -101,20 +110,25 @@ export class GeminiClient extends BaseLLMClient {
   }
 
   private async generateUncached(prompt: string, options: ApiCallOptions): Promise<ApiCallResult> {
-    const response = await this.fetchWithTimeout(CONFIG.GEMINI.API_URL, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "X-goog-api-key": CONFIG.GEMINI.API_KEY,
-      },
-      body: JSON.stringify({
-        contents: [{ parts: [{ text: prompt }] }],
-        generationConfig: {
-          temperature: options.temperature ?? 0.7,
-          maxOutputTokens: options.maxTokens ?? 512,
+    const timeoutMs = options.timeoutMs ?? CONFIG.LLM.REQUEST_TIMEOUT_MS;
+    const response = await this.fetchWithTimeout(
+      CONFIG.GEMINI.API_URL,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-goog-api-key": CONFIG.GEMINI.API_KEY,
         },
-      }),
-    });
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: prompt }] }],
+          generationConfig: {
+            temperature: options.temperature ?? 0.7,
+            maxOutputTokens: options.maxTokens ?? 512,
+          },
+        }),
+      },
+      timeoutMs,
+    );
     if (!response.ok) {
       const errorText = await response.text();
       throw new Error(`Gemini API error: ${response.status} ${response.statusText}\n${errorText}`);

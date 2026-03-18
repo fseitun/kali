@@ -77,7 +77,7 @@ export const esAR = {
   },
   llm: {
     retrying: "Dejame intentar de nuevo...",
-    allRetriesFailed: "Disculpá, no te pude entender. ¿Podés intentar otra vez?",
+    allRetriesFailed: "No pude conectar con el asistente. Probá de nuevo en un momento.",
     networkError: "Tengo problemas de conexión. Intentalo de nuevo.",
   },
   nicknames: [

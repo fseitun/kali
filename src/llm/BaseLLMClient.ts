@@ -133,6 +133,7 @@ export abstract class BaseLLMClient implements LLMClient {
       temperature: 0.7,
       maxTokens: 512,
       contextParts: { systemPrompt: this.systemPrompt, userMessage },
+      timeoutMs: CONFIG.LLM.GET_ACTIONS_TIMEOUT_MS,
     });
     Profiler.end("llm.network");
 

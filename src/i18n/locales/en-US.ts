@@ -77,7 +77,7 @@ export const enUS = {
   },
   llm: {
     retrying: "Let me try that again...",
-    allRetriesFailed: "Sorry, I didn't catch that. Can you try again?",
+    allRetriesFailed: "I couldn't reach the assistant. Please try again in a moment.",
     networkError: "I'm having connection problems. Please try again.",
   },
   nicknames: [
