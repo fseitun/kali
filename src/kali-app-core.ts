@@ -379,7 +379,10 @@ ${examples.map((ex: string, i: number) => `${i + 1}. ${ex}`).join("\n")}`;
             position: nextPlayer.position,
             prompt: pendingPrompt,
           })
-        : t("game.turnHandoff", { name: nextPlayer.name });
+        : t("game.turnAnnouncement", {
+            name: nextPlayer.name,
+            position: nextPlayer.position,
+          });
       Logger.info(`Turn start sanity check: ${nextPlayer.name} at ${nextPlayer.position}`);
       await this.speechService.speak(message);
     }

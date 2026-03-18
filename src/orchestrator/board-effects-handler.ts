@@ -226,6 +226,7 @@ export class BoardEffectsHandler {
         applied.length > 0
           ? `[SYSTEM: Current player just landed on square ${position} (${squareName}).${appliedText} Narrate this encounter. Square data for flavour: ${squareInfo}]`
           : `[SYSTEM: Current player just landed on square ${position} (${squareName}). Narrate this encounter. Do not change game state. Square data for flavour: ${squareInfo}]`;
+      this.stateManager.set("game.pendingAnimalEncounter", null);
     }
 
     this.isProcessingSquareEffect = true;

@@ -330,6 +330,25 @@ describe("BoardEffectsHandler", () => {
       );
     });
 
+    it("clears pendingAnimalEncounter when applying hazard (non-animal) square effect", async () => {
+      stateManager.set("board.squares", {
+        "18": { type: "hazard", name: "Plantas carnívoras", effect: "skipTurn" },
+      });
+      stateManager.set("players.p1.position", 18);
+      stateManager.set("players.p1.skipTurns", 0);
+      stateManager.set("game.pendingAnimalEncounter", {
+        position: 16,
+        power: 1,
+        playerId: "p1",
+        phase: "riddle",
+      });
+
+      await boardEffectsHandler.checkAndApplySquareEffects("players.p1.position", baseContext);
+
+      expect(stateManager.get("game.pendingAnimalEncounter")).toBeNull();
+      expect(stateManager.get("players.p1.skipTurns")).toBe(1);
+    });
+
     it("should apply skipTurn effect from square config", async () => {
       stateManager.set("board.squares", {
         "11": {
