@@ -11,10 +11,7 @@ export const LOG_CATEGORIES = [
   { id: "prompt", label: "Prompts", icon: "📤" },
   { id: "actions", label: "Actions", icon: "✏️" },
   { id: "user", label: "User input", icon: "👤" },
-  { id: "transcription", label: "Transcription", icon: "📝" },
   { id: "narration", label: "Narration", icon: "🔊" },
-  { id: "voice", label: "Voice pipeline", icon: "🎤" },
-  { id: "init", label: "Init", icon: "🚀" },
 ] as const;
 
 export type LogCategoryId = (typeof LOG_CATEGORIES)[number]["id"];
