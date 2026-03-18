@@ -100,6 +100,8 @@ export interface ExecutionContext {
   skipTrailingNarrateForPowerCheck?: boolean;
   /** Set when we just spoke a NARRATE that asks for the current decision; skip enforceDecisionPoints this round. */
   justNarratedDecisionAsk?: boolean;
+  /** Paths (e.g. players.p1.position) set by PLAYER_ROLLED this run; SET_STATE for these is ignored to avoid overwriting the roll. */
+  positionPathsSetByRoll?: Set<string>;
 }
 
 export type ActionHandler = (action: PrimitiveAction, context: ExecutionContext) => Promise<void>;

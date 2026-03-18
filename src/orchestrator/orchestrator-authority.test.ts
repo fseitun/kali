@@ -268,6 +268,42 @@ describe("Orchestrator Authority - LLM Adversarial Tests", () => {
 
       expect(currentPosition).toBe(30);
     });
+
+    it("SET_STATE for position after PLAYER_ROLLED in same batch is ignored (position from roll wins)", async () => {
+      const squares: Record<string, { type: string; next?: number[]; prev?: number[] }> = {};
+      for (let i = 0; i <= 40; i++) {
+        squares[String(i)] = {
+          type: "empty",
+          next: i < 40 ? [i + 1] : [],
+          prev: i > 0 ? [i - 1] : [],
+        };
+      }
+      (testState.board as any).squares = squares;
+      (testState.board as any).winPosition = 100;
+      (testState.board as any).moves = {};
+      (testState.players as any).p1.position = 28;
+      (testState.game as any).turn = "p1";
+
+      mockStateManager.getState = vi.fn(() => testState);
+      mockStateManager.get = vi.fn((path: string) => {
+        if (path === "players.p1.position") return testState.players.p1.position;
+        return undefined;
+      });
+      mockStateManager.set = vi.fn(async (path: string, value: unknown) => {
+        if (path === "players.p1.position") {
+          (testState.players as any).p1.position = value as number;
+        }
+      });
+
+      const actions: PrimitiveAction[] = [
+        { action: "PLAYER_ROLLED", value: 6 },
+        { action: "SET_STATE", path: "players.p1.position", value: 28 },
+      ];
+
+      await orchestrator.testExecuteActions(actions);
+
+      expect((testState.players as any).p1.position).toBe(34);
+    });
   });
 
   describe("State Consistency - Validation Matches Execution", () => {

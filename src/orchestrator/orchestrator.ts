@@ -473,6 +473,10 @@ export class Orchestrator {
     if (context.depth === 0) {
       Logger.info("Actions executed successfully");
     }
+    Logger.state(
+      "Current state (after actions):\n" +
+        formatStateContext(this.stateManager.getState() as Record<string, unknown>),
+    );
 
     // Only enforce decision points for top-level (user-initiated) flows.
     // When depth > 0, we're in a nested call from a previous enforcement or board effect;
@@ -506,6 +510,9 @@ export class Orchestrator {
       Logger.warn(`Max execution depth (${context.maxDepth}) reached, stopping`);
       return;
     }
+
+    context.positionPathsSetByRoll = context.positionPathsSetByRoll ?? new Set();
+    context.positionPathsSetByRoll.clear();
 
     let skipTrailingNarrate = false;
 
@@ -1018,6 +1025,12 @@ export class Orchestrator {
       }
 
       case "SET_STATE": {
+        if (context.positionPathsSetByRoll?.has(primitive.path)) {
+          Logger.write(
+            `Ignoring SET_STATE that would overwrite position just set by PLAYER_ROLLED: ${primitive.path}`,
+          );
+          break;
+        }
         await this.turnManager.assertPlayerTurnOwnership(primitive.path);
         Logger.write(`Setting state: ${primitive.path} = ${JSON.stringify(primitive.value)}`);
         this.stateManager.set(primitive.path, primitive.value);
@@ -1049,6 +1062,7 @@ export class Orchestrator {
         );
 
         this.stateManager.set(path, newPosition);
+        context.positionPathsSetByRoll?.add(path);
         this.stateManager.set("game.lastRoll", primitive.value);
         await this.boardEffectsHandler.checkAndApplyBoardMoves(path);
         await this.boardEffectsHandler.checkAndApplySquareEffects(path, context);
