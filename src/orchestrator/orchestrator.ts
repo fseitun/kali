@@ -1062,7 +1062,7 @@ export class Orchestrator {
 
         const newPosition = this.computeNewPosition(currentTurn, currentPosition, primitive.value);
         Logger.write(
-          `Player rolled ${primitive.value}: ${path} (${currentPosition} + ${primitive.value} = ${newPosition})`,
+          `Player rolled ${primitive.value}: ${path} ${currentPosition} → ${newPosition}`,
         );
 
         this.stateManager.set(path, newPosition);
