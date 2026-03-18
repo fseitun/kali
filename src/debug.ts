@@ -79,7 +79,7 @@ class KaliDebugApp {
     const versionCurrent = document.getElementById("version-current");
     if (versionCurrent) {
       const buildLabel = t("ui.buildLabel");
-      versionCurrent.textContent = `${buildLabel}${CONFIG.BUILD_ID}`;
+      versionCurrent.textContent = `${t("ui.upToDate")} · ${buildLabel}${CONFIG.BUILD_ID}`;
       versionCurrent.title = `${buildLabel}${CONFIG.BUILD_ID}`;
     }
 

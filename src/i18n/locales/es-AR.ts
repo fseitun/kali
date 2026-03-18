@@ -49,6 +49,7 @@ export const esAR = {
     versionNoticeMessage: "Hay una nueva versión.",
     versionRefreshButton: "Actualizar",
     buildLabel: "Versión: ",
+    upToDate: "Al día",
     status: {
       initializing: "Iniciando...",
       loading: "Cargando modelo...",

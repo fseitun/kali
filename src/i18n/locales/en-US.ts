@@ -49,6 +49,7 @@ export const enUS = {
     versionNoticeMessage: "New version available.",
     versionRefreshButton: "Refresh",
     buildLabel: "Build: ",
+    upToDate: "Up to date",
     status: {
       initializing: "Initializing...",
       loading: "Loading model...",
