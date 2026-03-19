@@ -1,4 +1,4 @@
-import { CONFIG } from "../config";
+import { CONFIG } from "@/config";
 
 export class ConfigValidationError extends Error {
   constructor(message: string) {

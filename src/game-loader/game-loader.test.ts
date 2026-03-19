@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { GamePhase } from "../orchestrator/types";
 import { GameLoader } from "./game-loader";
 import type { GameModule } from "./types";
+import { GamePhase } from "@/orchestrator/types";
 
 // Mock SpeechService
 const mockSpeechService = {

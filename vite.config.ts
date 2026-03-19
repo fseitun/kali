@@ -1,11 +1,17 @@
 /// <reference types="vitest/config" />
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 import { defineConfig } from "vite";
 import { VitePWA } from "vite-plugin-pwa";
 import type { ManifestEntry } from "workbox-build";
 
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 type ManifestTransformEntry = ManifestEntry & { size: number };
 
 export default defineConfig({
+  resolve: {
+    alias: { "@": path.resolve(__dirname, "src") },
+  },
   define: {
     ...(process.env.VITEST === "true"
       ? { "import.meta.env.VITE_LLM_PROVIDER": JSON.stringify("mock") }

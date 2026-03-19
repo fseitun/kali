@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { GamePhase } from "../orchestrator/types";
-import type { GameState } from "../orchestrator/types";
 import { OpenRouterClient } from "./OpenRouterClient";
+import { GamePhase } from "@/orchestrator/types";
+import type { GameState } from "@/orchestrator/types";
 
 vi.mock("../config", () => ({
   CONFIG: {

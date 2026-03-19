@@ -1,12 +1,12 @@
-import { CONFIG } from "../config";
-import type { GameState, PrimitiveAction } from "../orchestrator/types";
-import { safeParse, parseArray } from "../utils/json-parser";
-import { Logger } from "../utils/logger";
-import { Profiler } from "../utils/profiler";
 import type { LLMClient } from "./LLMClient";
 import { formatStateContext } from "./state-context";
 import { buildSystemPrompt } from "./system-prompt";
 import type { ApiCallOptions, ApiCallResult } from "./types";
+import { CONFIG } from "@/config";
+import type { GameState, PrimitiveAction } from "@/orchestrator/types";
+import { safeParse, parseArray } from "@/utils/json-parser";
+import { Logger } from "@/utils/logger";
+import { Profiler } from "@/utils/profiler";
 
 type PromptPurpose = "getActions" | "extractName" | "analyzeResponse" | "validateRiddleAnswer";
 

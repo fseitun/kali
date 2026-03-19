@@ -1,9 +1,9 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { describe, it, expect, beforeEach } from "vitest";
-import type { StateManager } from "../state-manager";
 import { GamePhase } from "./types";
 import type { GameState } from "./types";
 import { validateActions } from "./validator";
+import type { StateManager } from "@/state-manager";
 
 type MockStateManager = Pick<StateManager, "pathExists" | "getByPath">;
 

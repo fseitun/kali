@@ -1,8 +1,8 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
-import { StateManager } from "../state-manager";
 import { DecisionPointEnforcer } from "./decision-point-enforcer";
 import { GamePhase } from "./types";
 import type { ExecutionContext } from "./types";
+import { StateManager } from "@/state-manager";
 
 describe("DecisionPointEnforcer", () => {
   let decisionPointEnforcer: DecisionPointEnforcer;

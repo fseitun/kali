@@ -1,7 +1,7 @@
-import { CONFIG } from "../config";
-import { Logger } from "../utils/logger";
 import { BaseLLMClient } from "./BaseLLMClient";
 import type { ApiCallOptions, ApiCallResult } from "./types";
+import { CONFIG } from "@/config";
+import { Logger } from "@/utils/logger";
 
 const CACHE_TTL_SECONDS = 3600; // 1 hour
 

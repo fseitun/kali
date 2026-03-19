@@ -1,6 +1,6 @@
-import { CONFIG } from "../config";
 import { BaseLLMClient } from "./BaseLLMClient";
 import type { ApiCallOptions, ApiCallResult } from "./types";
+import { CONFIG } from "@/config";
 
 /**
  * Ollama LLM client implementation that communicates with a local Ollama instance.

@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
-import { GamePhase } from "../orchestrator/types";
-import type { GameState, PrimitiveAction } from "../orchestrator/types";
 import { BaseLLMClient } from "./BaseLLMClient";
+import { GamePhase } from "@/orchestrator/types";
+import type { GameState, PrimitiveAction } from "@/orchestrator/types";
 
 class TestLLMClient extends BaseLLMClient {
   public responseQueue: string[] = [];

@@ -1,6 +1,6 @@
-import type { IUIService } from "../services/ui-service";
 import { getLogBuffer } from "./log-buffer";
 import type { LogLevel } from "./log-buffer";
+import type { IUIService } from "@/services/ui-service";
 
 export class Logger {
   private static uiService: IUIService | null = null;

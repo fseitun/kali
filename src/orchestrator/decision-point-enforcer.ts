@@ -1,6 +1,6 @@
-import type { StateManager } from "../state-manager";
-import { Logger } from "../utils/logger";
 import type { ExecutionContext } from "./types";
+import type { StateManager } from "@/state-manager";
+import { Logger } from "@/utils/logger";
 
 /**
  * Enforces decision point requirements in game flow.

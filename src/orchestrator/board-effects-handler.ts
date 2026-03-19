@@ -1,7 +1,7 @@
-import type { StateManager } from "../state-manager";
-import { Logger } from "../utils/logger";
 import { getSquareKind, isAnimalEncounterKind, isDeferredRewardKind } from "./square-types";
 import type { ExecutionContext } from "./types";
+import type { StateManager } from "@/state-manager";
+import { Logger } from "@/utils/logger";
 
 /**
  * Handles automatic board mechanics and square-based effects for Kalimba.

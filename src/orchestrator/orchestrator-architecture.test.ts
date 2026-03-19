@@ -1,10 +1,10 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
-import type { StatusIndicator } from "../components/status-indicator";
-import type { LLMClient } from "../llm/LLMClient";
-import type { SpeechService } from "../services/speech-service";
-import { StateManager } from "../state-manager";
 import { Orchestrator } from "./orchestrator";
 import { GamePhase } from "./types";
+import type { StatusIndicator } from "@/components/status-indicator";
+import type { LLMClient } from "@/llm/LLMClient";
+import type { SpeechService } from "@/services/speech-service";
+import { StateManager } from "@/state-manager";
 
 /**
  * Architecture Tests - Enforce Orchestrator Authority Model

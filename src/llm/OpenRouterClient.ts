@@ -1,8 +1,8 @@
-import { CONFIG } from "../config";
-import type { PrimitiveAction } from "../orchestrator/types";
-import { Logger } from "../utils/logger";
 import { BaseLLMClient } from "./BaseLLMClient";
 import type { ApiCallOptions, ApiCallResult } from "./types";
+import { CONFIG } from "@/config";
+import type { PrimitiveAction } from "@/orchestrator/types";
+import { Logger } from "@/utils/logger";
 
 /**
  * OpenRouter LLM client using the OpenAI-compatible chat completions API.

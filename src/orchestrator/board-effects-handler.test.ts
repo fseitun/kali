@@ -1,8 +1,8 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
-import { StateManager } from "../state-manager";
 import { BoardEffectsHandler } from "./board-effects-handler";
 import { GamePhase } from "./types";
 import type { ExecutionContext } from "./types";
+import { StateManager } from "@/state-manager";
 
 describe("BoardEffectsHandler", () => {
   let boardEffectsHandler: BoardEffectsHandler;

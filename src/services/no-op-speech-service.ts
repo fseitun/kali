@@ -1,5 +1,5 @@
-import { Logger } from "../utils/logger";
 import type { ISpeechService } from "./speech-service";
+import { Logger } from "@/utils/logger";
 
 /**
  * SpeechService implementation that logs narration to console and skips all audio.

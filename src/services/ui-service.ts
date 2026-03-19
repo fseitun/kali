@@ -1,4 +1,4 @@
-import type { IStatusIndicator } from "../components/status-indicator";
+import type { IStatusIndicator } from "@/components/status-indicator";
 
 export interface IUIService {
   getStatusIndicator(): IStatusIndicator;

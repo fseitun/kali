@@ -1,4 +1,4 @@
-import { getLocale } from "../locale-manager";
+import { getLocale } from "@/locale-manager";
 
 const LANGUAGE_INSTRUCTIONS: Record<string, string> = {
   "es-AR":

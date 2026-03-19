@@ -1,8 +1,8 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
-import type { GameMetadata } from "../game-loader/types";
-import type { LLMClient } from "../llm/LLMClient";
-import type { SpeechService } from "../services/speech-service";
 import { NameCollector } from "./name-collector";
+import type { GameMetadata } from "@/game-loader/types";
+import type { LLMClient } from "@/llm/LLMClient";
+import type { SpeechService } from "@/services/speech-service";
 
 describe("NameCollector - State Isolation (Rule #4)", () => {
   let mockSpeechService: SpeechService;

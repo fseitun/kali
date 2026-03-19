@@ -1,11 +1,11 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
-import type { StatusIndicator } from "../components/status-indicator";
-import { MockLLMClient } from "../llm/MockLLMClient";
-import type { SpeechService } from "../services/speech-service";
-import { StateManager } from "../state-manager";
 import { Orchestrator } from "./orchestrator";
 import { GamePhase } from "./types";
 import type { GameState, PrimitiveAction } from "./types";
+import type { StatusIndicator } from "@/components/status-indicator";
+import { MockLLMClient } from "@/llm/MockLLMClient";
+import type { SpeechService } from "@/services/speech-service";
+import { StateManager } from "@/state-manager";
 
 /**
  * ARCHITECTURE: Integration tests use MockLLM to simulate game actions.

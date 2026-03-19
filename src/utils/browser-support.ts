@@ -1,4 +1,4 @@
-import { CONFIG } from "../config";
+import { CONFIG } from "@/config";
 
 /**
  * Checks if all required browser APIs are available.

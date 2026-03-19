@@ -1,6 +1,6 @@
-import { CONFIG } from "../config";
-import { getTtsLang } from "../locale-manager";
-import { Logger } from "../utils/logger";
+import { CONFIG } from "@/config";
+import { getTtsLang } from "@/locale-manager";
+import { Logger } from "@/utils/logger";
 
 export interface ISpeechService {
   prime(): void;

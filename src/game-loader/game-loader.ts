@@ -1,7 +1,7 @@
-import type { SquareData } from "../orchestrator/types";
-import type { ISpeechService } from "../services/speech-service";
-import { Logger } from "../utils/logger";
 import type { GameModule } from "./types";
+import type { SquareData } from "@/orchestrator/types";
+import type { ISpeechService } from "@/services/speech-service";
+import { Logger } from "@/utils/logger";
 
 /**
  * Fills in default next/prev for board squares. Only defines topology for indices

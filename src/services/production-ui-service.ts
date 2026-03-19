@@ -1,5 +1,5 @@
-import { StatusIndicator } from "../components/status-indicator";
 import type { IUIService } from "./ui-service";
+import { StatusIndicator } from "@/components/status-indicator";
 
 export class ProductionUIService implements IUIService {
   private statusIndicator: StatusIndicator;

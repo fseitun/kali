@@ -1,4 +1,4 @@
-import type { GameState } from "../orchestrator/types";
+import type { GameState } from "@/orchestrator/types";
 
 /**
  * Metadata about a game module.

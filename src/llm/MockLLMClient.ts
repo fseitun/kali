@@ -1,6 +1,6 @@
-import type { GameState, PrimitiveAction } from "../orchestrator/types";
-import { Logger } from "../utils/logger";
 import type { LLMClient } from "./LLMClient";
+import type { GameState, PrimitiveAction } from "@/orchestrator/types";
+import { Logger } from "@/utils/logger";
 
 export type MockScenario = "happy-path" | "scripted";
 

@@ -1,6 +1,6 @@
-import type { StateManager } from "../state-manager";
-import { Logger } from "../utils/logger";
 import { GamePhase } from "./types";
+import type { StateManager } from "@/state-manager";
+import { Logger } from "@/utils/logger";
 
 /**
  * Manages turn-based gameplay mechanics.

@@ -1,13 +1,13 @@
-import type { IStatusIndicator } from "../components/status-indicator";
-import { NoOpStatusIndicator } from "../components/status-indicator";
-import { t } from "../i18n";
+import type { IUIService } from "./ui-service";
+import type { IStatusIndicator } from "@/components/status-indicator";
+import { NoOpStatusIndicator } from "@/components/status-indicator";
+import { t } from "@/i18n";
 import {
   getCategoryIcon,
   getEnabledCategories,
   subscribeToCategoryChanges,
-} from "../utils/debug-options";
-import { initLogBuffer, type LogEntry, type LogSink } from "../utils/log-buffer";
-import type { IUIService } from "./ui-service";
+} from "@/utils/debug-options";
+import { initLogBuffer, type LogEntry, type LogSink } from "@/utils/log-buffer";
 
 const MAX_DISPLAY_ENTRIES = 3000;
 

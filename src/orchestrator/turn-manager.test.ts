@@ -1,8 +1,8 @@
 import { describe, it, expect, beforeEach } from "vitest";
-import { StateManager } from "../state-manager";
 import { TurnManager } from "./turn-manager";
 import { GamePhase } from "./types";
 import type { GameState } from "./types";
+import { StateManager } from "@/state-manager";
 
 describe("TurnManager", () => {
   let turnManager: TurnManager;

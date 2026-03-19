@@ -1,4 +1,4 @@
-import type { GameState, PrimitiveAction } from "../orchestrator/types";
+import type { GameState, PrimitiveAction } from "@/orchestrator/types";
 
 /**
  * Interface for LLM clients that translate voice commands into primitive actions.

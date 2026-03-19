@@ -1,11 +1,3 @@
-import type { IStatusIndicator } from "../components/status-indicator";
-import { t } from "../i18n";
-import type { LLMClient } from "../llm/LLMClient";
-import { formatStateContext } from "../llm/state-context";
-import type { ISpeechService } from "../services/speech-service";
-import type { StateManager } from "../state-manager";
-import { Logger } from "../utils/logger";
-import { Profiler } from "../utils/profiler";
 import type { ActionExecutorContext } from "./action-executors";
 import {
   executeNarrate,
@@ -30,6 +22,14 @@ import {
 } from "./types";
 import { VALIDATION_ERROR_I18N } from "./validation-i18n";
 import { validateActions } from "./validator";
+import type { IStatusIndicator } from "@/components/status-indicator";
+import { t } from "@/i18n";
+import type { LLMClient } from "@/llm/LLMClient";
+import { formatStateContext } from "@/llm/state-context";
+import type { ISpeechService } from "@/services/speech-service";
+import type { StateManager } from "@/state-manager";
+import { Logger } from "@/utils/logger";
+import { Profiler } from "@/utils/profiler";
 
 /**
  * Core orchestrator that processes voice transcripts through LLM,
