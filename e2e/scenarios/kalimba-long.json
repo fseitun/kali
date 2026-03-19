@@ -13,7 +13,7 @@
     {
       "description": "Intro; decision point triggers path choice (Path A)",
       "actions": [
-        { "action": "PLAYER_ANSWERED", "answer": "A" },
+        { "action": "PLAYER_ANSWERED", "answer": "1" },
         { "action": "NARRATE", "text": "Let's begin!" }
       ],
       "expect": { "players.p1.activeChoices.0": 1 }
@@ -22,7 +22,7 @@
     {
       "description": "p2 chooses path",
       "actions": [
-        { "action": "PLAYER_ANSWERED", "answer": "A" },
+        { "action": "PLAYER_ANSWERED", "answer": "1" },
         { "action": "NARRATE", "text": "Path A" }
       ]
     },
@@ -35,6 +35,13 @@
           { "action": "SET_STATE", "path": "players.p2.points", "value": 3 },
           { "action": "NARRATE", "text": "Halcón encounter! +3 points." }
         ]
+      ]
+    },
+    {
+      "description": "p3 chooses path",
+      "actions": [
+        { "action": "PLAYER_ANSWERED", "answer": "1" },
+        { "action": "NARRATE", "text": "Path A" }
       ]
     },
     { "roll": 1 },

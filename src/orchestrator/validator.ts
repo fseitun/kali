@@ -545,11 +545,15 @@ function validateSetState(
     }
 
     if (action.path === "game.pendingAnimalEncounter") {
-      return {
-        valid: false,
-        error: `SET_STATE at index ${index}: Cannot set game.pendingAnimalEncounter. The orchestrator owns encounter state. Use RIDDLE_RESOLVED or PLAYER_ANSWERED with roll value.`,
-        errorCode: "setStateForbidden",
-      };
+      const allowClear =
+        action.value === null && orchestrator.options?.allowScenarioOnlyStatePaths === true;
+      if (!allowClear) {
+        return {
+          valid: false,
+          error: `SET_STATE at index ${index}: Cannot set game.pendingAnimalEncounter. The orchestrator owns encounter state. Use RIDDLE_RESOLVED or PLAYER_ANSWERED with roll value.`,
+          errorCode: "setStateForbidden",
+        };
+      }
     }
 
     const turnValidation = validateTurnOwnership(action.path, state, "SET_STATE", index);

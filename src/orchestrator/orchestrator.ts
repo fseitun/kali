@@ -44,6 +44,12 @@ const VALIDATION_ERROR_I18N: Record<string, string> = {
  * - Player setup
  * - Board mechanics
  */
+/** Optional orchestrator options (e.g. E2E scenario mode). */
+export interface OrchestratorOptions {
+  /** When true, validator allows SET_STATE game.pendingAnimalEncounter to null for scripted E2E scenarios. */
+  allowScenarioOnlyStatePaths?: boolean;
+}
+
 export class Orchestrator {
   private turnManager: TurnManager;
   private boardEffectsHandler: BoardEffectsHandler;
@@ -61,6 +67,7 @@ export class Orchestrator {
     private speechService: ISpeechService,
     private statusIndicator: IStatusIndicator,
     initialState: GameState,
+    readonly options?: OrchestratorOptions,
   ) {
     this.initialState = initialState;
 

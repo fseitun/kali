@@ -132,6 +132,7 @@ export async function runScenario(scenario: Scenario): Promise<void> {
     mockSpeech,
     mockIndicator,
     initialState,
+    { allowScenarioOnlyStatePaths: true },
   );
 
   if (scenario.players !== undefined) {
