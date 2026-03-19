@@ -113,34 +113,53 @@ describe("Orchestrator - New Action Handlers", () => {
       expect(mockStateManager.set).toHaveBeenCalledWith("game.lastAnswer", "fight the dragon");
     });
 
+    const fork0DecisionPoint = {
+      position: 0,
+      prompt: "Choose path?",
+      positionOptions: { "1": 1, "15": 15 },
+    };
+
     it("auto-applies answer to pending fork decision point", async () => {
       (testState.players as any).p1.position = 0;
       (testState.players as any).p1.activeChoices = {};
-      testState.decisionPoints = [{ position: 0, prompt: "Choose A or B?" }];
+      testState.decisionPoints = [fork0DecisionPoint];
       mockStateManager.get = vi.fn((path: string) => {
         if (path === "players.p1.position") return 0;
         if (path === "players.p1.activeChoices.0") return undefined;
         return undefined;
       });
 
-      const actions: PrimitiveAction[] = [{ action: "PLAYER_ANSWERED", answer: "a" }];
+      const actions: PrimitiveAction[] = [{ action: "PLAYER_ANSWERED", answer: "1" }];
 
       await orchestrator.testExecuteActions(actions);
 
-      expect(mockStateManager.set).toHaveBeenCalledWith("game.lastAnswer", "a");
+      expect(mockStateManager.set).toHaveBeenCalledWith("game.lastAnswer", "1");
       expect(mockStateManager.set).toHaveBeenCalledWith("players.p1.activeChoices.0", 1);
+    });
+
+    it("auto-applies position 15 to fork at 0 via positionOptions", async () => {
+      (testState.players as any).p1.position = 0;
+      (testState.players as any).p1.activeChoices = {};
+      testState.decisionPoints = [fork0DecisionPoint];
+
+      const actions: PrimitiveAction[] = [{ action: "PLAYER_ANSWERED", answer: "15" }];
+
+      await orchestrator.testExecuteActions(actions);
+
+      expect(mockStateManager.set).toHaveBeenCalledWith("game.lastAnswer", "15");
+      expect(mockStateManager.set).toHaveBeenCalledWith("players.p1.activeChoices.0", 15);
     });
 
     it("PLAYER_ANSWERED path choice at position 0 does not set shouldAdvanceTurn", async () => {
       (testState.players as any).p1.position = 0;
       (testState.players as any).p1.activeChoices = {};
-      testState.decisionPoints = [{ position: 0, prompt: "Choose A or B?" }];
+      testState.decisionPoints = [fork0DecisionPoint];
       mockStateManager.get = vi.fn((path: string) => {
         if (path === "players.p1.position") return 0;
         return undefined;
       });
 
-      const actions: PrimitiveAction[] = [{ action: "PLAYER_ANSWERED", answer: "A" }];
+      const actions: PrimitiveAction[] = [{ action: "PLAYER_ANSWERED", answer: "1" }];
 
       const result = await orchestrator.testExecuteActions(actions);
 
@@ -148,20 +167,18 @@ describe("Orchestrator - New Action Handlers", () => {
       expect(result.shouldAdvanceTurn).toBe(false);
     });
 
-    it("PLAYER_ANSWERED + SET_STATE activeChoices at position 0 does not advance turn", async () => {
+    it("PLAYER_ANSWERED + NARRATE at fork 0 does not advance turn", async () => {
       (testState.players as any).p1.position = 0;
       (testState.players as any).p1.activeChoices = {};
-      testState.decisionPoints = [{ position: 0, prompt: "Choose A or B?" }];
+      testState.decisionPoints = [fork0DecisionPoint];
       mockStateManager.get = vi.fn((path: string) => {
         if (path === "players.p1.position") return 0;
         return undefined;
       });
-      (mockStateManager as any).pathExists = vi.fn(() => true);
 
       const actions: PrimitiveAction[] = [
-        { action: "PLAYER_ANSWERED", answer: "B" },
-        { action: "SET_STATE", path: "players.p1.activeChoices.0", value: 15 },
-        { action: "NARRATE", text: "Elegiste el Camino B. Tirá el dado." },
+        { action: "PLAYER_ANSWERED", answer: "15" },
+        { action: "NARRATE", text: "Elegiste la derecha. Tirá el dado." },
       ];
 
       const result = await orchestrator.testExecuteActions(actions);

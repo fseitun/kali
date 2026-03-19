@@ -404,7 +404,9 @@ describe("Orchestrator Integration Tests", () => {
           moves: {},
           squares: { "0": { type: "empty", next: [1, 15] } },
         },
-        decisionPoints: [{ position: 0, prompt: "Choose path A or B?" }],
+        decisionPoints: [
+          { position: 0, prompt: "Choose path A or B?", positionOptions: { "1": 1, "15": 15 } },
+        ],
       };
 
       setupGame(initialState);
@@ -418,8 +420,7 @@ describe("Orchestrator Integration Tests", () => {
     it("allows movement after decision is set", async () => {
       const responses: PrimitiveAction[][] = [
         [
-          { action: "PLAYER_ANSWERED", answer: "A" },
-          { action: "SET_STATE", path: "players.p1.activeChoices.0", value: 1 },
+          { action: "PLAYER_ANSWERED", answer: "1" },
           { action: "NARRATE", text: "You chose path A!" },
         ],
         [
@@ -448,7 +449,9 @@ describe("Orchestrator Integration Tests", () => {
           moves: {},
           squares: { "0": { type: "empty", next: [1, 15] } },
         },
-        decisionPoints: [{ position: 0, prompt: "Choose path A or B?" }],
+        decisionPoints: [
+          { position: 0, prompt: "Choose path A or B?", positionOptions: { "1": 1, "15": 15 } },
+        ],
       };
 
       setupGame(initialState);

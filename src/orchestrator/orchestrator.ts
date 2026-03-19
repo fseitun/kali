@@ -938,14 +938,7 @@ export class Orchestrator {
 
     const path = `players.${currentTurn}.activeChoices.${position}`;
 
-    // Position 0: "A" -> 1, "B" -> 15 (fall through to positionOptions if no match)
-    if (position === 0) {
-      const first = answer.trim().charAt(0).toUpperCase();
-      if (first === "A") return { path, value: 1 };
-      if (first === "B") return { path, value: 15 };
-    }
-
-    // Branch choice with positionOptions: match answer to target position
+    // Branch choice with positionOptions: match answer to target position (all forks, including 0)
     const options = decisionPoint.positionOptions;
     if (options) {
       const trimmed = answer.trim();
