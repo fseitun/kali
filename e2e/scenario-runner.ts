@@ -145,10 +145,23 @@ export async function runScenario(scenario: Scenario): Promise<void> {
     const step = scenario.steps[i];
     const actions = expandStep(step);
 
-    const result = await orchestrator.testExecuteActions(actions);
+    let result = await orchestrator.testExecuteActions(actions);
     if (!result.success) {
       throw new Error(`E2E step ${i} failed: testExecuteActions returned success=false`);
     }
+
+    // When step has llmResponses, execute the first batch (e.g. square-effect outcome) before advancing turn,
+    // so SET_STATE on the current player (e.g. players.p2.points) is valid.
+    if (step.llmResponses?.[0]?.length) {
+      const effectResult = await orchestrator.testExecuteActions(step.llmResponses[0]);
+      if (!effectResult.success) {
+        throw new Error(
+          `E2E step ${i} failed: testExecuteActions (llmResponses) returned success=false`,
+        );
+      }
+      if (effectResult.shouldAdvanceTurn) result = effectResult;
+    }
+
     if (result.shouldAdvanceTurn) {
       await orchestrator.advanceTurn();
     }

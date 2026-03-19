@@ -1,16 +1,25 @@
 import type { IStatusIndicator } from "../components/status-indicator";
 import { t } from "../i18n";
 import type { LLMClient } from "../llm/LLMClient";
-import { formatStateContext } from "../llm/system-prompt";
+import { formatStateContext } from "../llm/state-context";
 import type { ISpeechService } from "../services/speech-service";
 import type { StateManager } from "../state-manager";
 import { Logger } from "../utils/logger";
 import { Profiler } from "../utils/profiler";
+import type { ActionExecutorContext } from "./action-executors";
+import {
+  executeNarrate,
+  executePlayerAnswered,
+  executePlayerRolled,
+  executeResetGame,
+  executeSetState,
+} from "./action-executors";
 import { BoardEffectsHandler } from "./board-effects-handler";
-import { computeNewPositionFromState } from "./board-traversal";
+import { getCurrentDecisionPoint, narrateCoversDecision } from "./decision-helpers";
 import { DecisionPointEnforcer } from "./decision-point-enforcer";
 import { reorderPowerCheckBeforeRoll } from "./reorder-power-check";
-import { resolveRiddleAnswerToOption, isStrictRiddleCorrect } from "./riddle-answer";
+import { resolveRiddleAnswerToOption } from "./riddle-answer";
+import { RiddlePowerCheckHandler } from "./riddle-power-check";
 import { TurnManager } from "./turn-manager";
 import {
   GamePhase,
@@ -19,20 +28,8 @@ import {
   type ActionHandler,
   type GameState,
 } from "./types";
+import { VALIDATION_ERROR_I18N } from "./validation-i18n";
 import { validateActions } from "./validator";
-
-/** Maps validation errorCode to i18n key; fallback to errors.validationFailed for unknown/missing. */
-const VALIDATION_ERROR_I18N: Record<string, string> = {
-  invalidDiceRoll: "errors.invalidDiceRoll",
-  chooseForkFirst: "errors.chooseForkFirst",
-  resolveSquareEffectFirst: "errors.resolveSquareEffectFirst",
-  wrongPhaseForRoll: "errors.wrongPhaseForRoll",
-  invalidAnswer: "errors.invalidAnswer",
-  wrongTurn: "errors.wrongTurn",
-  setStateForbidden: "errors.setStateForbidden",
-  pathNotAllowed: "errors.pathNotAllowed",
-  invalidActionFormat: "errors.validationFailed",
-};
 
 /**
  * Core orchestrator that processes voice transcripts through LLM,
@@ -54,6 +51,7 @@ export class Orchestrator {
   private turnManager: TurnManager;
   private boardEffectsHandler: BoardEffectsHandler;
   private decisionPointEnforcer: DecisionPointEnforcer;
+  private riddlePowerCheckHandler: RiddlePowerCheckHandler;
   private actionHandlers: Map<string, ActionHandler> = new Map();
   private isProcessing = false;
   private initialState: GameState;
@@ -71,7 +69,6 @@ export class Orchestrator {
   ) {
     this.initialState = initialState;
 
-    // Instantiate subsystems
     this.turnManager = new TurnManager(stateManager);
     this.boardEffectsHandler = new BoardEffectsHandler(
       stateManager,
@@ -81,6 +78,17 @@ export class Orchestrator {
       stateManager,
       this.processTranscriptAsBool.bind(this),
     );
+    this.riddlePowerCheckHandler = new RiddlePowerCheckHandler({
+      stateManager,
+      speechService,
+      llmClient,
+      boardEffectsHandler: this.boardEffectsHandler,
+      statusIndicator,
+      setLastNarration: (text) => {
+        this.lastNarration = text;
+      },
+      checkAndApplyWinCondition: (path) => this.checkAndApplyWinCondition(path),
+    });
 
     llmClient.onRetry = () => {
       this.speechService.speak(t("llm.retrying"));
@@ -550,7 +558,10 @@ export class Orchestrator {
 
         // Skip NARRATE that is exactly the decision prompt when we already narrated the decision ask
         if (action.action === "NARRATE") {
-          const dp = this.getCurrentDecisionPoint();
+          const dp = getCurrentDecisionPoint(
+            () => this.stateManager.getState(),
+            () => this.turnManager.getPendingDecisionPrompt(),
+          );
           if (action.text?.trim() === dp?.prompt && context.justNarratedDecisionAsk) {
             Logger.info("Skipping redundant NARRATE: same as decision prompt (already asked)");
             continue;
@@ -560,9 +571,12 @@ export class Orchestrator {
         skipTrailingNarrate = false;
         await this.executeAction(action, context);
         if (action.action === "NARRATE") {
-          const dp = this.getCurrentDecisionPoint();
+          const dp = getCurrentDecisionPoint(
+            () => this.stateManager.getState(),
+            () => this.turnManager.getPendingDecisionPrompt(),
+          );
           const text = action.text;
-          if (dp && text && this.narrateCoversDecision(text, dp.position, dp.prompt)) {
+          if (dp && text && narrateCoversDecision(text, dp.position, dp.prompt)) {
             context.justNarratedDecisionAsk = true;
           }
         }
@@ -572,291 +586,6 @@ export class Orchestrator {
       } catch (error) {
         Logger.error("Failed to execute action:", action, error);
       }
-    }
-  }
-
-  /**
-   * Handles RIDDLE_RESOLVED: updates pendingAnimalEncounter to phase powerCheck, riddleCorrect.
-   */
-  private async handleRiddleResolved(primitive: {
-    action: "RIDDLE_RESOLVED";
-    correct: boolean;
-  }): Promise<void> {
-    const state = this.stateManager.getState();
-    const game = state.game as Record<string, unknown> | undefined;
-    const pending = game?.pendingAnimalEncounter as
-      | { position: number; power: number; playerId: string; phase?: string }
-      | null
-      | undefined;
-
-    if (pending?.phase !== "riddle") {
-      return;
-    }
-
-    this.stateManager.set("game.pendingAnimalEncounter", {
-      ...pending,
-      phase: "powerCheck",
-      riddleCorrect: primitive.correct,
-    });
-    Logger.info(`Riddle resolved: correct=${primitive.correct}, phase→powerCheck`);
-  }
-
-  /**
-   * Handles ASK_RIDDLE: stores riddle text, four options, correct option, and optional synonyms in pendingAnimalEncounter.
-   * LLM should follow with NARRATE to speak the riddle and options.
-   */
-  private async handleAskRiddle(primitive: {
-    action: "ASK_RIDDLE";
-    text: string;
-    options: [string, string, string, string];
-    correctOption: string;
-    correctOptionSynonyms?: string[];
-  }): Promise<void> {
-    const state = this.stateManager.getState();
-    const game = state.game as Record<string, unknown> | undefined;
-    const pending = game?.pendingAnimalEncounter as Record<string, unknown> | null | undefined;
-    if (pending?.phase !== "riddle") {
-      return;
-    }
-    if (
-      !Array.isArray(primitive.options) ||
-      primitive.options.length !== 4 ||
-      typeof primitive.correctOption !== "string" ||
-      !primitive.correctOption.trim()
-    ) {
-      Logger.warn(
-        `ASK_RIDDLE ignored: need options length 4 and non-empty correctOption, got ${primitive.options?.length ?? 0}, correctOption=${String(primitive.correctOption ?? "").slice(0, 20)}`,
-      );
-      return;
-    }
-    this.stateManager.set("game.pendingAnimalEncounter", {
-      ...pending,
-      riddlePrompt: primitive.text,
-      riddleOptions: primitive.options,
-      correctOption: primitive.correctOption,
-      ...(Array.isArray(primitive.correctOptionSynonyms) &&
-      primitive.correctOptionSynonyms.length > 0
-        ? { correctOptionSynonyms: primitive.correctOptionSynonyms }
-        : {}),
-    } as Record<string, unknown>);
-    Logger.info(
-      `Ask riddle stored; correctOption=${primitive.correctOption.slice(0, 30)}${primitive.correctOptionSynonyms?.length ? `, synonyms=${primitive.correctOptionSynonyms.length}` : ""}`,
-    );
-  }
-
-  /**
-   * If PLAYER_ANSWERED is a riddle choice (phase=riddle with correctOption set): strict match first, then LLM if false.
-   * Otherwise returns false.
-   */
-  private async tryHandleRiddleAnswer(
-    answer: string,
-    _context: ExecutionContext,
-  ): Promise<false | { correct: boolean }> {
-    const state = this.stateManager.getState();
-    const game = state.game as Record<string, unknown> | undefined;
-    const currentTurn = game?.turn as string | undefined;
-    const pending = game?.pendingAnimalEncounter as
-      | {
-          phase?: string;
-          playerId?: string;
-          correctOption?: string;
-          correctOptionSynonyms?: string[];
-          riddleOptions?: string[];
-        }
-      | null
-      | undefined;
-    if (
-      pending?.phase !== "riddle" ||
-      pending.playerId !== currentTurn ||
-      !pending.correctOption ||
-      !Array.isArray(pending.riddleOptions) ||
-      pending.riddleOptions.length !== 4
-    ) {
-      return false;
-    }
-
-    // Strict JS first: option text + synonyms
-    if (
-      isStrictRiddleCorrect(
-        answer,
-        pending.riddleOptions,
-        pending.correctOption,
-        pending.correctOptionSynonyms,
-      )
-    ) {
-      await this.handleRiddleResolved({ action: "RIDDLE_RESOLVED", correct: true });
-      return { correct: true };
-    }
-
-    // Strict said false: ask LLM to validate (synonyms/paraphrases)
-    const options = pending.riddleOptions as [string, string, string, string];
-    const result = await this.llmClient.validateRiddleAnswer(
-      answer,
-      options,
-      pending.correctOption,
-    );
-    await this.handleRiddleResolved({ action: "RIDDLE_RESOLVED", correct: result.correct });
-    return { correct: result.correct };
-  }
-
-  /**
-   * If PLAYER_ANSWERED is a power-check roll, handles it.
-   * Returns false if not handled.
-   * Returns { handled: true, passed: true } on win.
-   * Returns { handled: true, passed: false, turnAdvanced? } on fail.
-   */
-  private async tryHandlePowerCheckAnswer(
-    answer: string,
-    context: ExecutionContext,
-  ): Promise<
-    | false
-    | { handled: true; passed: true }
-    | {
-        handled: true;
-        passed: false;
-        turnAdvanced?: { playerId: string; name: string; position: number };
-      }
-  > {
-    const state = this.stateManager.getState();
-    const game = state.game as Record<string, unknown> | undefined;
-    const currentTurn = game?.turn as string | undefined;
-    const pending = game?.pendingAnimalEncounter as
-      | {
-          position: number;
-          power: number;
-          playerId: string;
-          phase?: string;
-          riddleCorrect?: boolean;
-        }
-      | null
-      | undefined;
-
-    if (
-      !pending ||
-      !currentTurn ||
-      pending.playerId !== currentTurn ||
-      (pending.phase !== "powerCheck" && pending.phase !== "revenge")
-    ) {
-      return false;
-    }
-
-    const rollStr = answer.trim().replace(/\D/g, "") || answer.trim();
-    const roll = parseInt(rollStr, 10);
-    if (isNaN(roll) || roll < 1 || roll > 12) {
-      return false;
-    }
-
-    const power = pending.power ?? 0;
-    const isRevenge = pending.phase === "revenge";
-    const win = isRevenge ? roll >= power : roll > power;
-
-    const playerId = pending.playerId;
-    const position = pending.position;
-    const board = state.board as Record<string, unknown> | undefined;
-    const squares = (board?.squares as Record<string, Record<string, unknown>>) ?? {};
-    const squareData = squares[position.toString()];
-
-    if (win) {
-      // Speak pass before square effects so "Pasaste" is never after square narration (e.g. plants)
-      const passMsg = t("game.powerCheckPass");
-      this.lastNarration = passMsg;
-      this.statusIndicator.setState("speaking");
-      await this.speechService.speak(passMsg);
-
-      const currentPos = this.stateManager.get(`players.${playerId}.position`) as number;
-      const winJumpTo = squareData?.winJumpTo as number | undefined;
-      const newPosition = typeof winJumpTo === "number" ? winJumpTo : currentPos + roll;
-
-      this.stateManager.set(`players.${playerId}.position`, newPosition);
-      this.applyAnimalEncounterRewards(playerId, squareData ?? {});
-      this.stateManager.set("game.pendingAnimalEncounter", null);
-      Logger.info(`Power check WIN: ${playerId} advances to ${newPosition}`);
-
-      await this.boardEffectsHandler.checkAndApplyBoardMoves(`players.${playerId}.position`);
-      await this.boardEffectsHandler.checkAndApplySquareEffects(
-        `players.${playerId}.position`,
-        context,
-      );
-      this.checkAndApplyWinCondition(`players.${playerId}.position`);
-      return { handled: true, passed: true };
-    }
-
-    if (pending.phase === "powerCheck") {
-      const failMsg = t("game.powerCheckFail");
-      this.lastNarration = failMsg;
-      this.statusIndicator.setState("speaking");
-      await this.speechService.speak(failMsg);
-      this.stateManager.set("game.pendingAnimalEncounter", {
-        ...pending,
-        phase: "revenge",
-      });
-      Logger.info(`Power check LOSE: phase→revenge, advancing turn to next player`);
-      const turnAdvanced = this.advanceTurnForPowerCheckLose();
-      return { handled: true, passed: false, turnAdvanced: turnAdvanced ?? undefined };
-    }
-
-    return { handled: true, passed: false };
-  }
-
-  /**
-   * Advances turn to next player (used when power check fails). Reuses TurnManager logic.
-   * Keeps pending encounter with failed player; they get revenge when their turn comes again.
-   */
-  private advanceTurnForPowerCheckLose(): {
-    playerId: string;
-    name: string;
-    position: number;
-  } | null {
-    const state = this.stateManager.getState();
-    const game = state.game as Record<string, unknown> | undefined;
-    const players = state.players as Record<string, Record<string, unknown>> | undefined;
-    const currentTurn = game?.turn as string | undefined;
-    const playerOrder = game?.playerOrder as string[] | undefined;
-
-    if (!game || !players || !currentTurn || !playerOrder?.length) return null;
-
-    const currentIndex = playerOrder.indexOf(currentTurn);
-    const nextIndex = (currentIndex + 1) % playerOrder.length;
-    let nextPlayerId = playerOrder[nextIndex];
-    let nextPlayer = players[nextPlayerId];
-    let nextPlayerName = (nextPlayer?.name as string) || nextPlayerId;
-
-    // Handle skipTurns: consume one and use the player after (simplified - no recursion)
-    const skipTurns = (nextPlayer?.skipTurns as number) ?? 0;
-    if (skipTurns > 0) {
-      this.stateManager.set(`players.${nextPlayerId}.skipTurns`, skipTurns - 1);
-      Logger.info(`⏭️ Skipping ${nextPlayerName} (power check lose advance)`);
-      const skipIndex = (nextIndex + 1) % playerOrder.length;
-      nextPlayerId = playerOrder[skipIndex];
-      nextPlayer = players[nextPlayerId];
-      nextPlayerName = (nextPlayer?.name as string) || nextPlayerId;
-    }
-
-    this.stateManager.set("game.turn", nextPlayerId);
-    const position = (nextPlayer?.position as number) ?? 0;
-    return { playerId: nextPlayerId, name: nextPlayerName, position };
-  }
-
-  /**
-   * Applies rewards from animal encounter (points, heart, instrument).
-   */
-  private applyAnimalEncounterRewards(playerId: string, squareData: Record<string, unknown>): void {
-    const points = squareData.points as number | undefined;
-    if (typeof points === "number" && points > 0) {
-      const current = (this.stateManager.get(`players.${playerId}.points`) as number) ?? 0;
-      this.stateManager.set(`players.${playerId}.points`, current + points);
-    }
-
-    if (squareData.heart === true) {
-      const current = (this.stateManager.get(`players.${playerId}.hearts`) as number) ?? 0;
-      this.stateManager.set(`players.${playerId}.hearts`, current + 1);
-    }
-
-    const instrument = squareData.instrument as string | undefined;
-    if (typeof instrument === "string" && instrument.length > 0) {
-      const current = (this.stateManager.get(`players.${playerId}.instruments`) as unknown[]) ?? [];
-      const next = Array.isArray(current) ? [...current, instrument] : [instrument];
-      this.stateManager.set(`players.${playerId}.instruments`, next);
     }
   }
 
@@ -879,90 +608,10 @@ export class Orchestrator {
   }
 
   /**
-   * Returns the current decision point (position + prompt) if the current player is at a fork
-   * without a choice. Used to detect "NARRATE covers decision" and skip redundant prompt.
-   */
-  private getCurrentDecisionPoint(): { position: number; prompt: string } | null {
-    const prompt = this.turnManager.getPendingDecisionPrompt();
-    if (!prompt) return null;
-    const state = this.stateManager.getState();
-    const game = state.game as Record<string, unknown> | undefined;
-    const currentTurn = game?.turn as string | undefined;
-    const players = state.players as Record<string, Record<string, unknown>> | undefined;
-    const currentPlayer = currentTurn ? players?.[currentTurn] : undefined;
-    const position = currentPlayer?.position as number | undefined;
-    if (typeof position !== "number") return null;
-    return { position, prompt };
-  }
-
-  /**
-   * True when NARRATE text already asks for the given decision (exact prompt or path A/B wording at 0).
-   */
-  private narrateCoversDecision(text: string, position: number, prompt: string): boolean {
-    const t = (text ?? "").trim();
-    if (t.includes(prompt)) return true;
-    if (position === 0) {
-      const hasA = t.includes("camino A") || t.includes("por el A");
-      const hasB = t.includes("camino B") || t.includes("por el B");
-      if (hasA && hasB) return true;
-    }
-    return false;
-  }
-
-  /**
-   * If current player has a pending decision point, returns the path and value
-   * to apply the answer. Writes to activeChoices[position] = targetPosition.
-   * No position teleport; movement happens on roll.
-   */
-  private getDecisionPointApplyState(
-    answer: string,
-  ): { path: string; value: string | number } | null {
-    const state = this.stateManager.getState();
-    const game = state.game as Record<string, unknown> | undefined;
-    const currentTurn = game?.turn as string | undefined;
-    const decisionPoints = state.decisionPoints as
-      | Array<{
-          position: number;
-          prompt: string;
-          positionOptions?: Record<string, number>;
-        }>
-      | undefined;
-
-    if (!currentTurn || !decisionPoints?.length) return null;
-
-    const players = state.players as Record<string, Record<string, unknown>> | undefined;
-    const currentPlayer = players?.[currentTurn];
-    if (!currentPlayer) return null;
-
-    const position = currentPlayer.position as number | undefined;
-    if (typeof position !== "number") return null;
-
-    const decisionPoint = decisionPoints.find((dp) => dp.position === position);
-    if (!decisionPoint) return null;
-
-    const choices = currentPlayer.activeChoices as Record<string, number> | undefined;
-    if (choices?.[String(position)] !== undefined) return null; // Already set
-
-    const path = `players.${currentTurn}.activeChoices.${position}`;
-
-    // Branch choice with positionOptions: match answer to target position (all forks, including 0)
-    const options = decisionPoint.positionOptions;
-    if (options) {
-      const trimmed = answer.trim();
-      const numMatch = trimmed.match(/\d+/);
-      for (const [key, targetPos] of Object.entries(options)) {
-        if (trimmed === key || numMatch?.[0] === key) return { path, value: targetPos };
-      }
-    }
-
-    return null;
-  }
-
-  /**
    * Checks if the current player has reached or exceeded win position.
    * Sets game.winner and transitions to FINISHED if so.
    */
-  private checkAndApplyWinCondition(positionPath: string): void {
+  checkAndApplyWinCondition(positionPath: string): void {
     if (!positionPath.startsWith("players.") || !positionPath.endsWith(".position")) {
       return;
     }
@@ -987,12 +636,20 @@ export class Orchestrator {
     }
   }
 
-  /**
-   * Computes the new position after a dice roll using graph traversal.
-   */
-  private computeNewPosition(playerId: string, currentPosition: number, roll: number): number {
-    const state = this.stateManager.getState();
-    return computeNewPositionFromState(state, playerId, currentPosition, roll);
+  private getActionExecutorContext(): ActionExecutorContext {
+    return {
+      stateManager: this.stateManager,
+      speechService: this.speechService,
+      statusIndicator: this.statusIndicator,
+      turnManager: this.turnManager,
+      boardEffectsHandler: this.boardEffectsHandler,
+      riddlePowerCheckHandler: this.riddlePowerCheckHandler,
+      initialState: this.initialState,
+      setLastNarration: (text) => {
+        this.lastNarration = text;
+      },
+      checkAndApplyWinCondition: (path) => this.checkAndApplyWinCondition(path),
+    };
   }
 
   private async executeAction(
@@ -1005,173 +662,30 @@ export class Orchestrator {
       return;
     }
 
+    const ctx = this.getActionExecutorContext();
+
     switch (primitive.action) {
-      case "NARRATE": {
-        const state = this.stateManager.getState();
-        const game = state.game as Record<string, unknown> | undefined;
-        const pending = game?.pendingAnimalEncounter as
-          | { phase?: string; riddleHint?: string }
-          | null
-          | undefined;
-        if (
-          this.boardEffectsHandler.isProcessingEffect() &&
-          pending?.phase === "riddle" &&
-          primitive.text
-        ) {
-          this.stateManager.set("game.pendingAnimalEncounter", {
-            ...pending,
-            riddlePrompt: primitive.text,
-          } as Record<string, unknown>);
-        }
-        if (primitive.text) {
-          this.lastNarration = primitive.text;
-        }
-        this.statusIndicator.setState("speaking");
-        if (primitive.soundEffect) {
-          this.speechService.playSound(primitive.soundEffect);
-        }
-        await this.speechService.speak(primitive.text);
+      case "NARRATE":
+        await executeNarrate(ctx, primitive, context);
         break;
-      }
-
-      case "SET_STATE": {
-        if (context.positionPathsSetByRoll?.has(primitive.path)) {
-          Logger.write(
-            `Ignoring SET_STATE that would overwrite position just set by PLAYER_ROLLED: ${primitive.path}`,
-          );
-          break;
-        }
-        await this.turnManager.assertPlayerTurnOwnership(primitive.path);
-        Logger.write(`Setting state: ${primitive.path} = ${JSON.stringify(primitive.value)}`);
-        this.stateManager.set(primitive.path, primitive.value);
-        await this.boardEffectsHandler.checkAndApplyBoardMoves(primitive.path);
-        await this.boardEffectsHandler.checkAndApplySquareEffects(primitive.path, context);
-        this.checkAndApplyWinCondition(primitive.path);
+      case "SET_STATE":
+        await executeSetState(ctx, primitive, context);
         break;
-      }
-
-      case "PLAYER_ROLLED": {
-        const state = this.stateManager.getState();
-        const game = state.game as Record<string, unknown> | undefined;
-        const currentTurn = game?.turn as string | undefined;
-
-        if (!currentTurn) {
-          throw new Error("Cannot process PLAYER_ROLLED: No current turn set");
-        }
-
-        const path = `players.${currentTurn}.position`;
-        const currentPosition = this.stateManager.get(path) as number;
-
-        if (typeof currentPosition !== "number") {
-          throw new Error(`Cannot process PLAYER_ROLLED: ${path} is not a number`);
-        }
-
-        const newPosition = this.computeNewPosition(currentTurn, currentPosition, primitive.value);
-        Logger.write(
-          `Player rolled ${primitive.value}: ${path} ${currentPosition} → ${newPosition}`,
-        );
-
-        this.stateManager.set(path, newPosition);
-        context.positionPathsSetByRoll?.add(path);
-        this.stateManager.set("game.lastRoll", primitive.value);
-        await this.boardEffectsHandler.checkAndApplyBoardMoves(path);
-        await this.boardEffectsHandler.checkAndApplySquareEffects(path, context);
-        this.checkAndApplyWinCondition(path);
+      case "PLAYER_ROLLED":
+        await executePlayerRolled(ctx, primitive, context);
         break;
-      }
-
-      case "ASK_RIDDLE": {
-        await this.handleAskRiddle(primitive);
+      case "ASK_RIDDLE":
+        this.riddlePowerCheckHandler.handleAskRiddle(primitive);
         break;
-      }
-
-      case "RIDDLE_RESOLVED": {
-        await this.handleRiddleResolved(primitive);
+      case "RIDDLE_RESOLVED":
+        this.riddlePowerCheckHandler.handleRiddleResolved(primitive);
         break;
-      }
-
-      case "PLAYER_ANSWERED": {
-        Logger.info(`Player answered: "${primitive.answer}"`);
-        this.stateManager.set("game.lastAnswer", primitive.answer);
-
-        // Riddle phase with structured options: orchestrator resolves A/B/C/D
-        const riddleResult = await this.tryHandleRiddleAnswer(primitive.answer, context);
-        if (riddleResult) {
-          context.skipTrailingNarrateForPowerCheck = true;
-          const msg = riddleResult.correct ? t("game.riddleCorrect") : t("game.riddleIncorrect");
-          this.lastNarration = msg;
-          this.statusIndicator.setState("speaking");
-          await this.speechService.speak(msg);
-          break;
-        }
-
-        // Power check / revenge: orchestrator handles roll evaluation (speaks pass/fail inside handler)
-        const powerCheckResult = await this.tryHandlePowerCheckAnswer(primitive.answer, context);
-        if (powerCheckResult) {
-          if ("turnAdvanced" in powerCheckResult && powerCheckResult.turnAdvanced) {
-            context.turnAdvancedForRevenge = powerCheckResult.turnAdvanced;
-          }
-          context.skipTrailingNarrateForPowerCheck = true;
-          break;
-        }
-
-        // Auto-apply answer to current player's decision point (activeChoices[position] = target).
-        const applyState = this.getDecisionPointApplyState(primitive.answer);
-        if (applyState) {
-          Logger.write(
-            `Auto-applying PLAYER_ANSWERED to decision point: ${applyState.path} = ${JSON.stringify(applyState.value)}`,
-          );
-          this.stateManager.set(applyState.path, applyState.value);
-          await this.boardEffectsHandler.checkAndApplyBoardMoves(applyState.path);
-          await this.boardEffectsHandler.checkAndApplySquareEffects(applyState.path, context);
-        }
+      case "PLAYER_ANSWERED":
+        await executePlayerAnswered(ctx, primitive, context);
         break;
-      }
-
-      case "RESET_GAME": {
-        Logger.info(`Resetting game state (keepPlayerNames: ${primitive.keepPlayerNames})`);
-
-        const playerNames: Map<string, string> = new Map();
-        if (primitive.keepPlayerNames) {
-          const currentState = this.stateManager.getState();
-          const players = currentState.players as Record<string, { name: string }> | undefined;
-          if (players) {
-            for (const [id, player] of Object.entries(players)) {
-              playerNames.set(id, player.name);
-            }
-            Logger.info(
-              `Extracted ${playerNames.size} player names: [${Array.from(playerNames.values()).join(", ")}]`,
-            );
-          } else {
-            Logger.warn("keepPlayerNames=true but no players found in current state");
-          }
-        }
-
-        this.stateManager.resetState(this.initialState);
-        Logger.info("State reset to initial state");
-
-        if (primitive.keepPlayerNames && playerNames.size > 0) {
-          const state = this.stateManager.getState();
-          const game = state.game as Record<string, unknown> | undefined;
-          const playerOrder = game?.playerOrder as string[] | undefined;
-
-          if (playerOrder && playerOrder.length > 0) {
-            Logger.info(`Restoring ${playerNames.size} player names`);
-            for (const playerId of playerOrder) {
-              const savedName = playerNames.get(playerId);
-              if (savedName) {
-                this.stateManager.set(`players.${playerId}.name`, savedName);
-                Logger.info(`Restored player ${playerId}: "${savedName}"`);
-              }
-            }
-          } else {
-            Logger.warn("keepPlayerNames=true but no playerOrder found after reset");
-          }
-        }
-
-        Logger.info("Game state reset complete");
+      case "RESET_GAME":
+        await executeResetGame(ctx, primitive, context);
         break;
-      }
     }
   }
 }

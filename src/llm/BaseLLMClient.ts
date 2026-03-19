@@ -4,7 +4,8 @@ import { safeParse, parseArray } from "../utils/json-parser";
 import { Logger } from "../utils/logger";
 import { Profiler } from "../utils/profiler";
 import type { LLMClient } from "./LLMClient";
-import { buildSystemPrompt, formatStateContext } from "./system-prompt";
+import { formatStateContext } from "./state-context";
+import { buildSystemPrompt } from "./system-prompt";
 import type { ApiCallOptions, ApiCallResult } from "./types";
 
 type PromptPurpose = "getActions" | "extractName" | "analyzeResponse" | "validateRiddleAnswer";

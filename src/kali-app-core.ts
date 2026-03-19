@@ -2,13 +2,8 @@ import { CONFIG } from "./config";
 import { GameLoader } from "./game-loader";
 import type { GameModule } from "./game-loader";
 import { t } from "./i18n";
-import { DeepInfraClient } from "./llm/DeepInfraClient";
-import { GeminiClient } from "./llm/GeminiClient";
-import { GroqClient } from "./llm/GroqClient";
+import { createLLMClient } from "./llm/llm-client-factory";
 import type { LLMClient } from "./llm/LLMClient";
-import { MockLLMClient } from "./llm/MockLLMClient";
-import { OllamaClient } from "./llm/OllamaClient";
-import { OpenRouterClient } from "./llm/OpenRouterClient";
 import { inferDecisionPoints } from "./orchestrator/decision-point-inference";
 import { NameCollector } from "./orchestrator/name-collector";
 import { Orchestrator } from "./orchestrator/orchestrator";
@@ -113,7 +108,7 @@ export class KaliAppCore {
     }
 
     Logger.robot(`Configuring LLM (${CONFIG.LLM_PROVIDER}) with game rules...`);
-    this.llmClient = this.createLLMClient();
+    this.llmClient = createLLMClient();
     this.llmClient.setGameRules(this.formatGameRules(this.gameModule));
 
     const initialState = {
@@ -133,25 +128,6 @@ export class KaliAppCore {
     await gameLoader.loadSoundEffects(this.gameModule, this.speechService);
 
     Logger.info("Orchestrator ready");
-  }
-
-  private createLLMClient(): LLMClient {
-    switch (CONFIG.LLM_PROVIDER) {
-      case "gemini":
-        return new GeminiClient();
-      case "groq":
-        return new GroqClient();
-      case "openrouter":
-        return new OpenRouterClient();
-      case "deepinfra":
-        return new DeepInfraClient();
-      case "ollama":
-        return new OllamaClient();
-      case "mock":
-        return new MockLLMClient();
-      default:
-        throw new Error(`Unknown LLM provider: ${CONFIG.LLM_PROVIDER}`);
-    }
   }
 
   private formatGameRules(gameModule: GameModule): string {
