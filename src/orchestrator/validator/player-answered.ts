@@ -1,5 +1,5 @@
-import type { GameState, PrimitiveAction } from "../../types";
-import type { ValidationResult } from "../types";
+import type { GameState, PrimitiveAction } from "../types";
+import type { ValidationResult } from "./types";
 import { validateField } from "./common";
 
 export function validatePlayerAnswered(

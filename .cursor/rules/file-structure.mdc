@@ -17,7 +17,7 @@ Core validation and execution logic:
 - `turn-manager.ts` - Turn advancement and ownership validation
 - `board-effects-handler.ts` - Board moves and square effects
 - `decision-point-enforcer.ts` - Decision point requirements
-- `validator.ts` - Primitive action validation
+- `validator/` - Primitive action validation (flat: index, types, mock-state, common, narrate-reset, player-answered, player-rolled, riddle, set-state, square-effect)
 - `types.ts` - Type definitions for primitives
 - `name-collector.ts` - Voice-based player name collection
 

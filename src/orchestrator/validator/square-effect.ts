@@ -1,5 +1,5 @@
-import type { Orchestrator } from "../../orchestrator";
-import type { ValidationResult } from "../types";
+import type { Orchestrator } from "../orchestrator";
+import type { ValidationResult } from "./types";
 
 /** Player state keys that are orchestrator-owned during square effects; LLM must not SET_STATE these. */
 const SQUARE_EFFECT_FORBIDDEN_PLAYER_KEYS = new Set(["skipTurns", "position"]);

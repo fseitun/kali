@@ -1,5 +1,5 @@
-import type { PrimitiveAction } from "../../types";
-import type { ValidationResult } from "../types";
+import type { PrimitiveAction } from "../types";
+import type { ValidationResult } from "./types";
 import { validateField } from "./common";
 
 export function validateNarrate(action: PrimitiveAction, index: number): ValidationResult {

@@ -2,12 +2,12 @@ import type { StateManager } from "../../state-manager";
 import type { Orchestrator } from "../orchestrator";
 import type { GameState, PrimitiveAction } from "../types";
 import { applyActionToMockState } from "./mock-state";
+import { validateNarrate, validateResetGame } from "./narrate-reset";
+import { validatePlayerAnswered } from "./player-answered";
+import { validatePlayerRolled } from "./player-rolled";
+import { validateAskRiddle, validateRiddleResolved } from "./riddle";
+import { validateSetState } from "./set-state";
 import type { ValidationResult } from "./types";
-import { validateNarrate, validateResetGame } from "./validators/validate-narrate-reset";
-import { validatePlayerAnswered } from "./validators/validate-player-answered";
-import { validatePlayerRolled } from "./validators/validate-player-rolled";
-import { validateAskRiddle, validateRiddleResolved } from "./validators/validate-riddle";
-import { validateSetState } from "./validators/validate-set-state";
 
 export type { ValidationResult } from "./types";
 

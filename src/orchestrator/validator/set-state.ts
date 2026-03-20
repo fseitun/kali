@@ -1,9 +1,9 @@
-import type { StateManager } from "../../../state-manager";
-import type { Orchestrator } from "../../orchestrator";
-import type { GameState, PrimitiveAction } from "../../types";
-import type { ValidationResult } from "../types";
+import type { StateManager } from "../../state-manager";
+import type { Orchestrator } from "../orchestrator";
+import type { GameState, PrimitiveAction } from "../types";
 import { validateField } from "./common";
-import { validateSquareEffectPathRestriction } from "./validate-square-effect";
+import { validateSquareEffectPathRestriction } from "./square-effect";
+import type { ValidationResult } from "./types";
 
 function validateTurnOwnership(
   path: string,
