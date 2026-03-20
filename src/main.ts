@@ -1,8 +1,8 @@
 import "./styles/shared.css";
 import "./styles/production.css";
-import "./i18n";
+import "./i18n/translations";
 import { CONFIG } from "./config";
-import { t } from "./i18n";
+import { t } from "./i18n/translations";
 import { KaliAppCore } from "./kali-app-core";
 import { ModelManager } from "./model-manager";
 import { setupVersionRefreshPrompt } from "./pwa-register";

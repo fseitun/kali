@@ -4,7 +4,7 @@
  */
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { StatusIndicator } from "./components/status-indicator";
-import type { GameModule } from "./game-loader";
+import type { GameModule } from "./game-loader/types";
 import { KaliAppCore } from "./kali-app-core";
 import { GamePhase } from "./orchestrator/types";
 import type { ISpeechService } from "./services/speech-service";
@@ -16,7 +16,7 @@ vi.mock("./utils/browser-support", () => ({
 
 const phaseOverride = vi.hoisted(() => ({ value: undefined as GamePhase | undefined }));
 
-vi.mock("./game-loader", async () => {
+vi.mock("./game-loader/game-loader", async () => {
   const pathMod = await import("node:path");
   const fsMod = await import("node:fs");
   const { fileURLToPath } = await import("node:url");

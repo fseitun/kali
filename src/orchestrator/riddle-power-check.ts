@@ -1,12 +1,12 @@
-import type { IStatusIndicator } from "../components/status-indicator";
-import { t } from "../i18n";
-import type { LLMClient } from "../llm/LLMClient";
-import type { ISpeechService } from "../services/speech-service";
-import type { StateManager } from "../state-manager";
-import { Logger } from "../utils/logger";
 import type { BoardEffectsHandler } from "./board-effects-handler";
 import { isStrictRiddleCorrect } from "./riddle-answer";
 import type { ExecutionContext } from "./types";
+import type { IStatusIndicator } from "@/components/status-indicator";
+import { t } from "@/i18n/translations";
+import type { LLMClient } from "@/llm/LLMClient";
+import type { ISpeechService } from "@/services/speech-service";
+import type { StateManager } from "@/state-manager";
+import { Logger } from "@/utils/logger";
 
 export interface RiddlePowerCheckDeps {
   stateManager: StateManager;

@@ -4,7 +4,7 @@ import { describe, it, expect, beforeEach, vi } from "vitest";
 import { Orchestrator } from "./orchestrator";
 import type { GameState, PrimitiveAction } from "./types";
 import type { StatusIndicator } from "@/components/status-indicator";
-import { t } from "@/i18n";
+import { t } from "@/i18n/translations";
 import type { LLMClient } from "@/llm/LLMClient";
 import type { SpeechService } from "@/services/speech-service";
 import type { StateManager } from "@/state-manager";

@@ -1,5 +1,5 @@
 import type { GameMetadata } from "@/game-loader/types";
-import { t, getNumberWords, parseConfirmation } from "@/i18n";
+import { t, getNumberWords, parseConfirmation } from "@/i18n/translations";
 import type { LLMClient } from "@/llm/LLMClient";
 import type { ISpeechService } from "@/services/speech-service";
 import { Logger } from "@/utils/logger";

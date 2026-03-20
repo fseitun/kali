@@ -1,14 +1,14 @@
-import type { IStatusIndicator } from "../components/status-indicator";
-import { t } from "../i18n";
-import type { ISpeechService } from "../services/speech-service";
-import type { StateManager } from "../state-manager";
-import { Logger } from "../utils/logger";
 import type { BoardEffectsHandler } from "./board-effects-handler";
 import { computeNewPositionFromState } from "./board-traversal";
 import { getDecisionPointApplyState } from "./decision-helpers";
 import type { RiddlePowerCheckHandler } from "./riddle-power-check";
 import type { TurnManager } from "./turn-manager";
 import type { ExecutionContext, GameState, PrimitiveAction } from "./types";
+import type { IStatusIndicator } from "@/components/status-indicator";
+import { t } from "@/i18n/translations";
+import type { ISpeechService } from "@/services/speech-service";
+import type { StateManager } from "@/state-manager";
+import { Logger } from "@/utils/logger";
 
 export interface ActionExecutorContext {
   stateManager: StateManager;

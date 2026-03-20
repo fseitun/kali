@@ -23,7 +23,7 @@ import {
 import { VALIDATION_ERROR_I18N } from "./validation-i18n";
 import { validateActions } from "./validator";
 import type { IStatusIndicator } from "@/components/status-indicator";
-import { t } from "@/i18n";
+import { t } from "@/i18n/translations";
 import type { LLMClient } from "@/llm/LLMClient";
 import { formatStateContext } from "@/llm/state-context";
 import type { ISpeechService } from "@/services/speech-service";

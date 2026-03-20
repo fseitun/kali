@@ -17,9 +17,22 @@ Core validation and execution logic:
 - `turn-manager.ts` - Turn advancement and ownership validation
 - `board-effects-handler.ts` - Board moves and square effects
 - `decision-point-enforcer.ts` - Decision point requirements
-- `validator/` - Primitive action validation (flat: index, types, mock-state, common, narrate-reset, player-answered, player-rolled, riddle, set-state, square-effect)
+- `validator.ts` - Primitive action validation entry (validateActions)
+- `validator/` - Validation submodules (types, mock-state, common, narrate-reset, player-answered, player-rolled, riddle, set-state, square-effect)
 - `types.ts` - Type definitions for primitives
 - `name-collector.ts` - Voice-based player name collection
+
+Supporting modules:
+
+- `action-executors.ts` - Executes NARRATE, PLAYER_ROLLED, SET_STATE, etc.
+- `board-traversal.ts` - Position computation for board moves
+- `decision-helpers.ts` - Decision point lookup helpers
+- `decision-point-inference.ts` - Infers decision points from game config
+- `riddle-answer.ts` - Riddle answer resolution and validation
+- `riddle-power-check.ts` - Power check / revenge phase handling
+- `reorder-power-check.ts` - Power check reordering logic
+- `square-types.ts` - Square kind utilities
+- `validation-i18n.ts` - Validation error i18n keys
 
 ### src/llm/
 
@@ -58,7 +71,7 @@ Audio processing for Vosk:
 
 ### src/game-loader/
 
-Game definition loading:
+Game definition loading (no barrel; import from `game-loader.ts` and `types.ts` directly):
 
 - `game-loader.ts` - Loads game JSON and sound effects
 - `types.ts` - Game definition types
@@ -73,6 +86,12 @@ Game definitions (JSON files):
 ## State Management
 
 - `src/state-manager.ts` - In-memory state manager with path-based operations
+
+## Internationalization
+
+- `src/i18n/translations.ts` - Translation functions (t, setLocale, getNicknames, etc.)
+- `src/i18n/locales/` - Locale files (en-US, es-AR)
+- `src/locale-manager.ts` - Locale persistence and selection
 
 ## Utilities
 

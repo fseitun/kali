@@ -1,4 +1,3 @@
-import { CONFIG } from "../config";
 import { DeepInfraClient } from "./DeepInfraClient";
 import { GeminiClient } from "./GeminiClient";
 import { GroqClient } from "./GroqClient";
@@ -6,6 +5,7 @@ import type { LLMClient } from "./LLMClient";
 import { MockLLMClient } from "./MockLLMClient";
 import { OllamaClient } from "./OllamaClient";
 import { OpenRouterClient } from "./OpenRouterClient";
+import { CONFIG } from "@/config";
 
 /**
  * Creates an LLM client based on CONFIG.LLM_PROVIDER.

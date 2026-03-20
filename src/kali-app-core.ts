@@ -1,7 +1,7 @@
 import { CONFIG } from "./config";
-import { GameLoader } from "./game-loader";
-import type { GameModule } from "./game-loader";
-import { t } from "./i18n";
+import { GameLoader } from "./game-loader/game-loader";
+import type { GameModule } from "./game-loader/types";
+import { t } from "./i18n/translations";
 import { createLLMClient } from "./llm/llm-client-factory";
 import type { LLMClient } from "./llm/LLMClient";
 import { inferDecisionPoints } from "./orchestrator/decision-point-inference";

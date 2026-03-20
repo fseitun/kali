@@ -1,7 +1,7 @@
 import type { IUIService } from "./ui-service";
 import type { IStatusIndicator } from "@/components/status-indicator";
 import { NoOpStatusIndicator } from "@/components/status-indicator";
-import { t } from "@/i18n";
+import { t } from "@/i18n/translations";
 import {
   getCategoryIcon,
   getEnabledCategories,

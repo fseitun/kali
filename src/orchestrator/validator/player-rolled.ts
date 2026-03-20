@@ -1,8 +1,8 @@
 import type { Orchestrator } from "../orchestrator";
 import type { GameState, PrimitiveAction } from "../types";
+import { validateField } from "./common";
 import { hasPendingDecisionsInState } from "./mock-state";
 import type { ValidationResult } from "./types";
-import { validateField } from "./common";
 
 export function validatePlayerRolled(
   action: PrimitiveAction,

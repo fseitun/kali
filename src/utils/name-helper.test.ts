@@ -3,7 +3,7 @@ import { describe, it, expect, vi } from "vitest";
 import { validateName, findNameConflicts, generateNickname, areNamesSimilar } from "./name-helper";
 
 // Mock i18n getNicknames function
-vi.mock("../i18n", () => ({
+vi.mock("../i18n/translations", () => ({
   getNicknames: () => ["the Great", "the Wise", "the Brave", "the Kind", "the Swift"],
 }));
 

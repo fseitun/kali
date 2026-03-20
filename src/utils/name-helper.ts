@@ -1,4 +1,4 @@
-import { getNicknames } from "@/i18n";
+import { getNicknames } from "@/i18n/translations";
 
 /**
  * Utility functions for player name validation, conflict detection, and nickname generation.

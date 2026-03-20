@@ -1,6 +1,6 @@
 import type { PrimitiveAction } from "../types";
-import type { ValidationResult } from "./types";
 import { validateField } from "./common";
+import type { ValidationResult } from "./types";
 
 export function validateNarrate(action: PrimitiveAction, index: number): ValidationResult {
   const actionRecord = action as unknown as Record<string, unknown>;

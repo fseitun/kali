@@ -1,19 +1,19 @@
-import "./styles/shared.css";
-import "./styles/debug.css";
-import "./i18n";
-import { CONFIG } from "./config";
-import { setLocale, t } from "./i18n";
-import { KaliAppCore } from "./kali-app-core";
-import { getLocale } from "./locale-manager";
-import { setupVersionRefreshPrompt } from "./pwa-register";
-import { DebugUIService } from "./services/debug-ui-service";
-import { NoOpSpeechService } from "./services/no-op-speech-service";
+import "@/styles/shared.css";
+import "@/styles/debug.css";
+import "@/i18n/translations";
+import { CONFIG } from "@/config";
+import { setLocale, t } from "@/i18n/translations";
+import { KaliAppCore } from "@/kali-app-core";
+import { getLocale } from "@/locale-manager";
+import { setupVersionRefreshPrompt } from "@/pwa-register";
+import { DebugUIService } from "@/services/debug-ui-service";
+import { NoOpSpeechService } from "@/services/no-op-speech-service";
 import {
   getLogCategories,
   isLogCategoryEnabled,
   setLogCategoryEnabled,
-} from "./utils/debug-options";
-import { Logger } from "./utils/logger";
+} from "@/utils/debug-options";
+import { Logger } from "@/utils/logger";
 
 setLocale(getLocale());
 

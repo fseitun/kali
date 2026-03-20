@@ -1,15 +1,15 @@
-import type { StateManager } from "../../state-manager";
-import type { Orchestrator } from "../orchestrator";
-import type { GameState, PrimitiveAction } from "../types";
-import { applyActionToMockState } from "./mock-state";
-import { validateNarrate, validateResetGame } from "./narrate-reset";
-import { validatePlayerAnswered } from "./player-answered";
-import { validatePlayerRolled } from "./player-rolled";
-import { validateAskRiddle, validateRiddleResolved } from "./riddle";
-import { validateSetState } from "./set-state";
-import type { ValidationResult } from "./types";
+import type { Orchestrator } from "./orchestrator";
+import type { GameState, PrimitiveAction } from "./types";
+import { applyActionToMockState } from "./validator/mock-state";
+import { validateNarrate, validateResetGame } from "./validator/narrate-reset";
+import { validatePlayerAnswered } from "./validator/player-answered";
+import { validatePlayerRolled } from "./validator/player-rolled";
+import { validateAskRiddle, validateRiddleResolved } from "./validator/riddle";
+import { validateSetState } from "./validator/set-state";
+import type { ValidationResult } from "./validator/types";
+import type { StateManager } from "@/state-manager";
 
-export type { ValidationResult } from "./types";
+export type { ValidationResult } from "./validator/types";
 
 /**
  * Validates an array of primitive actions against current game state.

@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { setLocale, t, getNicknames, getNumberWords, getConfirmationWords } from "./index";
+import { setLocale, t, getNicknames, getNumberWords, getConfirmationWords } from "./translations";
 
 // Mock CONFIG
 vi.mock("../config", () => ({
