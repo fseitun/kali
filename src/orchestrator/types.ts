@@ -100,7 +100,7 @@ export interface ExecutionContext {
   /** When true, skip decision point enforcement after actions (e.g. proactive start). */
   skipDecisionPointEnforcement?: boolean;
   /** Set when power check fails and turn was advanced; app should announce next player. */
-  turnAdvancedForRevenge?: { playerId: string; name: string; position: number };
+  turnAdvancedAfterPowerCheckFail?: { playerId: string; name: string; position: number };
   /** Set when power check/revenge was handled; skip trailing NARRATE from LLM (orchestrator speaks pass/fail). */
   skipTrailingNarrateForPowerCheck?: boolean;
   /** Set when we just spoke a NARRATE that asks for the current decision; skip enforceDecisionPoints this round. */
@@ -126,7 +126,7 @@ export interface VoiceOutcomeHints {
 export interface OrchestratorGameplayResult {
   success: boolean;
   shouldAdvanceTurn: boolean;
-  turnAdvancedForRevenge?: { playerId: string; name: string; position: number };
+  turnAdvancedAfterPowerCheckFail?: { playerId: string; name: string; position: number };
   /** Present on successful top-level runs when the batch matches a silent-success pattern for voice policy. */
   voiceOutcomeHints?: VoiceOutcomeHints;
 }

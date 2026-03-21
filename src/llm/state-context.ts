@@ -137,7 +137,7 @@ function formatDecisionPointContext(state: Record<string, unknown>): string {
               " | ",
             )}. When the user clearly chooses a branch, return PLAYER_ANSWERED with the target position number only (one of: ${targetNums.join(", ")}); do not pass through their exact words if you can resolve. If unclear, NARRATE to ask again.`
         : ` When intent is clear, return PLAYER_ANSWERED with the target position number; if unclear, NARRATE to ask again.`;
-    return `⚠️ DECISION (${playerName}) fork choice at ${position}. Ask: "${decisionPoint.prompt}" If user asks what to do or for help → NARRATE the path options (e.g. from the prompt); do NOT emit PLAYER_ANSWERED.${hint} If they state a choice, emit PLAYER_ANSWERED with the correct target number. [current]`;
+    return `⚠️ DECISION (${playerName}) fork choice at ${position}. Ask: "${playerName}, ${decisionPoint.prompt}" Always name the player when asking. If user asks what to do or for help → NARRATE the path options (e.g. from the prompt); do NOT emit PLAYER_ANSWERED.${hint} If they state a choice, emit PLAYER_ANSWERED with the correct target number. [current]`;
   }
 
   return "";

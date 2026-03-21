@@ -424,14 +424,21 @@ ${summary ? `**Summary (for NARRATE explanations):** ${summary}\n` : ""}${exampl
 
     if (this.orchestrator) {
       this.speechService.beginGameplayTurn();
-      const { success, shouldAdvanceTurn, turnAdvancedForRevenge, voiceOutcomeHints } =
+      const { success, shouldAdvanceTurn, turnAdvancedAfterPowerCheckFail, voiceOutcomeHints } =
         await this.orchestrator.handleTranscript(text);
 
-      if (success && turnAdvancedForRevenge) {
-        const revengeMsg = t("game.turnAnnouncement", {
-          name: turnAdvancedForRevenge.name,
-          position: turnAdvancedForRevenge.position,
-        });
+      if (success && turnAdvancedAfterPowerCheckFail) {
+        const pendingPrompt = this.orchestrator.getPendingDecisionPrompt();
+        const revengeMsg = pendingPrompt
+          ? t("game.turnAnnouncementWithDecision", {
+              name: turnAdvancedAfterPowerCheckFail.name,
+              position: turnAdvancedAfterPowerCheckFail.position,
+              prompt: pendingPrompt,
+            })
+          : t("game.turnAnnouncement", {
+              name: turnAdvancedAfterPowerCheckFail.name,
+              position: turnAdvancedAfterPowerCheckFail.position,
+            });
         await this.speechService.speak(revengeMsg);
         this.orchestrator.setLastNarrationForVoicePolicy(revengeMsg);
       } else if (success && shouldAdvanceTurn) {
@@ -501,7 +508,7 @@ ${summary ? `**Summary (for NARRATE explanations):** ${summary}\n` : ""}${exampl
   async testExecuteActions(actions: PrimitiveAction[]): Promise<{
     success: boolean;
     shouldAdvanceTurn: boolean;
-    turnAdvancedForRevenge?: { playerId: string; name: string; position: number };
+    turnAdvancedAfterPowerCheckFail?: { playerId: string; name: string; position: number };
     voiceOutcomeHints?: VoiceOutcomeHints;
   }> {
     if (!this.orchestrator) {
@@ -511,13 +518,20 @@ ${summary ? `**Summary (for NARRATE explanations):** ${summary}\n` : ""}${exampl
     this.speechService.beginGameplayTurn();
     const result = await this.orchestrator.testExecuteActions(actions);
 
-    if (result.success && result.turnAdvancedForRevenge) {
-      await this.speechService.speak(
-        t("game.turnAnnouncement", {
-          name: result.turnAdvancedForRevenge.name,
-          position: result.turnAdvancedForRevenge.position,
-        }),
-      );
+    if (result.success && result.turnAdvancedAfterPowerCheckFail) {
+      const pendingPrompt = this.orchestrator.getPendingDecisionPrompt();
+      const msg = pendingPrompt
+        ? t("game.turnAnnouncementWithDecision", {
+            name: result.turnAdvancedAfterPowerCheckFail.name,
+            position: result.turnAdvancedAfterPowerCheckFail.position,
+            prompt: pendingPrompt,
+          })
+        : t("game.turnAnnouncement", {
+            name: result.turnAdvancedAfterPowerCheckFail.name,
+            position: result.turnAdvancedAfterPowerCheckFail.position,
+          });
+      await this.speechService.speak(msg);
+      this.orchestrator.setLastNarrationForVoicePolicy(msg);
     } else if (result.success && result.shouldAdvanceTurn) {
       await this.checkAndAdvanceTurn();
     }

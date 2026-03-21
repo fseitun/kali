@@ -284,7 +284,7 @@ describe("Orchestrator Integration Tests", () => {
       expect(mockLLM.getCallCount()).toBe(2);
     });
 
-    it("advances turn to next player on power check failure and returns turnAdvancedForRevenge", async () => {
+    it("advances turn to next player on power check failure and returns turnAdvancedAfterPowerCheckFail", async () => {
       const initialState: GameState = {
         game: {
           name: "Test Game",
@@ -321,7 +321,7 @@ describe("Orchestrator Integration Tests", () => {
 
       expect(result.success).toBe(true);
       expect(result.shouldAdvanceTurn).toBe(false);
-      expect(result.turnAdvancedForRevenge).toEqual({
+      expect(result.turnAdvancedAfterPowerCheckFail).toEqual({
         playerId: "p2",
         name: "Bob",
         position: 0,

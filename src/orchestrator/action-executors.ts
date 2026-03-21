@@ -135,7 +135,7 @@ export async function executePlayerAnswered(
   );
   if (powerCheckResult) {
     if ("turnAdvanced" in powerCheckResult && powerCheckResult.turnAdvanced) {
-      context.turnAdvancedForRevenge = powerCheckResult.turnAdvanced;
+      context.turnAdvancedAfterPowerCheckFail = powerCheckResult.turnAdvanced;
     }
     context.skipTrailingNarrateForPowerCheck = true;
     return;

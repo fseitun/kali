@@ -74,7 +74,7 @@ export class DecisionPointEnforcer {
         const newContext: ExecutionContext = { isNestedCall: true };
 
         await this.processTranscriptFn(
-          `[SYSTEM: ${playerName} (${currentTurn}) is at position ${position} and MUST choose direction at fork before proceeding. Ask them: "${decisionPoint.prompt}"]`,
+          `[SYSTEM: ${playerName} (${currentTurn}) is at position ${position} and MUST choose direction at fork before proceeding. Ask them: "${playerName}, ${decisionPoint.prompt}"]`,
           newContext,
         );
       }

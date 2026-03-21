@@ -141,7 +141,7 @@ export class Orchestrator {
    * This is the main entry point for handling user voice commands.
    * @param transcript - The transcribed user command
    * @param options - Optional flags; skipDecisionPointEnforcement for system-initiated flows (e.g. proactive start)
-   * @returns Success, turn flags, optional revenge handoff, and voice hints for app-layer fallback TTS
+   * @returns Success, turn flags, optional next-player-after-power-check-fail, and voice hints for app-layer fallback TTS
    */
   async handleTranscript(
     transcript: string,
@@ -549,11 +549,11 @@ export class Orchestrator {
     }
 
     // When power check failed and we advanced turn internally, don't call advanceTurn again
-    if (context.turnAdvancedForRevenge) {
+    if (context.turnAdvancedAfterPowerCheckFail) {
       return {
         success: true,
         shouldAdvanceTurn: false,
-        turnAdvancedForRevenge: context.turnAdvancedForRevenge,
+        turnAdvancedAfterPowerCheckFail: context.turnAdvancedAfterPowerCheckFail,
         voiceOutcomeHints,
       };
     }
