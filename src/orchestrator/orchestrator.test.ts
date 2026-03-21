@@ -7,7 +7,7 @@ import type { StatusIndicator } from "@/components/status-indicator";
 import { t } from "@/i18n/translations";
 import type { LLMClient } from "@/llm/LLMClient";
 import type { SpeechService } from "@/services/speech-service";
-import type { StateManager } from "@/state-manager";
+import { StateManager } from "@/state-manager";
 
 describe("Orchestrator - New Action Handlers", () => {
   let orchestrator: Orchestrator;
@@ -522,6 +522,83 @@ describe("Orchestrator - New Action Handlers", () => {
       await orchestrator.testExecuteActions(actions);
 
       expect(llmCallCount).toBeGreaterThanOrEqual(1);
+    });
+  });
+
+  describe("Power-check chaining", () => {
+    it("power win from 16 with roll 5 lands on 21 (Camello), sets pending encounter, turn does not advance", async () => {
+      const stateManager = new StateManager();
+      stateManager.init({
+        game: {
+          turn: "p1",
+          phase: "PLAYING",
+          lastRoll: 2,
+          playerOrder: ["p1", "p2"],
+          pendingAnimalEncounter: {
+            position: 16,
+            power: 1,
+            playerId: "p1",
+            phase: "powerCheck",
+            riddleCorrect: true,
+          },
+        },
+        players: {
+          p1: {
+            id: "p1",
+            name: "Fico",
+            position: 16,
+            hearts: 0,
+            points: 0,
+            activeChoices: { 0: 15 },
+          },
+          p2: { id: "p2", name: "Fede", position: 0, hearts: 0, points: 0, activeChoices: {} },
+        },
+        board: {
+          winPosition: 196,
+          moves: {},
+          squares: {
+            "16": { type: "animal", name: "Escarabajo", power: 1, points: 1, habitat: "desierto" },
+            "21": { type: "animal", name: "Camello", power: 2, points: 2, habitat: "desierto" },
+          },
+        },
+        decisionPoints: [],
+      } as GameState);
+
+      const mockLLMChain = {
+        getActions: vi.fn(async (_transcript: string) => {
+          if (_transcript.includes("animal square 21") || _transcript.includes("Camello")) {
+            return [
+              {
+                action: "ASK_RIDDLE",
+                text: "Riddle?",
+                options: ["A", "B", "C", "D"],
+                correctOption: "A",
+              },
+              { action: "NARRATE", text: "Riddle and options." },
+            ];
+          }
+          return [];
+        }),
+        setGameRules: vi.fn(),
+        validateRiddleAnswer: vi.fn(async () => ({ correct: false })),
+      } as unknown as LLMClient;
+
+      const chainOrchestrator = new Orchestrator(
+        mockLLMChain,
+        stateManager,
+        { speak: vi.fn(async () => {}), playSound: vi.fn() } as unknown as SpeechService,
+        { setState: vi.fn() } as unknown as StatusIndicator,
+        stateManager.getState() as GameState,
+      );
+
+      await chainOrchestrator.testExecuteActions([{ action: "PLAYER_ANSWERED", answer: "5" }]);
+
+      expect(stateManager.get("players.p1.position")).toBe(21);
+      const pending = stateManager.get("game.pendingAnimalEncounter") as Record<string, unknown>;
+      expect(pending).toBeDefined();
+      expect(pending?.position).toBe(21);
+      expect(pending?.phase).toBe("riddle");
+      expect((stateManager.getState().game as Record<string, unknown>).turn).toBe("p1");
     });
   });
 

@@ -1,6 +1,7 @@
 import type { BoardEffectsHandler } from "./board-effects-handler";
+import { computeNewPositionFromState } from "./board-traversal";
 import { isStrictRiddleCorrect } from "./riddle-answer";
-import type { ExecutionContext } from "./types";
+import type { ExecutionContext, GameState } from "./types";
 import type { IStatusIndicator } from "@/components/status-indicator";
 import { t } from "@/i18n/translations";
 import type { LLMClient } from "@/llm/LLMClient";
@@ -192,7 +193,10 @@ export class RiddlePowerCheckHandler {
 
       const currentPos = this.deps.stateManager.get(`players.${playerId}.position`) as number;
       const winJumpTo = squareData?.winJumpTo as number | undefined;
-      const newPosition = typeof winJumpTo === "number" ? winJumpTo : currentPos + roll;
+      const newPosition =
+        typeof winJumpTo === "number"
+          ? winJumpTo
+          : computeNewPositionFromState(state as GameState, playerId, currentPos, roll);
 
       this.deps.stateManager.set(`players.${playerId}.position`, newPosition);
       this.applyAnimalEncounterRewards(playerId, squareData ?? {});

@@ -181,6 +181,7 @@ export class BoardEffectsHandler {
 
     const squareData = squares[position.toString()];
     if (!squareData || squareData.type === "empty" || Object.keys(squareData).length === 0) {
+      Logger.info(`No square config for position ${position}, skipping effects`);
       return;
     }
 
