@@ -32,6 +32,7 @@ export const enUS = {
     powerCheckFail: "No luck.",
     riddleCorrect: "Correct! Roll 2 dice for the power check.",
     riddleIncorrect: "Wrong. Roll 1 die for the power check.",
+    forkChoiceResolvedRoll: "{name}, you're set. Roll the dice.",
   },
   ui: {
     startButton: "Start",

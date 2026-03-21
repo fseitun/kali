@@ -108,6 +108,28 @@ export interface ExecutionContext {
   positionPathsSetByRoll?: Set<string>;
 }
 
+/**
+ * Classifiers for successful primitive batches that may need app-layer voice fallback when the LLM omitted NARRATE.
+ */
+export interface VoiceOutcomeHints {
+  /**
+   * Fork or branch choice was stored via PLAYER_ANSWERED or SET_STATE on activeChoices without PLAYER_ROLLED,
+   * and the batch contained no NARRATE.
+   */
+  forkChoiceResolvedWithoutNarrate?: boolean;
+}
+
+/**
+ * Result of orchestrator transcript or direct primitive execution (gameplay paths).
+ */
+export interface OrchestratorGameplayResult {
+  success: boolean;
+  shouldAdvanceTurn: boolean;
+  turnAdvancedForRevenge?: { playerId: string; name: string; position: number };
+  /** Present on successful depth-0 runs when the batch matches a silent-success pattern for voice policy. */
+  voiceOutcomeHints?: VoiceOutcomeHints;
+}
+
 export type ActionHandler = (action: PrimitiveAction, context: ExecutionContext) => Promise<void>;
 
 /**

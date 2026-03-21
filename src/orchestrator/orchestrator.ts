@@ -15,10 +15,12 @@ import { RiddlePowerCheckHandler } from "./riddle-power-check";
 import { TurnManager } from "./turn-manager";
 import {
   GamePhase,
+  type OrchestratorGameplayResult,
   type PrimitiveAction,
   type ExecutionContext,
   type ActionHandler,
   type GameState,
+  type VoiceOutcomeHints,
 } from "./types";
 import { VALIDATION_ERROR_I18N } from "./validation-i18n";
 import { validateActions } from "./validator";
@@ -137,16 +139,12 @@ export class Orchestrator {
    * This is the main entry point for handling user voice commands.
    * @param transcript - The transcribed user command
    * @param options - Optional flags; skipDecisionPointEnforcement for system-initiated flows (e.g. proactive start)
-   * @returns Object with success flag and shouldAdvanceTurn; advance turn only when state was mutated
+   * @returns Success, turn flags, optional revenge handoff, and voice hints for app-layer fallback TTS
    */
   async handleTranscript(
     transcript: string,
     options?: { skipDecisionPointEnforcement?: boolean },
-  ): Promise<{
-    success: boolean;
-    shouldAdvanceTurn: boolean;
-    turnAdvancedForRevenge?: { playerId: string; name: string; position: number };
-  }> {
+  ): Promise<OrchestratorGameplayResult> {
     if (!this.tryAcquireProcessing()) {
       Logger.warn("Orchestrator busy, ignoring new request");
       return { success: false, shouldAdvanceTurn: false };
@@ -172,13 +170,9 @@ export class Orchestrator {
    * Test-only: Execute actions directly without LLM interpretation.
    * Bypasses LLM for testing orchestrator validation and execution logic.
    * @param actions - Array of primitive actions to validate and execute
-   * @returns Object with success and shouldAdvanceTurn
+   * @returns Object with success, shouldAdvanceTurn, and optional voice hints
    */
-  async testExecuteActions(actions: PrimitiveAction[]): Promise<{
-    success: boolean;
-    shouldAdvanceTurn: boolean;
-    turnAdvancedForRevenge?: { playerId: string; name: string; position: number };
-  }> {
+  async testExecuteActions(actions: PrimitiveAction[]): Promise<OrchestratorGameplayResult> {
     if (!this.tryAcquireProcessing()) {
       Logger.warn("Orchestrator busy, ignoring test request");
       return { success: false, shouldAdvanceTurn: false };
@@ -211,13 +205,9 @@ export class Orchestrator {
    * Intended for non-LLM interpreters (debug tools, alternate UIs) that already
    * produced a validated PrimitiveAction[] request.
    * @param actions - Array of primitive actions to validate and execute
-   * @returns Object with success and shouldAdvanceTurn
+   * @returns Object with success, shouldAdvanceTurn, and optional voice hints
    */
-  async executePrimitiveActions(actions: PrimitiveAction[]): Promise<{
-    success: boolean;
-    shouldAdvanceTurn: boolean;
-    turnAdvancedForRevenge?: { playerId: string; name: string; position: number };
-  }> {
+  async executePrimitiveActions(actions: PrimitiveAction[]): Promise<OrchestratorGameplayResult> {
     if (!this.tryAcquireProcessing()) {
       Logger.warn("Orchestrator busy, ignoring primitive execution request");
       return { success: false, shouldAdvanceTurn: false };
@@ -300,6 +290,15 @@ export class Orchestrator {
   }
 
   /**
+   * Updates the last bot utterance after app-layer voice policy speaks (LLM context for short replies).
+   *
+   * @param text - The line the user heard
+   */
+  setLastNarrationForVoicePolicy(text: string): void {
+    this.lastNarration = text;
+  }
+
+  /**
    * Advances to the next player's turn.
    * AUTHORITY: Only the orchestrator can advance turns.
    * @returns The next player's ID and details, or null if unable to advance. Includes skippedPlayers (all skipped in order).
@@ -320,11 +319,7 @@ export class Orchestrator {
   private async processTranscript(
     transcript: string,
     context: ExecutionContext,
-  ): Promise<{
-    success: boolean;
-    shouldAdvanceTurn: boolean;
-    turnAdvancedForRevenge?: { playerId: string; name: string; position: number };
-  }> {
+  ): Promise<OrchestratorGameplayResult> {
     try {
       Logger.brain(`Orchestrator processing: ${transcript} (depth: ${context.depth})`);
 
@@ -424,11 +419,7 @@ export class Orchestrator {
     actions: PrimitiveAction[],
     context: ExecutionContext,
     profilerPrefix: string,
-  ): Promise<{
-    success: boolean;
-    shouldAdvanceTurn: boolean;
-    turnAdvancedForRevenge?: { playerId: string; name: string; position: number };
-  }> {
+  ): Promise<OrchestratorGameplayResult> {
     const state = this.stateManager.getState();
     Logger.state(
       "Current state:\n" + formatStateContext(state as Record<string, unknown>, { forLog: true }),
@@ -483,6 +474,11 @@ export class Orchestrator {
     );
     const shouldAdvanceTurn = rawShouldAdvanceTurn && !onlyResolvedForkChoice;
 
+    const voiceOutcomeHints: VoiceOutcomeHints | undefined =
+      context.depth === 0 && onlyResolvedForkChoice && !actions.some((a) => a.action === "NARRATE")
+        ? { forkChoiceResolvedWithoutNarrate: true }
+        : undefined;
+
     Logger.info("Actions validated, executing...");
     const actionsToRun =
       context.depth === 0 ? reorderPowerCheckBeforeRoll(actions, state) : actions;
@@ -518,9 +514,10 @@ export class Orchestrator {
         success: true,
         shouldAdvanceTurn: false,
         turnAdvancedForRevenge: context.turnAdvancedForRevenge,
+        voiceOutcomeHints,
       };
     }
-    return { success: true, shouldAdvanceTurn };
+    return { success: true, shouldAdvanceTurn, voiceOutcomeHints };
   }
 
   private async executeActions(

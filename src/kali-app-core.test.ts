@@ -76,6 +76,14 @@ describe("KaliAppCore Architecture - Pure Coordination", () => {
       expect(callsOrchestratorHandleTranscript).toBe(true);
     });
 
+    it("resets speech meter per gameplay turn and applies silent-success voice policy", () => {
+      const code = KaliAppCore.toString();
+
+      expect(code).toContain("beginGameplayTurn");
+      expect(code).toContain("maybeApplySilentGameplayVoice");
+      expect(code).toContain("applySilentSuccessFallback");
+    });
+
     it("only announces turn changes, does not compute them", () => {
       const code = KaliAppCore.toString();
 

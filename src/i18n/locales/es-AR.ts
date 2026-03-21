@@ -32,6 +32,7 @@ export const esAR = {
     powerCheckFail: "No alcanzó.",
     riddleCorrect: "¡Correcto! Tirá 2 dados para la prueba de poder.",
     riddleIncorrect: "No acertaste. Tirá 1 dado para la prueba.",
+    forkChoiceResolvedRoll: "{name}, listo. Tirá el dado.",
   },
   ui: {
     startButton: "Jugar",

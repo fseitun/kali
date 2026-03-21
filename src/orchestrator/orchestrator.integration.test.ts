@@ -46,6 +46,81 @@ describe("Orchestrator Integration Tests", () => {
     createMockServices();
   });
 
+  describe("VoiceOutcomeHints", () => {
+    it("sets forkChoiceResolvedWithoutNarrate when only PLAYER_ANSWERED resolves fork", async () => {
+      mockLLM = createScriptedLLM([]);
+
+      const initialState: GameState = {
+        game: {
+          name: "Test Game",
+          phase: GamePhase.PLAYING,
+          turn: "p1",
+          playerOrder: ["p1", "p2"],
+          winner: null,
+          lastRoll: 0,
+        },
+        players: {
+          p1: { id: "p1", name: "Alice", position: 0, activeChoices: {} },
+          p2: { id: "p2", name: "Bob", position: 0 },
+        },
+        board: {
+          winPosition: 100,
+          moves: {},
+          squares: { "0": { type: "empty", next: [1, 15] } },
+        },
+        decisionPoints: [
+          { position: 0, prompt: "Choose path A or B?", positionOptions: { "1": 1, "15": 15 } },
+        ],
+      };
+
+      setupGame(initialState);
+
+      const result = await orchestrator.testExecuteActions([
+        { action: "PLAYER_ANSWERED", answer: "15" },
+      ]);
+
+      expect(result.success).toBe(true);
+      expect(result.voiceOutcomeHints?.forkChoiceResolvedWithoutNarrate).toBe(true);
+    });
+
+    it("does not set fork hint when NARRATE is in the batch", async () => {
+      mockLLM = createScriptedLLM([]);
+
+      const initialState: GameState = {
+        game: {
+          name: "Test Game",
+          phase: GamePhase.PLAYING,
+          turn: "p1",
+          playerOrder: ["p1", "p2"],
+          winner: null,
+          lastRoll: 0,
+        },
+        players: {
+          p1: { id: "p1", name: "Alice", position: 0, activeChoices: {} },
+          p2: { id: "p2", name: "Bob", position: 0 },
+        },
+        board: {
+          winPosition: 100,
+          moves: {},
+          squares: { "0": { type: "empty", next: [1, 15] } },
+        },
+        decisionPoints: [
+          { position: 0, prompt: "Choose path A or B?", positionOptions: { "1": 1, "15": 15 } },
+        ],
+      };
+
+      setupGame(initialState);
+
+      const result = await orchestrator.testExecuteActions([
+        { action: "PLAYER_ANSWERED", answer: "1" },
+        { action: "NARRATE", text: "You chose path A!" },
+      ]);
+
+      expect(result.success).toBe(true);
+      expect(result.voiceOutcomeHints).toBeUndefined();
+    });
+  });
+
   describe("Board Mechanics", () => {
     it("auto-applies ladders after position changes", async () => {
       const responses: PrimitiveAction[][] = [

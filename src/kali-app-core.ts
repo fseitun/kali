@@ -7,7 +7,12 @@ import type { LLMClient } from "./llm/LLMClient";
 import { inferDecisionPoints } from "./orchestrator/decision-point-inference";
 import { NameCollector } from "./orchestrator/name-collector";
 import { Orchestrator } from "./orchestrator/orchestrator";
-import { GamePhase, type PrimitiveAction } from "./orchestrator/types";
+import {
+  GamePhase,
+  type GameState,
+  type PrimitiveAction,
+  type VoiceOutcomeHints,
+} from "./orchestrator/types";
 import type { ISpeechService } from "./services/speech-service";
 import type { IUIService } from "./services/ui-service";
 import { StateManager } from "./state-manager";
@@ -15,6 +20,8 @@ import { checkBrowserSupport } from "./utils/browser-support";
 import { validateConfig } from "./utils/config-validator";
 import { Logger } from "./utils/logger";
 import { acquireScreenWakeLock, releaseWakeLock } from "./utils/wake-lock";
+import { applySilentSuccessFallback } from "./voice/gameplay-voice-policy";
+import { MeteredSpeechService } from "./voice/metered-speech-service";
 import type { WakeWordDetector } from "./wake-word";
 
 export class KaliAppCore {
@@ -25,12 +32,15 @@ export class KaliAppCore {
   private gameModule: GameModule | null = null;
   private initialized = false;
   private currentNameHandler: ((text: string) => void) | null = null;
+  private readonly speechService: MeteredSpeechService;
 
   constructor(
     private uiService: IUIService,
-    private speechService: ISpeechService,
+    speechBackend: ISpeechService,
     private options?: { skipWakeWord?: boolean },
-  ) {}
+  ) {
+    this.speechService = new MeteredSpeechService(speechBackend);
+  }
 
   async initialize(): Promise<void> {
     try {
@@ -205,20 +215,47 @@ ${examples.map((ex: string, i: number) => `${i + 1}. ${ex}`).join("\n")}`;
 
     Logger.info("Starting game proactively");
 
+    this.speechService.beginGameplayTurn();
+
     const pendingPrompt = this.orchestrator.getPendingDecisionPrompt();
     if (pendingPrompt) {
       // At game start with a decision point (e.g. path choice): speak turn announcement
       // directly. Avoids proactiveGameStart LLM also asking, causing duplicate path ask.
       await this.announceCurrentTurnIfPending();
     } else {
-      const { success, shouldAdvanceTurn } = await this.orchestrator.handleTranscript(
-        t("game.proactiveStart"),
-        { skipDecisionPointEnforcement: true },
-      );
+      const { success, shouldAdvanceTurn, voiceOutcomeHints } =
+        await this.orchestrator.handleTranscript(t("game.proactiveStart"), {
+          skipDecisionPointEnforcement: true,
+        });
       if (success && shouldAdvanceTurn) {
         await this.checkAndAdvanceTurn();
       }
+      await this.maybeApplySilentGameplayVoice(success, voiceOutcomeHints);
     }
+  }
+
+  /**
+   * Ensures the gameplay voice-turn invariant after orchestrator + turn follow-ups (see development guidelines).
+   */
+  private async maybeApplySilentGameplayVoice(
+    success: boolean,
+    voiceOutcomeHints: VoiceOutcomeHints | undefined,
+  ): Promise<void> {
+    const orchestrator = this.orchestrator;
+    const stateManager = this.stateManager;
+    if (!success || !orchestrator || !stateManager) {
+      return;
+    }
+    if (this.speechService.didSpeakThisTurn()) {
+      return;
+    }
+    const state = stateManager.getState() as GameState;
+    await applySilentSuccessFallback({
+      hints: voiceOutcomeHints,
+      state,
+      speak: (text) => this.speechService.speak(text),
+      setLastNarration: (text) => orchestrator.setLastNarrationForVoicePolicy(text),
+    });
   }
 
   private async runNameCollection(): Promise<void> {
@@ -375,7 +412,8 @@ ${examples.map((ex: string, i: number) => `${i + 1}. ${ex}`).join("\n")}`;
     }
 
     if (this.orchestrator) {
-      const { success, shouldAdvanceTurn, turnAdvancedForRevenge } =
+      this.speechService.beginGameplayTurn();
+      const { success, shouldAdvanceTurn, turnAdvancedForRevenge, voiceOutcomeHints } =
         await this.orchestrator.handleTranscript(text);
 
       if (success && turnAdvancedForRevenge) {
@@ -388,6 +426,7 @@ ${examples.map((ex: string, i: number) => `${i + 1}. ${ex}`).join("\n")}`;
       } else if (success && shouldAdvanceTurn) {
         await this.checkAndAdvanceTurn();
       }
+      await this.maybeApplySilentGameplayVoice(success, voiceOutcomeHints);
     }
 
     this.uiService.updateStatus(
@@ -452,11 +491,13 @@ ${examples.map((ex: string, i: number) => `${i + 1}. ${ex}`).join("\n")}`;
     success: boolean;
     shouldAdvanceTurn: boolean;
     turnAdvancedForRevenge?: { playerId: string; name: string; position: number };
+    voiceOutcomeHints?: VoiceOutcomeHints;
   }> {
     if (!this.orchestrator) {
       throw new Error("Orchestrator not initialized");
     }
 
+    this.speechService.beginGameplayTurn();
     const result = await this.orchestrator.testExecuteActions(actions);
 
     if (result.success && result.turnAdvancedForRevenge) {
@@ -469,6 +510,8 @@ ${examples.map((ex: string, i: number) => `${i + 1}. ${ex}`).join("\n")}`;
     } else if (result.success && result.shouldAdvanceTurn) {
       await this.checkAndAdvanceTurn();
     }
+
+    await this.maybeApplySilentGameplayVoice(result.success, result.voiceOutcomeHints);
 
     return result;
   }

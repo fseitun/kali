@@ -14,12 +14,14 @@ Kali is a voice-first PWA game moderator for kids to play board games independen
 The system is built on a strict separation of duties:
 
 ### The LLM (Interpreter)
+
 - Translates natural language to primitive actions
 - Game rules provided in prompt context (doesn't "understand" them)
 - Maps player speech to orchestrator primitives
 - Creative but untrusted - orchestrator validates everything
 
 ### The Orchestrator (CPU)
+
 - Deterministic, authoritative, and simple component
 - Knows nothing about game rules
 - Only understands primitive actions: `NARRATE`, `RESET_GAME`, `SET_STATE`, `PLAYER_ROLLED`, `PLAYER_ANSWERED`
@@ -31,12 +33,15 @@ This separation ensures the Orchestrator stays small and universal.
 ## Orchestrator Modular Structure
 
 The orchestrator uses specialized subsystems for different concerns:
+
 - **TurnManager** - Turn advancement, ownership validation, pending decisions
 - **BoardEffectsHandler** - Board moves (portals, path merge), square effects
 - **DecisionPointEnforcer** - Decision point requirements
 - **Orchestrator** - Core coordination and primitive execution
 
 When working with turn logic, board effects, or decision points, look in the corresponding module rather than the main orchestrator file.
+
+**App vs orchestrator (voice):** [`KaliAppCore`](src/kali-app-core.ts) owns turn-announcement TTS and, after each successful gameplay transcript, enforces the **gameplay voice-turn invariant** via [`gameplay-voice-policy`](src/voice/gameplay-voice-policy.ts) when the orchestrator and LLM `NARRATE` produced no speech. The orchestrator returns `VoiceOutcomeHints` to classify silent-success cases (e.g. fork choice stored without narration).
 
 ## Technology Stack
 
