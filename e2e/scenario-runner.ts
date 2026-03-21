@@ -3,7 +3,8 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { vi } from "vitest";
 import type { StatusIndicator } from "../src/components/status-indicator";
-import type { GameModule } from "../src/game-loader/types";
+import { resolveInitialState } from "../src/game-loader/game-loader";
+import type { GameConfigInput } from "../src/game-loader/types";
 import { MockLLMClient } from "../src/llm/MockLLMClient";
 import { inferDecisionPoints } from "../src/orchestrator/decision-point-inference";
 import { Orchestrator } from "../src/orchestrator/orchestrator";
@@ -16,25 +17,23 @@ import type { Scenario, ScenarioStep } from "./scenario-types";
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const PROJECT_ROOT = path.resolve(__dirname, "..");
 
-/** Game config may have stateDisplay at top level. */
-type GameConfig = GameModule & { stateDisplay?: unknown };
-
 /**
  * Loads a game config from public/games/{gameId}/config.json.
  */
-function loadGameConfig(gameId: string): GameConfig {
+function loadGameConfig(gameId: string): GameConfigInput {
   const configPath = path.join(PROJECT_ROOT, "public", "games", gameId, "config.json");
   const raw = fs.readFileSync(configPath, "utf-8");
-  return JSON.parse(raw) as GameConfig;
+  return JSON.parse(raw) as GameConfigInput;
 }
 
 /**
- * Builds initial state by merging scenario overrides onto the game's initialState.
+ * Builds initial state by merging scenario overrides onto the game's base state.
+ * Base state comes from resolveInitialState (handles both legacy initialState and squares-only).
  * Nested objects (game, players, board) are merged so partial overrides work.
- * Top-level stateDisplay is merged from config. decisionPoints are inferred from board.
+ * decisionPoints are inferred from board.
  */
-function buildInitialState(game: GameConfig, scenario: Scenario): GameState {
-  const base = game.initialState as Record<string, unknown>;
+function buildInitialState(game: GameConfigInput, scenario: Scenario): GameState {
+  const base = resolveInitialState(game) as Record<string, unknown>;
   const overrides = (scenario.initialState ?? {}) as Record<string, unknown>;
 
   const merged: Record<string, unknown> = { ...base };
@@ -58,8 +57,7 @@ function buildInitialState(game: GameConfig, scenario: Scenario): GameState {
   const decisionPoints = inferDecisionPoints(board);
   if (decisionPoints.length) merged.decisionPoints = decisionPoints;
 
-  const hasStateDisplay = game.stateDisplay !== undefined;
-  if (hasStateDisplay) merged.stateDisplay = game.stateDisplay;
+  if (game.stateDisplay) merged.stateDisplay = game.stateDisplay;
 
   return merged as GameState;
 }

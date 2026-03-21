@@ -1,5 +1,7 @@
-import type { GameModule } from "./types";
-import type { SquareData } from "@/orchestrator/types";
+import { createDefaultPlayer } from "./player-factory";
+import type { GameConfigInput, GameModule } from "./types";
+import type { BoardConfig, GameState, Player, SquareData } from "@/orchestrator/types";
+import { GamePhase } from "@/orchestrator/types";
 import type { ISpeechService } from "@/services/speech-service";
 import { Logger } from "@/utils/logger";
 
@@ -38,6 +40,96 @@ function hydrateBoardTopology(
 }
 
 /**
+ * Derives board config from squares. winPosition from effect=win, magicDoor from effect=magicDoorCheck, moves from portals.
+ */
+function deriveBoardFromSquares(
+  squares: Record<string, SquareData>,
+): Omit<BoardConfig, "squares"> & { squares: Record<string, SquareData> } {
+  let winPosition = 196;
+  let magicDoorPosition: number | undefined;
+  let magicDoorTarget = 6;
+  const moves: Record<string, number> = {};
+
+  for (const [key, sq] of Object.entries(squares)) {
+    const pos = parseInt(key, 10);
+    if (Number.isNaN(pos)) continue;
+    const effect = sq.effect;
+    const dest = sq.destination;
+
+    if (effect === "win") winPosition = pos;
+    if (effect === "magicDoorCheck") {
+      magicDoorPosition = pos;
+      const target = (sq as { target?: number }).target;
+      if (typeof target === "number") magicDoorTarget = target;
+    }
+    if (sq.type === "portal" && typeof dest === "number") {
+      moves[key] = dest;
+    }
+  }
+
+  const result: BoardConfig & { squares: Record<string, SquareData> } = {
+    winPosition,
+    squares,
+  };
+  if (magicDoorPosition !== undefined) {
+    result.magicDoorPosition = magicDoorPosition;
+    result.magicDoorTarget = magicDoorTarget;
+  }
+  if (Object.keys(moves).length > 0) result.moves = moves;
+  return result;
+}
+
+/**
+ * Resolves initialState from config. Use when config may have legacy initialState or new squares-only format.
+ * Exported for e2e scenario runner which loads config from file.
+ */
+export function resolveInitialState(config: GameConfigInput): GameState {
+  if (config.initialState) {
+    return config.initialState;
+  }
+  return buildInitialStateFromParts(config);
+}
+
+/**
+ * Builds initialState from squares + metadata. Used when config has squares but no initialState.
+ */
+function buildInitialStateFromParts(config: GameConfigInput): GameState {
+  const { metadata, squares: rawSquares, stateDisplay } = config;
+  if (!rawSquares) {
+    throw new Error("Cannot build initialState: config has no squares");
+  }
+
+  const boardDerived = deriveBoardFromSquares(rawSquares);
+  const boardLength = typeof boardDerived.winPosition === "number" ? boardDerived.winPosition : 196;
+  const hydratedSquares = hydrateBoardTopology(rawSquares, boardLength);
+  const board: BoardConfig = { ...boardDerived, squares: hydratedSquares };
+
+  const playerOrder = Array.from({ length: metadata.minPlayers }, (_, i) => `p${i + 1}`);
+  const players: Record<string, Player> = {};
+  for (let i = 0; i < metadata.minPlayers; i++) {
+    const id = `p${i + 1}`;
+    const name = `Player ${i + 1}`;
+    players[id] = createDefaultPlayer(metadata.id, id, name);
+  }
+
+  const game = {
+    name: metadata.name.split(" - ")[0] ?? metadata.name,
+    phase: GamePhase.SETUP,
+    turn: "p1",
+    playerOrder,
+    winner: null,
+    lastRoll: 0,
+    pendingRoll: null,
+    currentHabitat: metadata.initialHabitat ?? "Inicio",
+    pendingAnimalEncounter: null,
+  };
+
+  const state: GameState = { game, players, board };
+  if (stateDisplay) (state as Record<string, unknown>).stateDisplay = stateDisplay;
+  return state;
+}
+
+/**
  * Handles loading game modules from JSON files and their associated resources.
  */
 export class GameLoader {
@@ -60,12 +152,13 @@ export class GameLoader {
         throw new Error(`Failed to load game module: ${response.statusText}`);
       }
 
-      const module = (await response.json()) as GameModule;
+      const config = (await response.json()) as GameConfigInput;
 
-      this.validateGameModule(module);
+      this.validateGameConfig(config);
 
-      if (module.initialState?.board?.squares) {
-        const board = module.initialState.board as Record<string, unknown>;
+      const initialState = resolveInitialState(config);
+      if (initialState.board?.squares) {
+        const board = initialState.board as Record<string, unknown>;
         const boardLength = typeof board.winPosition === "number" ? board.winPosition : 196;
         const hydrated = hydrateBoardTopology(
           board.squares as Record<string, SquareData>,
@@ -73,6 +166,15 @@ export class GameLoader {
         );
         board.squares = hydrated;
       }
+
+      const module: GameModule = {
+        metadata: config.metadata,
+        initialState,
+        rules: config.rules,
+        soundEffects: config.soundEffects,
+        customActions: config.customActions,
+        stateDisplay: config.stateDisplay,
+      };
 
       Logger.info(`Game module loaded: ${module.metadata.name}`);
       return module;
@@ -107,17 +209,21 @@ export class GameLoader {
     await Promise.all(loadPromises);
   }
 
-  private validateGameModule(module: GameModule): void {
-    if (!module.metadata?.id || !module.metadata?.name) {
+  private validateGameConfig(config: GameConfigInput): void {
+    if (!config.metadata?.id || !config.metadata?.name) {
       throw new Error("Invalid game module: missing metadata");
     }
 
-    if (!module.initialState) {
-      throw new Error("Invalid game module: missing initialState");
+    if (!config.rules?.objective) {
+      throw new Error("Invalid game module: missing rules");
     }
 
-    if (!module.rules?.objective || !module.rules?.mechanics) {
-      throw new Error("Invalid game module: missing rules");
+    if (config.initialState) {
+      // Legacy format: initialState present
+    } else if (config.squares && Object.keys(config.squares).length > 0) {
+      // New format: squares only
+    } else {
+      throw new Error("Invalid game config: need initialState or squares");
     }
 
     Logger.info("Game module validation passed");

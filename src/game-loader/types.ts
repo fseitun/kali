@@ -1,4 +1,4 @@
-import type { GameState } from "@/orchestrator/types";
+import type { GameState, SquareData } from "@/orchestrator/types";
 
 /**
  * Metadata about a game module.
@@ -6,9 +6,10 @@ import type { GameState } from "@/orchestrator/types";
 export interface GameMetadata {
   id: string;
   name: string;
-  description: string;
   minPlayers: number;
   maxPlayers: number;
+  /** Initial habitat label for game.currentHabitat. Default "Inicio". */
+  initialHabitat?: string;
 }
 
 /**
@@ -16,10 +17,6 @@ export interface GameMetadata {
  */
 export interface GameRules {
   objective: string;
-  mechanics: string;
-  turnStructure: string;
-  boardLayout: string;
-  examples: string[];
   /** Optional short summary for NARRATE explanations (2-3 sentences). Not sent as full rules. */
   summary?: string;
 }
@@ -40,6 +37,21 @@ export interface StateDisplayMetadata {
   game?: StateDisplayConfig;
   players?: StateDisplayConfig;
   board?: StateDisplayConfig;
+}
+
+/**
+ * Raw config input. Supports legacy (initialState) or new (squares-only) format.
+ */
+export interface GameConfigInput {
+  metadata: GameMetadata;
+  rules: GameRules;
+  soundEffects?: Record<string, string>;
+  customActions?: string[];
+  stateDisplay?: StateDisplayMetadata;
+  /** Legacy: full initial state. If present, used as-is. */
+  initialState?: GameState;
+  /** New format: squares only. Board, game, players derived at load. */
+  squares?: Record<string, SquareData>;
 }
 
 /**

@@ -26,7 +26,6 @@ describe("NameCollector - State Isolation (Rule #4)", () => {
     gameMetadata = {
       id: "test-game",
       name: "Test Game",
-      description: "A test game",
       minPlayers: 2,
       maxPlayers: 4,
     };
@@ -273,7 +272,6 @@ describe("NameCollector - Runtime Flow", () => {
     gameMetadata = {
       id: "test-game",
       name: "Test Game",
-      description: "A test game",
       minPlayers: 2,
       maxPlayers: 4,
     };

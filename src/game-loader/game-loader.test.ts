@@ -42,16 +42,11 @@ describe("GameLoader", () => {
         metadata: {
           id: "test-game",
           name: "Test Game",
-          description: "Test description",
           minPlayers: 2,
           maxPlayers: 4,
         },
         rules: {
           objective: "Test objective",
-          mechanics: "Test mechanics",
-          turnStructure: "Test turn structure",
-          boardLayout: "Test board layout",
-          examples: ["Test example"],
         },
         initialState: {
           game: {
@@ -99,7 +94,6 @@ describe("GameLoader", () => {
       const invalidModule = {
         rules: {
           objective: "Test objective",
-          mechanics: "Test mechanics",
         },
         initialState: {
           game: {
@@ -128,7 +122,10 @@ describe("GameLoader", () => {
         metadata: {
           id: "test-game",
           name: "Test Game",
+          minPlayers: 2,
+          maxPlayers: 4,
         },
+        rules: {},
         initialState: {
           game: {
             name: "Test Game",
@@ -156,10 +153,11 @@ describe("GameLoader", () => {
         metadata: {
           id: "test-game",
           name: "Test Game",
+          minPlayers: 2,
+          maxPlayers: 4,
         },
         rules: {
           objective: "Test objective",
-          mechanics: "Test mechanics",
         },
       };
 
@@ -169,7 +167,7 @@ describe("GameLoader", () => {
       });
 
       await expect(gameLoader.loadGame("invalid")).rejects.toThrow(
-        "Invalid game module: missing initialState",
+        "Invalid game config: need initialState or squares",
       );
     });
 
@@ -178,7 +176,6 @@ describe("GameLoader", () => {
         metadata: {},
         rules: {
           objective: "Test objective",
-          mechanics: "Test mechanics",
         },
         initialState: {
           game: {
@@ -209,16 +206,11 @@ describe("GameLoader", () => {
         metadata: {
           id: "test-game",
           name: "Test Game",
-          description: "Test description",
           minPlayers: 2,
           maxPlayers: 4,
         },
         rules: {
           objective: "Test objective",
-          mechanics: "Test mechanics",
-          turnStructure: "Test turn structure",
-          boardLayout: "Test board layout",
-          examples: ["Test example"],
         },
         initialState: {
           game: {
@@ -252,16 +244,11 @@ describe("GameLoader", () => {
         metadata: {
           id: "test-game",
           name: "Test Game",
-          description: "Test description",
           minPlayers: 2,
           maxPlayers: 4,
         },
         rules: {
           objective: "Test objective",
-          mechanics: "Test mechanics",
-          turnStructure: "Test turn structure",
-          boardLayout: "Test board layout",
-          examples: ["Test example"],
         },
         initialState: {
           game: {
@@ -285,16 +272,11 @@ describe("GameLoader", () => {
         metadata: {
           id: "test-game",
           name: "Test Game",
-          description: "Test description",
           minPlayers: 2,
           maxPlayers: 4,
         },
         rules: {
           objective: "Test objective",
-          mechanics: "Test mechanics",
-          turnStructure: "Test turn structure",
-          boardLayout: "Test board layout",
-          examples: ["Test example"],
         },
         initialState: {
           game: {
@@ -329,16 +311,11 @@ describe("GameLoader", () => {
         metadata: {
           id: "test-game",
           name: "Test Game",
-          description: "Test description",
           minPlayers: 2,
           maxPlayers: 4,
         },
         rules: {
           objective: "Test objective",
-          mechanics: "Test mechanics",
-          turnStructure: "Test turn structure",
-          boardLayout: "Test board layout",
-          examples: ["Test example"],
         },
         initialState: {
           game: {

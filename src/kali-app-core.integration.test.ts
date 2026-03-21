@@ -4,8 +4,9 @@
  */
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { StatusIndicator } from "./components/status-indicator";
-import type { GameModule } from "./game-loader/types";
+import type { GameConfigInput, GameModule } from "./game-loader/types";
 import { KaliAppCore } from "./kali-app-core";
+import type { GameState } from "./orchestrator/types";
 import { GamePhase } from "./orchestrator/types";
 import type { ISpeechService } from "./services/speech-service";
 import type { IUIService } from "./services/ui-service";
@@ -22,6 +23,9 @@ vi.mock("./game-loader/game-loader", async () => {
   const { fileURLToPath } = await import("node:url");
   const __dirname = pathMod.dirname(fileURLToPath(import.meta.url));
   const root = pathMod.resolve(__dirname, "..");
+  const gameLoaderActual = await vi.importActual<{
+    resolveInitialState: (config: GameConfigInput) => GameState;
+  }>("./game-loader/game-loader");
   return {
     GameLoader: class MockGameLoader {
       constructor(private _gamesPath: string) {
@@ -31,7 +35,16 @@ vi.mock("./game-loader/game-loader", async () => {
       async loadGame(gameId: string): Promise<GameModule> {
         const configPath = pathMod.join(root, "public", "games", gameId, "config.json");
         const raw = fsMod.readFileSync(configPath, "utf-8");
-        const module = JSON.parse(raw) as GameModule;
+        const config = JSON.parse(raw) as GameConfigInput;
+        const initialState = gameLoaderActual.resolveInitialState(config);
+        const module: GameModule = {
+          metadata: config.metadata,
+          initialState,
+          rules: config.rules,
+          soundEffects: config.soundEffects,
+          customActions: config.customActions,
+          stateDisplay: config.stateDisplay,
+        };
         if (phaseOverride.value !== undefined) {
           (module.initialState.game as Record<string, unknown>).phase = phaseOverride.value;
         }

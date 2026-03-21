@@ -16,38 +16,19 @@ Each game lives in `public/games/[game-name]/config.json`:
   "metadata": {
     "id": "game-id",
     "name": "Display Name",
-    "description": "Brief description",
     "minPlayers": 2,
     "maxPlayers": 4
   },
   "rules": {
     "objective": "Win condition",
-    "mechanics": "How to play",
-    "turnStructure": "Turn order",
-    "boardLayout": "Board description",
-    "examples": ["example 1", "example 2"]
+    "summary": "Optional short summary for NARRATE"
   },
-  "initialState": {
-    "game": {
-      "phase": "SETUP",
-      "turn": null,
-      "winner": null
-    },
-    "players": {}
-  },
-  "board": {
-    "size": 100,
-    "moves": {
-      "5": 15,   // Ladder: 5 → 15
-      "12": 3    // Snake: 12 → 3
-    },
-    "squares": {
-      "10": {
-        "type": "encounter",
-        "name": "Wolf",
-        "power": 3
-      }
-    }
+  "squares": {
+    "0": { "type": "empty", "next": { "1": ["left"], "15": ["right"] } },
+    "10": { "type": "animal", "name": "Wolf", "power": 3 },
+    "45": { "type": "portal", "destination": 82 },
+    "186": { "type": "special", "effect": "magicDoorCheck", "target": 6 },
+    "196": { "type": "special", "effect": "win" }
   },
   "soundEffects": {
     "roll": "/games/[game-name]/sounds/roll.mp3",
@@ -56,21 +37,28 @@ Each game lives in `public/games/[game-name]/config.json`:
 }
 ```
 
+## Config formats
+
+**New (squares-only):** Define `squares` at top level. Board (winPosition, moves, magicDoor), game state, and players are derived at load. See `player-factory.ts` and `deriveBoardFromSquares` in game-loader.
+
+**Legacy:** Define `initialState` with full game/players/board. Still supported for backward compatibility.
+
 ## Decision Points
 
-Decision points (forks) are inferred from `board.squares`: any square with `next.length > 1` becomes a decision point. No config needed.
+Decision points (forks) are inferred from board squares: any square with `next` mapping to multiple targets becomes a decision point.
 
 ## How Games Are Loaded
 
 1. `GameLoader.loadGame(gameName)` fetches config JSON
-2. Validates structure against `GameModule` interface
-3. Preloads sound effects via WebAudio
-4. Returns game module to orchestrator
-5. Orchestrator initializes state from `initialState`
+2. Resolves initialState (from config.initialState or derived from config.squares)
+3. Hydrates board topology (fills empty squares, default next/prev)
+4. Preloads sound effects via WebAudio
+5. Returns game module to orchestrator
 
 ## LLM Integration
 
 Game rules are passed to LLM via system prompt:
+
 - `rules` section becomes LLM context
 - LLM understands game mechanics
 - LLM translates player actions to primitives
@@ -83,12 +71,14 @@ MVP is Kalimba-only. `BoardEffectsHandler` contains Kalimba board logic (board.m
 ## Sound Effects
 
 Sound effects are preloaded at game start:
+
 ```typescript
-const soundEffects = await gameLoader.loadSoundEffects(gameModule)
+const soundEffects = await gameLoader.loadSoundEffects(gameModule);
 // Returns Map<string, AudioBuffer>
 ```
 
 Used by SpeechService for:
+
 - Dice rolls
 - Win conditions
 - Special events

@@ -1,4 +1,5 @@
 import { CONFIG } from "./config";
+import { getExamples } from "./game-loader/examples";
 import { GameLoader } from "./game-loader/game-loader";
 import type { GameModule } from "./game-loader/types";
 import { t } from "./i18n/translations";
@@ -142,14 +143,22 @@ export class KaliAppCore {
 
   private formatGameRules(gameModule: GameModule): string {
     const { rules, metadata } = gameModule;
-    const examples = rules.examples.slice(0, 4);
+    const typedExamples = getExamples(metadata.id).slice(0, 4);
+    const exampleLines = typedExamples.map(
+      (ex) => `User: ${ex.user} | You: ${JSON.stringify(ex.actions)}`,
+    );
+
     const summary = rules.summary?.trim() ?? "";
+
+    const examplesBlock =
+      exampleLines.length > 0
+        ? `**Examples:**\n${exampleLines.map((ex, i) => `${i + 1}. ${ex}`).join("\n")}`
+        : "";
 
     return `## ${metadata.name}
 **Objective:** ${rules.objective}
 **Your job:** Translate user speech to primitives. Orchestrator does math and turn management. Current task and options are in the state block below.
-${summary ? `**Summary (for NARRATE explanations):** ${summary}\n` : ""}**Examples:**
-${examples.map((ex: string, i: number) => `${i + 1}. ${ex}`).join("\n")}`;
+${summary ? `**Summary (for NARRATE explanations):** ${summary}\n` : ""}${examplesBlock}`;
   }
 
   private async initializeWakeWord(): Promise<void> {
