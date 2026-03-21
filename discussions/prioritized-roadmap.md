@@ -467,6 +467,20 @@ class StateManager {
 
 ---
 
+### Follow-ups: getActions & turn advancement (after movement-roll fix) 💎
+
+**Context:** Fixes already shipped: sync `lastNarration` with app-spoken turn announcements (`src/kali-app-core.ts`) so the LLM sees the same prompt the user heard (avoids stale lines like “Pasaste.” confusing a bare number). Post-LLM coercion: a single dice-only `PLAYER_ANSWERED` is rewritten to `PLAYER_ROLLED` when `validatePlayerRolled` allows it (`Orchestrator.coerceMovementPlayerAnsweredToPlayerRolled` in `src/orchestrator/orchestrator.ts`). Tests: describe `Coerce PLAYER_ANSWERED → PLAYER_ROLLED for movement` in `src/orchestrator/orchestrator.integration.test.ts`.
+
+**Future ideas (not implemented):**
+
+1. **Smarter `shouldAdvanceTurn` for `PLAYER_ANSWERED`** — Today, almost any validated `PLAYER_ANSWERED` ends the turn even when `executePlayerAnswered` does nothing (no riddle, power check, or fork apply). Improvement: advance only when a handler reports consumption (e.g. explicit flags on `ExecutionContext`) or another well-defined rule. **Risk:** handlers live in several modules; naive before/after state diff is easy to get wrong. **When:** If “turn skipped, nothing happened” still happens for mistakes that are not a lone numeric movement (coercion does not cover those).
+
+2. **Lower LLM temperature for `getActions` only** — Reduce `temperature` in `BaseLLMClient.attemptLLMCall` for action extraction. **Trade-off:** Affects every `getActions` call (not just dice); does not fix bad context by itself. **When:** Optional tuning if mis-tags remain frequent after the shipped fixes.
+
+3. **Numeric fast path** — For unambiguous transcripts (e.g. trimmed `/^\d+$/` and `validatePlayerRolled` passes), skip the LLM to save latency and remove a failure mode. **Caution:** Must not intercept power-check/revenge numeric answers; those must stay `PLAYER_ANSWERED`.
+
+---
+
 ### Enhanced Logging & Debug Tools 💎
 
 **Value: 6/10 | Complexity: 5/10 | Ratio: 1.2**

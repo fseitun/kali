@@ -24,6 +24,7 @@ import {
 } from "./types";
 import { VALIDATION_ERROR_I18N } from "./validation-i18n";
 import { validateActions } from "./validator";
+import { validatePlayerRolled } from "./validator/player-rolled";
 import type { IStatusIndicator } from "@/components/status-indicator";
 import { t } from "@/i18n/translations";
 import type { LLMClient } from "@/llm/LLMClient";
@@ -360,9 +361,8 @@ export class Orchestrator {
             Logger.robot(
               `LLM retry returned ${retryActions.length} action(s): ${retryActions.map((a) => a.action).join(", ")}`,
             );
-            const normalizedRetry = this.normalizeRiddleAnswerFromTranscript(
-              retryActions,
-              transcript,
+            const normalizedRetry = this.coerceMovementPlayerAnsweredToPlayerRolled(
+              this.normalizeRiddleAnswerFromTranscript(retryActions, transcript),
             );
             return await this.runValidatedActions(normalizedRetry, context, "orchestrator");
           }
@@ -372,7 +372,9 @@ export class Orchestrator {
         // Turn not advanced; user can say something again to trigger a fresh getActions.
         return { success: false, shouldAdvanceTurn: false };
       }
-      const normalizedActions = this.normalizeRiddleAnswerFromTranscript(actions, transcript);
+      const normalizedActions = this.coerceMovementPlayerAnsweredToPlayerRolled(
+        this.normalizeRiddleAnswerFromTranscript(actions, transcript),
+      );
       return await this.runValidatedActions(normalizedActions, context, "orchestrator");
     } catch (error) {
       Logger.error("Orchestrator error:", error);
@@ -385,6 +387,30 @@ export class Orchestrator {
    * When in riddle phase with structured options, resolve the user's transcript to the matched option text.
    * If the transcript matches one of the four options, replace the first PLAYER_ANSWERED answer with that option text.
    */
+  /**
+   * When the LLM returns PLAYER_ANSWERED with a dice-only answer but the game expects a
+   * movement PLAYER_ROLLED, rewrite so the roll applies and turn logic stays correct.
+   * Skipped when validatePlayerRolled would fail (fork pending, powerCheck, riddle, etc.).
+   */
+  private coerceMovementPlayerAnsweredToPlayerRolled(
+    actions: PrimitiveAction[],
+  ): PrimitiveAction[] {
+    if (actions.length !== 1) return actions;
+    const action = actions[0];
+    if (action.action !== "PLAYER_ANSWERED") return actions;
+    if (!("answer" in action) || typeof action.answer !== "string") return actions;
+    const trimmed = action.answer.trim();
+    if (!/^\d+$/.test(trimmed)) return actions;
+    const value = parseInt(trimmed, 10);
+    if (!Number.isFinite(value)) return actions;
+    const rolled: PrimitiveAction = { action: "PLAYER_ROLLED", value };
+    const state = this.stateManager.getState();
+    const validation = validatePlayerRolled(rolled, state, 0, this);
+    if (!validation.valid) return actions;
+    Logger.info(`Coerced PLAYER_ANSWERED "${trimmed}" → PLAYER_ROLLED (${value})`);
+    return [rolled];
+  }
+
   private normalizeRiddleAnswerFromTranscript(
     actions: PrimitiveAction[],
     transcript: string,

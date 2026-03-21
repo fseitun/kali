@@ -365,6 +365,7 @@ ${examples.map((ex: string, i: number) => `${i + 1}. ${ex}`).join("\n")}`;
     });
     Logger.info(`Announcing current turn (decision pending): ${name} at ${position}`);
     await this.speechService.speak(message);
+    this.orchestrator.setLastNarrationForVoicePolicy(message);
   }
 
   /**
@@ -397,6 +398,7 @@ ${examples.map((ex: string, i: number) => `${i + 1}. ${ex}`).join("\n")}`;
           });
       Logger.info(`Turn start sanity check: ${nextPlayer.name} at ${nextPlayer.position}`);
       await this.speechService.speak(message);
+      this.orchestrator.setLastNarrationForVoicePolicy(message);
     }
   }
 
@@ -417,12 +419,12 @@ ${examples.map((ex: string, i: number) => `${i + 1}. ${ex}`).join("\n")}`;
         await this.orchestrator.handleTranscript(text);
 
       if (success && turnAdvancedForRevenge) {
-        await this.speechService.speak(
-          t("game.turnAnnouncement", {
-            name: turnAdvancedForRevenge.name,
-            position: turnAdvancedForRevenge.position,
-          }),
-        );
+        const revengeMsg = t("game.turnAnnouncement", {
+          name: turnAdvancedForRevenge.name,
+          position: turnAdvancedForRevenge.position,
+        });
+        await this.speechService.speak(revengeMsg);
+        this.orchestrator.setLastNarrationForVoicePolicy(revengeMsg);
       } else if (success && shouldAdvanceTurn) {
         await this.checkAndAdvanceTurn();
       }

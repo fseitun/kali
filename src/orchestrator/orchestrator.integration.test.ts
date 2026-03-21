@@ -1171,4 +1171,74 @@ describe("Orchestrator Integration Tests", () => {
       expect(points).toBe(3);
     });
   });
+
+  describe("Coerce PLAYER_ANSWERED → PLAYER_ROLLED for movement", () => {
+    it("rewrites a mis-tagged dice-only answer when a movement roll is legal", async () => {
+      mockLLM = createScriptedLLM([[{ action: "PLAYER_ANSWERED", answer: "2" }]]);
+
+      const initialState: GameState = {
+        game: {
+          name: "Test Game",
+          phase: GamePhase.PLAYING,
+          turn: "p1",
+          playerOrder: ["p1", "p2"],
+          winner: null,
+          lastRoll: 0,
+        },
+        players: {
+          p1: {
+            id: "p1",
+            name: "Alice",
+            position: 36,
+            activeChoices: {},
+            bonusDiceNextTurn: false,
+          },
+          p2: { id: "p2", name: "Bob", position: 0 },
+        },
+        board: { winPosition: 196, moves: {}, squares: {} },
+      };
+
+      setupGame(initialState);
+
+      const result = await orchestrator.handleTranscript("2");
+
+      expect(result.success).toBe(true);
+      expect(stateManager.get("players.p1.position")).toBe(38);
+      expect(stateManager.get("game.lastRoll")).toBe(2);
+    });
+
+    it("does not coerce when a fork choice is still pending (PLAYER_ROLLED invalid)", async () => {
+      mockLLM = createScriptedLLM([[{ action: "PLAYER_ANSWERED", answer: "3" }]]);
+
+      const initialState: GameState = {
+        game: {
+          name: "Test Game",
+          phase: GamePhase.PLAYING,
+          turn: "p1",
+          playerOrder: ["p1", "p2"],
+          winner: null,
+          lastRoll: 0,
+        },
+        players: {
+          p1: { id: "p1", name: "Alice", position: 0, activeChoices: {} },
+          p2: { id: "p2", name: "Bob", position: 0 },
+        },
+        board: {
+          winPosition: 196,
+          moves: {},
+          squares: { "0": { type: "empty", next: [1, 15] } },
+        },
+        decisionPoints: [
+          { position: 0, prompt: "Choose path?", positionOptions: { "1": 1, "15": 15 } },
+        ],
+      };
+
+      setupGame(initialState);
+
+      const result = await orchestrator.handleTranscript("3");
+
+      expect(result.success).toBe(true);
+      expect(stateManager.get("players.p1.position")).toBe(0);
+    });
+  });
 });
