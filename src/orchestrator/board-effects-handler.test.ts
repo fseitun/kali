@@ -122,7 +122,7 @@ describe("BoardEffectsHandler", () => {
   });
 
   describe("checkAndApplySquareEffects()", () => {
-    const baseContext: ExecutionContext = { depth: 0, maxDepth: 5 };
+    const baseContext: ExecutionContext = {};
 
     it("should do nothing for non-position paths", async () => {
       stateManager.set("board.squares", {
@@ -236,33 +236,17 @@ describe("BoardEffectsHandler", () => {
       expect(boardEffectsHandler.isProcessingEffect()).toBe(false);
     });
 
-    it("should pass correct context depth (depth + 1)", async () => {
+    it("should pass isNestedCall: true when invoking processTranscript", async () => {
       const squareData = { type: "encounter", name: "Bear" };
       stateManager.set("board.squares", { "5": squareData });
       stateManager.set("players.p1.position", 5);
 
-      await boardEffectsHandler.checkAndApplySquareEffects("players.p1.position", {
-        depth: 2,
-        maxDepth: 5,
-      });
+      await boardEffectsHandler.checkAndApplySquareEffects("players.p1.position", baseContext);
 
       expect(mockProcessTranscript).toHaveBeenCalledWith(
         expect.stringContaining("[SYSTEM: Current player just landed on square 5"),
-        { depth: 3, maxDepth: 5 },
+        { isNestedCall: true },
       );
-    });
-
-    it("should skip processing when approaching max depth", async () => {
-      const squareData = { type: "encounter", name: "Bear" };
-      stateManager.set("board.squares", { "5": squareData });
-      stateManager.set("players.p1.position", 5);
-
-      await boardEffectsHandler.checkAndApplySquareEffects("players.p1.position", {
-        depth: 4,
-        maxDepth: 5,
-      });
-
-      expect(mockProcessTranscript).not.toHaveBeenCalled();
     });
 
     it("should include square data in synthetic transcript", async () => {
@@ -439,10 +423,7 @@ describe("BoardEffectsHandler", () => {
         return true;
       });
 
-      await boardEffectsHandler.checkAndApplySquareEffects("players.p1.position", {
-        depth: 0,
-        maxDepth: 5,
-      });
+      await boardEffectsHandler.checkAndApplySquareEffects("players.p1.position", {});
 
       expect(statusDuringProcessing).toBe(true);
     });
@@ -452,10 +433,7 @@ describe("BoardEffectsHandler", () => {
       stateManager.set("board.squares", { "5": squareData });
       stateManager.set("players.p1.position", 5);
 
-      await boardEffectsHandler.checkAndApplySquareEffects("players.p1.position", {
-        depth: 0,
-        maxDepth: 5,
-      });
+      await boardEffectsHandler.checkAndApplySquareEffects("players.p1.position", {});
 
       expect(boardEffectsHandler.isProcessingEffect()).toBe(false);
     });

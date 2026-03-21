@@ -153,15 +153,10 @@ export class BoardEffectsHandler {
    * Reads board.squares config; orchestrator owns all state mutations for game rules.
    *
    * @param path - State path that was mutated
-   * @param context - Execution context for depth tracking
+   * @param context - Execution context
    */
-  async checkAndApplySquareEffects(path: string, context: ExecutionContext): Promise<void> {
+  async checkAndApplySquareEffects(path: string, _context: ExecutionContext): Promise<void> {
     if (!path.endsWith(".position") || !path.startsWith("players.")) {
-      return;
-    }
-
-    if (context.depth >= context.maxDepth - 1) {
-      Logger.warn("Skipping square effect check: max depth approaching");
       return;
     }
 
@@ -207,10 +202,7 @@ export class BoardEffectsHandler {
     const applied = this.applyDeterministicSquareEffects(path, squareData);
     const appliedText = applied.length > 0 ? ` Orchestrator applied: ${applied.join(", ")}.` : "";
 
-    const newContext: ExecutionContext = {
-      depth: context.depth + 1,
-      maxDepth: context.maxDepth,
-    };
+    const newContext: ExecutionContext = { isNestedCall: true };
 
     const squareInfo = JSON.stringify(squareData);
     let transcript: string;

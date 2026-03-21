@@ -42,7 +42,7 @@ describe("DecisionPointEnforcer", () => {
   });
 
   describe("enforceDecisionPoints()", () => {
-    const baseContext: ExecutionContext = { depth: 0, maxDepth: 5 };
+    const baseContext: ExecutionContext = {};
 
     it("should do nothing when no decision points exist", async () => {
       await decisionPointEnforcer.enforceDecisionPoints(baseContext);
@@ -173,46 +173,16 @@ describe("DecisionPointEnforcer", () => {
       );
     });
 
-    it("should pass correct context depth (depth + 1)", async () => {
+    it("should pass isNestedCall: true when invoking processTranscript", async () => {
       stateManager.set("decisionPoints", [{ position: 5, prompt: "Choose your path" }]);
       stateManager.set("players.p1.position", 5);
       stateManager.set("players.p1.activeChoices", {});
 
-      await decisionPointEnforcer.enforceDecisionPoints({
-        depth: 2,
-        maxDepth: 5,
-      });
+      await decisionPointEnforcer.enforceDecisionPoints(baseContext);
 
       expect(mockProcessTranscript).toHaveBeenCalledWith(expect.any(String), {
-        depth: 3,
-        maxDepth: 5,
+        isNestedCall: true,
       });
-    });
-
-    it("should skip enforcement when approaching max depth", async () => {
-      stateManager.set("decisionPoints", [{ position: 5, prompt: "Choose your path" }]);
-      stateManager.set("players.p1.position", 5);
-      stateManager.set("players.p1.activeChoices", {});
-
-      await decisionPointEnforcer.enforceDecisionPoints({
-        depth: 4,
-        maxDepth: 5,
-      });
-
-      expect(mockProcessTranscript).not.toHaveBeenCalled();
-    });
-
-    it("should skip enforcement when at max depth", async () => {
-      stateManager.set("decisionPoints", [{ position: 5, prompt: "Choose your path" }]);
-      stateManager.set("players.p1.position", 5);
-      stateManager.set("players.p1.activeChoices", {});
-
-      await decisionPointEnforcer.enforceDecisionPoints({
-        depth: 5,
-        maxDepth: 5,
-      });
-
-      expect(mockProcessTranscript).not.toHaveBeenCalled();
     });
 
     it("should handle multiple decision points (only enforce current position)", async () => {

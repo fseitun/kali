@@ -24,14 +24,9 @@ export class DecisionPointEnforcer {
    * If player is at a decision point and hasn't filled required field,
    * injects a prompt to ask for the decision.
    *
-   * @param context - Execution context for depth tracking
+   * @param context - Execution context
    */
-  async enforceDecisionPoints(context: ExecutionContext): Promise<void> {
-    if (context.depth >= context.maxDepth - 1) {
-      Logger.warn("Skipping decision point check: max depth approaching");
-      return;
-    }
-
+  async enforceDecisionPoints(_context: ExecutionContext): Promise<void> {
     const state = this.stateManager.getState();
     const game = state.game as Record<string, unknown> | undefined;
     const currentTurn = game?.turn as string | undefined;
@@ -76,10 +71,7 @@ export class DecisionPointEnforcer {
           `Orchestrator enforcing decision point for ${playerName} at position ${position}`,
         );
 
-        const newContext: ExecutionContext = {
-          depth: context.depth + 1,
-          maxDepth: context.maxDepth,
-        };
+        const newContext: ExecutionContext = { isNestedCall: true };
 
         await this.processTranscriptFn(
           `[SYSTEM: ${playerName} (${currentTurn}) is at position ${position} and MUST choose direction at fork before proceeding. Ask them: "${decisionPoint.prompt}"]`,

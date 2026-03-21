@@ -58,7 +58,7 @@ export class Orchestrator {
   private actionHandlers: Map<string, ActionHandler> = new Map();
   private isProcessing = false;
   private initialState: GameState;
-  private readonly defaultContext: ExecutionContext = { depth: 0, maxDepth: 5 };
+  private readonly defaultContext: ExecutionContext = {};
   /** Last NARRATE text spoken; passed to LLM so short replies (sí/no, number) can be interpreted as answers to that question. */
   private lastNarration = "";
 
@@ -322,16 +322,19 @@ export class Orchestrator {
     context: ExecutionContext,
   ): Promise<OrchestratorGameplayResult> {
     try {
-      Logger.brain(`Orchestrator processing: ${transcript} (depth: ${context.depth})`);
+      Logger.brain(
+        `Orchestrator processing: ${transcript} (${context.isNestedCall ? "nested" : "top"})`,
+      );
 
       const state = this.stateManager.getState();
       Logger.state(
         "Current state:\n" + formatStateContext(state as Record<string, unknown>, { forLog: true }),
       );
-      Profiler.start(`orchestrator.llm.${context.depth}`);
+      const profilerKey = context.isNestedCall ? "nested" : "top";
+      Profiler.start(`orchestrator.llm.${profilerKey}`);
       const lastBotUtterance = this.lastNarration !== "" ? this.lastNarration : undefined;
       const actions = await this.llmClient.getActions(transcript, state, lastBotUtterance);
-      Profiler.end(`orchestrator.llm.${context.depth}`);
+      Profiler.end(`orchestrator.llm.${profilerKey}`);
 
       if (Array.isArray(actions)) {
         Logger.robot(
@@ -350,13 +353,13 @@ export class Orchestrator {
           );
           await this.speechService.speak(t("llm.retrying"));
           const retryState = this.stateManager.getState();
-          Profiler.start(`orchestrator.llm.retry.${context.depth}`);
+          Profiler.start(`orchestrator.llm.retry.${profilerKey}`);
           const retryActions = await this.llmClient.getActions(
             transcript,
             retryState,
             lastBotUtterance,
           );
-          Profiler.end(`orchestrator.llm.retry.${context.depth}`);
+          Profiler.end(`orchestrator.llm.retry.${profilerKey}`);
           if (Array.isArray(retryActions) && retryActions.length > 0) {
             Logger.robot(
               `LLM retry returned ${retryActions.length} action(s): ${retryActions.map((a) => a.action).join(", ")}`,
@@ -451,9 +454,10 @@ export class Orchestrator {
       "Current state:\n" + formatStateContext(state as Record<string, unknown>, { forLog: true }),
     );
 
-    Profiler.start(`${profilerPrefix}.validation.${context.depth}`);
+    const validationProfilerKey = context.isNestedCall ? "nested" : "top";
+    Profiler.start(`${profilerPrefix}.validation.${validationProfilerKey}`);
     const validation = validateActions(actions, state, this.stateManager, this);
-    Profiler.end(`${profilerPrefix}.validation.${context.depth}`);
+    Profiler.end(`${profilerPrefix}.validation.${validationProfilerKey}`);
 
     if (!validation.valid) {
       Logger.error("Validation failed:", validation.error);
@@ -501,17 +505,21 @@ export class Orchestrator {
     const shouldAdvanceTurn = rawShouldAdvanceTurn && !onlyResolvedForkChoice;
 
     const voiceOutcomeHints: VoiceOutcomeHints | undefined =
-      context.depth === 0 && onlyResolvedForkChoice && !actions.some((a) => a.action === "NARRATE")
+      !context.isNestedCall &&
+      onlyResolvedForkChoice &&
+      !actions.some((a) => a.action === "NARRATE")
         ? { forkChoiceResolvedWithoutNarrate: true }
         : undefined;
 
     Logger.info("Actions validated, executing...");
-    const actionsToRun =
-      context.depth === 0 ? reorderPowerCheckBeforeRoll(actions, state) : actions;
-    Profiler.start(`${profilerPrefix}.execution.${context.depth}`);
+    const actionsToRun = !context.isNestedCall
+      ? reorderPowerCheckBeforeRoll(actions, state)
+      : actions;
+    const runProfilerKey = context.isNestedCall ? "nested" : "top";
+    Profiler.start(`${profilerPrefix}.execution.${runProfilerKey}`);
     await this.executeActions(actionsToRun, context);
-    Profiler.end(`${profilerPrefix}.execution.${context.depth}`);
-    if (context.depth === 0) {
+    Profiler.end(`${profilerPrefix}.execution.${runProfilerKey}`);
+    if (!context.isNestedCall) {
       Logger.info("Actions executed successfully");
     }
     Logger.state(
@@ -522,12 +530,12 @@ export class Orchestrator {
     );
 
     // Only enforce decision points for top-level (user-initiated) flows.
-    // When depth > 0, we're in a nested call from a previous enforcement or board effect;
+    // When isNestedCall, we're in a nested call from board effect or decision enforcement;
     // we just executed the LLM's response (e.g. asking the question). Don't re-inject.
     // Skip when skipDecisionPointEnforcement (e.g. proactive start already asked).
     // Skip when we just narrated the decision ask (avoids duplicate "path A or B" question).
     if (
-      context.depth === 0 &&
+      !context.isNestedCall &&
       !context.skipDecisionPointEnforcement &&
       !context.justNarratedDecisionAsk
     ) {
@@ -550,11 +558,6 @@ export class Orchestrator {
     actions: PrimitiveAction[],
     context: ExecutionContext,
   ): Promise<void> {
-    if (context.depth >= context.maxDepth) {
-      Logger.warn(`Max execution depth (${context.maxDepth}) reached, stopping`);
-      return;
-    }
-
     context.positionPathsSetByRoll = context.positionPathsSetByRoll ?? new Set();
     context.positionPathsSetByRoll.clear();
 

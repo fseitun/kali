@@ -640,6 +640,23 @@ class StateManager {
 
 ---
 
+### Orchestrator Execution Loop Detection 🔧
+
+**Value: 5/10 | Complexity: 4/10 | Ratio: 1.25**
+
+**Problem:** The previous depth limit (maxDepth: 5) was removed because it capped legitimate gameplay chains (e.g. consecutive animal encounters when player keeps winning power checks). There is currently no guard against infinite loops from misconfigured board effects or bugs.
+
+**Implementation (future):**
+
+- Add loop detection: track `(position, phase)` or similar in the current transcript tree
+- Stop only when the same state is seen twice (actual cycle), not on raw call depth
+- Log a warning and speak an error to the user if a loop is detected
+- Consider a high safety cap (e.g. 50) as a last resort for truly infinite loops
+
+**Files:** `src/orchestrator/orchestrator.ts`, `src/orchestrator/board-effects-handler.ts`, `src/orchestrator/types.ts`
+
+---
+
 ## 🎨 Polish (Nice to Have / Lower Priority)
 
 ### Graceful Degradation 🎨

@@ -91,11 +91,12 @@ export interface GameState {
 }
 
 /**
- * Context for tracking execution depth to prevent infinite loops in agentic chains.
+ * Context passed through orchestrator execution. Distinguishes top-level (user-initiated)
+ * from nested calls (from board effects or decision-point enforcement).
  */
 export interface ExecutionContext {
-  depth: number;
-  maxDepth: number;
+  /** When true, call originated from board effects or decision-point enforcement, not user. */
+  isNestedCall?: boolean;
   /** When true, skip decision point enforcement after actions (e.g. proactive start). */
   skipDecisionPointEnforcement?: boolean;
   /** Set when power check fails and turn was advanced; app should announce next player. */
@@ -126,7 +127,7 @@ export interface OrchestratorGameplayResult {
   success: boolean;
   shouldAdvanceTurn: boolean;
   turnAdvancedForRevenge?: { playerId: string; name: string; position: number };
-  /** Present on successful depth-0 runs when the batch matches a silent-success pattern for voice policy. */
+  /** Present on successful top-level runs when the batch matches a silent-success pattern for voice policy. */
   voiceOutcomeHints?: VoiceOutcomeHints;
 }
 
