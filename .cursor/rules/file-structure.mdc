@@ -81,7 +81,7 @@ Game definition loading (no barrel; import from `game-loader.ts` and `types.ts` 
 Game definitions (JSON files):
 
 - Each game has a directory with `config.json`
-- Contains: metadata, rules, initialState, board (optional), soundEffects
+- Contains: metadata (id, name, objective, min/maxPlayers), squares, soundEffects (optional)
 
 ## State Management
 

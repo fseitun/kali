@@ -2,10 +2,10 @@
 
 **Kalimba | tablero**
 
-**Hábitat “Desierto”** 
+**Hábitat “Desierto”**
 
 Casillero 2 | Halcón \- 3 pts  
-Casillero 5 | Cobra \- 4 pts   
+Casillero 5 | Cobra \- 4 pts  
 Casillero 7 | Águila \- Avanza con 2 dados  
 Casillero 11| Arenas movedizas \- pierdes 1 turno
 
@@ -16,7 +16,7 @@ Casillero 26| Coyote \- 2pts
 
 Casillero 38| Escorpión \- 4 pts
 
-**Casillero 40| Entrada al Hábitat “Bosque”** 
+**Casillero 40| Entrada al Hábitat “Bosque”**
 
 Casillero 42| Lobo \- 4 pts  
 Casillero 45| Portal \- te lleva al casillero 82\.  
@@ -30,7 +30,7 @@ Casillero 65| Murciélagos \- retrocedes con 1 dado
 Casillero 66| Ardilla \- 1 pts  
 Casillero 68| Ciervo \-2 pts
 
-**Casillero 70| Entrada al Hábitat “Océano”** 
+**Casillero 70| Entrada al Hábitat “Océano”**
 
 Casillero 71| Pez globo \- retrocedes con 2 dados  
 Casillero 72| Tiburón tigre \- 4 pts  
@@ -38,7 +38,7 @@ Casillero 75| Cangrejo \- retrocedes con 3 dados.
 Casillero 77| Pirañas \- pierdes 1 turno  
 Casillero 78| Pulpo y estrella de mar \- 3 pts  
 Casillero 79| Antorcha \- (no perderás 1 turno de caer en el casillero “cae la noche”)  
-Casillero 82| Portal \- te lleva al casillero 45   
+Casillero 82| Portal \- te lleva al casillero 45  
 Casillero 84| Pez payaso \- 1pts  
 Casillero 85| Cae la noche \- pierdes 1 turno  
 Casillero 87| Tortuga marina \- 2pts  
@@ -46,7 +46,7 @@ Casillero 92| Orca Asesina \- 4pts
 Casillero 93| Subí al casillero 97\.  
 Casillero 95| Lluvias de meteoritos \- pierdes 1 turno
 
-**Casillero 96| Entrada al Hábitat “Ártico”**   
+**Casillero 96| Entrada al Hábitat “Ártico”**  
 Casillero 97| Pinguino \- 2pts
 
 Casillero 100| Narval \- 2pts
@@ -58,10 +58,9 @@ Casillero 103| iceberg \- Retrocedes con 1 dado
 Casillero 105| Oso polar \- 4 pts
 
 Casillero 106| Ballena azul \- 5pts  
-Casillero 109| volcán en erupción \- pierdes 1 turno  
- 
+Casillero 109| volcán en erupción \- pierdes 1 turno
 
-**Casillero 113| Entrada al Hábitat “Amazonas”** 
+**Casillero 113| Entrada al Hábitat “Amazonas”**
 
 Casillero 114| Fantasma de un babuino \- 1 pts  
 Casillero 115| Tornado \- retrocedes con 3 dados  
@@ -72,12 +71,12 @@ Casillero 120| Babuino \- 2pts
 Casillero 122| Caimán \- 3pts  
 Casillero 124| Oso negro \- 3pts
 
-**Casillero 125| Entrada al Hábitat “Sabana”** 
+**Casillero 125| Entrada al Hábitat “Sabana”**
 
 Casillero 129| Perros salvajes \- 1 pts  
 Casillero 131| Cae la noche \- pierdes 1 turno  
 Casillero 132| Avestruz \- avanzas con 2 dados  
-Casillero 133| Antorcha \- (no perderás 1 turno de caer en el casillero “cae la noche”)	  
+Casillero 133| Antorcha \- (no perderás 1 turno de caer en el casillero “cae la noche”)  
 Casillero 134| Cocodrilo \- 3 pts  
 Casillero 136| Pantano \- pierdes 1 turno  
 Casillero 140| Rinoceronte \- 3 pts  
@@ -94,7 +93,7 @@ Casillero 160| Pirañas \- pierdes 1 turno
 Casillero 164| Rinoceronte blanco \- 4pts  
 Casillero 165| Canguro \- 2pts
 
-**Casillero 167| Entrada al Hábitat “Selva india”**   
+**Casillero 167| Entrada al Hábitat “Selva india”**  
 Casillero 168| Lagartija \- 1 vida  
 Casillero 171| Dragón de Komodo \- 3pts  
 Casillero 174| Cae la noche \- pierdes 1 turno  
@@ -106,18 +105,16 @@ Casillero 185| Pavo real \- 1 vida
 
 **Casillero 186| “Puerta” al camino de la Anaconda**
 
-Casillero 187| “cabeza de la anaconda”   
+Casillero 187| “cabeza de la anaconda”  
 Casillero 190| Calavera \- vuelves al casillero “cabeza de la anaconda”  
 Casillero 192| Calavera \- vuelves al casillero “cabeza de la anaconda”  
 Casillero 194| Calavera \- vuelves al casillero “cabeza de la anaconda”
 
 Casillero 196| Tesoro \- Ganaste la partida
 
- 	
-
 # Reglas
 
-# **🐍** 
+# **🐍**
 
 # **KALIMBA – El Desafío de los 7 Hábitats**
 
@@ -131,7 +128,7 @@ El primero en alcanzar el tesoro se convierte en el Guardián de Kalimba.
 
 ---
 
-## **🎯** 
+## **🎯**
 
 ## **Objetivo del juego**
 
@@ -141,7 +138,7 @@ Los corazones no son vidas que se pierden, sino puntos mágicos que sirven para 
 
 ---
 
-## **🧩** 
+## **🧩**
 
 ## **Preparación**
 
@@ -155,15 +152,15 @@ Los corazones no son vidas que se pierden, sino puntos mágicos que sirven para 
 
 ---
 
-## **🎲** 
+## **🎲**
 
 ## **Desarrollo del juego**
 
 ### **1️⃣ Turno básico**
 
-* En tu turno, tirás el dado y avanzás el número de casilleros indicados.
+- En tu turno, tirás el dado y avanzás el número de casilleros indicados.
 
-* Luego resolvés lo que diga el casillero: puede ser un animal, una trampa, un portal, o un casillero especial.
+- Luego resolvés lo que diga el casillero: puede ser un animal, una trampa, un portal, o un casillero especial.
 
 ---
 
@@ -173,30 +170,30 @@ Cuando caes en un casillero de animal, el enfrentamiento se resuelve en el sigui
 
 **A. El Acertijo (Solo en el primer intento)** Apenas llegas al animal, Kali te lee una adivinanza.
 
-* ✅ **Si aciertas:** Tiras **2 dados** para intentar superar a la bestia.  
-* ❌ **Si fallas:** Tiras **1 solo dado** para intentar superar a la bestia.
+- ✅ **Si aciertas:** Tiras **2 dados** para intentar superar a la bestia.
+- ❌ **Si fallas:** Tiras **1 solo dado** para intentar superar a la bestia.
 
 **B. La Prueba de Poder (Primer turno)** Lanzas los dados correspondientes (1 o 2, según el acertijo).
 
-* **Condición de victoria:** El resultado de la suma debe ser **ESTRICTAMENTE MAYOR (\>)** al poder del animal.  
-  * *Ejemplo: Si el animal tiene poder 4, necesitas sacar un 5 o más.*  
-* **Si ganas:** Avanzas inmediatamente esa misma cantidad de casilleros (la suma de lo que sacaste).  
-* **Si pierdes:** Te quedas en el casillero y termina tu turno.
+- **Condición de victoria:** El resultado de la suma debe ser **ESTRICTAMENTE MAYOR (\>)** al poder del animal.
+  - _Ejemplo: Si el animal tiene poder 4, necesitas sacar un 5 o más._
+- **Si ganas:** Avanzas inmediatamente esa misma cantidad de casilleros (la suma de lo que sacaste).
+- **Si pierdes:** Te quedas en el casillero y termina tu turno.
 
 **C. La Revancha (Turnos siguientes)** Si no lograste superar al animal en el turno en que llegaste, en tus siguientes turnos la mecánica cambia para facilitar el avance:
 
-1. Solo tiras **1 dado**.  
-2. **Condición de victoria:** El resultado debe ser **MAYOR O IGUAL (\>=)** al poder del animal.  
-   * *Ejemplo: Si el animal tiene poder 4, ahora te sirve sacar un 4 o más.*  
+1. Solo tiras **1 dado**.
+2. **Condición de victoria:** El resultado debe ser **MAYOR O IGUAL (\>=)** al poder del animal.
+   - _Ejemplo: Si el animal tiene poder 4, ahora te sirve sacar un 4 o más._
 3. Si lo logras, avanzas el número que sacaste.
 
 ---
 
 ### **3️⃣ Adivinanzas de Kalimba**
 
-* Todos los animales plantean un desafío intelectual antes del físico.  
-* Acertar es clave porque **duplica tus probabilidades** de superar al animal (te permite usar 2 dados en vez de 1).  
-* **Importante:** La adivinanza solo se responde **una vez**, en el momento en que caes en el casillero. Si te quedas trabado varios turnos, no vuelves a responder adivinanzas, solo tiras el dado de revancha.
+- Todos los animales plantean un desafío intelectual antes del físico.
+- Acertar es clave porque **duplica tus probabilidades** de superar al animal (te permite usar 2 dados en vez de 1).
+- **Importante:** La adivinanza solo se responde **una vez**, en el momento en que caes en el casillero. Si te quedas trabado varios turnos, no vuelves a responder adivinanzas, solo tiras el dado de revancha.
 
 ---
 
@@ -206,15 +203,15 @@ Ciertos animales especiales otorgan instrumentos mágicos al acertar su adivinan
 
 Funciones de los instrumentos:
 
-* Permiten “dormir” a una bestia sin tirar el dado ni adivinanza.
+- Permiten “dormir” a una bestia sin tirar el dado ni adivinanza.
 
-* Si el instrumento se usa en su hábitat correcto, el jugador avanza automáticamente.
+- Si el instrumento se usa en su hábitat correcto, el jugador avanza automáticamente.
 
-* Si se usa fuera de su hábitat, da un \+2 al dado.
+- Si se usa fuera de su hábitat, da un \+2 al dado.
 
-* Cada instrumento se usa una sola vez.
+- Cada instrumento se usa una sola vez.
 
-* Un jugador puede tener hasta 5 instrumentos a la vez.
+- Un jugador puede tener hasta 5 instrumentos a la vez.
 
 ---
 
@@ -222,21 +219,21 @@ Funciones de los instrumentos:
 
 Los corazones son puntos mágicos acumulativos que reducen la dificultad de abrir la puerta final.
 
-* Sin corazones: necesitás sacar un 6\.
+- Sin corazones: necesitás sacar un 6\.
 
-* Con 1 corazón: un 5\.
+- Con 1 corazón: un 5\.
 
-* Con 2 corazones: un 4, y así sucesivamente.
+- Con 2 corazones: un 4, y así sucesivamente.
 
 Casilleros con corazones:
 
-* 156 (Gorila)
+- 156 (Gorila)
 
-* 168 (Lagartija)
+- 168 (Lagartija)
 
-* 176 (Cimitarra)
+- 176 (Cimitarra)
 
-* 185 (Pavo real)
+- 185 (Pavo real)
 
 📍 La Cimitarra actúa como un corazón especial, pero con la misma función: cuenta como un punto mágico adicional.
 
@@ -244,11 +241,11 @@ Casilleros con corazones:
 
 ### **6️⃣ Ítems de protección**
 
-* 🔥 Antorcha: evita perder turno si caés en “Cae la noche”.
+- 🔥 Antorcha: evita perder turno si caés en “Cae la noche”.
 
-* 🐝 Traje anti-avispas: evita perder turno si caés en el casillero de avispas (116).
+- 🐝 Traje anti-avispas: evita perder turno si caés en el casillero de avispas (116).
 
-* Estos ítems se obtienen automáticamente al caer en su casillero y se usan una sola vez.
+- Estos ítems se obtienen automáticamente al caer en su casillero y se usan una sola vez.
 
 ---
 
@@ -256,11 +253,11 @@ Casilleros con corazones:
 
 Los portales están en los casilleros 45 y 82, y conectan entre sí.
 
-* Si caés en el 45, viajás automáticamente al 82\.
+- Si caés en el 45, viajás automáticamente al 82\.
 
-* Si caés en el 82, viajás automáticamente al 45\.
+- Si caés en el 82, viajás automáticamente al 45\.
 
-* Si el portal te hace retroceder (por ejemplo, del 82 al 45), se activa el poder inverso de Kalimba:
+- Si el portal te hace retroceder (por ejemplo, del 82 al 45), se activa el poder inverso de Kalimba:
 
 ✨ Desde ese momento, hasta volver a pasar por el portal opuesto (el del 82),  
 todos los casilleros que normalmente te harían retroceder, ahora te hacen avanzar.
@@ -271,17 +268,16 @@ Esto solo aplica a retrocesos, no a trampas que hacen perder turno ni a eventos 
 
 ### **8️⃣ Casilleros especiales**
 
-* 🦊 Zorro Dorado (54): el jugador salta al casillero donde está el líder actual y pasa a ser el nuevo primero.
+- 🦊 Zorro Dorado (54): el jugador salta al casillero donde está el líder actual y pasa a ser el nuevo primero.
 
-* ⚔️ Trampas: hacen retroceder, perder turno o tirar menos dados.
+- ⚔️ Trampas: hacen retroceder, perder turno o tirar menos dados.
+  - “Retrocedes/avanzás con X dados” significa tirar X dados y moverse la suma de esos resultados.
 
-  * “Retrocedes/avanzás con X dados” significa tirar X dados y moverse la suma de esos resultados.
+- 💥 Ataque de avispas (116): perdés un turno, salvo que tengas el traje.
 
-* 💥 Ataque de avispas (116): perdés un turno, salvo que tengas el traje.
+- 🌙 Cae la noche (85, 131, 174): perdés un turno, salvo que tengas una antorcha.
 
-* 🌙 Cae la noche (85, 131, 174): perdés un turno, salvo que tengas una antorcha.
-
-* 💖 Corazones y Cimitarra: reducen la dificultad para abrir la puerta mágica.
+- 💖 Corazones y Cimitarra: reducen la dificultad para abrir la puerta mágica.
 
 ---
 
@@ -291,23 +287,20 @@ Esto solo aplica a retrocesos, no a trampas que hacen perder turno ni a eventos 
 
 Este es el último obstáculo antes del tramo final. La mecánica aquí es única:
 
-1. **Llegada Exacta:** Debes caer exactamente en el 186\. Si te pasas, rebotas.  
-2. **Detenerse:** Una vez en la puerta, **dejas de tirar para moverte**. Tu objetivo ahora es "abrir" la puerta.  
-3. **La Tirada de Apertura:**  
-   * En tu turno, lanzas el dado para intentar abrir la puerta.  
-   * **Dificultad Base:** 6\.  
-   * **Bonificador:** Resta 1 a la dificultad por cada **Corazón** que tengas acumulado.  
-   * *Fórmula: Necesitas sacar un número \+ Cantidad de Corazones  \>= 6\.*  
-4. **Entrar:**  
-   * Si fallas la tirada, pasas el turno y vuelves a intentar abrirla en la siguiente ronda.  
-   * Si tenes éxito: La puerta se abre y en el siguiente turno tiras para moverte..
-
-
-
+1. **Llegada Exacta:** Debes caer exactamente en el 186\. Si te pasas, rebotas.
+2. **Detenerse:** Una vez en la puerta, **dejas de tirar para moverte**. Tu objetivo ahora es "abrir" la puerta.
+3. **La Tirada de Apertura:**
+   - En tu turno, lanzas el dado para intentar abrir la puerta.
+   - **Dificultad Base:** 6\.
+   - **Bonificador:** Resta 1 a la dificultad por cada **Corazón** que tengas acumulado.
+   - _Fórmula: Necesitas sacar un número \+ Cantidad de Corazones \>= 6\._
+4. **Entrar:**
+   - Si fallas la tirada, pasas el turno y vuelves a intentar abrirla en la siguiente ronda.
+   - Si tenes éxito: La puerta se abre y en el siguiente turno tiras para moverte..
 
 ---
 
-## **🏁** 
+## **🏁**
 
 ## **Fin del juego – El Guardián de Kalimba**
 
@@ -319,24 +312,22 @@ Este título representa haber completado el recorrido por los siete hábitats, e
 
 Ramificaciones
 
-* del 0 podés ir al 1 o al 15  
-* del 96 podes ir al 97 o al 99  
-* del 101 podes ir al 102 o 105
+- del 0 podés ir al 1 o al 15
+- del 96 podes ir al 97 o al 99
+- del 101 podes ir al 102 o 105
 
-
-  
 Casilleros especiales
 
-* Si caes en el casillero 45 “portal” te lleva al casillero 82\.  
-* Si caes en el casillero 54, es el “Zorro dorado” te lleva a la primera posición.  
-* Si caes en el casillero 82 “portal” te lleva al casillero 45\. Si esto ocurre, se implementa una regla nueva: cada vez que caigas en un casillero que te haga retroceder, solo avanzaras. Se invierte la carga del recorrido. Ya no retrocedes nunca.  
-* Si caes en el 93, subis al 97  
-* Si caes en el casillero 141, te lleva al casillero 165\.  
-* Si caes en el casillero 145 y le ganas a la jirafa, te lleva al casillero 162\.  
-* La puerta esta en el casillero 186\. Tenes que caer justo sino rebotas.  
-* Si caes en el casillero 190, vuelves al casillero 187 “cabeza de la serpiente”.  
-* Si caes en el casillero 192, vuelves al casillero 187 “cabeza de la serpiente”.  
-* Si caes en el casillero 194, vuelves al casillero 187 “cabeza de la serpiente”.
+- Si caes en el casillero 45 “portal” te lleva al casillero 82\.
+- Si caes en el casillero 54, es el “Zorro dorado” te lleva a la primera posición.
+- Si caes en el casillero 82 “portal” te lleva al casillero 45\. Si esto ocurre, se implementa una regla nueva: cada vez que caigas en un casillero que te haga retroceder, solo avanzaras. Se invierte la carga del recorrido. Ya no retrocedes nunca.
+- Si caes en el 93, subis al 97
+- Si caes en el casillero 141, te lleva al casillero 165\.
+- Si caes en el casillero 145 y le ganas a la jirafa, te lleva al casillero 162\.
+- La puerta esta en el casillero 186\. Tenes que caer justo sino rebotas.
+- Si caes en el casillero 190, vuelves al casillero 187 “cabeza de la serpiente”.
+- Si caes en el casillero 192, vuelves al casillero 187 “cabeza de la serpiente”.
+- Si caes en el casillero 194, vuelves al casillero 187 “cabeza de la serpiente”.
 
 # Business Plan
 
@@ -354,15 +345,15 @@ Casilleros especiales
 
 ## **2\. Propuesta de valor**
 
-* 🎮 **Juego físico \+ agente digital:** une lo táctil del tablero con la experiencia interactiva de una IA.
+- 🎮 **Juego físico \+ agente digital:** une lo táctil del tablero con la experiencia interactiva de una IA.
 
-* 🧠 **Aprendizaje y entretenimiento:** ideal para familias, colegios y adultos curiosos.
+- 🧠 **Aprendizaje y entretenimiento:** ideal para familias, colegios y adultos curiosos.
 
-* 🗣️ **Moderación con voz:** explica reglas, resuelve dudas y mantiene la partida fluida.
+- 🗣️ **Moderación con voz:** explica reglas, resuelve dudas y mantiene la partida fluida.
 
-* 🎵 **Música ambiental por hábitat:** jungla, océano, desierto, montaña, etc.
+- 🎵 **Música ambiental por hábitat:** jungla, océano, desierto, montaña, etc.
 
-* 🌎 **Conexión inclusiva:** sin necesidad de leer instrucciones, ideal para todo público.
+- 🌎 **Conexión inclusiva:** sin necesidad de leer instrucciones, ideal para todo público.
 
 ---
 
@@ -372,17 +363,16 @@ Casilleros especiales
 
 **Kalimba – Edición 1 (Juego físico \+ Kali)**
 
-* Precio al público: **USD 20**
+- Precio al público: **USD 20**
 
-* Incluye:
+- Incluye:
+  - Tablero físico y componentes.
 
-  * Tablero físico y componentes.
+  - Acceso a **Kali por 1 año** (licencia digital).
 
-  * Acceso a **Kali por 1 año** (licencia digital).
+  - **10 partidas mensuales** incluidas.
 
-  * **10 partidas mensuales** incluidas.
-
-  * Música y ambientación completa de los 7 hábitats.
+  - Música y ambientación completa de los 7 hábitats.
 
 Tras el primer año, el usuario puede **renovar la licencia de Kali** para seguir jugando o acceder a nuevas expansiones.
 
@@ -390,81 +380,77 @@ Tras el primer año, el usuario puede **renovar la licencia de Kali** para segui
 
 ### **💰 Estructura de precios**
 
-| Concepto | Descripción | Precio (USD) |
-| ----- | ----- | ----- |
-| Juego base (Kalimba \+ Kali 1 año) | Tablero físico \+ acceso digital | **20** |
-| Renovación anual de licencia Kali | 12 meses adicionales | **10** |
-| Pack de expansión (nuevo mapa/hábitat) | Tablero digital o físico adicional | **5** |
-| Pack de música o voz adicional | Contenido temático (selva, océano, etc.) | **3** |
+| Concepto                               | Descripción                              | Precio (USD) |
+| -------------------------------------- | ---------------------------------------- | ------------ |
+| Juego base (Kalimba \+ Kali 1 año)     | Tablero físico \+ acceso digital         | **20**       |
+| Renovación anual de licencia Kali      | 12 meses adicionales                     | **10**       |
+| Pack de expansión (nuevo mapa/hábitat) | Tablero digital o físico adicional       | **5**        |
+| Pack de música o voz adicional         | Contenido temático (selva, océano, etc.) | **3**        |
 
 ---
 
 ## **4\. Fuentes de ingresos**
 
 1. **Venta inicial del juego físico (B2C):**
+   - Canal online (e-commerce propio, Amazon, MercadoLibre).
 
-   * Canal online (e-commerce propio, Amazon, MercadoLibre).
-
-   * Retail (librerías, jugueterías, locales educativos).
+   - Retail (librerías, jugueterías, locales educativos).
 
 2. **Renovación anual de licencia Kali (SaaS lúdico):**
-
-   * Acceso digital vía QR \+ suscripción anual.
+   - Acceso digital vía QR \+ suscripción anual.
 
 3. **Expansiones y contenidos adicionales:**
-
-   * Nuevos hábitats, desafíos, música, modos de juego.
+   - Nuevos hábitats, desafíos, música, modos de juego.
 
 4. **Licencias B2B:**
-
-   * Venta o sublicencia de Kali a otros editores de juegos de mesa o instituciones educativas.
+   - Venta o sublicencia de Kali a otros editores de juegos de mesa o instituciones educativas.
 
 ---
 
 ## **5\. Estructura de costos (por unidad)**
 
-| Componente | Costo estimado (USD) |
-| ----- | ----- |
-| Producción del tablero \+ piezas | 5,00 |
-| Empaque y manual visual | 1,00 |
-| Acceso a Kali (IA \+ hosting) | 2,00 |
-| Marketing y distribución | 3,00 |
-| **Costo total estimado** | **11,00** |
-| **Margen por unidad (venta USD 20\)** | **45%** |
+| Componente                            | Costo estimado (USD) |
+| ------------------------------------- | -------------------- |
+| Producción del tablero \+ piezas      | 5,00                 |
+| Empaque y manual visual               | 1,00                 |
+| Acceso a Kali (IA \+ hosting)         | 2,00                 |
+| Marketing y distribución              | 3,00                 |
+| **Costo total estimado**              | **11,00**            |
+| **Margen por unidad (venta USD 20\)** | **45%**              |
 
 ---
 
 ## **6\. Proyecciones iniciales (Año 1\)**
 
-| Escenario | Ventas estimadas | Ingreso bruto | Renovaciones (Año 2\) |
-| ----- | ----- | ----- | ----- |
-| **Conservador** | 5.000 unidades | USD 100.000 | USD 25.000 |
-| **Medio** | 15.000 unidades | USD 300.000 | USD 75.000 |
-| **Expansivo** | 50.000 unidades | USD 1.000.000 | USD 250.000 |
+| Escenario       | Ventas estimadas | Ingreso bruto | Renovaciones (Año 2\) |
+| --------------- | ---------------- | ------------- | --------------------- |
+| **Conservador** | 5.000 unidades   | USD 100.000   | USD 25.000            |
+| **Medio**       | 15.000 unidades  | USD 300.000   | USD 75.000            |
+| **Expansivo**   | 50.000 unidades  | USD 1.000.000 | USD 250.000           |
 
 ---
 
 ## **7\. Roadmap de desarrollo**
 
-| Etapa | Descripción | Duración |
-| ----- | ----- | ----- |
-| **Q1 – 2025** | Diseño final del tablero y componentes | 2 meses |
-| **Q2 – 2025** | Integración Kali (voz \+ app QR) | 2 meses |
-| **Q3 – 2025** | Producción piloto (500 unidades) | 1 mes |
-| **Q4 – 2025** | Lanzamiento comercial LATAM | 1 mes |
-| **Q1 – 2026** | Licencia anual y nuevos hábitats | Continuo |
+| Etapa         | Descripción                            | Duración |
+| ------------- | -------------------------------------- | -------- |
+| **Q1 – 2025** | Diseño final del tablero y componentes | 2 meses  |
+| **Q2 – 2025** | Integración Kali (voz \+ app QR)       | 2 meses  |
+| **Q3 – 2025** | Producción piloto (500 unidades)       | 1 mes    |
+| **Q4 – 2025** | Lanzamiento comercial LATAM            | 1 mes    |
+| **Q1 – 2026** | Licencia anual y nuevos hábitats       | Continuo |
 
 ---
 
 ## **8\. Escalabilidad futura**
 
-* **App Kali Games:** plataforma que concentra todos los juegos compatibles con Kali.
+- **App Kali Games:** plataforma que concentra todos los juegos compatibles con Kali.
 
-* **Licencias educativas:** versiones adaptadas para escuelas y talleres.
+- **Licencias educativas:** versiones adaptadas para escuelas y talleres.
 
-* **Merchandising temático:** animales, hábitats, figuras coleccionables.
+- **Merchandising temático:** animales, hábitats, figuras coleccionables.
 
-* **Integración con altavoces inteligentes (Alexa, Google Home).**
+- **Integración con altavoces inteligentes (Alexa, Google Home).**
 
 ---
 
@@ -512,14 +498,13 @@ De este modo, Kali se ubica en un lugar de **marca reconocible** — algo entre 
 La hoja de ruta podría ser así:
 
 1. **Versión 1 (MVP de Kalimba)**  
-    Kali no es “IA generativa completa” todavía. Es un **asistente preconfigurado con voz**, con guiones, efectos de sonido y respuestas pregrabadas.  
-    → Esto se puede desarrollar sin un plan corporativo grande.
+   Kali no es “IA generativa completa” todavía. Es un **asistente preconfigurado con voz**, con guiones, efectos de sonido y respuestas pregrabadas.  
+   → Esto se puede desarrollar sin un plan corporativo grande.
 
 2. **Versión 2 (Kali con IA conectada)**  
-    Cuando el juego crezca, se conecta a una IA real (GPT o similar) y ya **interpreta voz, responde libremente y modera dinámicamente**.  
-    → Ahí sí necesitás el plan corporativo y una infraestructura sólida.
+   Cuando el juego crezca, se conecta a una IA real (GPT o similar) y ya **interpreta voz, responde libremente y modera dinámicamente**.  
+   → Ahí sí necesitás el plan corporativo y una infraestructura sólida.
 
 3. **Versión 3 (Kali como plataforma)**  
-    Kali deja de ser parte solo de Kalimba y empieza a integrarse en otros juegos, con API o licencia.  
-    → Es el modelo escalable, donde el negocio se multiplica.
-
+   Kali deja de ser parte solo de Kalimba y empieza a integrarse en otros juegos, con API o licencia.  
+   → Es el modelo escalable, donde el negocio se multiplica.

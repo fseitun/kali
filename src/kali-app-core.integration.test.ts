@@ -40,7 +40,6 @@ vi.mock("./game-loader/game-loader", async () => {
         const module: GameModule = {
           metadata: config.metadata,
           initialState,
-          rules: config.rules,
           soundEffects: config.soundEffects,
           customActions: config.customActions,
           stateDisplay: config.stateDisplay,

@@ -38,39 +38,32 @@ describe("GameLoader", () => {
 
   describe("loadGame", () => {
     it("should load valid game module", async () => {
-      const mockGameModule: GameModule = {
+      const mockConfig = {
         metadata: {
           id: "test-game",
           name: "Test Game",
           minPlayers: 2,
           maxPlayers: 4,
-        },
-        rules: {
           objective: "Test objective",
         },
-        initialState: {
-          game: {
-            name: "Test Game",
-            phase: GamePhase.SETUP,
-            turn: null,
-            playerOrder: [],
-            winner: null,
-          },
-          players: {},
-          currentPlayer: 0,
-          phase: "SETUP",
+        squares: {
+          "0": { type: "empty", next: [1], prev: [] },
+          "1": { type: "special", effect: "win", next: [], prev: [0] },
         },
       };
 
       mockFetch.mockResolvedValueOnce({
         ok: true,
-        json: () => Promise.resolve(mockGameModule),
+        json: () => Promise.resolve(mockConfig),
       });
 
       const result = await gameLoader.loadGame("test-game");
 
       expect(mockFetch).toHaveBeenCalledWith("/test/games/test-game/config.json");
-      expect(result).toEqual(mockGameModule);
+      expect(result.metadata).toEqual(mockConfig.metadata);
+      expect(result.initialState).toBeDefined();
+      expect(result.initialState.game.phase).toBe(GamePhase.SETUP);
+      expect(result.initialState.board?.squares).toBeDefined();
     });
 
     it("should throw error for failed fetch", async () => {
@@ -92,19 +85,8 @@ describe("GameLoader", () => {
 
     it("should validate game module metadata", async () => {
       const invalidModule = {
-        rules: {
-          objective: "Test objective",
-        },
-        initialState: {
-          game: {
-            name: "Test Game",
-            phase: GamePhase.SETUP,
-            turn: null,
-            playerOrder: [],
-            winner: null,
-          },
-          players: {},
-        },
+        metadata: { objective: "Test objective" },
+        squares: { "0": { type: "empty", next: [1], prev: [] } },
       };
 
       mockFetch.mockResolvedValueOnce({
@@ -117,7 +99,7 @@ describe("GameLoader", () => {
       );
     });
 
-    it("should validate game module rules", async () => {
+    it("should validate metadata objective", async () => {
       const invalidModule = {
         metadata: {
           id: "test-game",
@@ -125,17 +107,7 @@ describe("GameLoader", () => {
           minPlayers: 2,
           maxPlayers: 4,
         },
-        rules: {},
-        initialState: {
-          game: {
-            name: "Test Game",
-            phase: GamePhase.SETUP,
-            turn: null,
-            playerOrder: [],
-            winner: null,
-          },
-          players: {},
-        },
+        squares: { "0": { type: "empty", next: [1], prev: [] } },
       };
 
       mockFetch.mockResolvedValueOnce({
@@ -144,19 +116,17 @@ describe("GameLoader", () => {
       });
 
       await expect(gameLoader.loadGame("invalid")).rejects.toThrow(
-        "Invalid game module: missing rules",
+        "Invalid game module: missing metadata.objective",
       );
     });
 
-    it("should validate game module initialState", async () => {
+    it("should validate game config has squares", async () => {
       const invalidModule = {
         metadata: {
           id: "test-game",
           name: "Test Game",
           minPlayers: 2,
           maxPlayers: 4,
-        },
-        rules: {
           objective: "Test objective",
         },
       };
@@ -167,26 +137,14 @@ describe("GameLoader", () => {
       });
 
       await expect(gameLoader.loadGame("invalid")).rejects.toThrow(
-        "Invalid game config: need initialState or squares",
+        "Invalid game config: squares required",
       );
     });
 
     it("should validate metadata id and name", async () => {
       const invalidModule = {
-        metadata: {},
-        rules: {
-          objective: "Test objective",
-        },
-        initialState: {
-          game: {
-            name: "Test Game",
-            phase: GamePhase.SETUP,
-            turn: null,
-            playerOrder: [],
-            winner: null,
-          },
-          players: {},
-        },
+        metadata: { objective: "Test objective" },
+        squares: { "0": { type: "empty", next: [1], prev: [] } },
       };
 
       mockFetch.mockResolvedValueOnce({
@@ -208,8 +166,6 @@ describe("GameLoader", () => {
           name: "Test Game",
           minPlayers: 2,
           maxPlayers: 4,
-        },
-        rules: {
           objective: "Test objective",
         },
         initialState: {
@@ -246,8 +202,6 @@ describe("GameLoader", () => {
           name: "Test Game",
           minPlayers: 2,
           maxPlayers: 4,
-        },
-        rules: {
           objective: "Test objective",
         },
         initialState: {
@@ -274,8 +228,6 @@ describe("GameLoader", () => {
           name: "Test Game",
           minPlayers: 2,
           maxPlayers: 4,
-        },
-        rules: {
           objective: "Test objective",
         },
         initialState: {
@@ -313,8 +265,6 @@ describe("GameLoader", () => {
           name: "Test Game",
           minPlayers: 2,
           maxPlayers: 4,
-        },
-        rules: {
           objective: "Test objective",
         },
         initialState: {

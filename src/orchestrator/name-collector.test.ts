@@ -28,6 +28,7 @@ describe("NameCollector - State Isolation (Rule #4)", () => {
       name: "Test Game",
       minPlayers: 2,
       maxPlayers: 4,
+      objective: "Test objective",
     };
   });
 
@@ -274,6 +275,7 @@ describe("NameCollector - Runtime Flow", () => {
       name: "Test Game",
       minPlayers: 2,
       maxPlayers: 4,
+      objective: "Test objective",
     };
   });
 

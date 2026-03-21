@@ -16,7 +16,7 @@ description: Step-by-step guides for common development tasks - add primitives, 
 ## Adding New Game Support
 
 1. Create game definition JSON in `public/games/[game-name]/config.json`
-2. Include: metadata, rules, initialState, board (if applicable), soundEffects
+2. Include: metadata (id, name, objective, min/maxPlayers), squares (board topology derived at load), soundEffects
 3. Most game logic lives in LLM context via system prompts
 4. Note: Some mechanics (board moves, square effects) are currently in BoardEffectsHandler - see roadmap item #12 for game-agnostic refactor
 

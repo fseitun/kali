@@ -8,15 +8,10 @@ export interface GameMetadata {
   name: string;
   minPlayers: number;
   maxPlayers: number;
+  /** Win condition / objective for LLM context. */
+  objective: string;
   /** Initial habitat label for game.currentHabitat. Default "Inicio". */
   initialHabitat?: string;
-}
-
-/**
- * Game rules and structure information for LLM context.
- */
-export interface GameRules {
-  objective: string;
   /** Optional short summary for NARRATE explanations (2-3 sentences). Not sent as full rules. */
   summary?: string;
 }
@@ -40,17 +35,14 @@ export interface StateDisplayMetadata {
 }
 
 /**
- * Raw config input. Supports legacy (initialState) or new (squares-only) format.
+ * Raw config input. Squares-only format; board, game, and players are derived at load.
  */
 export interface GameConfigInput {
   metadata: GameMetadata;
-  rules: GameRules;
   soundEffects?: Record<string, string>;
   customActions?: string[];
   stateDisplay?: StateDisplayMetadata;
-  /** Legacy: full initial state. If present, used as-is. */
-  initialState?: GameState;
-  /** New format: squares only. Board, game, players derived at load. */
+  /** Squares 0..boardLength with explicit next/prev. Board, game, players derived from this. */
   squares?: Record<string, SquareData>;
 }
 
@@ -60,7 +52,6 @@ export interface GameConfigInput {
 export interface GameModule {
   metadata: GameMetadata;
   initialState: GameState;
-  rules: GameRules;
   soundEffects?: Record<string, string>;
   customActions?: string[];
   stateDisplay?: StateDisplayMetadata;

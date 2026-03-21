@@ -28,7 +28,7 @@ function loadGameConfig(gameId: string): GameConfigInput {
 
 /**
  * Builds initial state by merging scenario overrides onto the game's base state.
- * Base state comes from resolveInitialState (handles both legacy initialState and squares-only).
+ * Base state comes from resolveInitialState (built from config.squares).
  * Nested objects (game, players, board) are merged so partial overrides work.
  * decisionPoints are inferred from board.
  */

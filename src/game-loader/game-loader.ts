@@ -5,37 +5,37 @@ import type { ISpeechService } from "@/services/speech-service";
 import { Logger } from "@/utils/logger";
 
 /**
- * Fills in default next/prev for board squares. Only defines topology for indices
- * 0..boardLength; explicit squares keep their data but get defaults for missing next/prev.
- * Used for sparse config: define only forks, merges, jumps; hydration fills the rest.
+ * Validates that board topology is complete. Throws if any square 0..boardLength is missing or lacks next/prev.
  */
-function hydrateBoardTopology(
+function validateBoardTopology(
   squares: Record<string, SquareData>,
   boardLength: number = 196,
-): Record<string, SquareData> {
-  const result: Record<string, SquareData> = {};
-
+): void {
   for (let i = 0; i <= boardLength; i++) {
     const key = String(i);
-    const existing = squares[key];
-    if (!existing) {
-      result[key] = {
-        type: "empty",
-        next: i < boardLength ? [i + 1] : [],
-        prev: i > 0 ? [i - 1] : [],
-      };
+    const sq = squares[key];
+    if (!sq) {
+      throw new Error(`Invalid game config: missing square ${key}`);
+    }
+    const hasNext =
+      sq.next !== undefined &&
+      sq.next !== null &&
+      (Array.isArray(sq.next) ? sq.next.length > 0 : Object.keys(sq.next as object).length > 0);
+    const hasPrev = Array.isArray(sq.prev) && sq.prev.length > 0;
+    if (i === 0) {
+      if (!hasNext) throw new Error(`Invalid game config: square 0 must have next`);
+      if (sq.prev && (sq.prev as unknown[]).length > 0) {
+        throw new Error(`Invalid game config: square 0 must have empty prev`);
+      }
+    } else if (i === boardLength) {
+      if (hasNext)
+        throw new Error(`Invalid game config: square ${boardLength} must have empty next`);
+      if (!hasPrev) throw new Error(`Invalid game config: square ${boardLength} must have prev`);
     } else {
-      const sq = { ...existing };
-      const needsDefaultNext =
-        sq.next === undefined ||
-        sq.next === null ||
-        (Array.isArray(sq.next) && sq.next.length === 0);
-      if (needsDefaultNext && i < boardLength) sq.next = [i + 1];
-      if (!sq.prev && i > 0) sq.prev = [i - 1];
-      result[key] = sq;
+      if (!hasNext) throw new Error(`Invalid game config: square ${key} must have next`);
+      if (!hasPrev) throw new Error(`Invalid game config: square ${key} must have prev`);
     }
   }
-  return result;
 }
 
 /**
@@ -79,22 +79,15 @@ function deriveBoardFromSquares(
 }
 
 /**
- * Resolves initialState from config. Use when config may have legacy initialState or new squares-only format.
- * Always returns hydrated board.squares. Exported for e2e scenario runner which loads config from file.
+ * Resolves initialState from config squares and metadata.
+ * Exported for e2e scenario runner which loads config from file.
  */
 export function resolveInitialState(config: GameConfigInput): GameState {
-  const state = config.initialState ?? buildInitialStateFromParts(config);
-  if (state.board?.squares) {
-    const board = state.board as Record<string, unknown>;
-    const boardLength = typeof board.winPosition === "number" ? board.winPosition : 196;
-    const hydrated = hydrateBoardTopology(board.squares as Record<string, SquareData>, boardLength);
-    board.squares = hydrated;
-  }
-  return state;
+  return buildInitialStateFromParts(config);
 }
 
 /**
- * Builds initialState from squares + metadata. Used when config has squares but no initialState.
+ * Builds initialState from squares + metadata.
  */
 function buildInitialStateFromParts(config: GameConfigInput): GameState {
   const { metadata, squares: rawSquares, stateDisplay } = config;
@@ -104,8 +97,8 @@ function buildInitialStateFromParts(config: GameConfigInput): GameState {
 
   const boardDerived = deriveBoardFromSquares(rawSquares);
   const boardLength = typeof boardDerived.winPosition === "number" ? boardDerived.winPosition : 196;
-  const hydratedSquares = hydrateBoardTopology(rawSquares, boardLength);
-  const board: BoardConfig = { ...boardDerived, squares: hydratedSquares };
+  validateBoardTopology(rawSquares, boardLength);
+  const board: BoardConfig = { ...boardDerived, squares: rawSquares };
 
   const playerOrder = Array.from({ length: metadata.minPlayers }, (_, i) => `p${i + 1}`);
   const players: Record<string, Player> = {};
@@ -179,7 +172,6 @@ export class GameLoader {
       const module: GameModule = {
         metadata: config.metadata,
         initialState,
-        rules: config.rules,
         soundEffects: config.soundEffects,
         customActions: config.customActions,
         stateDisplay: config.stateDisplay,
@@ -223,16 +215,12 @@ export class GameLoader {
       throw new Error("Invalid game module: missing metadata");
     }
 
-    if (!config.rules?.objective) {
-      throw new Error("Invalid game module: missing rules");
+    if (!config.metadata?.objective) {
+      throw new Error("Invalid game module: missing metadata.objective");
     }
 
-    if (config.initialState) {
-      // Legacy format: initialState present
-    } else if (config.squares && Object.keys(config.squares).length > 0) {
-      // New format: squares only
-    } else {
-      throw new Error("Invalid game config: need initialState or squares");
+    if (!config.squares || Object.keys(config.squares).length === 0) {
+      throw new Error("Invalid game config: squares required");
     }
 
     Logger.info("Game module validation passed");

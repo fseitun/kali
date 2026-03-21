@@ -142,13 +142,13 @@ export class KaliAppCore {
   }
 
   private formatGameRules(gameModule: GameModule): string {
-    const { rules, metadata } = gameModule;
+    const { metadata } = gameModule;
     const typedExamples = (metadata.id === "kalimba" ? KALIMBA_EXAMPLES : []).slice(0, 4);
     const exampleLines = typedExamples.map(
       (ex) => `User: ${ex.user} | You: ${JSON.stringify(ex.actions)}`,
     );
 
-    const summary = rules.summary?.trim() ?? "";
+    const summary = metadata.summary?.trim() ?? "";
 
     const examplesBlock =
       exampleLines.length > 0
@@ -156,7 +156,7 @@ export class KaliAppCore {
         : "";
 
     return `## ${metadata.name}
-**Objective:** ${rules.objective}
+**Objective:** ${metadata.objective}
 **Your job:** Translate user speech to primitives. Orchestrator does math and turn management. Current task and options are in the state block below.
 ${summary ? `**Summary (for NARRATE explanations):** ${summary}\n` : ""}${examplesBlock}`;
   }

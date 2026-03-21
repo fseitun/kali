@@ -17,9 +17,7 @@ Each game lives in `public/games/[game-name]/config.json`:
     "id": "game-id",
     "name": "Display Name",
     "minPlayers": 2,
-    "maxPlayers": 4
-  },
-  "rules": {
+    "maxPlayers": 4,
     "objective": "Win condition",
     "summary": "Optional short summary for NARRATE"
   },
@@ -37,11 +35,9 @@ Each game lives in `public/games/[game-name]/config.json`:
 }
 ```
 
-## Config formats
+## Config format
 
-**New (squares-only):** Define `squares` at top level. Board (winPosition, moves, magicDoor), game state, and players are derived at load. See `deriveBoardFromSquares` in game-loader.
-
-**Legacy:** Define `initialState` with full game/players/board. Still supported for backward compatibility.
+Define `squares` at top level. Board (winPosition, moves, magicDoor), game state, and players are derived at load. See `deriveBoardFromSquares` in game-loader.
 
 ## Decision Points
 
@@ -50,16 +46,15 @@ Decision points (forks) are inferred from board squares: any square with `next` 
 ## How Games Are Loaded
 
 1. `GameLoader.loadGame(gameName)` fetches config JSON
-2. Resolves initialState (from config.initialState or derived from config.squares)
-3. Hydrates board topology (fills empty squares, default next/prev)
-4. Preloads sound effects via WebAudio
-5. Returns game module to orchestrator
+2. Builds initialState from config.squares and metadata (deriveBoardFromSquares, validateBoardTopology)
+3. Preloads sound effects via WebAudio
+4. Returns game module to orchestrator
 
 ## LLM Integration
 
-Game rules are passed to LLM via system prompt:
+Game metadata (objective, summary) is passed to LLM via system prompt:
 
-- `rules` section becomes LLM context
+- `metadata.objective` and `metadata.summary` become LLM context
 - LLM understands game mechanics
 - LLM translates player actions to primitives
 - Orchestrator executes primitives deterministically
