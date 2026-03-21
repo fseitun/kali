@@ -1,9 +1,8 @@
 import type { StateManager } from "../../state-manager";
-import type { Orchestrator } from "../orchestrator";
 import type { GameState, PrimitiveAction } from "../types";
 import { validateField } from "./common";
 import { validateSquareEffectPathRestriction } from "./square-effect";
-import type { ValidationResult } from "./types";
+import type { ValidationResult, ValidatorContext } from "./types";
 
 function validateTurnOwnership(
   path: string,
@@ -105,7 +104,7 @@ export function validateSetState(
   state: GameState,
   stateManager: StateManager,
   index: number,
-  orchestrator: Orchestrator,
+  context: ValidatorContext,
 ): ValidationResult {
   const actionRecord = action as unknown as Record<string, unknown>;
   const pathValidation = validateField(actionRecord, "path", "string", "SET_STATE", index);
@@ -123,7 +122,7 @@ export function validateSetState(
     const squareEffectValidation = validateSquareEffectPathRestriction(
       action.path,
       index,
-      orchestrator,
+      context.isProcessingEffect,
     );
     if (!squareEffectValidation.valid) return squareEffectValidation;
 
@@ -157,10 +156,7 @@ export function validateSetState(
     }
 
     if (action.path === "game.pendingAnimalEncounter") {
-      if (
-        orchestrator.options?.allowScenarioOnlyStatePaths &&
-        (action as { value?: unknown }).value === null
-      ) {
+      if (context.allowScenarioOnlyStatePaths && (action as { value?: unknown }).value === null) {
         // E2E scenarios script clearing the encounter after a square effect.
         return { valid: true };
       }

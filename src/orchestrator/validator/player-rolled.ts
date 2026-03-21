@@ -1,14 +1,13 @@
-import type { Orchestrator } from "../orchestrator";
 import type { GameState, PrimitiveAction } from "../types";
 import { validateField } from "./common";
 import { hasPendingDecisionsInState } from "./mock-state";
-import type { ValidationResult } from "./types";
+import type { ValidationResult, ValidatorContext } from "./types";
 
 export function validatePlayerRolled(
   action: PrimitiveAction,
   state: GameState,
   index: number,
-  orchestrator: Orchestrator,
+  context: ValidatorContext,
 ): ValidationResult {
   const actionRecord = action as unknown as Record<string, unknown>;
   const valueValidation = validateField(actionRecord, "value", "number", "PLAYER_ROLLED", index);
@@ -25,7 +24,7 @@ export function validatePlayerRolled(
     }
   }
 
-  if (orchestrator.isProcessingEffect()) {
+  if (context.isProcessingEffect) {
     return {
       valid: false,
       error: `PLAYER_ROLLED at index ${index}: Cannot roll dice during square effect processing. The square effect must be resolved first (fight/flee decision, etc.).`,

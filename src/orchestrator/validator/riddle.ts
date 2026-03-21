@@ -1,4 +1,3 @@
-import type { Orchestrator } from "../orchestrator";
 import type { GameState, PrimitiveAction } from "../types";
 import { validateField } from "./common";
 import type { ValidationResult } from "./types";
@@ -53,7 +52,6 @@ export function validateRiddleResolved(
   action: PrimitiveAction,
   state: GameState,
   index: number,
-  _orchestrator: Orchestrator,
 ): ValidationResult {
   const actionRecord = action as unknown as Record<string, unknown>;
   const correctValidation = validateField(

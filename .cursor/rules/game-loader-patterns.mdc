@@ -39,7 +39,7 @@ Each game lives in `public/games/[game-name]/config.json`:
 
 ## Config formats
 
-**New (squares-only):** Define `squares` at top level. Board (winPosition, moves, magicDoor), game state, and players are derived at load. See `player-factory.ts` and `deriveBoardFromSquares` in game-loader.
+**New (squares-only):** Define `squares` at top level. Board (winPosition, moves, magicDoor), game state, and players are derived at load. See `deriveBoardFromSquares` in game-loader.
 
 **Legacy:** Define `initialState` with full game/players/board. Still supported for backward compatibility.
 

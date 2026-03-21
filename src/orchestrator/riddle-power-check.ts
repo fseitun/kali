@@ -1,6 +1,7 @@
 import type { BoardEffectsHandler } from "./board-effects-handler";
 import { computeNewPositionFromState } from "./board-traversal";
 import { isStrictRiddleCorrect } from "./riddle-answer";
+import type { TurnManager } from "./turn-manager";
 import type { ExecutionContext, GameState } from "./types";
 import type { IStatusIndicator } from "@/components/status-indicator";
 import { t } from "@/i18n/translations";
@@ -14,6 +15,7 @@ export interface RiddlePowerCheckDeps {
   speechService: ISpeechService;
   llmClient: LLMClient;
   boardEffectsHandler: BoardEffectsHandler;
+  turnManager: TurnManager;
   statusIndicator: IStatusIndicator;
   setLastNarration: (text: string) => void;
   checkAndApplyWinCondition: (positionPath: string) => void;
@@ -222,45 +224,11 @@ export class RiddlePowerCheckHandler {
         phase: "revenge",
       });
       Logger.info(`Power check LOSE: phase→revenge, advancing turn to next player`);
-      const turnAdvanced = this.advanceTurnForPowerCheckLose();
+      const turnAdvanced = this.deps.turnManager.advanceTurnMechanical();
       return { handled: true, passed: false, turnAdvanced: turnAdvanced ?? undefined };
     }
 
     return { handled: true, passed: false };
-  }
-
-  advanceTurnForPowerCheckLose(): {
-    playerId: string;
-    name: string;
-    position: number;
-  } | null {
-    const state = this.deps.stateManager.getState();
-    const game = state.game as Record<string, unknown> | undefined;
-    const players = state.players as Record<string, Record<string, unknown>> | undefined;
-    const currentTurn = game?.turn as string | undefined;
-    const playerOrder = game?.playerOrder as string[] | undefined;
-
-    if (!game || !players || !currentTurn || !playerOrder?.length) return null;
-
-    const currentIndex = playerOrder.indexOf(currentTurn);
-    const nextIndex = (currentIndex + 1) % playerOrder.length;
-    let nextPlayerId = playerOrder[nextIndex];
-    let nextPlayer = players[nextPlayerId];
-    let nextPlayerName = (nextPlayer?.name as string) || nextPlayerId;
-
-    const skipTurns = (nextPlayer?.skipTurns as number) ?? 0;
-    if (skipTurns > 0) {
-      this.deps.stateManager.set(`players.${nextPlayerId}.skipTurns`, skipTurns - 1);
-      Logger.info(`⏭️ Skipping ${nextPlayerName} (power check lose advance)`);
-      const skipIndex = (nextIndex + 1) % playerOrder.length;
-      nextPlayerId = playerOrder[skipIndex];
-      nextPlayer = players[nextPlayerId];
-      nextPlayerName = (nextPlayer?.name as string) || nextPlayerId;
-    }
-
-    this.deps.stateManager.set("game.turn", nextPlayerId);
-    const position = (nextPlayer?.position as number) ?? 0;
-    return { playerId: nextPlayerId, name: nextPlayerName, position };
   }
 
   applyAnimalEncounterRewards(playerId: string, squareData: Record<string, unknown>): void {

@@ -1,5 +1,5 @@
 import { CONFIG } from "./config";
-import { getExamples } from "./game-loader/examples";
+import { KALIMBA_EXAMPLES } from "./game-loader/examples/kalimba";
 import { GameLoader } from "./game-loader/game-loader";
 import type { GameModule } from "./game-loader/types";
 import { t } from "./i18n/translations";
@@ -143,7 +143,7 @@ export class KaliAppCore {
 
   private formatGameRules(gameModule: GameModule): string {
     const { rules, metadata } = gameModule;
-    const typedExamples = getExamples(metadata.id).slice(0, 4);
+    const typedExamples = (metadata.id === "kalimba" ? KALIMBA_EXAMPLES : []).slice(0, 4);
     const exampleLines = typedExamples.map(
       (ex) => `User: ${ex.user} | You: ${JSON.stringify(ex.actions)}`,
     );

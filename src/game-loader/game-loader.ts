@@ -1,4 +1,3 @@
-import { createDefaultPlayer } from "./player-factory";
 import type { GameConfigInput, GameModule } from "./types";
 import type { BoardConfig, GameState, Player, SquareData } from "@/orchestrator/types";
 import { GamePhase } from "@/orchestrator/types";
@@ -81,13 +80,17 @@ function deriveBoardFromSquares(
 
 /**
  * Resolves initialState from config. Use when config may have legacy initialState or new squares-only format.
- * Exported for e2e scenario runner which loads config from file.
+ * Always returns hydrated board.squares. Exported for e2e scenario runner which loads config from file.
  */
 export function resolveInitialState(config: GameConfigInput): GameState {
-  if (config.initialState) {
-    return config.initialState;
+  const state = config.initialState ?? buildInitialStateFromParts(config);
+  if (state.board?.squares) {
+    const board = state.board as Record<string, unknown>;
+    const boardLength = typeof board.winPosition === "number" ? board.winPosition : 196;
+    const hydrated = hydrateBoardTopology(board.squares as Record<string, SquareData>, boardLength);
+    board.squares = hydrated;
   }
-  return buildInitialStateFromParts(config);
+  return state;
 }
 
 /**
@@ -109,7 +112,22 @@ function buildInitialStateFromParts(config: GameConfigInput): GameState {
   for (let i = 0; i < metadata.minPlayers; i++) {
     const id = `p${i + 1}`;
     const name = `Player ${i + 1}`;
-    players[id] = createDefaultPlayer(metadata.id, id, name);
+    players[id] =
+      metadata.id === "kalimba"
+        ? {
+            id,
+            name,
+            position: 0,
+            hearts: 0,
+            points: 0,
+            items: [],
+            instruments: [],
+            bonusDiceNextTurn: false,
+            activeChoices: {},
+            skipTurns: 0,
+            inverseMode: false,
+          }
+        : { id, name, position: 0 };
   }
 
   const game = {
@@ -157,15 +175,6 @@ export class GameLoader {
       this.validateGameConfig(config);
 
       const initialState = resolveInitialState(config);
-      if (initialState.board?.squares) {
-        const board = initialState.board as Record<string, unknown>;
-        const boardLength = typeof board.winPosition === "number" ? board.winPosition : 196;
-        const hydrated = hydrateBoardTopology(
-          board.squares as Record<string, SquareData>,
-          boardLength,
-        );
-        board.squares = hydrated;
-      }
 
       const module: GameModule = {
         metadata: config.metadata,

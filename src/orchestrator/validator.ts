@@ -1,4 +1,3 @@
-import type { Orchestrator } from "./orchestrator";
 import type { GameState, PrimitiveAction } from "./types";
 import { applyActionToMockState } from "./validator/mock-state";
 import { validateNarrate, validateResetGame } from "./validator/narrate-reset";
@@ -6,7 +5,7 @@ import { validatePlayerAnswered } from "./validator/player-answered";
 import { validatePlayerRolled } from "./validator/player-rolled";
 import { validateAskRiddle, validateRiddleResolved } from "./validator/riddle";
 import { validateSetState } from "./validator/set-state";
-import type { ValidationResult } from "./validator/types";
+import type { ValidationResult, ValidatorContext } from "./validator/types";
 import type { StateManager } from "@/state-manager";
 
 export type { ValidationResult } from "./validator/types";
@@ -20,7 +19,7 @@ export function validateActions(
   actions: unknown,
   state: GameState,
   stateManager: StateManager,
-  orchestrator: Orchestrator,
+  context: ValidatorContext,
 ): ValidationResult {
   if (!Array.isArray(actions)) {
     return {
@@ -41,13 +40,7 @@ export function validateActions(
         errorCode: "invalidActionFormat",
       };
     }
-    const result = validateAction(
-      action as PrimitiveAction,
-      mockState,
-      stateManager,
-      i,
-      orchestrator,
-    );
+    const result = validateAction(action as PrimitiveAction, mockState, stateManager, i, context);
     if (!result.valid) {
       return result;
     }
@@ -63,7 +56,7 @@ function validateAction(
   state: GameState,
   stateManager: StateManager,
   index: number,
-  orchestrator: Orchestrator,
+  context: ValidatorContext,
 ): ValidationResult {
   if (!primitive || typeof primitive !== "object") {
     return {
@@ -87,15 +80,15 @@ function validateAction(
     case "RESET_GAME":
       return validateResetGame(primitive, index);
     case "SET_STATE":
-      return validateSetState(primitive, state, stateManager, index, orchestrator);
+      return validateSetState(primitive, state, stateManager, index, context);
     case "PLAYER_ROLLED":
-      return validatePlayerRolled(primitive, state, index, orchestrator);
+      return validatePlayerRolled(primitive, state, index, context);
     case "PLAYER_ANSWERED":
       return validatePlayerAnswered(primitive, state, index);
     case "ASK_RIDDLE":
       return validateAskRiddle(primitive, state, index);
     case "RIDDLE_RESOLVED":
-      return validateRiddleResolved(primitive, state, index, orchestrator);
+      return validateRiddleResolved(primitive, state, index);
     default:
       return {
         valid: false,

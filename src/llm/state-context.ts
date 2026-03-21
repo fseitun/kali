@@ -1,14 +1,6 @@
-export interface StateDisplayConfig {
-  primary?: string[];
-  secondary?: string[];
-  hidden?: string[];
-}
+import type { StateDisplayConfig, StateDisplayMetadata } from "@/game-loader/types";
 
-export interface StateDisplayMetadata {
-  game?: StateDisplayConfig;
-  players?: StateDisplayConfig;
-  board?: StateDisplayConfig;
-}
+export type { StateDisplayConfig, StateDisplayMetadata };
 
 const LOG_FORMAT_MAX_DEPTH = 2;
 

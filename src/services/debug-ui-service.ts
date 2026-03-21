@@ -1,12 +1,12 @@
 import type { IUIService } from "./ui-service";
 import type { IStatusIndicator } from "@/components/status-indicator";
 import { NoOpStatusIndicator } from "@/components/status-indicator";
-import { t } from "@/i18n/translations";
 import {
   getCategoryIcon,
   getEnabledCategories,
   subscribeToCategoryChanges,
 } from "@/utils/debug-options";
+import { createExportLogsButton } from "@/utils/export-logs-button";
 import { initLogBuffer, type LogEntry, type LogSink } from "@/utils/log-buffer";
 
 const MAX_DISPLAY_ENTRIES = 3000;
@@ -39,36 +39,7 @@ export class DebugUIService implements IUIService {
 
   private setupExportButton(): void {
     if (!window.location.pathname.includes("/debug")) return;
-    this.exportButton = document.createElement("button");
-    this.exportButton.textContent = t("ui.exportLogs");
-    this.exportButton.className = "export-logs-button";
-    this.exportButton.style.cssText = `
-      position: fixed;
-      bottom: 1rem;
-      right: 1rem;
-      padding: 0.5rem 1rem;
-      background: rgba(0, 200, 255, 0.8);
-      color: #000;
-      border: none;
-      border-radius: 4px;
-      cursor: pointer;
-      font-family: 'Courier New', monospace;
-      font-size: 0.9rem;
-      z-index: 1000;
-    `;
-    this.exportButton.addEventListener("click", () => {
-      const buffer = initLogBuffer();
-      const entries = buffer.getAll();
-      const blob = new Blob([JSON.stringify(entries, null, 2)], {
-        type: "application/json",
-      });
-      const name = `kali-logs-${new Date().toISOString().replace(/[:.]/g, "-")}.json`;
-      const a = document.createElement("a");
-      a.href = URL.createObjectURL(blob);
-      a.download = name;
-      a.click();
-      URL.revokeObjectURL(a.href);
-    });
+    this.exportButton = createExportLogsButton();
     document.body.appendChild(this.exportButton);
   }
 

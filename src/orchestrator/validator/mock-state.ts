@@ -1,5 +1,5 @@
-import { matchAnswerToChoiceKeywords } from "../board-next";
 import { computeNewPositionFromState } from "../board-traversal";
+import { getDecisionPointApplyState } from "../decision-helpers";
 import { isStrictRiddleCorrect } from "../riddle-answer";
 import type { GameState, PrimitiveAction } from "../types";
 
@@ -120,45 +120,20 @@ export function applyActionToMockState(state: GameState, primitive: PrimitiveAct
           return mockState;
         }
       }
-      const decisionPoints = mockState.decisionPoints as
-        | Array<{
-            position: number;
-            positionOptions?: Record<string, number>;
-            choiceKeywords?: Record<string, string[]>;
-          }>
-        | undefined;
-      const players = mockState.players as Record<string, Record<string, unknown>>;
-      const player = currentTurn ? players?.[currentTurn] : undefined;
-      if (!currentTurn || !player || !decisionPoints?.length) return mockState;
-      const position = player.position as number | undefined;
-      if (typeof position !== "number") return mockState;
-      const dp = decisionPoints.find((d) => d.position === position);
-      if (!dp) return mockState;
-      const choices = (player.activeChoices ?? {}) as Record<string, number>;
-      if (choices[String(position)] !== undefined) return mockState;
-
-      let target: number | null = null;
-      // Position 0: "A" -> 1, "B" -> 15 (fall through to positionOptions if no match)
-      if (position === 0) {
-        const first = answer.charAt(0).toUpperCase();
-        if (first === "A") target = 1;
-        if (first === "B") target = 15;
-      }
-      if (target === null && dp.positionOptions) {
-        const numMatch = answer.match(/\d+/);
-        for (const [key, val] of Object.entries(dp.positionOptions)) {
-          if (answer === key || numMatch?.[0] === key) {
-            target = val;
-            break;
+      const apply = getDecisionPointApplyState(mockState, answer);
+      if (apply) {
+        const parts = apply.path.split(".");
+        let current: Record<string, unknown> = mockState;
+        for (let i = 0; i < parts.length - 1; i++) {
+          const part = parts[i];
+          let next = current[part];
+          if (typeof next !== "object" || next === null) {
+            next = {};
+            current[part] = next;
           }
+          current = next as Record<string, unknown>;
         }
-      }
-      if (target === null && dp.choiceKeywords) {
-        target = matchAnswerToChoiceKeywords(answer, dp.choiceKeywords);
-      }
-      if (target !== null) {
-        player.activeChoices ??= {};
-        (player.activeChoices as Record<string, number>)[String(position)] = target;
+        current[parts[parts.length - 1]] = apply.value;
       }
     } else if (
       primitive.action === "ASK_RIDDLE" &&

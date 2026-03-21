@@ -1,3 +1,11 @@
+/**
+ * Context passed to validators instead of Orchestrator. Decouples validation from orchestrator type.
+ */
+export interface ValidatorContext {
+  isProcessingEffect: boolean;
+  allowScenarioOnlyStatePaths?: boolean;
+}
+
 export interface ValidationResult {
   valid: boolean;
   error?: string;

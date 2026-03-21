@@ -253,6 +253,46 @@ export class TurnManager {
   }
 
   /**
+   * Mechanical turn advance: find next player, handle skipTurns, set game.turn.
+   * No guards (phase, winner, pending decisions, pending encounter). Used when
+   * the caller has already cleared blockers (e.g. power-check lose).
+   * @returns Next player details, or null if advance not possible
+   */
+  advanceTurnMechanical(): {
+    playerId: string;
+    name: string;
+    position: number;
+  } | null {
+    const state = this.stateManager.getState();
+    const game = state.game as Record<string, unknown> | undefined;
+    const players = state.players as Record<string, Record<string, unknown>> | undefined;
+    const currentTurn = game?.turn as string | undefined;
+    const playerOrder = game?.playerOrder as string[] | undefined;
+
+    if (!game || !players || !currentTurn || !playerOrder?.length) return null;
+
+    const currentIndex = playerOrder.indexOf(currentTurn);
+    const nextIndex = (currentIndex + 1) % playerOrder.length;
+    let nextPlayerId = playerOrder[nextIndex];
+    let nextPlayer = players[nextPlayerId];
+    let nextPlayerName = (nextPlayer?.name as string) || nextPlayerId;
+
+    const skipTurns = (nextPlayer?.skipTurns as number) ?? 0;
+    if (skipTurns > 0) {
+      this.stateManager.set(`players.${nextPlayerId}.skipTurns`, skipTurns - 1);
+      Logger.info(`⏭️ Skipping ${nextPlayerName} (power check lose advance)`);
+      const skipIndex = (nextIndex + 1) % playerOrder.length;
+      nextPlayerId = playerOrder[skipIndex];
+      nextPlayer = players[nextPlayerId];
+      nextPlayerName = (nextPlayer?.name as string) || nextPlayerId;
+    }
+
+    this.stateManager.set("game.turn", nextPlayerId);
+    const position = (nextPlayer?.position as number) ?? 0;
+    return { playerId: nextPlayerId, name: nextPlayerName, position };
+  }
+
+  /**
    * Validates that a state mutation targets the current turn's player.
    *
    * @param path - State path being mutated (e.g., "players.p1.position")

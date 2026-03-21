@@ -1,4 +1,3 @@
-import type { Orchestrator } from "../orchestrator";
 import type { ValidationResult } from "./types";
 
 /** Player state keys that are orchestrator-owned during square effects; LLM must not SET_STATE these. */
@@ -22,9 +21,9 @@ const SQUARE_EFFECT_ALLOWED_PLAYER_KEYS = new Set([
 export function validateSquareEffectPathRestriction(
   path: string,
   index: number,
-  orchestrator: Orchestrator,
+  isProcessingEffect: boolean,
 ): ValidationResult {
-  if (!orchestrator.isProcessingEffect()) return { valid: true };
+  if (!isProcessingEffect) return { valid: true };
 
   const playerMatch = path.match(/^players\.([^.]+)\.(.+)$/);
   if (!playerMatch) return { valid: true };

@@ -86,6 +86,7 @@ export class Orchestrator {
       speechService,
       llmClient,
       boardEffectsHandler: this.boardEffectsHandler,
+      turnManager: this.turnManager,
       statusIndicator,
       setLastNarration: (text) => {
         this.lastNarration = text;
@@ -408,7 +409,9 @@ export class Orchestrator {
     if (!Number.isFinite(value)) return actions;
     const rolled: PrimitiveAction = { action: "PLAYER_ROLLED", value };
     const state = this.stateManager.getState();
-    const validation = validatePlayerRolled(rolled, state, 0, this);
+    const validation = validatePlayerRolled(rolled, state, 0, {
+      isProcessingEffect: this.boardEffectsHandler.isProcessingEffect(),
+    });
     if (!validation.valid) return actions;
     Logger.info(`Coerced PLAYER_ANSWERED "${trimmed}" → PLAYER_ROLLED (${value})`);
     return [rolled];
@@ -456,7 +459,10 @@ export class Orchestrator {
 
     const validationProfilerKey = context.isNestedCall ? "nested" : "top";
     Profiler.start(`${profilerPrefix}.validation.${validationProfilerKey}`);
-    const validation = validateActions(actions, state, this.stateManager, this);
+    const validation = validateActions(actions, state, this.stateManager, {
+      isProcessingEffect: this.boardEffectsHandler.isProcessingEffect(),
+      allowScenarioOnlyStatePaths: this.options?.allowScenarioOnlyStatePaths,
+    });
     Profiler.end(`${profilerPrefix}.validation.${validationProfilerKey}`);
 
     if (!validation.valid) {
