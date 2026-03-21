@@ -72,7 +72,7 @@
         "82": 45
       },
       "squares": {
-        "0": {"type": "empty", "next": [1, 15]},
+        "0": {"type": "empty", "next": {"1": ["izquierda", "corto"], "15": ["derecha", "largo"]}},
         "2": {"type": "animal", "name": "Halcón", "power": 3, "points": 3, "habitat": "desierto"},
         "5": {"type": "animal", "name": "Cobra", "power": 4, "points": 4, "habitat": "desierto"},
         "7": {"type": "special", "name": "Águila", "effect": "roll2d6Advance", "power": 3, "points": 3, "habitat": "desierto", "instrument": "flauta del desierto"},
@@ -109,12 +109,12 @@
         "92": {"type": "animal", "name": "Orca Asesina", "power": 4, "points": 4, "habitat": "océano"},
         "93": {"type": "empty", "next": [94], "nextOnLanding": [97]},
         "95": {"type": "hazard", "name": "Lluvias de meteoritos", "effect": "skipTurn"},
-        "96": {"type": "empty", "next": [97, 99]},
+        "96": {"type": "empty", "next": {"97": ["97", "abajo", "pingüino"], "99": ["99", "arriba", "narval"]}},
         "97": {"type": "animal", "name": "Pingüino", "power": 2, "points": 2, "habitat": "ártico", "prev": [96]},
         "98": {"type": "empty", "next": [101]},
         "99": {"type": "empty", "prev": [96]},
         "100": {"type": "animal", "name": "Narval", "power": 2, "points": 2, "habitat": "ártico"},
-        "101": {"type": "animal", "name": "Morsa", "power": 3, "points": 3, "habitat": "ártico", "instrument": "campanas del ártico", "next": [102, 105]},
+        "101": {"type": "animal", "name": "Morsa", "power": 3, "points": 3, "habitat": "ártico", "instrument": "campanas del ártico", "next": {"102": ["102", "abajo"], "105": ["105", "oso polar"]}},
         "103": {"type": "special", "name": "Iceberg", "effect": "roll1d6Directional"},
         "105": {"type": "animal", "name": "Oso polar", "power": 4, "points": 4, "habitat": "ártico", "prev": [101]},
         "106": {"type": "animal", "name": "Ballena azul", "power": 5, "points": 5, "habitat": "ártico"},

@@ -1,3 +1,4 @@
+import { matchAnswerToChoiceKeywords } from "../board-next";
 import { computeNewPositionFromState } from "../board-traversal";
 import { isStrictRiddleCorrect } from "../riddle-answer";
 import type { GameState, PrimitiveAction } from "../types";
@@ -123,6 +124,7 @@ export function applyActionToMockState(state: GameState, primitive: PrimitiveAct
         | Array<{
             position: number;
             positionOptions?: Record<string, number>;
+            choiceKeywords?: Record<string, string[]>;
           }>
         | undefined;
       const players = mockState.players as Record<string, Record<string, unknown>>;
@@ -150,6 +152,9 @@ export function applyActionToMockState(state: GameState, primitive: PrimitiveAct
             break;
           }
         }
+      }
+      if (target === null && dp.choiceKeywords) {
+        target = matchAnswerToChoiceKeywords(answer, dp.choiceKeywords);
       }
       if (target !== null) {
         player.activeChoices ??= {};

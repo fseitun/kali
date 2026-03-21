@@ -52,8 +52,10 @@ export interface SquareData {
   instrument?: string;
   heart?: boolean;
   inverseMode?: string;
-  /** Graph edges: next[pos] = squares reachable in forward direction (e.g. [97, 99] at fork) */
-  next?: number[];
+  /**
+   * Forward edges: either a single path `number[]` or a fork map (target index string → phrases for that branch).
+   */
+  next?: number[] | Record<string, string[]>;
   /** Graph edges: prev[pos] = squares reachable in inverse direction */
   prev?: number[];
   /** Jump applied only when this square is the final step of a roll (e.g. 93→97) */
@@ -72,6 +74,8 @@ export interface DecisionPoint {
   prompt: string;
   /** Maps answer to target position for branch choices (e.g. 96 → 97 or 99) */
   positionOptions?: Record<string, number>;
+  /** Per-target phrases for fork resolution (includes implicit target number strings). */
+  choiceKeywords?: Record<string, string[]>;
 }
 
 /**

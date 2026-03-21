@@ -50,7 +50,11 @@ function buildInitialState(game: GameConfig, scenario: Scenario): GameState {
   const hasBoardOverride = overrides.board !== undefined;
   if (hasBoardOverride) merged.board = overrides.board;
 
-  const board = merged.board as { squares?: Record<string, { next?: number[] }> } | undefined;
+  const board = merged.board as
+    | {
+        squares?: Record<string, { next?: number[] | Record<string, string[]> }>;
+      }
+    | undefined;
   const decisionPoints = inferDecisionPoints(board);
   if (decisionPoints.length) merged.decisionPoints = decisionPoints;
 

@@ -53,6 +53,29 @@ describe("formatStateContext", () => {
     expect(result).not.toContain("DECISION (Bob)");
   });
 
+  it("includes branch hints when decision point has choiceKeywords", () => {
+    const state = {
+      game: { turn: "p1", phase: "PLAYING" },
+      players: {
+        p1: { id: "p1", name: "Alice", position: 0, activeChoices: {} },
+      },
+      decisionPoints: [
+        {
+          position: 0,
+          prompt: "¿Izquierda o derecha?",
+          choiceKeywords: { "1": ["izquierda"], "15": ["derecha"] },
+        },
+      ],
+    } as Record<string, unknown>;
+
+    const result = formatStateContext(state);
+
+    expect(result).toContain("Branch hints from config");
+    expect(result).toContain("target 1:");
+    expect(result).toContain("izquierda");
+    expect(result).toContain("one of: 1, 15");
+  });
+
   it("shows DECISION for p2 when it is p2's turn and they have pending path choice", () => {
     const state = {
       game: { turn: "p2", phase: "PLAYING" },

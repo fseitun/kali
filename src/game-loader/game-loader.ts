@@ -25,7 +25,11 @@ function hydrateBoardTopology(
       };
     } else {
       const sq = { ...existing };
-      if (!sq.next && i < boardLength) sq.next = [i + 1];
+      const needsDefaultNext =
+        sq.next === undefined ||
+        sq.next === null ||
+        (Array.isArray(sq.next) && sq.next.length === 0);
+      if (needsDefaultNext && i < boardLength) sq.next = [i + 1];
       if (!sq.prev && i > 0) sq.prev = [i - 1];
       result[key] = sq;
     }

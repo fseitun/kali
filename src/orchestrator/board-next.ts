@@ -1,0 +1,91 @@
+import type { SquareData } from "./types";
+
+/** `next` may be a linear edge list or a fork map (target index → phrases for that branch). */
+export type NextField = SquareData["next"];
+
+/**
+ * True when `next` is the object (fork) form, not a number array.
+ * @param next - Square's `next` field
+ * @returns Whether next is a non-array object
+ */
+export function isNextRecord(next: NextField | undefined): next is Record<string, string[]> {
+  return next !== undefined && next !== null && typeof next === "object" && !Array.isArray(next);
+}
+
+/**
+ * Returns sorted unique target indices from a square's `next` field.
+ * Arrays are returned as-is (copy); object form uses numeric keys only.
+ * @param sq - Square-like object with optional `next`
+ * @returns Sorted list of reachable forward targets
+ */
+export function getNextTargets(sq: { next?: NextField } | undefined): number[] {
+  const next = sq?.next;
+  if (next === undefined || next === null) return [];
+  if (Array.isArray(next)) return [...next];
+  const keys = Object.keys(next as Record<string, unknown>);
+  const nums = keys.map((k) => parseInt(k, 10)).filter((n) => !Number.isNaN(n));
+  return [...new Set(nums)].sort((a, b) => a - b);
+}
+
+/**
+ * True when the square has more than one forward target (fork).
+ * @param sq - Square-like object with optional `next`
+ */
+export function isNextFork(sq: { next?: NextField } | undefined): boolean {
+  return getNextTargets(sq).length > 1;
+}
+
+/**
+ * For fork `next` objects, returns phrase lists per target key, with the numeric target string
+ * appended to each list so PLAYER_ANSWERED with "15" matches without duplicating in JSON.
+ * @param sq - Square with object `next`
+ * @returns Map of target string → phrases including implicit target number, or undefined if not object next
+ */
+export function getForkKeywordsWithImplicitTargets(
+  sq: { next?: NextField } | undefined,
+): Record<string, string[]> | undefined {
+  const next = sq?.next;
+  if (!isNextRecord(next)) return undefined;
+  const obj = next;
+  const result: Record<string, string[]> = {};
+  for (const [key, phrases] of Object.entries(obj)) {
+    const n = parseInt(key, 10);
+    if (Number.isNaN(n)) continue;
+    const keyStr = String(n);
+    const list = Array.isArray(phrases) ? [...phrases] : [];
+    if (!list.includes(keyStr)) list.push(keyStr);
+    result[keyStr] = list;
+  }
+  return Object.keys(result).length > 0 ? result : undefined;
+}
+
+/**
+ * Resolves a user/LLM answer to a fork target using choice keyword lists.
+ * Matches: exact phrase (case-insensitive), or extracted number matching a target key,
+ * or substring when phrase length ≥ 3 (e.g. "derecha" in "por la derecha").
+ * @param answer - Raw answer string
+ * @param choiceKeywords - Per-target phrase lists (from decision point)
+ * @returns Target position if matched, else null
+ */
+export function matchAnswerToChoiceKeywords(
+  answer: string,
+  choiceKeywords: Record<string, string[]>,
+): number | null {
+  const trimmed = answer.trim();
+  const lower = trimmed.toLowerCase();
+  const numMatch = trimmed.match(/\d+/);
+
+  for (const [targetStr, phrases] of Object.entries(choiceKeywords)) {
+    const targetNum = parseInt(targetStr, 10);
+    if (Number.isNaN(targetNum)) continue;
+    if (numMatch?.[0] === targetStr) return targetNum;
+
+    for (const phrase of phrases) {
+      const p = phrase.trim().toLowerCase();
+      if (!p) continue;
+      if (lower === p) return targetNum;
+      if (p.length >= 3 && lower.includes(p)) return targetNum;
+    }
+  }
+  return null;
+}

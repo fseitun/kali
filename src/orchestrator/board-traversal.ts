@@ -1,3 +1,4 @@
+import { getNextTargets } from "./board-next";
 import type { GameState } from "./types";
 
 /**
@@ -14,7 +15,12 @@ export function computeNewPositionFromState(
   const squares = board?.squares as
     | Record<
         string,
-        { next?: number[]; prev?: number[]; nextOnLanding?: number[]; prevOnLanding?: number[] }
+        {
+          next?: number[] | Record<string, string[]>;
+          prev?: number[];
+          nextOnLanding?: number[];
+          prevOnLanding?: number[];
+        }
       >
     | undefined;
   const player = (state.players as Record<string, Record<string, unknown>>)?.[playerId];
@@ -26,9 +32,14 @@ export function computeNewPositionFromState(
 
   for (let i = 0; i < roll; i++) {
     const sq = squares?.[String(current)];
-    const dir = inverseMode
-      ? (sq?.prev ?? (current > 0 ? [current - 1] : []))
-      : (sq?.next ?? (current < 196 ? [current + 1] : []));
+    const nextField = sq?.next;
+    const forwardDir =
+      nextField === undefined || nextField === null
+        ? current < 196
+          ? [current + 1]
+          : []
+        : getNextTargets(sq);
+    const dir = inverseMode ? (sq?.prev ?? (current > 0 ? [current - 1] : [])) : forwardDir;
 
     const saved = activeChoices[current];
     current = saved !== undefined && dir.includes(saved) ? saved : (dir[0] ?? current);

@@ -1,3 +1,4 @@
+import { matchAnswerToChoiceKeywords } from "./board-next";
 import type { GameState } from "./types";
 
 /**
@@ -50,6 +51,7 @@ export function getDecisionPointApplyState(
         position: number;
         prompt: string;
         positionOptions?: Record<string, number>;
+        choiceKeywords?: Record<string, string[]>;
       }>
     | undefined;
 
@@ -85,6 +87,12 @@ export function getDecisionPointApplyState(
     for (const [key, targetPos] of Object.entries(options)) {
       if (trimmed === key || numMatch?.[0] === key) return { path, value: targetPos };
     }
+  }
+
+  const keywords = decisionPoint.choiceKeywords;
+  if (keywords) {
+    const matched = matchAnswerToChoiceKeywords(answer, keywords);
+    if (matched !== null) return { path, value: matched };
   }
 
   return null;

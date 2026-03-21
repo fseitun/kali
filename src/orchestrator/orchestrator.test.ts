@@ -150,6 +150,27 @@ describe("Orchestrator - New Action Handlers", () => {
       expect(mockStateManager.set).toHaveBeenCalledWith("players.p1.activeChoices.0", 15);
     });
 
+    it("auto-applies choiceKeywords phrase (e.g. derecha) to fork at 0", async () => {
+      (testState.players as any).p1.position = 0;
+      (testState.players as any).p1.activeChoices = {};
+      testState.decisionPoints = [
+        {
+          ...fork0DecisionPoint,
+          choiceKeywords: {
+            "1": ["izquierda", "corto", "1"],
+            "15": ["derecha", "largo", "15"],
+          },
+        },
+      ];
+
+      const actions: PrimitiveAction[] = [{ action: "PLAYER_ANSWERED", answer: "derecha" }];
+
+      await orchestrator.testExecuteActions(actions);
+
+      expect(mockStateManager.set).toHaveBeenCalledWith("game.lastAnswer", "derecha");
+      expect(mockStateManager.set).toHaveBeenCalledWith("players.p1.activeChoices.0", 15);
+    });
+
     it("PLAYER_ANSWERED path choice at position 0 does not set shouldAdvanceTurn", async () => {
       (testState.players as any).p1.position = 0;
       (testState.players as any).p1.activeChoices = {};

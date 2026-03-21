@@ -75,4 +75,22 @@ describe("inferDecisionPoints", () => {
     expect(result[1].position).toBe(96);
     expect(result[2].position).toBe(101);
   });
+
+  it("infers choiceKeywords from object next with implicit target numbers", () => {
+    const board: BoardConfig = {
+      squares: {
+        "0": {
+          type: "empty",
+          next: { "1": ["izquierda", "corto"], "15": ["derecha", "largo"] },
+        },
+      },
+    };
+    const result = inferDecisionPoints(board);
+    expect(result).toHaveLength(1);
+    expect(result[0].positionOptions).toEqual({ "1": 1, "15": 15 });
+    expect(result[0].choiceKeywords).toEqual({
+      "1": ["izquierda", "corto", "1"],
+      "15": ["derecha", "largo", "15"],
+    });
+  });
 });
