@@ -158,6 +158,32 @@ describe("BoardEffectsHandler", () => {
 
       expect(stateManager.get("players.p1.position")).toBe("invalid");
     });
+
+    it("should apply jumpToLeader (goldenFox) - move to leader position", async () => {
+      stateManager.set("board.squares", {
+        "54": { type: "special", effect: "jumpToLeader", name: "Zorro dorado" },
+      });
+      stateManager.set("game.playerOrder", ["p1", "p2"]);
+      stateManager.set("players.p1.position", 54);
+      stateManager.set("players.p2.position", 80);
+
+      await boardEffectsHandler.checkAndApplyBoardMoves("players.p1.position");
+
+      expect(stateManager.get("players.p1.position")).toBe(80);
+    });
+
+    it("should keep position when jumpToLeader but current player is already leader", async () => {
+      stateManager.set("board.squares", {
+        "54": { type: "special", effect: "jumpToLeader", name: "Zorro dorado" },
+      });
+      stateManager.set("game.playerOrder", ["p1", "p2"]);
+      stateManager.set("players.p1.position", 54);
+      stateManager.set("players.p2.position", 30);
+
+      await boardEffectsHandler.checkAndApplyBoardMoves("players.p1.position");
+
+      expect(stateManager.get("players.p1.position")).toBe(54);
+    });
   });
 
   describe("checkAndApplySquareEffects()", () => {
@@ -434,6 +460,112 @@ describe("BoardEffectsHandler", () => {
         expect.stringContaining("Narrate this encounter"),
         expect.anything(),
       );
+    });
+
+    it("rollDirectional squares trigger narration only (no deterministic effects)", async () => {
+      stateManager.set("board.squares", {
+        "55": {
+          type: "special",
+          name: "Indios Jíbaros",
+          effect: "roll2d6Directional",
+        },
+      });
+      stateManager.set("players.p1.position", 55);
+      stateManager.set("players.p1.skipTurns", 0);
+
+      await boardEffectsHandler.checkAndApplySquareEffects("players.p1.position", baseContext);
+
+      expect(stateManager.get("players.p1.skipTurns")).toBe(0);
+      expect(mockProcessTranscript).toHaveBeenCalledWith(
+        expect.stringContaining("Narrate this encounter"),
+        expect.anything(),
+      );
+      expect(mockProcessTranscript).toHaveBeenCalledWith(
+        expect.stringContaining("Indios Jíbaros"),
+        expect.anything(),
+      );
+    });
+
+    it("checkTorch hazard applies skipTurn when player has no torch", async () => {
+      stateManager.set("board.squares", {
+        "85": { type: "hazard", name: "Cae la noche", effect: "checkTorch" },
+      });
+      stateManager.set("players.p1.position", 85);
+      stateManager.set("players.p1.items", []);
+      stateManager.set("players.p1.skipTurns", 0);
+
+      await boardEffectsHandler.checkAndApplySquareEffects("players.p1.position", baseContext);
+
+      expect(stateManager.get("players.p1.skipTurns")).toBe(1);
+      expect(mockProcessTranscript).toHaveBeenCalledWith(
+        expect.stringContaining("skip next turn (no torch)"),
+        expect.anything(),
+      );
+    });
+
+    it("checkTorch hazard consumes torch and does not apply skipTurn when player has torch", async () => {
+      stateManager.set("board.squares", {
+        "85": { type: "hazard", name: "Cae la noche", effect: "checkTorch" },
+      });
+      stateManager.set("players.p1.position", 85);
+      stateManager.set("players.p1.items", ["torch"]);
+      stateManager.set("players.p1.skipTurns", 0);
+
+      await boardEffectsHandler.checkAndApplySquareEffects("players.p1.position", baseContext);
+
+      expect(stateManager.get("players.p1.items")).toEqual([]);
+      expect(stateManager.get("players.p1.skipTurns")).toBe(0);
+      expect(mockProcessTranscript).toHaveBeenCalledWith(
+        expect.stringContaining("torch used (no skip)"),
+        expect.anything(),
+      );
+    });
+
+    it("checkAntiWasp hazard applies skipTurn when player has no anti-wasp", async () => {
+      stateManager.set("board.squares", {
+        "116": { type: "hazard", name: "Avispas", effect: "checkAntiWasp" },
+      });
+      stateManager.set("players.p1.position", 116);
+      stateManager.set("players.p1.items", []);
+      stateManager.set("players.p1.skipTurns", 0);
+
+      await boardEffectsHandler.checkAndApplySquareEffects("players.p1.position", baseContext);
+
+      expect(stateManager.get("players.p1.skipTurns")).toBe(1);
+      expect(mockProcessTranscript).toHaveBeenCalledWith(
+        expect.stringContaining("skip next turn (no anti-wasp)"),
+        expect.anything(),
+      );
+    });
+
+    it("checkAntiWasp hazard consumes anti-wasp and does not apply skipTurn when player has it", async () => {
+      stateManager.set("board.squares", {
+        "116": { type: "hazard", name: "Avispas", effect: "checkAntiWasp" },
+      });
+      stateManager.set("players.p1.position", 116);
+      stateManager.set("players.p1.items", ["anti-wasp"]);
+      stateManager.set("players.p1.skipTurns", 0);
+
+      await boardEffectsHandler.checkAndApplySquareEffects("players.p1.position", baseContext);
+
+      expect(stateManager.get("players.p1.items")).toEqual([]);
+      expect(stateManager.get("players.p1.skipTurns")).toBe(0);
+      expect(mockProcessTranscript).toHaveBeenCalledWith(
+        expect.stringContaining("anti-wasp used (no skip)"),
+        expect.anything(),
+      );
+    });
+
+    it("torch protectionItem square adds torch item immediately", async () => {
+      stateManager.set("board.squares", {
+        "79": { type: "item", name: "Antorcha", item: "torch" },
+      });
+      stateManager.set("players.p1.position", 79);
+      stateManager.set("players.p1.items", []);
+
+      await boardEffectsHandler.checkAndApplySquareEffects("players.p1.position", baseContext);
+
+      expect(stateManager.get("players.p1.items")).toEqual(["torch"]);
     });
 
     it("should handle position value that is not a number", async () => {

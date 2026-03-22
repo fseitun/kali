@@ -66,6 +66,25 @@ export class BoardEffectsHandler {
         destination = squareData.destination;
       } else if (squareData.effect === "returnTo187") {
         destination = 187;
+      } else if (squareData.effect === "jumpToLeader") {
+        const match = path.match(/^players\.([^.]+)\.position$/);
+        const currentPlayerId = match?.[1];
+        const playerOrder = (state.game as Record<string, unknown>)?.playerOrder as
+          | string[]
+          | undefined;
+        const players = state.players as Record<string, Record<string, unknown>> | undefined;
+        if (currentPlayerId && Array.isArray(playerOrder) && players) {
+          let leaderPosition = -1;
+          for (const pid of playerOrder) {
+            const pos = players[pid]?.position as number | undefined;
+            if (typeof pos === "number" && pos > leaderPosition) {
+              leaderPosition = pos;
+            }
+          }
+          if (leaderPosition >= 0) {
+            destination = leaderPosition;
+          }
+        }
       }
 
       if (destination !== undefined && destination !== position) {
@@ -160,6 +179,36 @@ export class BoardEffectsHandler {
       const current = (this.stateManager.get(`players.${playerId}.skipTurns`) as number) ?? 0;
       this.stateManager.set(`players.${playerId}.skipTurns`, current + 1);
       applied.push("skip next turn");
+    }
+
+    if (squareData.effect === "checkTorch") {
+      const items = (this.stateManager.get(`players.${playerId}.items`) as unknown[]) ?? [];
+      const idx = Array.isArray(items) ? items.indexOf("torch") : -1;
+      if (idx >= 0) {
+        const next = [...items];
+        next.splice(idx, 1);
+        this.stateManager.set(`players.${playerId}.items`, next);
+        applied.push("torch used (no skip)");
+      } else {
+        const current = (this.stateManager.get(`players.${playerId}.skipTurns`) as number) ?? 0;
+        this.stateManager.set(`players.${playerId}.skipTurns`, current + 1);
+        applied.push("skip next turn (no torch)");
+      }
+    }
+
+    if (squareData.effect === "checkAntiWasp") {
+      const items = (this.stateManager.get(`players.${playerId}.items`) as unknown[]) ?? [];
+      const idx = Array.isArray(items) ? items.indexOf("anti-wasp") : -1;
+      if (idx >= 0) {
+        const next = [...items];
+        next.splice(idx, 1);
+        this.stateManager.set(`players.${playerId}.items`, next);
+        applied.push("anti-wasp used (no skip)");
+      } else {
+        const current = (this.stateManager.get(`players.${playerId}.skipTurns`) as number) ?? 0;
+        this.stateManager.set(`players.${playerId}.skipTurns`, current + 1);
+        applied.push("skip next turn (no anti-wasp)");
+      }
     }
 
     const item = squareData.item as string | undefined;
