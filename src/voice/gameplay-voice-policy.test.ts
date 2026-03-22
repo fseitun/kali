@@ -1,8 +1,13 @@
-import { describe, it, expect, vi } from "vitest";
+import { describe, it, expect, vi, beforeEach } from "vitest";
 import { applySilentSuccessFallback } from "./gameplay-voice-policy";
-import { GamePhase, type GameState } from "@/orchestrator/types";
+import { setLocale } from "@/i18n/translations";
+import { GamePhase, type GameState, type VoiceOutcomeHints } from "@/orchestrator/types";
 
 describe("applySilentSuccessFallback", () => {
+  beforeEach(() => {
+    setLocale("en-US");
+  });
+
   it("speaks fork fallback when hint is set", async () => {
     const speak = vi.fn().mockResolvedValue(undefined);
     const setLastNarration = vi.fn();
@@ -54,5 +59,75 @@ describe("applySilentSuccessFallback", () => {
 
     expect(spoke).toBe(false);
     expect(speak).not.toHaveBeenCalled();
+  });
+
+  it("returns false when hints object has no recognized flags", async () => {
+    const speak = vi.fn();
+    const state = {
+      game: {
+        name: "G",
+        phase: GamePhase.PLAYING,
+        turn: "p1",
+        playerOrder: ["p1"],
+        winner: null,
+      },
+      players: { p1: { id: "p1", name: "Ada", position: 0 } },
+    } as GameState;
+
+    const spoke = await applySilentSuccessFallback({
+      hints: {} as VoiceOutcomeHints,
+      state,
+      speak,
+      setLastNarration: vi.fn(),
+    });
+
+    expect(spoke).toBe(false);
+    expect(speak).not.toHaveBeenCalled();
+  });
+
+  it("uses turn id when player name is empty", async () => {
+    const speak = vi.fn().mockResolvedValue(undefined);
+    const setLastNarration = vi.fn();
+    const state = {
+      game: {
+        name: "G",
+        phase: GamePhase.PLAYING,
+        turn: "p1",
+        playerOrder: ["p1"],
+        winner: null,
+      },
+      players: { p1: { id: "p1", name: "", position: 0 } },
+    } as GameState;
+
+    await applySilentSuccessFallback({
+      hints: { forkChoiceResolvedWithoutNarrate: true },
+      state,
+      speak,
+      setLastNarration,
+    });
+
+    expect(speak).toHaveBeenCalledWith("p1, you're set. Roll the dice.");
+  });
+
+  it("uses empty name when game.turn is missing", async () => {
+    const speak = vi.fn().mockResolvedValue(undefined);
+    const state = {
+      game: {
+        name: "G",
+        phase: GamePhase.PLAYING,
+        playerOrder: ["p1"],
+        winner: null,
+      },
+      players: { p1: { id: "p1", name: "Ada", position: 0 } },
+    } as unknown as GameState;
+
+    await applySilentSuccessFallback({
+      hints: { forkChoiceResolvedWithoutNarrate: true },
+      state,
+      speak,
+      setLastNarration: vi.fn(),
+    });
+
+    expect(speak).toHaveBeenCalledWith(", you're set. Roll the dice.");
   });
 });
