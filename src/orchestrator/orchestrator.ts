@@ -26,6 +26,7 @@ import {
 import { VALIDATION_ERROR_I18N } from "./validation-i18n";
 import { validateActions, type ValidationResult } from "./validator";
 import { validatePlayerRolled } from "./validator/player-rolled";
+import type { ValidatorContext } from "./validator/types";
 import type { IStatusIndicator } from "@/components/status-indicator";
 import { t } from "@/i18n/translations";
 import type { LLMClient } from "@/llm/LLMClient";
@@ -49,6 +50,8 @@ import { Profiler } from "@/utils/profiler";
 export interface OrchestratorOptions {
   /** When true, validator allows SET_STATE game.pendingAnimalEncounter to null for scripted E2E scenarios. */
   allowScenarioOnlyStatePaths?: boolean;
+  /** When true, SET_STATE on players.*.position bypasses the fork-choice gate (debug teleport; build-time gated via env). */
+  allowBypassPositionDecisionGate?: boolean;
 }
 
 function isPendingAnimalRiddleForCurrentTurn(game: Record<string, unknown> | undefined): boolean {
@@ -592,6 +595,14 @@ export class Orchestrator {
     return { hasPendingDecisions, isForkAnswerAtStart, onlyResolvedForkChoice };
   }
 
+  private getValidatorContext(): ValidatorContext {
+    return {
+      isProcessingEffect: this.boardEffectsHandler.isProcessingEffect(),
+      allowScenarioOnlyStatePaths: this.options?.allowScenarioOnlyStatePaths,
+      allowBypassPositionDecisionGate: this.options?.allowBypassPositionDecisionGate,
+    };
+  }
+
   private async runValidatedActions(
     actions: PrimitiveAction[],
     context: ExecutionContext,
@@ -603,10 +614,12 @@ export class Orchestrator {
     );
 
     Profiler.start(`${profilerPrefix}.validation.${this.getProfilerKey(context)}`);
-    const validation = validateActions(actions, state, this.stateManager, {
-      isProcessingEffect: this.boardEffectsHandler.isProcessingEffect(),
-      allowScenarioOnlyStatePaths: this.options?.allowScenarioOnlyStatePaths,
-    });
+    const validation = validateActions(
+      actions,
+      state,
+      this.stateManager,
+      this.getValidatorContext(),
+    );
     Profiler.end(`${profilerPrefix}.validation.${this.getProfilerKey(context)}`);
 
     if (!validation.valid) {

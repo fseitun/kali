@@ -67,6 +67,7 @@ class KaliDebugApp {
 
     this.core = new KaliAppCore(this.uiService, this.speechService, {
       skipWakeWord: true,
+      debugAllowPositionTeleport: CONFIG.DEBUG_POSITION_TELEPORT,
     });
 
     statusElement.textContent = t("ui.clickToStart");
@@ -174,6 +175,12 @@ class KaliDebugApp {
       input.value = "";
 
       try {
+        const posMatch = /^\/pos\s+(\d+)\s*$/i.exec(text);
+        if (posMatch && CONFIG.DEBUG_POSITION_TELEPORT) {
+          const square = Number.parseInt(posMatch[1], 10);
+          await this.core.submitDebugPositionTeleport(square);
+          return;
+        }
         await this.core.submitTranscript(text);
       } finally {
         submitButton.disabled = false;

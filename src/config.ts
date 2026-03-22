@@ -100,6 +100,13 @@ export const CONFIG = {
     SHOW_EXPORT_BUTTON: import.meta.env.VITE_SHOW_EXPORT_BUTTON === "true",
   },
 
+  /**
+   * When true (set `VITE_DEBUG_POSITION_TELEPORT=true` at build time, e.g. local `.env` or staging CI),
+   * the debug route may use `/pos <n>` to teleport the current player. Production builds should omit
+   * the var or set it to false. Value is inlined at build time, not a runtime secret.
+   */
+  DEBUG_POSITION_TELEPORT: import.meta.env.VITE_DEBUG_POSITION_TELEPORT === "true",
+
   TTS: {
     RATE: 1.0,
     PITCH: 1.0,

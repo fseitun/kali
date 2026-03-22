@@ -4,6 +4,8 @@
 export interface ValidatorContext {
   isProcessingEffect: boolean;
   allowScenarioOnlyStatePaths?: boolean;
+  /** When true, SET_STATE on players.*.position is allowed even when a fork choice is pending (debug teleport only). */
+  allowBypassPositionDecisionGate?: boolean;
 }
 
 export interface ValidationResult {

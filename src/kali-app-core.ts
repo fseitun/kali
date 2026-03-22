@@ -38,7 +38,7 @@ export class KaliAppCore {
   constructor(
     private uiService: IUIService,
     speechBackend: ISpeechService,
-    private options?: { skipWakeWord?: boolean },
+    private options?: { skipWakeWord?: boolean; debugAllowPositionTeleport?: boolean },
   ) {
     this.speechService = new MeteredSpeechService(speechBackend);
   }
@@ -133,12 +133,17 @@ export class KaliAppCore {
 
     const initialState = this.gameModule.initialState;
     const indicator = this.uiService.getStatusIndicator();
+    const orchestratorOptions =
+      this.options?.debugAllowPositionTeleport === true
+        ? { allowBypassPositionDecisionGate: true }
+        : undefined;
     this.orchestrator = new Orchestrator(
       this.llmClient,
       this.stateManager,
       this.speechService,
       indicator,
       initialState,
+      orchestratorOptions,
     );
 
     Logger.info("Loading sound effects...");
@@ -525,6 +530,70 @@ ${summary ? `**Summary (for NARRATE explanations):** ${summary}\n` : ""}${exampl
    */
   async submitTranscript(text: string): Promise<void> {
     await this.handleTranscription(text);
+  }
+
+  /**
+   * @returns Error message or null when phase, turn, and square index are valid for teleport.
+   */
+  private validateDebugTeleportPlayingSquare(state: GameState, square: number): string | null {
+    const game = state.game as Record<string, unknown> | undefined;
+    if (game?.phase !== GamePhase.PLAYING) {
+      return "game not in PLAYING phase";
+    }
+    if (!game.turn) {
+      return "no current turn";
+    }
+    const board = state.board as Record<string, unknown> | undefined;
+    const squares = board?.squares as Record<string, unknown> | undefined;
+    if (!squares || !(String(square) in squares)) {
+      return `square ${square} not on board`;
+    }
+    return null;
+  }
+
+  /**
+   * Resolves current player id for debug teleport, or an error message.
+   */
+  private resolveDebugTeleportOrError(
+    square: number,
+  ): { ok: true; turn: string } | { ok: false; msg: string } {
+    if (!this.options?.debugAllowPositionTeleport) {
+      return { ok: false, msg: "disabled (enable VITE_DEBUG_POSITION_TELEPORT at build time)" };
+    }
+    if (!this.initialized || !this.orchestrator || !this.stateManager) {
+      return { ok: false, msg: "app not ready" };
+    }
+    if (!Number.isInteger(square) || square < 0) {
+      return { ok: false, msg: `invalid square ${square}` };
+    }
+    const state = this.stateManager.getState();
+    const squareErr = this.validateDebugTeleportPlayingSquare(state, square);
+    if (squareErr !== null) {
+      return { ok: false, msg: squareErr };
+    }
+    const turn = (state.game as Record<string, unknown>).turn as string;
+    return { ok: true, turn };
+  }
+
+  /**
+   * Debug route only: teleport the current player to a board square (SET_STATE).
+   * Requires `debugAllowPositionTeleport` and `VITE_DEBUG_POSITION_TELEPORT=true` at build time.
+   * @param square - Target square index from the loaded game board
+   * @returns Same shape as {@link KaliAppCore.testExecuteActions}
+   */
+  async submitDebugPositionTeleport(square: number): Promise<{
+    success: boolean;
+    shouldAdvanceTurn: boolean;
+    turnAdvancedAfterPowerCheckFail?: { playerId: string; name: string; position: number };
+    voiceOutcomeHints?: VoiceOutcomeHints;
+  }> {
+    const resolved = this.resolveDebugTeleportOrError(square);
+    if (!resolved.ok) {
+      Logger.warn(`submitDebugPositionTeleport: ${resolved.msg}`);
+      return { success: false, shouldAdvanceTurn: false };
+    }
+    const path = `players.${resolved.turn}.position`;
+    return this.testExecuteActions([{ action: "SET_STATE", path, value: square }]);
   }
 
   /**

@@ -88,22 +88,12 @@ function validateTurnOwnership(
   return { valid: true };
 }
 
-function validateDecisionBeforeMove(
-  path: string,
+function validateForkChoiceBeforePositionSet(
+  playerId: string,
   state: GameState,
   actionType: string,
   index: number,
 ): ValidationResult {
-  if (!path.endsWith(".position") || !path.startsWith("players.")) {
-    return { valid: true };
-  }
-
-  const parts = path.split(".");
-  if (parts.length !== 3) {
-    return { valid: true };
-  }
-
-  const playerId = parts[1];
   const players = state.players;
   const player = players[playerId];
 
@@ -141,6 +131,29 @@ function validateDecisionBeforeMove(
   }
 
   return { valid: true };
+}
+
+function validateDecisionBeforeMove(
+  path: string,
+  state: GameState,
+  actionType: string,
+  index: number,
+  context: ValidatorContext,
+): ValidationResult {
+  if (!path.endsWith(".position") || !path.startsWith("players.")) {
+    return { valid: true };
+  }
+
+  const parts = path.split(".");
+  if (parts.length !== 3) {
+    return { valid: true };
+  }
+
+  if (context.allowBypassPositionDecisionGate) {
+    return { valid: true };
+  }
+
+  return validateForkChoiceBeforePositionSet(parts[1], state, actionType, index);
 }
 
 export function validateSetState(
@@ -195,6 +208,7 @@ export function validateSetState(
       state,
       "SET_STATE",
       index,
+      context,
     );
     if (!decisionMoveValidation.valid) {
       return decisionMoveValidation;

@@ -10,7 +10,11 @@ type MockStateManager = Pick<StateManager, "pathExists" | "getByPath">;
 describe("Validator - New Primitives", () => {
   let mockState: GameState;
   let mockStateManager: MockStateManager;
-  let mockValidatorContext: { isProcessingEffect: boolean; allowScenarioOnlyStatePaths?: boolean };
+  let mockValidatorContext: {
+    isProcessingEffect: boolean;
+    allowScenarioOnlyStatePaths?: boolean;
+    allowBypassPositionDecisionGate?: boolean;
+  };
 
   beforeEach(() => {
     mockState = {
@@ -904,6 +908,17 @@ describe("Validator - New Primitives", () => {
       expect(result.errorCode).toBe("chooseForkFirst");
       expect(result.error).toContain("Cannot move from position 5");
       expect(result.error).toContain("direction at fork");
+    });
+
+    it("allows position SET_STATE at fork when allowBypassPositionDecisionGate", () => {
+      const actions = [{ action: "SET_STATE", path: "players.p1.position", value: 10 }];
+      const result = validateActions(
+        actions,
+        mockState,
+        mockStateManager as unknown as StateManager,
+        { ...mockValidatorContext, allowBypassPositionDecisionGate: true },
+      );
+      expect(result.valid).toBe(true);
     });
 
     it("allows position changes after decision is made", () => {
