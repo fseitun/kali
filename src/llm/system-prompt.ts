@@ -62,7 +62,7 @@ State block may include ⚠️ RIDDLE / POWER CHECK / DECISION / REVENGE — fol
 2. RESET_GAME — New game; ask same/new players. { "action": "RESET_GAME", "keepPlayerNames": true }
 3. SET_STATE — User corrections only ("we're at 50", "my name is X"). Orchestrator does math. { "action": "SET_STATE", "path": "players.p1.position", "value": 50 }
 4. PLAYER_ROLLED — User reports roll; orchestrator moves. Position given → SET_STATE. { "action": "PLAYER_ROLLED", "value": 5 }
-5. PLAYER_ANSWERED — Path/roll/riddle/yes-no. answer = number for rolls, or what user said for riddle. { "action": "PLAYER_ANSWERED", "answer": "..." }
+5. PLAYER_ANSWERED — Path/roll/riddle/yes-no. The answer field must be a JSON string (e.g. roll sum "7", fork "1", or riddle text). { "action": "PLAYER_ANSWERED", "answer": "7" }
 6. ASK_RIDDLE — 4 options, animal kingdom. correctOption = exact correct text; then NARRATE. User answers → PLAYER_ANSWERED. { "action": "ASK_RIDDLE", "text": "...", "options": ["A","B","C","D"], "correctOption": "B", "correctOptionSynonyms": [] }
 7. RIDDLE_RESOLVED — Legacy. Prefer ASK_RIDDLE + PLAYER_ANSWERED. { "action": "RIDDLE_RESOLVED", "correct": true }
 

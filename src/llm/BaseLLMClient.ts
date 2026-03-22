@@ -303,7 +303,7 @@ JSON:`;
         );
       }
 
-      return result.data;
+      return this.normalizeExtractedActions(result.data);
     } catch (error) {
       // If parsing fails, throw error with helpful message for retry
       if (error instanceof SyntaxError) {
@@ -316,6 +316,25 @@ JSON:`;
         cause: error,
       });
     }
+  }
+
+  /** Models often emit numeric `answer` for rolls; orchestrator validators require a string. */
+  private normalizeExtractedActions(actions: PrimitiveAction[]): PrimitiveAction[] {
+    return actions.map((a) => {
+      if (
+        a &&
+        typeof a === "object" &&
+        "action" in a &&
+        a.action === "PLAYER_ANSWERED" &&
+        "answer" in a
+      ) {
+        const ans = (a as { answer?: unknown }).answer;
+        if (typeof ans === "number" && Number.isFinite(ans)) {
+          return { ...a, answer: String(ans) } as PrimitiveAction;
+        }
+      }
+      return a;
+    });
   }
 
   private isDuplicate(transcript: string): boolean {

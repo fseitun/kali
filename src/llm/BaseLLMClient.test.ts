@@ -79,6 +79,14 @@ describe("LLM - Pure JSON Parsing", () => {
       expect(actions[1]).toEqual({ action: "NARRATE", text: "Moved!" });
     });
 
+    it("coerces PLAYER_ANSWERED numeric answer to string", () => {
+      const json = '[{"action":"PLAYER_ANSWERED","answer":8}]';
+      const actions = client.testExtractActions(json);
+
+      expect(actions).toHaveLength(1);
+      expect(actions[0]).toEqual({ action: "PLAYER_ANSWERED", answer: "8" });
+    });
+
     it("rejects markdown-wrapped JSON", () => {
       const markdown = '```json\n[{"action":"NARRATE","text":"Hi"}]\n```';
 
@@ -172,7 +180,7 @@ describe("LLM - Pure JSON Parsing", () => {
   });
 
   describe("LLM Client is Pure Interface - No Game Logic", () => {
-    it("extractActions only parses JSON, does no validation", () => {
+    it("extractActions parses JSON and normalizes PLAYER_ANSWERED numeric answer only", () => {
       const invalidAction = '[{"action":"INVALID_TYPE","data":"something"}]';
       const actions = client.testExtractActions(invalidAction);
 
