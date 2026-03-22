@@ -337,6 +337,56 @@ describe("Orchestrator Integration Tests", () => {
       expect(pending.phase).toBe("revenge");
     });
 
+    it("does not nest LLM for fork enforcement when initial power-check loss advances turn to a player at fork", async () => {
+      mockLLM = createScriptedLLM([
+        [{ action: "NARRATE", text: "Should not run — nested fork enforcement" }],
+      ]);
+
+      const initialState: GameState = {
+        game: {
+          name: "Test Game",
+          phase: GamePhase.PLAYING,
+          turn: "p1",
+          playerOrder: ["p1", "p2"],
+          winner: null,
+          lastRoll: 0,
+          pendingAnimalEncounter: {
+            position: 5,
+            power: 4,
+            playerId: "p1",
+            phase: "powerCheck",
+            riddleCorrect: false,
+          },
+        },
+        players: {
+          p1: { id: "p1", name: "Alice", position: 5 },
+          p2: { id: "p2", name: "Bob", position: 0 },
+        },
+        board: {
+          squares: {
+            "0": { type: "empty", next: [1, 15] },
+            "5": { type: "animal", name: "Cobra", power: 4, points: 4 },
+            "100": { type: "special", effect: "win" },
+          },
+        },
+      };
+
+      setupGame(initialState);
+
+      const result = await orchestrator.testExecuteActions([
+        { action: "PLAYER_ANSWERED", answer: "2" },
+        { action: "NARRATE", text: "No alcanzó. Próximo jugador. Revancha: 1 dado, 4 o más." },
+      ]);
+
+      expect(result.success).toBe(true);
+      expect(result.turnAdvancedAfterPowerCheckFail).toEqual({
+        playerId: "p2",
+        name: "Bob",
+        position: 0,
+      });
+      expect(mockLLM.getCallCount()).toBe(0);
+    });
+
     it("handles animal encounter triggering square effect", async () => {
       const responses: PrimitiveAction[][] = [
         [

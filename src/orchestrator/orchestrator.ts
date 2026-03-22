@@ -612,10 +612,13 @@ export class Orchestrator {
         }),
     );
 
+    // After initial power-check loss the app announces the next player (incl. fork prompt);
+    // skip nested enforce here to avoid duplicating the fork question (see turnAdvancedAfterPowerCheckFail).
     const shouldEnforceDecisionPoints =
       !context.isNestedCall &&
       !context.skipDecisionPointEnforcement &&
-      !context.justNarratedDecisionAsk;
+      !context.justNarratedDecisionAsk &&
+      !context.turnAdvancedAfterPowerCheckFail;
     if (shouldEnforceDecisionPoints) {
       await this.decisionPointEnforcer.enforceDecisionPoints(context);
     }
