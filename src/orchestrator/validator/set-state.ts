@@ -5,6 +5,51 @@ import { validateField } from "./common";
 import { validateSquareEffectPathRestriction } from "./square-effect";
 import type { ValidationResult, ValidatorContext } from "./types";
 
+function validateForbiddenSetStatePath(
+  path: string,
+  index: number,
+  state: GameState,
+  context: ValidatorContext,
+  action: { value?: unknown },
+): ValidationResult | null {
+  if (path === "game.turn") {
+    const game = state.game;
+    if (game.phase !== "SETUP") {
+      return {
+        valid: false,
+        error: `SET_STATE at index ${index}: Cannot manually change game.turn. The orchestrator automatically advances turns when all effects are complete. Remove this action and let the orchestrator handle turn advancement.`,
+        errorCode: "setStateForbidden",
+      };
+    }
+    return null;
+  }
+  if (path === "game.phase") {
+    return {
+      valid: false,
+      error: `SET_STATE at index ${index}: Cannot manually change game.phase via SET_STATE. The orchestrator manages phase transitions.`,
+      errorCode: "setStateForbidden",
+    };
+  }
+  if (path === "game.winner") {
+    return {
+      valid: false,
+      error: `SET_STATE at index ${index}: Cannot manually set game.winner via SET_STATE. The orchestrator detects and sets winners.`,
+      errorCode: "setStateForbidden",
+    };
+  }
+  if (path === "game.pendingAnimalEncounter") {
+    if (context.allowScenarioOnlyStatePaths && action.value === null) {
+      return { valid: true };
+    }
+    return {
+      valid: false,
+      error: `SET_STATE at index ${index}: Cannot set game.pendingAnimalEncounter. The orchestrator owns encounter state. Use RIDDLE_RESOLVED or PLAYER_ANSWERED with roll value.`,
+      errorCode: "setStateForbidden",
+    };
+  }
+  return null;
+}
+
 function validateTurnOwnership(
   path: string,
   state: GameState,
@@ -129,45 +174,15 @@ export function validateSetState(
       return squareEffectValidation;
     }
 
-    if (action.path === "game.turn") {
-      const game = state.game;
-      const currentPhase = game.phase;
-
-      if (currentPhase !== "SETUP") {
-        return {
-          valid: false,
-          error: `SET_STATE at index ${index}: Cannot manually change game.turn. The orchestrator automatically advances turns when all effects are complete. Remove this action and let the orchestrator handle turn advancement.`,
-          errorCode: "setStateForbidden",
-        };
-      }
-    }
-
-    if (action.path === "game.phase") {
-      return {
-        valid: false,
-        error: `SET_STATE at index ${index}: Cannot manually change game.phase via SET_STATE. The orchestrator manages phase transitions.`,
-        errorCode: "setStateForbidden",
-      };
-    }
-
-    if (action.path === "game.winner") {
-      return {
-        valid: false,
-        error: `SET_STATE at index ${index}: Cannot manually set game.winner via SET_STATE. The orchestrator detects and sets winners.`,
-        errorCode: "setStateForbidden",
-      };
-    }
-
-    if (action.path === "game.pendingAnimalEncounter") {
-      if (context.allowScenarioOnlyStatePaths && (action as { value?: unknown }).value === null) {
-        // E2E scenarios script clearing the encounter after a square effect.
-        return { valid: true };
-      }
-      return {
-        valid: false,
-        error: `SET_STATE at index ${index}: Cannot set game.pendingAnimalEncounter. The orchestrator owns encounter state. Use RIDDLE_RESOLVED or PLAYER_ANSWERED with roll value.`,
-        errorCode: "setStateForbidden",
-      };
+    const forbiddenError = validateForbiddenSetStatePath(
+      action.path,
+      index,
+      state,
+      context,
+      action as { value?: unknown },
+    );
+    if (forbiddenError) {
+      return forbiddenError;
     }
 
     const turnValidation = validateTurnOwnership(action.path, state, "SET_STATE", index);

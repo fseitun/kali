@@ -43,10 +43,53 @@ export class KaliAppCore {
     this.speechService = new MeteredSpeechService(speechBackend);
   }
 
+  private getDefaultStatusMessage(): string {
+    return this.options?.skipWakeWord
+      ? t("ui.status.ready")
+      : t("ui.wakeWordReady", { wakeWord: CONFIG.WAKE_WORD.TEXT[0] });
+  }
+
+  private getPostInitStatusMessage(): string {
+    const defaultStatus = this.getDefaultStatusMessage();
+    if (!this.stateManager || this.options?.skipWakeWord) {
+      return defaultStatus;
+    }
+    const state = this.stateManager.getState();
+    const game = state.game as Record<string, unknown> | undefined;
+    if (game?.phase === GamePhase.PLAYING) {
+      return t("ui.savedGameDetected", { wakeWord: CONFIG.WAKE_WORD.TEXT[0] });
+    }
+    return defaultStatus;
+  }
+
+  private async handleInitSuccess(shouldStartGame: boolean): Promise<void> {
+    const defaultStatus = this.getDefaultStatusMessage();
+    if (shouldStartGame) {
+      this.uiService.updateStatus(defaultStatus);
+      Logger.info("Kali is ready");
+      await this.proactiveGameStart();
+      return;
+    }
+    const statusMessage = this.getPostInitStatusMessage();
+    this.uiService.updateStatus(statusMessage);
+    if (statusMessage !== defaultStatus) {
+      await this.speechService.speak(statusMessage);
+    }
+    Logger.info("Kali is ready");
+  }
+
+  private async handleInitError(error: unknown): Promise<void> {
+    this.uiService.setButtonState(t("ui.startKali"), false);
+    this.uiService.updateStatus(t("ui.initializationFailed"));
+    Logger.error(`Error: ${error}`);
+    const indicator = this.uiService.getStatusIndicator();
+    indicator.setState("idle");
+    await this.speechService.speak(t("ui.initializationFailed"));
+  }
+
   async initialize(): Promise<void> {
     try {
       validateConfig();
-
       const indicator = this.uiService.getStatusIndicator();
       indicator.setState("processing");
       Logger.info("Initializing Kali...");
@@ -60,41 +103,13 @@ export class KaliAppCore {
       }
 
       const shouldStartGame = await this.handleSavedGameOrSetup();
-
       this.initialized = true;
       this.uiService.hideButton();
       indicator.setState("listening");
 
-      const defaultStatus = this.options?.skipWakeWord
-        ? t("ui.status.ready")
-        : t("ui.wakeWordReady", { wakeWord: CONFIG.WAKE_WORD.TEXT[0] });
-      if (shouldStartGame) {
-        this.uiService.updateStatus(defaultStatus);
-        Logger.info("Kali is ready");
-        await this.proactiveGameStart();
-        return;
-      }
-
-      let statusMessage = defaultStatus;
-      if (this.stateManager && !this.options?.skipWakeWord) {
-        const state = this.stateManager.getState();
-        const game = state.game as Record<string, unknown> | undefined;
-        if (game?.phase === GamePhase.PLAYING) {
-          statusMessage = t("ui.savedGameDetected", { wakeWord: CONFIG.WAKE_WORD.TEXT[0] });
-        }
-      }
-      this.uiService.updateStatus(statusMessage);
-      if (statusMessage !== defaultStatus) {
-        await this.speechService.speak(statusMessage);
-      }
-      Logger.info("Kali is ready");
+      await this.handleInitSuccess(shouldStartGame);
     } catch (error) {
-      this.uiService.setButtonState(t("ui.startKali"), false);
-      this.uiService.updateStatus(t("ui.initializationFailed"));
-      Logger.error(`Error: ${error}`);
-      const indicator = this.uiService.getStatusIndicator();
-      indicator.setState("idle");
-      await this.speechService.speak(t("ui.initializationFailed"));
+      await this.handleInitError(error);
     }
   }
 
@@ -255,70 +270,69 @@ ${summary ? `**Summary (for NARRATE explanations):** ${summary}\n` : ""}${exampl
     });
   }
 
-  private async runNameCollection(): Promise<void> {
-    if (!this.stateManager || !this.gameModule || !this.orchestrator) {
-      throw new Error("Cannot run name collection: components not initialized");
+  private cleanupNameCollection(): void {
+    this.currentNameHandler = null;
+    this.uiService.setTranscriptInputEnabled?.(false);
+    if (this.wakeWordDetector) {
+      this.wakeWordDetector.disableDirectTranscription();
+    }
+  }
+
+  private async runNameCollectionCore(
+    stateManager: StateManager,
+    gameModule: GameModule,
+    orchestrator: Orchestrator,
+    llmClient: LLMClient,
+  ): Promise<void> {
+    const state = stateManager.getState();
+    const game = state.game as Record<string, unknown> | undefined;
+    Logger.info(`🎮 Name collection check - phase: ${game?.phase} (expected: ${GamePhase.SETUP})`);
+    if (game?.phase !== GamePhase.SETUP) {
+      Logger.info("Skipping name collection - not in SETUP phase");
+      return;
     }
 
+    this.uiService.updateStatus(
+      t("ui.wakeWordInstruction", { wakeWord: CONFIG.WAKE_WORD.TEXT[0] }),
+    );
+    const gameName = (game?.name as string) || "the game";
+    const nameCollector = new NameCollector(
+      this.speechService,
+      gameName,
+      () => this.wakeWordDetector?.enableDirectTranscription(),
+      llmClient,
+      gameModule.metadata,
+    );
+    const decisionPoints = inferDecisionPoints(gameModule.initialState.board);
+    const hasDecisionAtStart = decisionPoints.some((dp) => dp.position === 0);
+
+    this.uiService.setTranscriptInputEnabled?.(true);
+    const playerNames = await nameCollector.collectNames(
+      (handler) => {
+        this.currentNameHandler = handler;
+      },
+      { skipReadyMessage: hasDecisionAtStart },
+    );
+
+    this.cleanupNameCollection();
+    orchestrator.setupPlayers(playerNames);
+    orchestrator.transitionPhase(GamePhase.PLAYING);
+    Logger.info("Name collection complete");
+  }
+
+  private async runNameCollection(): Promise<void> {
+    const stateManager = this.stateManager;
+    const gameModule = this.gameModule;
+    const orchestrator = this.orchestrator;
+    const llmClient = this.llmClient;
+    if (!stateManager || !gameModule || !orchestrator || !llmClient) {
+      throw new Error("Cannot run name collection: components not initialized");
+    }
     try {
-      const state = this.stateManager.getState();
-      const game = state.game as Record<string, unknown> | undefined;
-
-      Logger.info(
-        `🎮 Name collection check - phase: ${game?.phase} (expected: ${GamePhase.SETUP})`,
-      );
-
-      if (game?.phase !== GamePhase.SETUP) {
-        Logger.info("Skipping name collection - not in SETUP phase");
-        return;
-      }
-
-      this.uiService.updateStatus(
-        t("ui.wakeWordInstruction", { wakeWord: CONFIG.WAKE_WORD.TEXT[0] }),
-      );
-      const gameName = (game.name as string) || "the game";
-      if (!this.llmClient) {
-        throw new Error("LLM client not initialized");
-      }
-
-      const nameCollector = new NameCollector(
-        this.speechService,
-        gameName,
-        () => this.wakeWordDetector?.enableDirectTranscription(),
-        this.llmClient,
-        this.gameModule.metadata,
-      );
-
-      const decisionPoints = inferDecisionPoints(this.gameModule.initialState.board);
-      const hasDecisionAtStart = decisionPoints.some((dp) => dp.position === 0);
-
-      this.uiService.setTranscriptInputEnabled?.(true);
-
-      const playerNames = await nameCollector.collectNames(
-        (handler) => {
-          this.currentNameHandler = handler;
-        },
-        { skipReadyMessage: hasDecisionAtStart },
-      );
-
-      this.currentNameHandler = null;
-      if (this.wakeWordDetector) {
-        this.wakeWordDetector.disableDirectTranscription();
-      }
-      this.uiService.setTranscriptInputEnabled?.(false);
-
-      // Let orchestrator handle state mutations
-      this.orchestrator.setupPlayers(playerNames);
-      this.orchestrator.transitionPhase(GamePhase.PLAYING);
-
-      Logger.info("Name collection complete");
+      await this.runNameCollectionCore(stateManager, gameModule, orchestrator, llmClient);
     } catch (error) {
       Logger.error(`Name collection failed: ${error}`);
-      this.currentNameHandler = null;
-      this.uiService.setTranscriptInputEnabled?.(false);
-      if (this.wakeWordDetector) {
-        this.wakeWordDetector.disableDirectTranscription();
-      }
+      this.cleanupNameCollection();
       throw error;
     }
   }

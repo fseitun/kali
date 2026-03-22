@@ -5,6 +5,47 @@ import { GamePhase } from "@/orchestrator/types";
 import type { ISpeechService } from "@/services/speech-service";
 import { Logger } from "@/utils/logger";
 
+function validateSquareAtStart(sq: SquareData): void {
+  const hasNext =
+    sq.next !== undefined &&
+    sq.next !== null &&
+    (Array.isArray(sq.next) ? sq.next.length > 0 : Object.keys(sq.next as object).length > 0);
+  if (!hasNext) {
+    throw new Error(`Invalid game config: square 0 must have next`);
+  }
+  if (sq.prev && (sq.prev as unknown[]).length > 0) {
+    throw new Error(`Invalid game config: square 0 must have empty prev`);
+  }
+}
+
+function validateSquareAtEnd(sq: SquareData, boardLength: number): void {
+  const hasNext =
+    sq.next !== undefined &&
+    sq.next !== null &&
+    (Array.isArray(sq.next) ? sq.next.length > 0 : Object.keys(sq.next as object).length > 0);
+  const hasPrev = Array.isArray(sq.prev) && sq.prev.length > 0;
+  if (hasNext) {
+    throw new Error(`Invalid game config: square ${boardLength} must have empty next`);
+  }
+  if (!hasPrev) {
+    throw new Error(`Invalid game config: square ${boardLength} must have prev`);
+  }
+}
+
+function validateSquareMiddle(key: string, sq: SquareData): void {
+  const hasNext =
+    sq.next !== undefined &&
+    sq.next !== null &&
+    (Array.isArray(sq.next) ? sq.next.length > 0 : Object.keys(sq.next as object).length > 0);
+  const hasPrev = Array.isArray(sq.prev) && sq.prev.length > 0;
+  if (!hasNext) {
+    throw new Error(`Invalid game config: square ${key} must have next`);
+  }
+  if (!hasPrev) {
+    throw new Error(`Invalid game config: square ${key} must have prev`);
+  }
+}
+
 /**
  * Validates that board topology is complete. Throws if any square 0..boardLength is missing or lacks next/prev.
  */
@@ -18,32 +59,12 @@ function validateBoardTopology(
     if (!sq) {
       throw new Error(`Invalid game config: missing square ${key}`);
     }
-    const hasNext =
-      sq.next !== undefined &&
-      sq.next !== null &&
-      (Array.isArray(sq.next) ? sq.next.length > 0 : Object.keys(sq.next as object).length > 0);
-    const hasPrev = Array.isArray(sq.prev) && sq.prev.length > 0;
     if (i === 0) {
-      if (!hasNext) {
-        throw new Error(`Invalid game config: square 0 must have next`);
-      }
-      if (sq.prev && (sq.prev as unknown[]).length > 0) {
-        throw new Error(`Invalid game config: square 0 must have empty prev`);
-      }
+      validateSquareAtStart(sq);
     } else if (i === boardLength) {
-      if (hasNext) {
-        throw new Error(`Invalid game config: square ${boardLength} must have empty next`);
-      }
-      if (!hasPrev) {
-        throw new Error(`Invalid game config: square ${boardLength} must have prev`);
-      }
+      validateSquareAtEnd(sq, boardLength);
     } else {
-      if (!hasNext) {
-        throw new Error(`Invalid game config: square ${key} must have next`);
-      }
-      if (!hasPrev) {
-        throw new Error(`Invalid game config: square ${key} must have prev`);
-      }
+      validateSquareMiddle(key, sq);
     }
   }
 }

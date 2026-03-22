@@ -110,61 +110,70 @@ export interface FormatStateContextOptions {
   forLog?: boolean;
 }
 
-function formatDecisionPointContext(state: Record<string, unknown>): string {
-  const decisionPoints = getDecisionPoints(state as GameState);
-
-  if (decisionPoints.length === 0) {
-    return "";
+function buildDecisionPointHint(decisionPoint: {
+  choiceKeywords?: Record<string, string[]>;
+}): string {
+  const kw = decisionPoint.choiceKeywords;
+  const targetNums =
+    kw && Object.keys(kw).length > 0
+      ? [...Object.keys(kw)]
+          .map((k) => parseInt(k, 10))
+          .filter((n) => !Number.isNaN(n))
+          .sort((a, b) => a - b)
+      : [];
+  if (targetNums.length > 0 && kw) {
+    return ` Branch hints from config (not exhaustive): ${Object.entries(kw)
+      .map(([target, phrases]) => `target ${target}: ${phrases.join(", ")}`)
+      .join(
+        " | ",
+      )}. When the user clearly chooses a branch, return PLAYER_ANSWERED with the target position number only (one of: ${targetNums.join(", ")}); do not pass through their exact words if you can resolve. If unclear, NARRATE to ask again.`;
   }
+  return ` When intent is clear, return PLAYER_ANSWERED with the target position number; if unclear, NARRATE to ask again.`;
+}
 
+function getCurrentPlayerAtFork(state: Record<string, unknown>): {
+  playerName: string;
+  position: number;
+  decisionPoint: { prompt: string; choiceKeywords?: Record<string, string[]> };
+} | null {
+  const decisionPoints = getDecisionPoints(state as GameState);
+  if (decisionPoints.length === 0) {
+    return null;
+  }
   const players = state.players as Record<string, Record<string, unknown>> | undefined;
   const game = state.game as Record<string, unknown> | undefined;
   const currentTurn = game?.turn as string | undefined;
-
   if (!players || !currentTurn) {
-    return "";
+    return null;
   }
-
   const currentPlayer = players[currentTurn];
   if (!currentPlayer) {
-    return "";
+    return null;
   }
-
   const position = currentPlayer.position as number | undefined;
   if (typeof position !== "number") {
-    return "";
+    return null;
   }
-
   const decisionPoint = decisionPoints.find((dp) => dp.position === position);
   if (!decisionPoint) {
+    return null;
+  }
+  const choices = currentPlayer.activeChoices as Record<string, number> | undefined;
+  if (choices?.[String(position)] !== undefined) {
+    return null;
+  }
+  const playerName = (currentPlayer.name as string) || currentTurn;
+  return { playerName, position, decisionPoint };
+}
+
+function formatDecisionPointContext(state: Record<string, unknown>): string {
+  const info = getCurrentPlayerAtFork(state);
+  if (!info) {
     return "";
   }
-
-  const choices = currentPlayer.activeChoices as Record<string, number> | undefined;
-  const hasChoice = choices?.[String(position)] !== undefined;
-
-  if (!hasChoice) {
-    const playerName = (currentPlayer.name as string) || currentTurn;
-    const kw = decisionPoint.choiceKeywords;
-    const targetNums =
-      kw && Object.keys(kw).length > 0
-        ? [...Object.keys(kw)]
-            .map((k) => parseInt(k, 10))
-            .filter((n) => !Number.isNaN(n))
-            .sort((a, b) => a - b)
-        : [];
-    const hint =
-      kw && targetNums.length > 0
-        ? ` Branch hints from config (not exhaustive): ${Object.entries(kw)
-            .map(([target, phrases]) => `target ${target}: ${phrases.join(", ")}`)
-            .join(
-              " | ",
-            )}. When the user clearly chooses a branch, return PLAYER_ANSWERED with the target position number only (one of: ${targetNums.join(", ")}); do not pass through their exact words if you can resolve. If unclear, NARRATE to ask again.`
-        : ` When intent is clear, return PLAYER_ANSWERED with the target position number; if unclear, NARRATE to ask again.`;
-    return `⚠️ DECISION (${playerName}) fork choice at ${position}. Ask: "${playerName}, ${decisionPoint.prompt}" Always name the player when asking. If user asks what to do or for help → NARRATE the path options (e.g. from the prompt); do NOT emit PLAYER_ANSWERED.${hint} If they state a choice, emit PLAYER_ANSWERED with the correct target number. [current]`;
-  }
-
-  return "";
+  const { playerName, position, decisionPoint } = info;
+  const hint = buildDecisionPointHint(decisionPoint);
+  return `⚠️ DECISION (${playerName}) fork choice at ${position}. Ask: "${playerName}, ${decisionPoint.prompt}" Always name the player when asking. If user asks what to do or for help → NARRATE the path options (e.g. from the prompt); do NOT emit PLAYER_ANSWERED.${hint} If they state a choice, emit PLAYER_ANSWERED with the correct target number. [current]`;
 }
 
 function formatAnimalEncounterContext(state: Record<string, unknown>): string {
@@ -232,6 +241,55 @@ function formatAnimalEncounterContext(state: Record<string, unknown>): string {
  * @param options - When forLog is true, nested objects are expanded for terminal readability
  * @returns Formatted state string
  */
+function formatGameSection(
+  state: Record<string, unknown>,
+  displayConfig: StateDisplayMetadata | undefined,
+  valueFormatter: ValueFormatter | undefined,
+): string {
+  const game = state.game as Record<string, unknown> | undefined;
+  if (!game) {
+    return "";
+  }
+  const fields = formatObjectFields(game, displayConfig?.game, valueFormatter);
+  return fields.length > 0 ? `Game: ${fields.join(", ")}` : "";
+}
+
+function formatPlayersSection(
+  state: Record<string, unknown>,
+  displayConfig: StateDisplayMetadata | undefined,
+  valueFormatter: ValueFormatter | undefined,
+): string {
+  const game = state.game as Record<string, unknown> | undefined;
+  const players = state.players as Record<string, Record<string, unknown>> | undefined;
+  if (!players) {
+    return "";
+  }
+  const playerOrder = game?.playerOrder as string[] | undefined;
+  const order =
+    Array.isArray(playerOrder) && playerOrder.length > 0 ? playerOrder : Object.keys(players);
+  const playerParts = order
+    .filter((id) => players[id] != null)
+    .map((id) => {
+      const player = players[id];
+      const fields = formatObjectFields(player, displayConfig?.players, valueFormatter);
+      return `${id}:${fields.join(",")}`;
+    });
+  return playerParts.length > 0 ? `Players: ${playerParts.join(" | ")}` : "";
+}
+
+function formatBoardSection(
+  state: Record<string, unknown>,
+  displayConfig: StateDisplayMetadata | undefined,
+  valueFormatter: ValueFormatter | undefined,
+): string {
+  const board = state.board as Record<string, unknown> | undefined;
+  if (!board) {
+    return "";
+  }
+  const fields = formatObjectFields(board, displayConfig?.board, valueFormatter);
+  return fields.length > 0 ? `Board: ${fields.join(", ")}` : "";
+}
+
 export function formatStateContext(
   state: Record<string, unknown>,
   options?: FormatStateContextOptions,
@@ -240,48 +298,26 @@ export function formatStateContext(
   const valueFormatter: ValueFormatter | undefined = forLog
     ? (v, depth) => formatFieldValueForLog(v, depth, LOG_FORMAT_MAX_DEPTH)
     : undefined;
-
-  const parts: string[] = [];
   const displayConfig = state.stateDisplay as StateDisplayMetadata | undefined;
 
-  const game = state.game as Record<string, unknown> | undefined;
-  if (game) {
-    const fields = formatObjectFields(game, displayConfig?.game, valueFormatter);
-    if (fields.length > 0) {
-      parts.push(`Game: ${fields.join(", ")}`);
-    }
+  const parts: string[] = [];
+  const gameSection = formatGameSection(state, displayConfig, valueFormatter);
+  if (gameSection) {
+    parts.push(gameSection);
   }
-
-  const players = state.players as Record<string, Record<string, unknown>> | undefined;
-  if (players) {
-    const playerOrder = game?.playerOrder as string[] | undefined;
-    const order =
-      Array.isArray(playerOrder) && playerOrder.length > 0 ? playerOrder : Object.keys(players);
-    const playerParts = order
-      .filter((id) => players[id] != null)
-      .map((id) => {
-        const player = players[id];
-        const fields = formatObjectFields(player, displayConfig?.players, valueFormatter);
-        return `${id}:${fields.join(",")}`;
-      });
-    if (playerParts.length > 0) {
-      parts.push(`Players: ${playerParts.join(" | ")}`);
-    }
+  const playersSection = formatPlayersSection(state, displayConfig, valueFormatter);
+  if (playersSection) {
+    parts.push(playersSection);
   }
-
-  const board = state.board as Record<string, unknown> | undefined;
-  if (board) {
-    const fields = formatObjectFields(board, displayConfig?.board, valueFormatter);
-    if (fields.length > 0) {
-      parts.push(`Board: ${fields.join(", ")}`);
-    }
+  const boardSection = formatBoardSection(state, displayConfig, valueFormatter);
+  if (boardSection) {
+    parts.push(boardSection);
   }
 
   const decisionContext = formatDecisionPointContext(state);
   if (decisionContext) {
     parts.push(decisionContext);
   }
-
   const animalEncounterContext = formatAnimalEncounterContext(state);
   if (animalEncounterContext) {
     parts.push(animalEncounterContext);

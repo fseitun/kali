@@ -1,8 +1,8 @@
 import { BaseLLMClient } from "./BaseLLMClient";
+import { parseOpenAIResponse } from "./parse-openai-response";
 import type { ApiCallOptions, ApiCallResult } from "./types";
 import { CONFIG } from "@/config";
 import type { PrimitiveAction } from "@/orchestrator/types";
-import { Logger } from "@/utils/logger";
 
 /**
  * DeepInfra LLM client using the OpenAI-compatible chat completions API.
@@ -69,17 +69,7 @@ export class DeepInfraClient extends BaseLLMClient {
     }
 
     const data = await response.json();
-
-    if (!data || typeof data !== "object") {
-      throw new Error("Invalid DeepInfra API response format");
-    }
-
-    const content = data.choices?.[0]?.message?.content ?? "";
-
-    if (!content) {
-      Logger.error("No content in DeepInfra response:", data);
-    }
-
+    const content = parseOpenAIResponse(data, "DeepInfra");
     return { content };
   }
 }

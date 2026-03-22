@@ -3,6 +3,18 @@ import type { ApiCallOptions, ApiCallResult } from "./types";
 import { CONFIG } from "@/config";
 import { Logger } from "@/utils/logger";
 
+function parseGeminiResponse(data: unknown): string {
+  if (!data || typeof data !== "object") {
+    throw new Error("Invalid Gemini API response format");
+  }
+  const obj = data as { candidates?: Array<{ content?: { parts?: Array<{ text?: string }> } }> };
+  const content = obj.candidates?.[0]?.content?.parts?.[0]?.text ?? "";
+  if (!content) {
+    Logger.error("No content in Gemini response:", data);
+  }
+  return content;
+}
+
 const CACHE_TTL_SECONDS = 3600; // 1 hour
 
 export class GeminiClient extends BaseLLMClient {
@@ -99,14 +111,7 @@ export class GeminiClient extends BaseLLMClient {
       throw new Error(`Gemini API error: ${response.status} ${response.statusText}\n${errorText}`);
     }
     const data = await response.json();
-    if (!data || typeof data !== "object") {
-      throw new Error("Invalid Gemini API response format");
-    }
-    const content = data.candidates?.[0]?.content?.parts?.[0]?.text ?? "";
-    if (!content) {
-      Logger.error("No content in Gemini response:", data);
-    }
-    return { content };
+    return { content: parseGeminiResponse(data) };
   }
 
   private async generateUncached(prompt: string, options: ApiCallOptions): Promise<ApiCallResult> {
@@ -134,13 +139,6 @@ export class GeminiClient extends BaseLLMClient {
       throw new Error(`Gemini API error: ${response.status} ${response.statusText}\n${errorText}`);
     }
     const data = await response.json();
-    if (!data || typeof data !== "object") {
-      throw new Error("Invalid Gemini API response format");
-    }
-    const content = data.candidates?.[0]?.content?.parts?.[0]?.text ?? "";
-    if (!content) {
-      Logger.error("No content in Gemini response:", data);
-    }
-    return { content };
+    return { content: parseGeminiResponse(data) };
   }
 }

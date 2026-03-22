@@ -1,7 +1,7 @@
 import { BaseLLMClient } from "./BaseLLMClient";
+import { parseOpenAIResponse } from "./parse-openai-response";
 import type { ApiCallOptions, ApiCallResult } from "./types";
 import { CONFIG } from "@/config";
-import { Logger } from "@/utils/logger";
 
 /**
  * Groq LLM client using the OpenAI-compatible chat completions API.
@@ -43,18 +43,7 @@ export class GroqClient extends BaseLLMClient {
     }
 
     const data = await response.json();
-
-    // Validate response structure (OpenAI-compatible)
-    if (!data || typeof data !== "object") {
-      throw new Error("Invalid Groq API response format");
-    }
-
-    const content = data.choices?.[0]?.message?.content ?? "";
-
-    if (!content) {
-      Logger.error("No content in Groq response:", data);
-    }
-
+    const content = parseOpenAIResponse(data, "Groq");
     return { content };
   }
 }

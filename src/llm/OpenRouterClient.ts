@@ -1,8 +1,8 @@
 import { BaseLLMClient } from "./BaseLLMClient";
+import { parseOpenAIResponse } from "./parse-openai-response";
 import type { ApiCallOptions, ApiCallResult } from "./types";
 import { CONFIG } from "@/config";
 import type { PrimitiveAction } from "@/orchestrator/types";
-import { Logger } from "@/utils/logger";
 
 /**
  * OpenRouter LLM client using the OpenAI-compatible chat completions API.
@@ -70,18 +70,7 @@ export class OpenRouterClient extends BaseLLMClient {
     }
 
     const data = await response.json();
-
-    // Validate response structure (OpenAI-compatible)
-    if (!data || typeof data !== "object") {
-      throw new Error("Invalid OpenRouter API response format");
-    }
-
-    const content = data.choices?.[0]?.message?.content ?? "";
-
-    if (!content) {
-      Logger.error("No content in OpenRouter response:", data);
-    }
-
+    const content = parseOpenAIResponse(data, "OpenRouter");
     return { content };
   }
 }

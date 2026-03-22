@@ -249,6 +249,26 @@ export class TurnManager {
     }
   }
 
+  private applySkipTurns(
+    players: Record<string, Record<string, unknown>>,
+    playerOrder: string[],
+    nextIndex: number,
+  ): { nextPlayerId: string; nextPlayerName: string; nextPlayer: Record<string, unknown> } {
+    let nextPlayerId = playerOrder[nextIndex];
+    let nextPlayer = players[nextPlayerId];
+    let nextPlayerName = (nextPlayer?.name as string) || nextPlayerId;
+    const skipTurns = (nextPlayer?.skipTurns as number) ?? 0;
+    if (skipTurns > 0) {
+      this.stateManager.set(`players.${nextPlayerId}.skipTurns`, skipTurns - 1);
+      Logger.info(`⏭️ Skipping ${nextPlayerName} (power check lose advance)`);
+      const skipIndex = (nextIndex + 1) % playerOrder.length;
+      nextPlayerId = playerOrder[skipIndex];
+      nextPlayer = players[nextPlayerId];
+      nextPlayerName = (nextPlayer?.name as string) || nextPlayerId;
+    }
+    return { nextPlayerId, nextPlayerName, nextPlayer };
+  }
+
   /**
    * Mechanical turn advance: find next player, handle skipTurns, set game.turn.
    * No guards (phase, winner, pending decisions, pending encounter). Used when
@@ -272,19 +292,11 @@ export class TurnManager {
 
     const currentIndex = playerOrder.indexOf(currentTurn);
     const nextIndex = (currentIndex + 1) % playerOrder.length;
-    let nextPlayerId = playerOrder[nextIndex];
-    let nextPlayer = players[nextPlayerId];
-    let nextPlayerName = (nextPlayer?.name as string) || nextPlayerId;
-
-    const skipTurns = (nextPlayer?.skipTurns as number) ?? 0;
-    if (skipTurns > 0) {
-      this.stateManager.set(`players.${nextPlayerId}.skipTurns`, skipTurns - 1);
-      Logger.info(`⏭️ Skipping ${nextPlayerName} (power check lose advance)`);
-      const skipIndex = (nextIndex + 1) % playerOrder.length;
-      nextPlayerId = playerOrder[skipIndex];
-      nextPlayer = players[nextPlayerId];
-      nextPlayerName = (nextPlayer?.name as string) || nextPlayerId;
-    }
+    const { nextPlayerId, nextPlayerName, nextPlayer } = this.applySkipTurns(
+      players,
+      playerOrder,
+      nextIndex,
+    );
 
     this.stateManager.set("game.turn", nextPlayerId);
     const position = (nextPlayer?.position as number) ?? 0;
