@@ -116,7 +116,6 @@ export class KaliAppCore {
   private async initializeOrchestrator(): Promise<void> {
     Logger.brain("Initializing orchestrator...");
 
-    Logger.info(`Loading game module: ${CONFIG.GAME.DEFAULT_MODULE}...`);
     const gameLoader = new GameLoader(CONFIG.GAME.MODULES_PATH);
     this.gameModule = await gameLoader.loadGame(CONFIG.GAME.DEFAULT_MODULE);
 
@@ -150,7 +149,7 @@ export class KaliAppCore {
 
   private formatGameRules(gameModule: GameModule): string {
     const { metadata } = gameModule;
-    const typedExamples = (metadata.id === "kalimba" ? KALIMBA_EXAMPLES : []).slice(0, 4);
+    const typedExamples = (metadata.id === "kalimba" ? KALIMBA_EXAMPLES : []).slice(0, 5);
     const exampleLines = typedExamples.map(
       (ex) => `User: ${ex.user} | You: ${JSON.stringify(ex.actions)}`,
     );

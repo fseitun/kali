@@ -505,7 +505,10 @@ describe("Orchestrator Authority - LLM Adversarial Tests", () => {
 
       let squareEffectCallCount = 0;
       mockLLM.getActions = vi.fn(async (transcript: string) => {
-        if (transcript.includes("[SYSTEM: Current player just landed")) {
+        if (
+          transcript.includes("[SYSTEM: Current player just landed") ||
+          transcript.includes("[SYSTEM: Animal encounter")
+        ) {
           squareEffectCallCount++;
           return [{ action: "PLAYER_ROLLED", value: 3 }];
         }
@@ -548,7 +551,10 @@ describe("Orchestrator Authority - LLM Adversarial Tests", () => {
       });
 
       mockLLM.getActions = vi.fn(async (transcript: string) => {
-        if (transcript.includes("[SYSTEM: Current player just landed")) {
+        if (
+          transcript.includes("[SYSTEM: Current player just landed") ||
+          transcript.includes("[SYSTEM: Animal encounter")
+        ) {
           return [{ action: "NARRATE", text: "You fell into a trap!" }];
         }
         return [];
@@ -595,7 +601,10 @@ describe("Orchestrator Authority - LLM Adversarial Tests", () => {
       });
 
       mockLLM.getActions = vi.fn(async (transcript: string) => {
-        if (transcript.includes("[SYSTEM: Current player just landed")) {
+        if (
+          transcript.includes("[SYSTEM: Current player just landed") ||
+          transcript.includes("[SYSTEM: Animal encounter")
+        ) {
           return [{ action: "NARRATE", text: "You met a Wolf!" }];
         }
         return [];
@@ -716,7 +725,10 @@ describe("Orchestrator Authority - LLM Adversarial Tests", () => {
       });
 
       mockLLM.getActions = vi.fn(async (transcript: string) => {
-        if (transcript.includes("[SYSTEM: Current player just landed")) {
+        if (
+          transcript.includes("[SYSTEM: Current player just landed") ||
+          transcript.includes("[SYSTEM: Animal encounter")
+        ) {
           return [{ action: "NARRATE", text: "You fell into carnivorous plants!" }];
         }
         return [];

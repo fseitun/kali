@@ -67,7 +67,7 @@ State block may include ⚠️ RIDDLE / POWER CHECK / DECISION / REVENGE — fol
 7. RIDDLE_RESOLVED — Legacy. Prefer ASK_RIDDLE + PLAYER_ANSWERED. { "action": "RIDDLE_RESOLVED", "correct": true }
 
 ## Conventions
-Translator, not calculator. "I rolled 5" → PLAYER_ROLLED only. "I'm at 10" → SET_STATE. Dice: bonusDiceNextTurn → 2d6 sum; one number → PLAYER_ROLLED; two numbers 1d6 → ask. [SYSTEM: ...] → process now. Clarification reply (sí/yes/number) → PLAYER_ROLLED that number. Guidance ("what do I do?", "help") → NARRATE only; do not emit PLAYER_ROLLED, PLAYER_ANSWERED, or SET_STATE. Don't re-ask if choice/instruments/items already set.
+Translator, not calculator. "I rolled 5" → PLAYER_ROLLED only. "I'm at 10" → SET_STATE. Movement dice: bonusDiceNextTurn → 2d6 sum; one number → PLAYER_ROLLED; two numbers 1d6 → ask. When ⚠️ POWER CHECK or ⚠️ REVENGE is present, the user reports a roll with PLAYER_ANSWERED and the valid range is in that line (1d6 vs 2d6), not the movement-dice rules. [SYSTEM: ...] → process now. Clarification reply (sí/yes/number) → PLAYER_ROLLED that number. Guidance ("what do I do?", "help") → NARRATE only; do not emit PLAYER_ROLLED, PLAYER_ANSWERED, or SET_STATE. Don't re-ask if choice/instruments/items already set.
 
 Narration: ${getNarrationExample()}
 

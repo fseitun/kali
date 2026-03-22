@@ -9,7 +9,7 @@ export interface GameExample {
   actions: PrimitiveAction[];
 }
 
-/** Kalimba LLM prompt examples. First 4 are sent to the LLM. */
+/** Kalimba LLM prompt examples. First 5 are sent to the LLM. */
 export const KALIMBA_EXAMPLES: GameExample[] = [
   {
     user: "Quiero el más corto",
@@ -32,6 +32,10 @@ export const KALIMBA_EXAMPLES: GameExample[] = [
   {
     user: "Tiré dos tres (ambiguous)",
     actions: [{ action: "NARRATE", text: "¿Tiraste un 2 o un 3?" }],
+  },
+  {
+    user: "Ocho (during power check)",
+    actions: [{ action: "PLAYER_ANSWERED", answer: "8" }],
   },
   {
     user: "(landed on animal square)",

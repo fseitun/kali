@@ -14,6 +14,12 @@ describe("SYSTEM_PROMPT", () => {
     expect(SYSTEM_PROMPT).toContain("PLAYER_ANSWERED");
     expect(SYSTEM_PROMPT).toContain("SET_STATE");
   });
+
+  it("distinguishes movement dice from POWER CHECK / REVENGE rolls in conventions", () => {
+    expect(SYSTEM_PROMPT).toContain("⚠️ POWER CHECK");
+    expect(SYSTEM_PROMPT).toContain("⚠️ REVENGE");
+    expect(SYSTEM_PROMPT).toMatch(/1d6 vs 2d6/);
+  });
 });
 
 describe("formatStateContext", () => {
@@ -114,10 +120,39 @@ describe("formatStateContext", () => {
     expect(result).toContain("POWER CHECK (fico)");
     expect(result).toContain("powerCheck");
     expect(result).toContain("PLAYER_ANSWERED");
+    expect(result).toContain("1–6");
+    expect(result).toContain("on the die");
+    expect(result).not.toContain("2–12");
     expect(result).toContain("Do NOT NARRATE the roll");
     expect(result).toContain("Orchestrator announces pass/fail");
     expect(result).not.toContain("Sumás");
     expect(result).not.toContain("confirm the roll");
+  });
+
+  it("POWER CHECK after correct riddle uses 2d6 (2–12) wording", () => {
+    const state = {
+      game: {
+        turn: "p1",
+        phase: "PLAYING",
+        pendingAnimalEncounter: {
+          position: 21,
+          power: 2,
+          playerId: "p1",
+          phase: "powerCheck",
+          riddleCorrect: true,
+        },
+      },
+      players: {
+        p1: { id: "p1", name: "fico", position: 21, activeChoices: {} },
+        p2: { id: "p2", name: "pedro", position: 6, activeChoices: {} },
+      },
+    } as Record<string, unknown>;
+
+    const result = formatStateContext(state);
+
+    expect(result).toContain("2–12");
+    expect(result).toContain("two dice");
+    expect(result).not.toContain("on the die");
   });
 
   it("shows REVENGE hint with anti-pattern when pendingAnimalEncounter phase=revenge", () => {

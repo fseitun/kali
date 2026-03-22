@@ -610,7 +610,7 @@ export class Orchestrator {
     Profiler.end(`${profilerPrefix}.validation.${this.getProfilerKey(context)}`);
 
     if (!validation.valid) {
-      Logger.error("Validation failed:", validation.error);
+      Logger.warn("Validation failed:", validation.error);
       await this.speechService.speak(t(this.resolveValidationErrorI18n(validation)));
       return { success: false, shouldAdvanceTurn: false };
     }

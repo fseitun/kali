@@ -229,7 +229,11 @@ function formatRiddlePhaseContext(
 
 function formatPowerCheckContext(playerName: string, riddleCorrect?: boolean): string {
   const diceCount = riddleCorrect ? "2" : "1";
-  return `⚠️ POWER CHECK (${playerName}) phase=powerCheck. If user REPORTS their roll (e.g. "tire un dos y un seis", "ocho", "siete") → PLAYER_ANSWERED with the number (sum for 2d6). Do NOT ask "decime el resultado", "¿alcanza?", "is that enough?", "¿sirve?" — they gave the number; process it immediately. Do NOT NARRATE the roll. Return only PLAYER_ANSWERED. Orchestrator announces pass/fail. If user asks what to do → NARRATE "Tirá ${diceCount} dado(s)... decime el resultado." [current]`;
+  const rollInstruction =
+    riddleCorrect === true
+      ? `PLAYER_ANSWERED with the sum (2–12 from two dice). Examples: "tire un dos y un seis", "ocho", "siete".`
+      : `PLAYER_ANSWERED with the number on the die (1–6). Examples: "cuatro", "tiré un seis", "6".`;
+  return `⚠️ POWER CHECK (${playerName}) phase=powerCheck. If user REPORTS their roll → ${rollInstruction} Do NOT ask "decime el resultado", "¿alcanza?", "is that enough?", "¿sirve?" — they gave the number; process it immediately. Do NOT NARRATE the roll. Return only PLAYER_ANSWERED. Orchestrator announces pass/fail. If user asks what to do → NARRATE "Tirá ${diceCount} dado(s)... decime el resultado." [current]`;
 }
 
 function formatRevengeContext(playerName: string, power: number): string {

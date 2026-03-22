@@ -350,7 +350,7 @@ export class BoardEffectsHandler {
     const isEmpty =
       !squareData || squareData.type === "empty" || Object.keys(squareData).length === 0;
     if (isEmpty) {
-      Logger.info(`No square config for position ${position}, skipping effects`);
+      Logger.debug(`Square ${position} is empty or has no effects, skipping square effects`);
       return null;
     }
     return { squares, squareData };
@@ -415,12 +415,10 @@ export class BoardEffectsHandler {
     const appliedText = applied.length > 0 ? ` Orchestrator applied: ${applied.join(", ")}.` : "";
     if (isAnimalEncounterKind(kind)) {
       return (
-        `[SYSTEM: Current player just landed on animal square ${position} (${squareName}, power ${power}). ` +
-        `phase=riddle. Ask a riddle with exactly FOUR options. The riddle MUST be about the animal kingdom (e.g. animals, habitats, behavior, diet, classification); it does NOT have to be this square's animal or habitat. ` +
-        `Return ASK_RIDDLE with "text", "options" (array of 4 strings), "correctOption" (exact text of the correct option), optionally "correctOptionSynonyms" (array of strings). Then NARRATE the same riddle and options for the user. ` +
-        `When the user answers, return PLAYER_ANSWERED with what they said (option text or paraphrase). ` +
-        `When phase is powerCheck or revenge, user reports roll → use PLAYER_ANSWERED with the number. Orchestrator owns all phase transitions and rewards. ` +
-        `Square data (for flavour only): ${squareInfo}]`
+        `[SYSTEM: Animal encounter at square ${position} (${squareName}, power ${power}), phase=riddle. ` +
+        `Follow the ⚠️ RIDDLE line in state: ASK_RIDDLE with exactly four options (animal kingdom) + correctOption (and optional synonyms), then NARRATE the same riddle; user answer → PLAYER_ANSWERED. ` +
+        `For powerCheck/revenge phases, roll → PLAYER_ANSWERED with the number. Orchestrator owns transitions and rewards. ` +
+        `Square data (flavour only): ${squareInfo}]`
       );
     }
     return applied.length > 0

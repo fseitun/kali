@@ -1,6 +1,43 @@
 import type { GameState } from "./orchestrator/types";
 import { Logger } from "./utils/logger";
 
+function summarizePlayersForLog(
+  players: GameState["players"] | undefined,
+): Record<string, { id: string; name: string }> {
+  const summary: Record<string, { id: string; name: string }> = {};
+  for (const [id, p] of Object.entries(players ?? {})) {
+    summary[id] = { id: p.id, name: p.name };
+  }
+  return summary;
+}
+
+function boardSummaryForLog(board: GameState["board"]): { squaresCount: number } {
+  const squares = board?.squares;
+  const squareCount =
+    squares && typeof squares === "object" ? Object.keys(squares as object).length : 0;
+  return { squaresCount: squareCount };
+}
+
+/**
+ * Compact summary for init logs (avoids dumping full board.squares graph).
+ */
+function summarizeInitialStateForLog(state: GameState): Record<string, unknown> {
+  const out: Record<string, unknown> = {
+    game: state.game,
+    players: summarizePlayersForLog(state.players),
+  };
+  if (state.board) {
+    out.board = boardSummaryForLog(state.board);
+  }
+  const skip = new Set(["game", "players", "board"]);
+  for (const key of Object.keys(state)) {
+    if (!skip.has(key)) {
+      out[key] = state[key as keyof GameState];
+    }
+  }
+  return out;
+}
+
 /**
  * Manages game state in memory with dot-notation path access.
  *
@@ -27,7 +64,7 @@ export class StateManager {
    */
   init(initialState: GameState): void {
     this.state = structuredClone(initialState);
-    Logger.init("Initialized game state:", initialState);
+    Logger.init("Initialized game state:", summarizeInitialStateForLog(initialState));
   }
 
   /**
