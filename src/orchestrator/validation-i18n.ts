@@ -3,6 +3,8 @@ export const VALIDATION_ERROR_I18N: Record<string, string> = {
   invalidDiceRoll: "errors.invalidDiceRoll",
   chooseForkFirst: "errors.chooseForkFirst",
   resolveSquareEffectFirst: "errors.resolveSquareEffectFirst",
+  answerRiddleFirst: "errors.answerRiddleFirst",
+  sayEncounterRollAsAnswer: "errors.sayEncounterRollAsAnswer",
   wrongPhaseForRoll: "errors.wrongPhaseForRoll",
   invalidAnswer: "errors.invalidAnswer",
   wrongTurn: "errors.wrongTurn",

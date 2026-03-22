@@ -1053,9 +1053,8 @@ describe("Validator - New Primitives", () => {
       );
 
       expect(result.valid).toBe(false);
-      expect(result.errorCode).toBe("wrongPhaseForRoll");
-      expect(result.error).toContain("Awaiting");
-      expect(result.error).toContain("PLAYER_ANSWERED");
+      expect(result.errorCode).toBe("sayEncounterRollAsAnswer");
+      expect(result.error).toContain("powerCheck");
     });
 
     it("allows PLAYER_ROLLED when pendingAnimalEncounter is for different player", () => {
@@ -1108,11 +1107,11 @@ describe("Validator - New Primitives", () => {
       );
 
       expect(result.valid).toBe(false);
-      expect(result.errorCode).toBe("wrongPhaseForRoll");
+      expect(result.errorCode).toBe("sayEncounterRollAsAnswer");
       expect(result.error).toContain("revenge");
     });
 
-    it("allows PLAYER_ROLLED when pendingAnimalEncounter is riddle phase (not powerCheck/revenge)", () => {
+    it("blocks PLAYER_ROLLED when pendingAnimalEncounter is riddle phase for current player", () => {
       const stateWithPending = {
         ...mockState,
         game: {
@@ -1135,7 +1134,8 @@ describe("Validator - New Primitives", () => {
         mockValidatorContext,
       );
 
-      expect(result.valid).toBe(true);
+      expect(result.valid).toBe(false);
+      expect(result.errorCode).toBe("answerRiddleFirst");
     });
 
     it("allows NARRATE during square effect processing", () => {

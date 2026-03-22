@@ -22,6 +22,16 @@ describe("resolveRiddleAnswerToOption", () => {
     expect(resolveRiddleAnswerToOption("la hormiga", [])).toBe(null);
     expect(resolveRiddleAnswerToOption("la hormiga", ["A) Hormiga"])).toBe(null);
   });
+
+  it("resolves 1–4 to option index (1-based)", () => {
+    expect(resolveRiddleAnswerToOption("1", animalOptions)).toBe("A) Hormiga");
+    expect(resolveRiddleAnswerToOption("4", animalOptions)).toBe("D) Delfín");
+  });
+
+  it("resolves opción N (Spanish) to option index", () => {
+    expect(resolveRiddleAnswerToOption("opción 2", animalOptions)).toBe("B) Elefante");
+    expect(resolveRiddleAnswerToOption("Opción 3", animalOptions)).toBe("C) Puma");
+  });
 });
 
 describe("isStrictRiddleCorrect", () => {

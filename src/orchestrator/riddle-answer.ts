@@ -1,7 +1,6 @@
 /**
  * Resolves a riddle answer to a matched option text (or null).
- * Used for strict match: user/LLM says option word or synonym; we match against the four options.
- * No letters or indices — option text only.
+ * Used for strict match: user/LLM says option text, or a 1–4 index / "opción N", or wording that matches an option.
  */
 
 /**
@@ -10,6 +9,56 @@
 export function normalizeOptionText(option: string): string {
   const stripped = option.replace(/^[A-Da-d][.)]\s*/i, "").trim();
   return stripped.toLowerCase();
+}
+
+/**
+ * If the answer is a 1-based index 1–4 or "opción N", return that option string.
+ * @param trimmed - Already trimmed user answer
+ * @param riddleOptions - Exactly four option strings
+ * @returns The option at that index, or null
+ */
+function resolveRiddleOptionBySpokenIndex(trimmed: string, riddleOptions: string[]): string | null {
+  const digitOnly = trimmed.match(/^([1-4])$/);
+  if (digitOnly) {
+    const idx = parseInt(digitOnly[1], 10) - 1;
+    const byIndex = riddleOptions[idx];
+    return typeof byIndex === "string" ? byIndex : null;
+  }
+
+  const opcionIdx = trimmed.match(/^opción\s*([1-4])$/i);
+  if (opcionIdx) {
+    const idx = parseInt(opcionIdx[1], 10) - 1;
+    const byIndex = riddleOptions[idx];
+    return typeof byIndex === "string" ? byIndex : null;
+  }
+  return null;
+}
+
+/**
+ * Fuzzy match user text to exactly one of four options (equals / contains), or null if ambiguous.
+ */
+function matchRiddleOptionByFuzzyText(
+  normalizedAnswer: string,
+  riddleOptions: string[],
+): string | null {
+  let matchedOption: string | null = null;
+  for (let i = 0; i < 4; i++) {
+    const opt = riddleOptions[i];
+    if (typeof opt !== "string") {
+      continue;
+    }
+    const normalizedOpt = normalizeOptionText(opt);
+    const equals = normalizedAnswer === normalizedOpt;
+    const answerContainsOption = normalizedAnswer.includes(normalizedOpt);
+    const optionContainsAnswer = normalizedOpt.includes(normalizedAnswer);
+    if (equals || answerContainsOption || optionContainsAnswer) {
+      if (matchedOption !== null) {
+        return null;
+      }
+      matchedOption = opt;
+    }
+  }
+  return matchedOption;
 }
 
 /**
@@ -30,27 +79,12 @@ export function resolveRiddleAnswerToOption(
     return null;
   }
 
-  const normalizedAnswer = trimmed.toLowerCase();
-  let matchedOption: string | null = null;
-
-  for (let i = 0; i < 4; i++) {
-    const opt = riddleOptions[i];
-    if (typeof opt !== "string") {
-      continue;
-    }
-    const normalizedOpt = normalizeOptionText(opt);
-    const equals = normalizedAnswer === normalizedOpt;
-    const answerContainsOption = normalizedAnswer.includes(normalizedOpt);
-    const optionContainsAnswer = normalizedOpt.includes(normalizedAnswer);
-    if (equals || answerContainsOption || optionContainsAnswer) {
-      if (matchedOption !== null) {
-        return null;
-      }
-      matchedOption = opt;
-    }
+  const byIndex = resolveRiddleOptionBySpokenIndex(trimmed, riddleOptions);
+  if (byIndex !== null) {
+    return byIndex;
   }
 
-  return matchedOption;
+  return matchRiddleOptionByFuzzyText(trimmed.toLowerCase(), riddleOptions);
 }
 
 function matchesCorrectOptionSynonyms(

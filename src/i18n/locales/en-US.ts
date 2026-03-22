@@ -64,10 +64,13 @@ export const enUS = {
   errors: {
     validationFailed: "I couldn't process that.",
     invalidDiceRoll: "That number isn't possible with the dice. Roll again.",
-    chooseForkFirst: "Choose your direction at the fork first, then roll.",
-    resolveSquareEffectFirst: "Finish what's happening on this square first.",
+    chooseForkFirst: "You still need to pick a path at the fork. After that you can roll.",
+    resolveSquareEffectFirst: "You still need to finish what's happening on this square first.",
+    answerRiddleFirst: "Answer the animal question first. You can roll for your move after that.",
+    sayEncounterRollAsAnswer:
+      "For this step, just say the number you rolled out loud - not like a normal turn roll yet.",
     wrongPhaseForRoll: "That roll isn't what I need right now.",
-    invalidAnswer: "I didn't get a clear answer. Try again.",
+    invalidAnswer: "I didn't catch that. Try again with a clear answer.",
     wrongTurn: "It's not your turn to change that.",
     setStateForbidden: "I can't change that for you.",
     pathNotAllowed: "That move isn't allowed right now.",

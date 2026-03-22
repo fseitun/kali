@@ -3,6 +3,25 @@ import { validateField } from "./common";
 import { hasPendingDecisionsInState } from "./mock-state";
 import type { ValidationResult, ValidatorContext } from "./types";
 
+type PendingEncounter = { phase?: string; playerId?: string } | null | undefined;
+
+function isAwaitingRiddleForTurn(
+  pending: PendingEncounter,
+  currentTurn: string | undefined,
+): boolean {
+  return pending?.phase === "riddle" && Boolean(currentTurn) && pending.playerId === currentTurn;
+}
+
+function isAwaitingEncounterRollForTurn(
+  pending: PendingEncounter,
+  currentTurn: string | undefined,
+): boolean {
+  return (
+    (pending?.phase === "powerCheck" || pending?.phase === "revenge") &&
+    pending?.playerId === currentTurn
+  );
+}
+
 function validatePlayerRolledPhaseRestrictions(
   state: GameState,
   index: number,
@@ -10,32 +29,37 @@ function validatePlayerRolledPhaseRestrictions(
 ): ValidationResult | null {
   const game = state.game as Record<string, unknown> | undefined;
   const currentTurn = game?.turn as string | undefined;
-  const pending = game?.pendingAnimalEncounter as
-    | { phase?: string; playerId?: string }
-    | null
-    | undefined;
-  const awaitingRoll =
-    (pending?.phase === "powerCheck" || pending?.phase === "revenge") &&
-    pending?.playerId === currentTurn;
-  const blocks: Array<{ when: boolean; errorCode: string; error: string }> = [
-    {
-      when: context.isProcessingEffect,
+  const pending = game?.pendingAnimalEncounter as PendingEncounter;
+
+  if (context.isProcessingEffect) {
+    return {
+      valid: false,
       errorCode: "resolveSquareEffectFirst",
       error: `PLAYER_ROLLED at index ${index}: Cannot roll dice during square effect processing. The square effect must be resolved first (fight/flee decision, etc.).`,
-    },
-    {
-      when: hasPendingDecisionsInState(state),
+    };
+  }
+  if (hasPendingDecisionsInState(state)) {
+    return {
+      valid: false,
       errorCode: "chooseForkFirst",
       error: `PLAYER_ROLLED at index ${index}: Cannot roll until direction is chosen at fork. Choose path/branch first.`,
-    },
-    {
-      when: awaitingRoll,
-      errorCode: "wrongPhaseForRoll",
-      error: `PLAYER_ROLLED at index ${index}: Awaiting ${pending?.phase} roll for animal encounter. Use PLAYER_ANSWERED with the roll value, not PLAYER_ROLLED.`,
-    },
-  ];
-  const block = blocks.find((b) => b.when);
-  return block ? { valid: false, error: block.error, errorCode: block.errorCode } : null;
+    };
+  }
+  if (isAwaitingRiddleForTurn(pending, currentTurn)) {
+    return {
+      valid: false,
+      errorCode: "answerRiddleFirst",
+      error: `PLAYER_ROLLED at index ${index}: Answer the animal riddle first; movement roll comes after.`,
+    };
+  }
+  if (isAwaitingEncounterRollForTurn(pending, currentTurn)) {
+    return {
+      valid: false,
+      errorCode: "sayEncounterRollAsAnswer",
+      error: `PLAYER_ROLLED at index ${index}: Awaiting ${pending?.phase} roll for animal encounter. Say the number as your answer, not as a movement roll.`,
+    };
+  }
+  return null;
 }
 
 function getRollLimits(state: GameState): { min: number; max: number; label: string } {

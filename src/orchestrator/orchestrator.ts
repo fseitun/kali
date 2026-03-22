@@ -51,6 +51,32 @@ export interface OrchestratorOptions {
   allowScenarioOnlyStatePaths?: boolean;
 }
 
+function isPendingAnimalRiddleForCurrentTurn(game: Record<string, unknown> | undefined): boolean {
+  const currentTurn = game?.turn as string | undefined;
+  const pending = game?.pendingAnimalEncounter as
+    | { phase?: string; playerId?: string }
+    | null
+    | undefined;
+  return pending?.phase === "riddle" && Boolean(currentTurn) && pending.playerId === currentTurn;
+}
+
+function normalizedRiddleOptionFromTranscript(
+  transcript: string,
+  actions: PrimitiveAction[],
+  firstAnsweredIndex: number,
+  riddleOptions: string[],
+): string | null {
+  const fromTranscript = resolveRiddleAnswerToOption(transcript, riddleOptions);
+  if (fromTranscript !== null) {
+    return fromTranscript;
+  }
+  const answered = actions[firstAnsweredIndex];
+  if (answered?.action === "PLAYER_ANSWERED" && typeof answered.answer === "string") {
+    return resolveRiddleAnswerToOption(answered.answer, riddleOptions);
+  }
+  return null;
+}
+
 export class Orchestrator {
   private turnManager: TurnManager;
   private boardEffectsHandler: BoardEffectsHandler;
@@ -408,17 +434,20 @@ export class Orchestrator {
   }
 
   /**
-   * When in riddle phase with structured options, resolve the user's transcript to the matched option text.
-   * If the transcript matches one of the four options, replace the first PLAYER_ANSWERED answer with that option text.
-   */
-  /**
    * When the LLM returns PLAYER_ANSWERED with a dice-only answer but the game expects a
    * movement PLAYER_ROLLED, rewrite so the roll applies and turn logic stays correct.
-   * Skipped when validatePlayerRolled would fail (fork pending, powerCheck, riddle, etc.).
+   * Returns actions unchanged when a riddle is pending for the current player (digits are option indices or answers).
+   * Otherwise skipped when validatePlayerRolled would fail (fork pending, power check, etc.).
    */
   private coerceMovementPlayerAnsweredToPlayerRolled(
     actions: PrimitiveAction[],
   ): PrimitiveAction[] {
+    const state = this.stateManager.getState();
+    const game = state.game as Record<string, unknown> | undefined;
+    if (isPendingAnimalRiddleForCurrentTurn(game)) {
+      return actions;
+    }
+
     if (actions.length !== 1) {
       return actions;
     }
@@ -438,7 +467,6 @@ export class Orchestrator {
       return actions;
     }
     const rolled: PrimitiveAction = { action: "PLAYER_ROLLED", value };
-    const state = this.stateManager.getState();
     const validation = validatePlayerRolled(rolled, state, 0, {
       isProcessingEffect: this.boardEffectsHandler.isProcessingEffect(),
     });
@@ -449,6 +477,10 @@ export class Orchestrator {
     return [rolled];
   }
 
+  /**
+   * When in riddle phase with four options, map transcript or the first PLAYER_ANSWERED answer
+   * (option text, 1–4, or "opción N") to the canonical option string on that action.
+   */
   private normalizeRiddleAnswerFromTranscript(
     actions: PrimitiveAction[],
     transcript: string,
@@ -471,13 +503,18 @@ export class Orchestrator {
     if (firstIndex === -1) {
       return actions;
     }
-    const optionFromTranscript = resolveRiddleAnswerToOption(transcript, pending.riddleOptions);
-    if (optionFromTranscript === null) {
+    const optionText = normalizedRiddleOptionFromTranscript(
+      transcript,
+      actions,
+      firstIndex,
+      pending.riddleOptions,
+    );
+    if (optionText === null) {
       return actions;
     }
     return actions.map((a, i) => {
       if (i === firstIndex && a.action === "PLAYER_ANSWERED" && "answer" in a) {
-        return { ...a, answer: optionFromTranscript };
+        return { ...a, answer: optionText };
       }
       return a;
     });

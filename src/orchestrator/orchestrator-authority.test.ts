@@ -253,7 +253,7 @@ describe("Orchestrator Authority - LLM Adversarial Tests", () => {
       await orchestrator.handleTranscript("move forward");
 
       expect(mockSpeech.speak).toHaveBeenCalledWith(
-        "Choose your direction at the fork first, then roll.",
+        "You still need to pick a path at the fork. After that you can roll.",
       );
       expect(mockStateManager.set).not.toHaveBeenCalledWith("players.p1.position", 15);
     });
@@ -519,7 +519,7 @@ describe("Orchestrator Authority - LLM Adversarial Tests", () => {
       expect(squareEffectCallCount).toBe(1);
       expect((testState.players as any).p1.position).toBe(5);
       expect(mockSpeech.speak).toHaveBeenCalledWith(
-        "Finish what's happening on this square first.",
+        "You still need to finish what's happening on this square first.",
       );
     });
 

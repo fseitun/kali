@@ -64,10 +64,13 @@ export const esAR = {
   errors: {
     validationFailed: "Disculpá, no te entendí.",
     invalidDiceRoll: "Ese número no se puede sacar con el dado. Tirá de nuevo.",
-    chooseForkFirst: "Elegí la dirección en la bifurcación primero, después tirá.",
-    resolveSquareEffectFirst: "Terminá lo que pasa en esta casilla primero.",
+    chooseForkFirst: "Primero tenés que elegir el camino en la bifurcación, después tirás el dado.",
+    resolveSquareEffectFirst: "Primero terminá lo de esta casilla, después seguimos.",
+    answerRiddleFirst: "Primero respondé la pregunta del animal. Después tirás para moverte.",
+    sayEncounterRollAsAnswer:
+      "Ahora decime en voz alta el número que te salió, como respuesta. Todavía no es la tirada de movimiento.",
     wrongPhaseForRoll: "Ese número no es lo que necesito ahora.",
-    invalidAnswer: "No entendí bien. Intentá de nuevo.",
+    invalidAnswer: "No me quedó claro. Intentá de nuevo con una respuesta clara.",
     wrongTurn: "No es tu turno para cambiar eso.",
     setStateForbidden: "No puedo cambiar eso por vos.",
     pathNotAllowed: "Ese movimiento no está permitido ahora.",

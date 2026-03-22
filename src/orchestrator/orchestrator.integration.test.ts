@@ -3,6 +3,7 @@ import { Orchestrator } from "./orchestrator";
 import { GamePhase } from "./types";
 import type { GameState, PrimitiveAction } from "./types";
 import type { StatusIndicator } from "@/components/status-indicator";
+import { setLocale, t } from "@/i18n/translations";
 import { MockLLMClient } from "@/llm/MockLLMClient";
 import type { SpeechService } from "@/services/speech-service";
 import { StateManager } from "@/state-manager";
@@ -1257,6 +1258,118 @@ describe("Orchestrator Integration Tests", () => {
 
       expect(result.success).toBe(true);
       expect(stateManager.get("players.p1.position")).toBe(0);
+    });
+
+    it("does not coerce numeric PLAYER_ANSWERED to movement roll during pending riddle", async () => {
+      mockLLM = createScriptedLLM([[{ action: "PLAYER_ANSWERED", answer: "1" }]]);
+
+      const initialState: GameState = {
+        game: {
+          name: "Test Game",
+          phase: GamePhase.PLAYING,
+          turn: "p1",
+          playerOrder: ["p1", "p2"],
+          winner: null,
+          lastRoll: 0,
+          pendingAnimalEncounter: {
+            position: 2,
+            power: 3,
+            playerId: "p1",
+            phase: "riddle",
+            riddlePrompt: "Which bird?",
+            riddleOptions: ["Águila", "Búho", "Halcón", "Cóndor"],
+            correctOption: "Halcón",
+          },
+        },
+        players: {
+          p1: { id: "p1", name: "Alice", position: 2, activeChoices: {} },
+          p2: { id: "p2", name: "Bob", position: 0 },
+        },
+        board: { squares: {} },
+      };
+
+      setupGame(initialState);
+
+      const result = await orchestrator.handleTranscript("1");
+
+      expect(result.success).toBe(true);
+      expect(stateManager.get("players.p1.position")).toBe(2);
+      const pendingAfter = stateManager.get("game.pendingAnimalEncounter") as { phase?: string };
+      expect(pendingAfter.phase).toBe("powerCheck");
+    });
+
+    it("speaks answerRiddleFirst when LLM returns PLAYER_ROLLED during pending riddle", async () => {
+      setLocale("en-US");
+      mockLLM = createScriptedLLM([[{ action: "PLAYER_ROLLED", value: 4 }]]);
+
+      const initialState: GameState = {
+        game: {
+          name: "Test Game",
+          phase: GamePhase.PLAYING,
+          turn: "p1",
+          playerOrder: ["p1", "p2"],
+          winner: null,
+          lastRoll: 0,
+          pendingAnimalEncounter: {
+            position: 2,
+            power: 3,
+            playerId: "p1",
+            phase: "riddle",
+            riddlePrompt: "Which bird?",
+            riddleOptions: ["Águila", "Búho", "Halcón", "Cóndor"],
+            correctOption: "Halcón",
+          },
+        },
+        players: {
+          p1: { id: "p1", name: "Alice", position: 2, activeChoices: {} },
+          p2: { id: "p2", name: "Bob", position: 0 },
+        },
+        board: { squares: {} },
+      };
+
+      setupGame(initialState);
+
+      const result = await orchestrator.handleTranscript("I rolled four");
+
+      expect(result.success).toBe(false);
+      expect(mockSpeech.speak).toHaveBeenCalledWith(t("errors.answerRiddleFirst"));
+      setLocale("es-AR");
+    });
+
+    it("speaks sayEncounterRollAsAnswer when LLM returns PLAYER_ROLLED during power check", async () => {
+      setLocale("en-US");
+      mockLLM = createScriptedLLM([[{ action: "PLAYER_ROLLED", value: 4 }]]);
+
+      const initialState: GameState = {
+        game: {
+          name: "Test Game",
+          phase: GamePhase.PLAYING,
+          turn: "p1",
+          playerOrder: ["p1", "p2"],
+          winner: null,
+          lastRoll: 0,
+          pendingAnimalEncounter: {
+            position: 5,
+            power: 4,
+            playerId: "p1",
+            phase: "powerCheck",
+            riddleCorrect: true,
+          },
+        },
+        players: {
+          p1: { id: "p1", name: "Alice", position: 5, activeChoices: {} },
+          p2: { id: "p2", name: "Bob", position: 0 },
+        },
+        board: { squares: {} },
+      };
+
+      setupGame(initialState);
+
+      const result = await orchestrator.handleTranscript("four");
+
+      expect(result.success).toBe(false);
+      expect(mockSpeech.speak).toHaveBeenCalledWith(t("errors.sayEncounterRollAsAnswer"));
+      setLocale("es-AR");
     });
   });
 });
