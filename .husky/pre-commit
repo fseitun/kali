@@ -1,3 +1,21 @@
+# Warn-only: local .env changed since last commit (gitignored; not in index)
+if [ -f .env ]; then
+  env_mtime=$(stat -c %Y .env 2>/dev/null || stat -f %m .env)
+  head_ct=$(git log -1 --format=%ct 2>/dev/null || echo 0)
+  if [ -n "$env_mtime" ] && [ "$env_mtime" -gt "$head_ct" ]; then
+    echo ""
+    echo "Reminder: .env was modified after the last commit — update deployment env (e.g. Vercel) if needed."
+    echo ""
+  fi
+fi
+
+# Warn-only: committed env contract or docs staged
+if git diff --cached --name-only | grep -qE '^\.env\.example$|^README\.md$'; then
+  echo ""
+  echo "Reminder: env contract/docs changed — update deployment env (e.g. Vercel) if you added/changed variables."
+  echo ""
+fi
+
 npx lint-staged
 npm run type-check
 npm run test
