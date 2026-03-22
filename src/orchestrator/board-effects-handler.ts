@@ -59,55 +59,7 @@ export class BoardEffectsHandler {
     }
 
     const squareData = squares[position.toString()];
-    if (squareData) {
-      let destination: number | undefined;
-
-      if (squareData.type === "portal" && typeof squareData.destination === "number") {
-        destination = squareData.destination;
-      } else if (squareData.effect === "returnTo187") {
-        destination = 187;
-      } else if (squareData.effect === "jumpToLeader") {
-        const match = path.match(/^players\.([^.]+)\.position$/);
-        const currentPlayerId = match?.[1];
-        const playerOrder = (state.game as Record<string, unknown>)?.playerOrder as
-          | string[]
-          | undefined;
-        const players = state.players as Record<string, Record<string, unknown>> | undefined;
-        if (currentPlayerId && Array.isArray(playerOrder) && players) {
-          let leaderPosition = -1;
-          for (const pid of playerOrder) {
-            const pos = players[pid]?.position as number | undefined;
-            if (typeof pos === "number" && pos > leaderPosition) {
-              leaderPosition = pos;
-            }
-          }
-          if (leaderPosition >= 0) {
-            destination = leaderPosition;
-          }
-        }
-      }
-
-      if (destination !== undefined && destination !== position) {
-        const isBackward = destination < position;
-        const match = path.match(/^players\.([^.]+)\.position$/);
-        const playerId = match?.[1];
-        const player = playerId
-          ? (state.players as Record<string, Record<string, unknown>>)?.[playerId]
-          : undefined;
-        const inverseMode = !!player?.inverseMode;
-
-        if (isBackward && inverseMode) {
-          Logger.info(
-            `Skipping backward teleport (inverseMode): position ${position} → ${destination}`,
-          );
-          // Do not apply; player stays
-        } else {
-          const moveType = isBackward ? "snake" : "ladder";
-          Logger.info(`Auto-applying ${moveType}: position ${position} → ${destination}`);
-          this.stateManager.set(path, destination);
-        }
-      }
-    }
+    this.applyTeleportIfApplicable(path, position, squareData, state);
 
     // Magic door bounce (Kalimba): overshooting door bounces back
     const finalPosition = this.stateManager.get(path) as number;
@@ -125,6 +77,71 @@ export class BoardEffectsHandler {
       );
       this.stateManager.set(path, bounceTo);
     }
+  }
+
+  /**
+   * Applies teleport (portal, returnTo187, jumpToLeader) if applicable. Uses early returns.
+   * Skips backward teleports when player has inverseMode.
+   */
+  private applyTeleportIfApplicable(
+    path: string,
+    position: number,
+    squareData: Record<string, unknown> | undefined,
+    state: {
+      game?: Record<string, unknown>;
+      players?: Record<string, Record<string, unknown>>;
+    },
+  ): void {
+    if (!squareData) {
+      return;
+    }
+
+    let destination: number | undefined;
+    if (squareData.type === "portal" && typeof squareData.destination === "number") {
+      destination = squareData.destination;
+    } else if (squareData.effect === "returnTo187") {
+      destination = 187;
+    } else if (squareData.effect === "jumpToLeader") {
+      const match = path.match(/^players\.([^.]+)\.position$/);
+      const currentPlayerId = match?.[1];
+      const playerOrder = state.game?.playerOrder as string[] | undefined;
+      const players = state.players;
+      if (currentPlayerId && Array.isArray(playerOrder) && players) {
+        let leaderPosition = -1;
+        for (const pid of playerOrder) {
+          const pos = players[pid]?.position as number | undefined;
+          if (typeof pos === "number" && pos > leaderPosition) {
+            leaderPosition = pos;
+          }
+        }
+        if (leaderPosition >= 0) {
+          destination = leaderPosition;
+        }
+      }
+    }
+
+    if (destination === undefined || destination === position) {
+      return;
+    }
+
+    const isBackward = destination < position;
+    const match = path.match(/^players\.([^.]+)\.position$/);
+    const playerId = match?.[1];
+    const player = playerId
+      ? (state.players as Record<string, Record<string, unknown>>)?.[playerId]
+      : undefined;
+    const inverseMode = !!player?.inverseMode;
+
+    if (isBackward && inverseMode) {
+      Logger.info(
+        `Skipping backward teleport (inverseMode): position ${position} → ${destination}`,
+      );
+      return;
+    }
+
+    const moveType = isBackward ? "snake" : "ladder";
+    Logger.info(`Auto-applying ${moveType}: position ${position} → ${destination}`);
+    this.stateManager.set(path, destination);
   }
 
   /**

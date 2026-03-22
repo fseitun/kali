@@ -114,7 +114,9 @@ export class Orchestrator {
    * @returns true if lock was acquired, false if already processing
    */
   private tryAcquireProcessing(): boolean {
-    if (this.isProcessing) return false;
+    if (this.isProcessing) {
+      return false;
+    }
     this.isProcessing = true;
     return true;
   }
@@ -347,34 +349,17 @@ export class Orchestrator {
       }
 
       if (Array.isArray(actions) && actions.length === 0) {
-        const canAutoRetryRiddle =
-          this.boardEffectsHandler.isProcessingEffect() && this.isRiddlePhaseWithNoRiddleStored();
-        if (canAutoRetryRiddle) {
-          Logger.info(
-            "Auto-unblock: retrying riddle request once (0 actions during square effect)",
-          );
-          await this.speechService.speak(t("llm.retrying"));
-          const retryState = this.stateManager.getState();
-          Profiler.start(`orchestrator.llm.retry.${profilerKey}`);
-          const retryActions = await this.llmClient.getActions(
-            transcript,
-            retryState,
-            lastBotUtterance,
-          );
-          Profiler.end(`orchestrator.llm.retry.${profilerKey}`);
-          if (Array.isArray(retryActions) && retryActions.length > 0) {
-            Logger.robot(
-              `LLM retry returned ${retryActions.length} action(s): ${retryActions.map((a) => a.action).join(", ")}`,
-            );
-            const normalizedRetry = this.coerceMovementPlayerAnsweredToPlayerRolled(
-              this.normalizeRiddleAnswerFromTranscript(retryActions, transcript),
-            );
-            return await this.runValidatedActions(normalizedRetry, context, "orchestrator");
-          }
+        const retryActions = await this.handleEmptyActionsWithRetry(
+          transcript,
+          context,
+          lastBotUtterance,
+          profilerKey,
+        );
+        if (retryActions && retryActions.length > 0) {
+          return await this.runValidatedActions(retryActions, context, "orchestrator");
         }
         Logger.warn("No actions returned from LLM");
         await this.speechService.speak(t("llm.allRetriesFailed"));
-        // Turn not advanced; user can say something again to trigger a fresh getActions.
         return { success: false, shouldAdvanceTurn: false };
       }
       const normalizedActions = this.coerceMovementPlayerAnsweredToPlayerRolled(
@@ -389,6 +374,40 @@ export class Orchestrator {
   }
 
   /**
+   * When LLM returns 0 actions during square effect + riddle phase, retries once.
+   * @returns Normalized actions if retry succeeded with non-empty result, otherwise null
+   */
+  private async handleEmptyActionsWithRetry(
+    transcript: string,
+    _context: ExecutionContext,
+    lastBotUtterance: string | undefined,
+    profilerKey: string,
+  ): Promise<PrimitiveAction[] | null> {
+    const canAutoRetryRiddle =
+      this.boardEffectsHandler.isProcessingEffect() && this.isRiddlePhaseWithNoRiddleStored();
+    if (!canAutoRetryRiddle) {
+      return null;
+    }
+
+    Logger.info("Auto-unblock: retrying riddle request once (0 actions during square effect)");
+    await this.speechService.speak(t("llm.retrying"));
+    const retryState = this.stateManager.getState();
+    Profiler.start(`orchestrator.llm.retry.${profilerKey}`);
+    const retryActions = await this.llmClient.getActions(transcript, retryState, lastBotUtterance);
+    Profiler.end(`orchestrator.llm.retry.${profilerKey}`);
+    if (!Array.isArray(retryActions) || retryActions.length === 0) {
+      return null;
+    }
+
+    Logger.robot(
+      `LLM retry returned ${retryActions.length} action(s): ${retryActions.map((a) => a.action).join(", ")}`,
+    );
+    return this.coerceMovementPlayerAnsweredToPlayerRolled(
+      this.normalizeRiddleAnswerFromTranscript(retryActions, transcript),
+    );
+  }
+
+  /**
    * When in riddle phase with structured options, resolve the user's transcript to the matched option text.
    * If the transcript matches one of the four options, replace the first PLAYER_ANSWERED answer with that option text.
    */
@@ -400,20 +419,32 @@ export class Orchestrator {
   private coerceMovementPlayerAnsweredToPlayerRolled(
     actions: PrimitiveAction[],
   ): PrimitiveAction[] {
-    if (actions.length !== 1) return actions;
+    if (actions.length !== 1) {
+      return actions;
+    }
     const action = actions[0];
-    if (action.action !== "PLAYER_ANSWERED") return actions;
-    if (!("answer" in action) || typeof action.answer !== "string") return actions;
+    if (action.action !== "PLAYER_ANSWERED") {
+      return actions;
+    }
+    if (!("answer" in action) || typeof action.answer !== "string") {
+      return actions;
+    }
     const trimmed = action.answer.trim();
-    if (!/^\d+$/.test(trimmed)) return actions;
+    if (!/^\d+$/.test(trimmed)) {
+      return actions;
+    }
     const value = parseInt(trimmed, 10);
-    if (!Number.isFinite(value)) return actions;
+    if (!Number.isFinite(value)) {
+      return actions;
+    }
     const rolled: PrimitiveAction = { action: "PLAYER_ROLLED", value };
     const state = this.stateManager.getState();
     const validation = validatePlayerRolled(rolled, state, 0, {
       isProcessingEffect: this.boardEffectsHandler.isProcessingEffect(),
     });
-    if (!validation.valid) return actions;
+    if (!validation.valid) {
+      return actions;
+    }
     Logger.info(`Coerced PLAYER_ANSWERED "${trimmed}" → PLAYER_ROLLED (${value})`);
     return [rolled];
   }
@@ -437,9 +468,13 @@ export class Orchestrator {
       return actions;
     }
     const firstIndex = actions.findIndex((a) => a.action === "PLAYER_ANSWERED");
-    if (firstIndex === -1) return actions;
+    if (firstIndex === -1) {
+      return actions;
+    }
     const optionFromTranscript = resolveRiddleAnswerToOption(transcript, pending.riddleOptions);
-    if (optionFromTranscript === null) return actions;
+    if (optionFromTranscript === null) {
+      return actions;
+    }
     return actions.map((a, i) => {
       if (i === firstIndex && a.action === "PLAYER_ANSWERED" && "answer" in a) {
         return { ...a, answer: optionFromTranscript };
@@ -561,6 +596,57 @@ export class Orchestrator {
     return { success: true, shouldAdvanceTurn, voiceOutcomeHints };
   }
 
+  private shouldSkipAction(
+    action: PrimitiveAction,
+    context: ExecutionContext,
+    skipTrailingNarrate: boolean,
+  ): boolean {
+    if (skipTrailingNarrate && action.action === "NARRATE") {
+      Logger.info(
+        "Skipping NARRATE: square effect or power check already narrated by orchestrator",
+      );
+      return true;
+    }
+    if (action.action === "NARRATE") {
+      const dp = getCurrentDecisionPoint(
+        () => this.stateManager.getState(),
+        () => this.turnManager.getPendingDecisionPrompt(),
+      );
+      if (action.text?.trim() === dp?.prompt && context.justNarratedDecisionAsk) {
+        Logger.info("Skipping redundant NARRATE: same as decision prompt (already asked)");
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /**
+   * Updates context flags after executing an action. Returns true if skipTrailingNarrate should be set.
+   */
+  private handlePostExecute(action: PrimitiveAction, context: ExecutionContext): boolean {
+    if (action.action === "NARRATE") {
+      const dp = getCurrentDecisionPoint(
+        () => this.stateManager.getState(),
+        () => this.turnManager.getPendingDecisionPrompt(),
+      );
+      const text = action.text;
+      if (dp && text && narrateCoversDecision(text, dp.position, dp.prompt)) {
+        context.justNarratedDecisionAsk = true;
+      }
+    }
+    if (action.action === "PLAYER_ANSWERED" && context.skipTrailingNarrateForPowerCheck) {
+      return true;
+    }
+    if (action.action === "PLAYER_ROLLED") {
+      const game = this.stateManager.getState().game as Record<string, unknown> | undefined;
+      const pending = game?.pendingAnimalEncounter as { phase?: string } | null | undefined;
+      if (pending && ["riddle", "powerCheck", "revenge"].includes(pending.phase ?? "")) {
+        return true;
+      }
+    }
+    return false;
+  }
+
   private async executeActions(
     actions: PrimitiveAction[],
     context: ExecutionContext,
@@ -572,48 +658,12 @@ export class Orchestrator {
 
     for (const action of actions) {
       try {
-        if (action.action === "PLAYER_ROLLED") {
-          await this.executeAction(action, context);
-          const game = this.stateManager.getState().game as Record<string, unknown> | undefined;
-          const pending = game?.pendingAnimalEncounter as { phase?: string } | null | undefined;
-          if (pending && ["riddle", "powerCheck", "revenge"].includes(pending.phase ?? "")) {
-            skipTrailingNarrate = true;
-          }
+        if (this.shouldSkipAction(action, context, skipTrailingNarrate)) {
           continue;
         }
-
-        if (skipTrailingNarrate && action.action === "NARRATE") {
-          Logger.info(
-            "Skipping NARRATE: square effect or power check already narrated by orchestrator",
-          );
-          continue;
-        }
-
-        // Skip NARRATE that is exactly the decision prompt when we already narrated the decision ask
-        if (action.action === "NARRATE") {
-          const dp = getCurrentDecisionPoint(
-            () => this.stateManager.getState(),
-            () => this.turnManager.getPendingDecisionPrompt(),
-          );
-          if (action.text?.trim() === dp?.prompt && context.justNarratedDecisionAsk) {
-            Logger.info("Skipping redundant NARRATE: same as decision prompt (already asked)");
-            continue;
-          }
-        }
-
         skipTrailingNarrate = false;
         await this.executeAction(action, context);
-        if (action.action === "NARRATE") {
-          const dp = getCurrentDecisionPoint(
-            () => this.stateManager.getState(),
-            () => this.turnManager.getPendingDecisionPrompt(),
-          );
-          const text = action.text;
-          if (dp && text && narrateCoversDecision(text, dp.position, dp.prompt)) {
-            context.justNarratedDecisionAsk = true;
-          }
-        }
-        if (action.action === "PLAYER_ANSWERED" && context.skipTrailingNarrateForPowerCheck) {
+        if (this.handlePostExecute(action, context)) {
           skipTrailingNarrate = true;
         }
       } catch (error) {
@@ -633,7 +683,9 @@ export class Orchestrator {
       | { phase?: string; riddleOptions?: unknown[]; correctOption?: string }
       | null
       | undefined;
-    if (pending?.phase !== "riddle") return false;
+    if (pending?.phase !== "riddle") {
+      return false;
+    }
     const options = pending.riddleOptions;
     const hasStructuredRiddle =
       Array.isArray(options) && options.length === 4 && pending.correctOption;
@@ -649,12 +701,16 @@ export class Orchestrator {
       return;
     }
     const position = this.stateManager.get(positionPath) as number;
-    if (typeof position !== "number") return;
+    if (typeof position !== "number") {
+      return;
+    }
 
     const state = this.stateManager.getState();
     const board = state.board as { squares?: Record<string, Record<string, unknown>> } | undefined;
     const winPosition = getWinPosition(board?.squares);
-    if (typeof winPosition !== "number") return;
+    if (typeof winPosition !== "number") {
+      return;
+    }
 
     if (position >= winPosition) {
       const match = positionPath.match(/^players\.([^.]+)\.position$/);

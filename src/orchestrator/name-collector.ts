@@ -75,6 +75,24 @@ export class NameCollector {
     }
   }
 
+  /**
+   * Handles off-topic response: logs urgent message if present, speaks fallback, returns true.
+   * Caller should return when this returns true.
+   */
+  private async handleOffTopic(
+    analysis: { isOnTopic: boolean; urgentMessage?: string },
+    fallbackMessage: string,
+  ): Promise<boolean> {
+    if (analysis.isOnTopic) {
+      return false;
+    }
+    if (analysis.urgentMessage) {
+      Logger.info(`LLM debug: ${analysis.urgentMessage}`);
+    }
+    await this.speechService.speak(fallbackMessage);
+    return true;
+  }
+
   private async askPlayerCount(
     onTranscript: (handler: (text: string) => void) => void,
   ): Promise<number> {
@@ -86,16 +104,12 @@ export class NameCollector {
           text,
           `expecting player count number from ${this.minPlayers} to ${this.maxPlayers}`,
         );
-        if (!analysis.isOnTopic) {
-          if (analysis.urgentMessage) {
-            Logger.info(`LLM debug: ${analysis.urgentMessage}`);
-          }
-          await this.speechService.speak(
-            t("setup.playerCount", {
-              min: this.minPlayers,
-              max: this.maxPlayers,
-            }),
-          );
+        if (
+          await this.handleOffTopic(
+            analysis,
+            t("setup.playerCount", { min: this.minPlayers, max: this.maxPlayers }),
+          )
+        ) {
           return;
         }
 
@@ -140,11 +154,7 @@ export class NameCollector {
         Logger.info(`Name handler for player ${playerNumber} received: "${text}"`);
 
         const analysis = await this.llmClient.analyzeResponse(text, "expecting person name");
-        if (!analysis.isOnTopic) {
-          if (analysis.urgentMessage) {
-            Logger.info(`LLM debug: ${analysis.urgentMessage}`);
-          }
-          await this.speechService.speak(t("setup.playerName", { number: playerNumber }));
+        if (await this.handleOffTopic(analysis, t("setup.playerName", { number: playerNumber }))) {
           return;
         }
 
@@ -215,11 +225,12 @@ export class NameCollector {
           text,
           "expecting yes/no confirmation for suggested name",
         );
-        if (!analysis.isOnTopic) {
-          if (analysis.urgentMessage) {
-            Logger.info(`LLM debug: ${analysis.urgentMessage}`);
-          }
-          await this.speechService.speak(t("setup.nameConflict", { name: original, suggestion }));
+        if (
+          await this.handleOffTopic(
+            analysis,
+            t("setup.nameConflict", { name: original, suggestion }),
+          )
+        ) {
           return;
         }
 
@@ -251,11 +262,7 @@ export class NameCollector {
         text,
         "expecting alternative person name",
       );
-      if (!analysis.isOnTopic) {
-        if (analysis.urgentMessage) {
-          Logger.info(`LLM debug: ${analysis.urgentMessage}`);
-        }
-        await this.speechService.speak(t("setup.nameConflictAlternative"));
+      if (await this.handleOffTopic(analysis, t("setup.nameConflictAlternative"))) {
         return;
       }
 
