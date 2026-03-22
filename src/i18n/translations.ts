@@ -1,6 +1,6 @@
+import { getLocale } from "./locale-manager";
 import { enUS } from "./locales/en-US";
 import { esAR } from "./locales/es-AR";
-import { getLocale } from "@/locale-manager";
 
 type TranslationObject = typeof esAR;
 type TranslationKey = string;

@@ -4,8 +4,8 @@ globs:
   - src/llm/**/*.ts
   - src/state-manager.ts
   - src/audio-worklet/**
-  - src/wake-word.ts
-  - src/model-manager.ts
+  - src/voice-recognition/wake-word.ts
+  - src/voice-recognition/model-manager.ts
 ---
 
 # Architecture Decisions
@@ -24,12 +24,14 @@ globs:
 We support multiple LLM providers via `ILLMClient` interface:
 
 **Gemini (Recommended)**
+
 - Fast response times (1-3s)
 - Low cost per request
 - Cloud-based (requires internet)
 - Best for production use
 
 **Ollama (Alternative)**
+
 - Slow response times (30-50s)
 - Completely free
 - Fully local (no internet needed)
@@ -49,21 +51,23 @@ Users choose based on their needs (speed vs. privacy/cost).
 The orchestrator uses `isProcessing` flag to serialize LLM requests:
 
 **Benefits:**
+
 - Prevents overlapping LLM requests
 - Ensures deterministic state updates
 - Avoids race conditions
 - Better UX (no confusing parallel responses)
 
 **How it works:**
+
 ```typescript
 if (this.isProcessing) {
-  return // Reject new requests
+  return; // Reject new requests
 }
-this.isProcessing = true
+this.isProcessing = true;
 try {
-  await this.processTranscript(transcript)
+  await this.processTranscript(transcript);
 } finally {
-  this.isProcessing = false
+  this.isProcessing = false;
 }
 ```
 
@@ -74,6 +78,7 @@ Without this, concurrent voice commands could corrupt game state.
 ### Hybrid Deterministic Rules
 
 Some game rules are enforced by the orchestrator (e.g., ladder/snake moves in Snakes & Ladders) rather than trusting the LLM. This is done for:
+
 - 100% reliability
 - Faster execution
 - Cost reduction
@@ -96,6 +101,7 @@ See `BoardEffectsHandler.checkAndApplyBoardMoves()` for implementation.
 ## Future Development
 
 For planned improvements and features, see:
+
 - **Prioritized Roadmap**: `discussions/prioritized-roadmap.md`
 - **Architecture Plans**: `discussions/` directory
 

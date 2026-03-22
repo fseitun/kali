@@ -1,4 +1,4 @@
-import { CONFIG } from "./config";
+import { CONFIG } from "../config";
 
 const STORAGE_KEY = "kali-locale";
 const SUPPORTED_LOCALES = ["es-AR", "en-US"] as const;

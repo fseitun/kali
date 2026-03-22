@@ -1,8 +1,8 @@
 // Model URL is configurable via VITE_VOSK_MODEL_URL (see config.ts). Use a CDN in production
 // to avoid shipping the model with your build. Cache key is the URL itself.
 
-import { CONFIG } from "./config";
-import { Logger } from "./utils/logger";
+import { CONFIG } from "../config";
+import { Logger } from "../utils/logger";
 
 /**
  * Singleton manager for downloading and caching the Vosk speech recognition model.

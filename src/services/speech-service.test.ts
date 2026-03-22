@@ -13,7 +13,7 @@ vi.mock("../config", () => ({
 }));
 
 // Mock locale-manager (getTtsLang used by SpeechService for TTS language)
-vi.mock("../locale-manager", () => ({
+vi.mock("@/i18n/locale-manager", () => ({
   getTtsLang: () => "en-US",
 }));
 

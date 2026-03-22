@@ -30,7 +30,7 @@ description: Step-by-step guides for common development tasks - add primitives, 
 
 1. Modify `src/orchestrator/orchestrator.ts` for main flow
 2. Edit `src/orchestrator/name-collector.ts` for name collection
-3. Update `src/wake-word.ts` for state machine changes
+3. Update `src/voice-recognition/wake-word.ts` for state machine changes
 
 ## Voice Interaction Flow
 

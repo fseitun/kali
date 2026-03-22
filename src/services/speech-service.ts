@@ -1,5 +1,5 @@
 import { CONFIG } from "@/config";
-import { getTtsLang } from "@/locale-manager";
+import { getTtsLang } from "@/i18n/locale-manager";
 import { Logger } from "@/utils/logger";
 
 export interface ISpeechService {

@@ -4,13 +4,13 @@ import "./i18n/translations";
 import { CONFIG } from "./config";
 import { t } from "./i18n/translations";
 import { KaliAppCore } from "./kali-app-core";
-import { ModelManager } from "./model-manager";
 import { setupVersionRefreshPrompt } from "./pwa-register";
 import { ProductionUIService } from "./services/production-ui-service";
 import { SpeechService } from "./services/speech-service";
 import { createExportLogsButton } from "./utils/export-logs-button";
 import { initLogBuffer } from "./utils/log-buffer";
 import { Logger } from "./utils/logger";
+import { ModelManager } from "@/voice-recognition/model-manager";
 
 // Start Vosk model download immediately; huge asset, don't delay (production entry only).
 void ModelManager.getInstance()

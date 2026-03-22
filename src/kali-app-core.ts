@@ -23,7 +23,7 @@ import { Logger } from "./utils/logger";
 import { acquireScreenWakeLock, releaseWakeLock } from "./utils/wake-lock";
 import { applySilentSuccessFallback } from "./voice/gameplay-voice-policy";
 import { MeteredSpeechService } from "./voice/metered-speech-service";
-import type { WakeWordDetector } from "./wake-word";
+import type { WakeWordDetector } from "@/voice-recognition/wake-word";
 
 export class KaliAppCore {
   private wakeWordDetector: WakeWordDetector | null = null;
@@ -172,7 +172,7 @@ ${summary ? `**Summary (for NARRATE explanations):** ${summary}\n` : ""}${exampl
     Logger.mic("Initializing speech recognition...");
     const indicator = this.uiService.getStatusIndicator();
 
-    const { WakeWordDetector } = await import("./wake-word");
+    const { WakeWordDetector } = await import("@/voice-recognition/wake-word");
     this.wakeWordDetector = new WakeWordDetector(
       () => this.handleWakeWord(),
       (text) => this.handleTranscription(text),

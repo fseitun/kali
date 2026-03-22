@@ -39,9 +39,17 @@ Supporting modules:
 LLM clients and system prompts:
 
 - `LLMClient.ts` - Interface for LLM providers
+- `BaseLLMClient.ts` - Base client with streaming, extended by providers
+- `llm-client-factory.ts` - Creates client from CONFIG.LLM_PROVIDER
+- `system-prompt.ts` - LLM system prompt generator
+- `state-context.ts` - Formats game state for LLM context
+- `parse-openai-response.ts` - Parses OpenAI-compatible responses (Groq, DeepInfra, OpenRouter)
 - `GeminiClient.ts` - Google Gemini integration
 - `OllamaClient.ts` - Local Ollama integration
-- `system-prompt.ts` - LLM system prompt generator
+- `GroqClient.ts` - Groq API integration
+- `OpenRouterClient.ts` - OpenRouter API integration
+- `DeepInfraClient.ts` - DeepInfra API integration
+- `MockLLMClient.ts` - Test/mock client
 
 ## Services
 
@@ -62,10 +70,13 @@ Audio processing for Vosk:
 
 - `vosk-processor.js` - AudioWorklet processor
 
-### Voice Recognition
+### src/voice-recognition/
 
-- `src/wake-word.ts` - Wake word detection state machine
-- `src/model-manager.ts` - Vosk model downloading and caching
+Vosk STT pipeline:
+
+- `wake-word.ts` - Wake word detection state machine
+- `wake-word-utils.ts` - Wake word matching utilities
+- `model-manager.ts` - Vosk model downloading and caching
 
 ## Game System
 
@@ -89,9 +100,11 @@ Game definitions (JSON files):
 
 ## Internationalization
 
-- `src/i18n/translations.ts` - Translation functions (t, setLocale, getNicknames, etc.)
-- `src/i18n/locales/` - Locale files (en-US, es-AR)
-- `src/locale-manager.ts` - Locale persistence and selection
+### src/i18n/
+
+- `translations.ts` - Translation functions (t, setLocale, getNicknames, etc.)
+- `locale-manager.ts` - Locale persistence and selection (getLocale, getTtsLang)
+- `locales/` - Locale files (en-US, es-AR)
 
 ## Utilities
 

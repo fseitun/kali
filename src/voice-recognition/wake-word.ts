@@ -6,10 +6,10 @@ import type {
   RecognitionResult,
 } from "vosk-browser";
 import { createModel } from "vosk-browser";
-import { CONFIG } from "./config";
+import { CONFIG } from "../config";
+import { isMobileDevice } from "../utils/browser-support";
+import { Logger } from "../utils/logger";
 import { ModelManager } from "./model-manager";
-import { isMobileDevice } from "./utils/browser-support";
-import { Logger } from "./utils/logger";
 import { isWakeWordMatch } from "./wake-word-utils";
 
 interface ExtendedMediaTrackConstraints extends MediaTrackConstraints {
@@ -63,7 +63,7 @@ export class WakeWordDetector {
       this.audioContext = new AudioContextClass();
 
       await this.audioContext.audioWorklet.addModule(
-        new URL("./audio-worklet/vosk-processor.js", import.meta.url),
+        new URL("../audio-worklet/vosk-processor.js", import.meta.url),
       );
 
       Logger.download("Loading Vosk model...");

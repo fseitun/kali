@@ -5,7 +5,7 @@ import { ModelManager } from "./model-manager";
 const MOCK_MODEL_URL = "https://alphacephei.com/vosk/models/vosk-model-small-es-0.42.zip";
 
 // Mock CONFIG (matches default in config.ts)
-vi.mock("./config", () => ({
+vi.mock("../config", () => ({
   CONFIG: {
     MODEL: {
       URL: "https://alphacephei.com/vosk/models/vosk-model-small-es-0.42.zip",
@@ -21,6 +21,7 @@ vi.mock("../utils/logger", () => ({
     info: vi.fn(),
     error: vi.fn(),
     warn: vi.fn(),
+    download: vi.fn(),
   },
 }));
 
