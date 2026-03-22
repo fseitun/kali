@@ -79,6 +79,69 @@ export class BoardEffectsHandler {
     }
   }
 
+  private findMaxPlayerPosition(
+    playerOrder: string[],
+    players: Record<string, Record<string, unknown>>,
+  ): number {
+    let max = -1;
+    for (const pid of playerOrder) {
+      const pos = players[pid]?.position as number | undefined;
+      if (typeof pos === "number" && pos > max) {
+        max = pos;
+      }
+    }
+    return max;
+  }
+
+  private getLeaderPosition(
+    path: string,
+    state: { game?: Record<string, unknown>; players?: Record<string, Record<string, unknown>> },
+  ): number | undefined {
+    const match = path.match(/^players\.([^.]+)\.position$/);
+    const playerOrder = state.game?.playerOrder as string[] | undefined;
+    const players = state.players;
+    if (!match?.[1] || !Array.isArray(playerOrder) || !players) {
+      return undefined;
+    }
+    const max = this.findMaxPlayerPosition(playerOrder, players);
+    return max >= 0 ? max : undefined;
+  }
+
+  private getTeleportDestination(
+    squareData: Record<string, unknown>,
+    path: string,
+    state: { game?: Record<string, unknown>; players?: Record<string, Record<string, unknown>> },
+  ): number | undefined {
+    if (squareData.type === "portal" && typeof squareData.destination === "number") {
+      return squareData.destination;
+    }
+    if (squareData.effect === "returnTo187") {
+      return 187;
+    }
+    if (squareData.effect === "jumpToLeader") {
+      return this.getLeaderPosition(path, state);
+    }
+    return undefined;
+  }
+
+  private shouldSkipBackwardTeleport(
+    path: string,
+    position: number,
+    destination: number,
+    state: { players?: Record<string, Record<string, unknown>> },
+  ): boolean {
+    const isBackward = destination < position;
+    if (!isBackward) {
+      return false;
+    }
+    const match = path.match(/^players\.([^.]+)\.position$/);
+    const playerId = match?.[1];
+    const player = playerId
+      ? (state.players as Record<string, Record<string, unknown>>)?.[playerId]
+      : undefined;
+    return !!player?.inverseMode;
+  }
+
   /**
    * Applies teleport (portal, returnTo187, jumpToLeader) if applicable. Uses early returns.
    * Skips backward teleports when player has inverseMode.
@@ -96,52 +159,115 @@ export class BoardEffectsHandler {
       return;
     }
 
-    let destination: number | undefined;
-    if (squareData.type === "portal" && typeof squareData.destination === "number") {
-      destination = squareData.destination;
-    } else if (squareData.effect === "returnTo187") {
-      destination = 187;
-    } else if (squareData.effect === "jumpToLeader") {
-      const match = path.match(/^players\.([^.]+)\.position$/);
-      const currentPlayerId = match?.[1];
-      const playerOrder = state.game?.playerOrder as string[] | undefined;
-      const players = state.players;
-      if (currentPlayerId && Array.isArray(playerOrder) && players) {
-        let leaderPosition = -1;
-        for (const pid of playerOrder) {
-          const pos = players[pid]?.position as number | undefined;
-          if (typeof pos === "number" && pos > leaderPosition) {
-            leaderPosition = pos;
-          }
-        }
-        if (leaderPosition >= 0) {
-          destination = leaderPosition;
-        }
-      }
-    }
-
+    const destination = this.getTeleportDestination(squareData, path, state);
     if (destination === undefined || destination === position) {
       return;
     }
 
-    const isBackward = destination < position;
-    const match = path.match(/^players\.([^.]+)\.position$/);
-    const playerId = match?.[1];
-    const player = playerId
-      ? (state.players as Record<string, Record<string, unknown>>)?.[playerId]
-      : undefined;
-    const inverseMode = !!player?.inverseMode;
-
-    if (isBackward && inverseMode) {
+    if (this.shouldSkipBackwardTeleport(path, position, destination, state)) {
       Logger.info(
         `Skipping backward teleport (inverseMode): position ${position} → ${destination}`,
       );
       return;
     }
 
-    const moveType = isBackward ? "snake" : "ladder";
+    const moveType = destination < position ? "snake" : "ladder";
     Logger.info(`Auto-applying ${moveType}: position ${position} → ${destination}`);
     this.stateManager.set(path, destination);
+  }
+
+  private applyPointsEffect(playerId: string, squareData: Record<string, unknown>): string | null {
+    const points = squareData.points as number | undefined;
+    if (typeof points !== "number" || points <= 0) {
+      return null;
+    }
+    const current = (this.stateManager.get(`players.${playerId}.points`) as number) ?? 0;
+    this.stateManager.set(`players.${playerId}.points`, current + points);
+    return `+${points} points`;
+  }
+
+  private applyHeartEffect(playerId: string, squareData: Record<string, unknown>): string | null {
+    if (squareData.heart !== true) {
+      return null;
+    }
+    const current = (this.stateManager.get(`players.${playerId}.hearts`) as number) ?? 0;
+    this.stateManager.set(`players.${playerId}.hearts`, current + 1);
+    return "+1 heart";
+  }
+
+  private applyInstrumentEffect(
+    playerId: string,
+    squareData: Record<string, unknown>,
+  ): string | null {
+    const instrument = squareData.instrument as string | undefined;
+    if (typeof instrument !== "string" || instrument.length === 0) {
+      return null;
+    }
+    const current = (this.stateManager.get(`players.${playerId}.instruments`) as unknown[]) ?? [];
+    const next = Array.isArray(current) ? [...current, instrument] : [instrument];
+    this.stateManager.set(`players.${playerId}.instruments`, next);
+    return `instrument: ${instrument}`;
+  }
+
+  private applyItemEffect(playerId: string, squareData: Record<string, unknown>): string | null {
+    const item = squareData.item as string | undefined;
+    if (typeof item !== "string" || item.length === 0) {
+      return null;
+    }
+    const current = (this.stateManager.get(`players.${playerId}.items`) as unknown[]) ?? [];
+    const next = Array.isArray(current) ? [...current, item] : [item];
+    this.stateManager.set(`players.${playerId}.items`, next);
+    return `item: ${item}`;
+  }
+
+  private applySkipTurnEffect(
+    playerId: string,
+    squareData: Record<string, unknown>,
+  ): string | null {
+    if (squareData.effect !== "skipTurn") {
+      return null;
+    }
+    const current = (this.stateManager.get(`players.${playerId}.skipTurns`) as number) ?? 0;
+    this.stateManager.set(`players.${playerId}.skipTurns`, current + 1);
+    return "skip next turn";
+  }
+
+  private applyCheckEffect(playerId: string, effect: unknown): string | null {
+    if (effect === "checkTorch") {
+      return this.applyCheckTorchEffect(playerId);
+    }
+    if (effect === "checkAntiWasp") {
+      return this.applyCheckAntiWaspEffect(playerId);
+    }
+    return null;
+  }
+
+  private applyCheckTorchEffect(playerId: string): string {
+    const items = (this.stateManager.get(`players.${playerId}.items`) as unknown[]) ?? [];
+    const idx = Array.isArray(items) ? items.indexOf("torch") : -1;
+    if (idx >= 0) {
+      const next = [...items];
+      next.splice(idx, 1);
+      this.stateManager.set(`players.${playerId}.items`, next);
+      return "torch used (no skip)";
+    }
+    const current = (this.stateManager.get(`players.${playerId}.skipTurns`) as number) ?? 0;
+    this.stateManager.set(`players.${playerId}.skipTurns`, current + 1);
+    return "skip next turn (no torch)";
+  }
+
+  private applyCheckAntiWaspEffect(playerId: string): string {
+    const items = (this.stateManager.get(`players.${playerId}.items`) as unknown[]) ?? [];
+    const idx = Array.isArray(items) ? items.indexOf("anti-wasp") : -1;
+    if (idx >= 0) {
+      const next = [...items];
+      next.splice(idx, 1);
+      this.stateManager.set(`players.${playerId}.items`, next);
+      return "anti-wasp used (no skip)";
+    }
+    const current = (this.stateManager.get(`players.${playerId}.skipTurns`) as number) ?? 0;
+    this.stateManager.set(`players.${playerId}.skipTurns`, current + 1);
+    return "skip next turn (no anti-wasp)";
   }
 
   /**
@@ -164,76 +290,36 @@ export class BoardEffectsHandler {
 
     const kind = getSquareKind(squareData);
     const deferRewards = isDeferredRewardKind(kind);
-
     const applied: string[] = [];
 
     if (!deferRewards) {
-      const points = squareData.points as number | undefined;
-      if (typeof points === "number" && points > 0) {
-        const current = (this.stateManager.get(`players.${playerId}.points`) as number) ?? 0;
-        const next = current + points;
-        this.stateManager.set(`players.${playerId}.points`, next);
-        applied.push(`+${points} points`);
+      const pointsResult = this.applyPointsEffect(playerId, squareData);
+      if (pointsResult) {
+        applied.push(pointsResult);
       }
-
-      if (squareData.heart === true) {
-        const current = (this.stateManager.get(`players.${playerId}.hearts`) as number) ?? 0;
-        this.stateManager.set(`players.${playerId}.hearts`, current + 1);
-        applied.push("+1 heart");
+      const heartResult = this.applyHeartEffect(playerId, squareData);
+      if (heartResult) {
+        applied.push(heartResult);
       }
-
-      const instrument = squareData.instrument as string | undefined;
-      if (typeof instrument === "string" && instrument.length > 0) {
-        const current =
-          (this.stateManager.get(`players.${playerId}.instruments`) as unknown[]) ?? [];
-        const next = Array.isArray(current) ? [...current, instrument] : [instrument];
-        this.stateManager.set(`players.${playerId}.instruments`, next);
-        applied.push(`instrument: ${instrument}`);
+      const instrumentResult = this.applyInstrumentEffect(playerId, squareData);
+      if (instrumentResult) {
+        applied.push(instrumentResult);
       }
     }
 
-    if (squareData.effect === "skipTurn") {
-      const current = (this.stateManager.get(`players.${playerId}.skipTurns`) as number) ?? 0;
-      this.stateManager.set(`players.${playerId}.skipTurns`, current + 1);
-      applied.push("skip next turn");
+    const skipResult = this.applySkipTurnEffect(playerId, squareData);
+    if (skipResult) {
+      applied.push(skipResult);
     }
 
-    if (squareData.effect === "checkTorch") {
-      const items = (this.stateManager.get(`players.${playerId}.items`) as unknown[]) ?? [];
-      const idx = Array.isArray(items) ? items.indexOf("torch") : -1;
-      if (idx >= 0) {
-        const next = [...items];
-        next.splice(idx, 1);
-        this.stateManager.set(`players.${playerId}.items`, next);
-        applied.push("torch used (no skip)");
-      } else {
-        const current = (this.stateManager.get(`players.${playerId}.skipTurns`) as number) ?? 0;
-        this.stateManager.set(`players.${playerId}.skipTurns`, current + 1);
-        applied.push("skip next turn (no torch)");
-      }
+    const checkEffect = this.applyCheckEffect(playerId, squareData.effect);
+    if (checkEffect) {
+      applied.push(checkEffect);
     }
 
-    if (squareData.effect === "checkAntiWasp") {
-      const items = (this.stateManager.get(`players.${playerId}.items`) as unknown[]) ?? [];
-      const idx = Array.isArray(items) ? items.indexOf("anti-wasp") : -1;
-      if (idx >= 0) {
-        const next = [...items];
-        next.splice(idx, 1);
-        this.stateManager.set(`players.${playerId}.items`, next);
-        applied.push("anti-wasp used (no skip)");
-      } else {
-        const current = (this.stateManager.get(`players.${playerId}.skipTurns`) as number) ?? 0;
-        this.stateManager.set(`players.${playerId}.skipTurns`, current + 1);
-        applied.push("skip next turn (no anti-wasp)");
-      }
-    }
-
-    const item = squareData.item as string | undefined;
-    if (typeof item === "string" && item.length > 0) {
-      const current = (this.stateManager.get(`players.${playerId}.items`) as unknown[]) ?? [];
-      const next = Array.isArray(current) ? [...current, item] : [item];
-      this.stateManager.set(`players.${playerId}.items`, next);
-      applied.push(`item: ${item}`);
+    const itemResult = this.applyItemEffect(playerId, squareData);
+    if (itemResult) {
+      applied.push(itemResult);
     }
 
     return applied;

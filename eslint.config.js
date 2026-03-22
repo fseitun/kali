@@ -77,7 +77,7 @@ export default tseslint.config(
       "no-console": ["warn", { allow: ["warn", "error"] }],
       eqeqeq: ["error", "always", { null: "ignore" }],
       "no-throw-literal": "error",
-      complexity: ["warn", 10],
+      complexity: ["error", 10],
       "no-param-reassign": "error",
       "@typescript-eslint/no-floating-promises": "error",
       curly: ["error", "all"],

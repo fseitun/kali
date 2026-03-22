@@ -24,7 +24,7 @@ import {
   type VoiceOutcomeHints,
 } from "./types";
 import { VALIDATION_ERROR_I18N } from "./validation-i18n";
-import { validateActions } from "./validator";
+import { validateActions, type ValidationResult } from "./validator";
 import { validatePlayerRolled } from "./validator/player-rolled";
 import type { IStatusIndicator } from "@/components/status-indicator";
 import { t } from "@/i18n/translations";
@@ -483,34 +483,49 @@ export class Orchestrator {
     });
   }
 
-  private async runValidatedActions(
+  private getProfilerKey(context: ExecutionContext): "nested" | "top" {
+    return context.isNestedCall ? "nested" : "top";
+  }
+
+  private resolveValidationErrorI18n(validation: ValidationResult): string {
+    return validation.errorCode && VALIDATION_ERROR_I18N[validation.errorCode]
+      ? VALIDATION_ERROR_I18N[validation.errorCode]
+      : "errors.validationFailed";
+  }
+
+  private computeShouldAdvanceTurn(
     actions: PrimitiveAction[],
-    context: ExecutionContext,
-    profilerPrefix: string,
-  ): Promise<OrchestratorGameplayResult> {
-    const state = this.stateManager.getState();
-    Logger.state(
-      "Current state:\n" + formatStateContext(state as Record<string, unknown>, { forLog: true }),
+    _hasPendingDecisions: boolean,
+    isForkAnswerAtStart: boolean,
+    onlyResolvedForkChoice: boolean,
+  ): boolean {
+    const rawShouldAdvanceTurn = actions.some(
+      (a) =>
+        a.action === "PLAYER_ROLLED" ||
+        a.action === "SET_STATE" ||
+        a.action === "RESET_GAME" ||
+        (a.action === "PLAYER_ANSWERED" && !isForkAnswerAtStart),
     );
+    return rawShouldAdvanceTurn && !onlyResolvedForkChoice;
+  }
 
-    const validationProfilerKey = context.isNestedCall ? "nested" : "top";
-    Profiler.start(`${profilerPrefix}.validation.${validationProfilerKey}`);
-    const validation = validateActions(actions, state, this.stateManager, {
-      isProcessingEffect: this.boardEffectsHandler.isProcessingEffect(),
-      allowScenarioOnlyStatePaths: this.options?.allowScenarioOnlyStatePaths,
-    });
-    Profiler.end(`${profilerPrefix}.validation.${validationProfilerKey}`);
+  private computeVoiceOutcomeHints(
+    context: ExecutionContext,
+    onlyResolvedForkChoice: boolean,
+    actions: PrimitiveAction[],
+  ): VoiceOutcomeHints | undefined {
+    return !context.isNestedCall &&
+      onlyResolvedForkChoice &&
+      !actions.some((a) => a.action === "NARRATE")
+      ? { forkChoiceResolvedWithoutNarrate: true }
+      : undefined;
+  }
 
-    if (!validation.valid) {
-      Logger.error("Validation failed:", validation.error);
-      const i18nKey =
-        validation.errorCode && VALIDATION_ERROR_I18N[validation.errorCode]
-          ? VALIDATION_ERROR_I18N[validation.errorCode]
-          : "errors.validationFailed";
-      await this.speechService.speak(t(i18nKey));
-      return { success: false, shouldAdvanceTurn: false };
-    }
-
+  private computeForkChoiceFlags(actions: PrimitiveAction[]): {
+    hasPendingDecisions: boolean;
+    isForkAnswerAtStart: boolean;
+    onlyResolvedForkChoice: boolean;
+  } {
     const hasPendingDecisions = this.turnManager.hasPendingDecisions();
     const isForkAnswerAtStart =
       hasPendingDecisions &&
@@ -537,30 +552,56 @@ export class Orchestrator {
         )) &&
       allSetStateTargetForkChoice;
 
-    const rawShouldAdvanceTurn = actions.some(
-      (a) =>
-        a.action === "PLAYER_ROLLED" ||
-        a.action === "SET_STATE" ||
-        a.action === "RESET_GAME" ||
-        (a.action === "PLAYER_ANSWERED" && !isForkAnswerAtStart),
-    );
-    const shouldAdvanceTurn = rawShouldAdvanceTurn && !onlyResolvedForkChoice;
+    return { hasPendingDecisions, isForkAnswerAtStart, onlyResolvedForkChoice };
+  }
 
-    const voiceOutcomeHints: VoiceOutcomeHints | undefined =
-      !context.isNestedCall &&
-      onlyResolvedForkChoice &&
-      !actions.some((a) => a.action === "NARRATE")
-        ? { forkChoiceResolvedWithoutNarrate: true }
-        : undefined;
+  private async runValidatedActions(
+    actions: PrimitiveAction[],
+    context: ExecutionContext,
+    profilerPrefix: string,
+  ): Promise<OrchestratorGameplayResult> {
+    const state = this.stateManager.getState();
+    Logger.state(
+      "Current state:\n" + formatStateContext(state as Record<string, unknown>, { forLog: true }),
+    );
+
+    Profiler.start(`${profilerPrefix}.validation.${this.getProfilerKey(context)}`);
+    const validation = validateActions(actions, state, this.stateManager, {
+      isProcessingEffect: this.boardEffectsHandler.isProcessingEffect(),
+      allowScenarioOnlyStatePaths: this.options?.allowScenarioOnlyStatePaths,
+    });
+    Profiler.end(`${profilerPrefix}.validation.${this.getProfilerKey(context)}`);
+
+    if (!validation.valid) {
+      Logger.error("Validation failed:", validation.error);
+      await this.speechService.speak(t(this.resolveValidationErrorI18n(validation)));
+      return { success: false, shouldAdvanceTurn: false };
+    }
+
+    const { hasPendingDecisions, isForkAnswerAtStart, onlyResolvedForkChoice } =
+      this.computeForkChoiceFlags(actions);
+
+    const shouldAdvanceTurn = this.computeShouldAdvanceTurn(
+      actions,
+      hasPendingDecisions,
+      isForkAnswerAtStart,
+      onlyResolvedForkChoice,
+    );
+
+    const voiceOutcomeHints = this.computeVoiceOutcomeHints(
+      context,
+      onlyResolvedForkChoice,
+      actions,
+    );
 
     Logger.info("Actions validated, executing...");
-    const actionsToRun = !context.isNestedCall
-      ? reorderPowerCheckBeforeRoll(actions, state)
-      : actions;
-    const runProfilerKey = context.isNestedCall ? "nested" : "top";
-    Profiler.start(`${profilerPrefix}.execution.${runProfilerKey}`);
+
+    const actionsToRun = context.isNestedCall
+      ? actions
+      : reorderPowerCheckBeforeRoll(actions, state);
+    Profiler.start(`${profilerPrefix}.execution.${this.getProfilerKey(context)}`);
     await this.executeActions(actionsToRun, context);
-    Profiler.end(`${profilerPrefix}.execution.${runProfilerKey}`);
+    Profiler.end(`${profilerPrefix}.execution.${this.getProfilerKey(context)}`);
     if (!context.isNestedCall) {
       Logger.info("Actions executed successfully");
     }
@@ -571,29 +612,23 @@ export class Orchestrator {
         }),
     );
 
-    // Only enforce decision points for top-level (user-initiated) flows.
-    // When isNestedCall, we're in a nested call from board effect or decision enforcement;
-    // we just executed the LLM's response (e.g. asking the question). Don't re-inject.
-    // Skip when skipDecisionPointEnforcement (e.g. proactive start already asked).
-    // Skip when we just narrated the decision ask (avoids duplicate "path A or B" question).
-    if (
+    const shouldEnforceDecisionPoints =
       !context.isNestedCall &&
       !context.skipDecisionPointEnforcement &&
-      !context.justNarratedDecisionAsk
-    ) {
+      !context.justNarratedDecisionAsk;
+    if (shouldEnforceDecisionPoints) {
       await this.decisionPointEnforcer.enforceDecisionPoints(context);
     }
 
-    // When power check failed and we advanced turn internally, don't call advanceTurn again
-    if (context.turnAdvancedAfterPowerCheckFail) {
-      return {
-        success: true,
-        shouldAdvanceTurn: false,
-        turnAdvancedAfterPowerCheckFail: context.turnAdvancedAfterPowerCheckFail,
-        voiceOutcomeHints,
-      };
-    }
-    return { success: true, shouldAdvanceTurn, voiceOutcomeHints };
+    const turnAdvanced = context.turnAdvancedAfterPowerCheckFail;
+    return turnAdvanced
+      ? {
+          success: true,
+          shouldAdvanceTurn: false,
+          turnAdvancedAfterPowerCheckFail: turnAdvanced,
+          voiceOutcomeHints,
+        }
+      : { success: true, shouldAdvanceTurn, voiceOutcomeHints };
   }
 
   private shouldSkipAction(

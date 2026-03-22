@@ -44,6 +44,51 @@ function formatFieldValueForLog(value: unknown, depth: number, maxDepth: number)
 
 type ValueFormatter = (value: unknown, depth: number) => string;
 
+function shouldIncludeValue(value: unknown): boolean {
+  return (
+    value !== null &&
+    value !== undefined &&
+    value !== 0 &&
+    value !== false &&
+    value !== "" &&
+    !(Array.isArray(value) && value.length === 0)
+  );
+}
+
+function pushFieldIfIncluded(
+  fields: string[],
+  key: string,
+  value: unknown,
+  format: ValueFormatter,
+): void {
+  if (shouldIncludeValue(value)) {
+    fields.push(`${key}=${format(value, 0)}`);
+  }
+}
+
+function processKeys(
+  keys: Iterable<string>,
+  obj: Record<string, unknown>,
+  fields: string[],
+  hiddenSet: Set<string>,
+  processed: Set<string>,
+  format: ValueFormatter,
+  primaryMode: boolean,
+): void {
+  for (const key of keys) {
+    if (hiddenSet.has(key) || (!primaryMode && processed.has(key))) {
+      continue;
+    }
+    processed.add(key);
+    const value = obj[key];
+    if (primaryMode) {
+      fields.push(`${key}=${format(value, 0)}`);
+    } else {
+      pushFieldIfIncluded(fields, key, value, format);
+    }
+  }
+}
+
 function formatObjectFields(
   obj: Record<string, unknown>,
   config?: StateDisplayConfig,
@@ -56,50 +101,12 @@ function formatObjectFields(
   if (config) {
     const { primary = [], secondary = [], hidden = [] } = config;
     const hiddenSet = new Set(hidden);
-
-    for (const key of primary) {
-      if (hiddenSet.has(key)) {
-        continue;
-      }
-      processed.add(key);
-      const value = obj[key];
-      fields.push(`${key}=${format(value, 0)}`);
-    }
-
-    for (const key of secondary) {
-      if (hiddenSet.has(key) || processed.has(key)) {
-        continue;
-      }
-      processed.add(key);
-      const value = obj[key];
-      if (value !== null && value !== undefined && value !== 0 && value !== false && value !== "") {
-        if (Array.isArray(value) && value.length === 0) {
-          continue;
-        }
-        fields.push(`${key}=${format(value, 0)}`);
-      }
-    }
-
-    for (const key of Object.keys(obj)) {
-      if (hiddenSet.has(key) || processed.has(key)) {
-        continue;
-      }
-      const value = obj[key];
-      if (value !== null && value !== undefined && value !== 0 && value !== false && value !== "") {
-        if (Array.isArray(value) && value.length === 0) {
-          continue;
-        }
-        fields.push(`${key}=${format(value, 0)}`);
-      }
-    }
+    processKeys(primary, obj, fields, hiddenSet, processed, format, true);
+    processKeys(secondary, obj, fields, hiddenSet, processed, format, false);
+    processKeys(Object.keys(obj), obj, fields, hiddenSet, processed, format, false);
   } else {
     for (const [key, value] of Object.entries(obj)) {
-      if (value !== null && value !== undefined && value !== 0 && value !== false && value !== "") {
-        if (Array.isArray(value) && value.length === 0) {
-          continue;
-        }
-        fields.push(`${key}=${format(value, 0)}`);
-      }
+      pushFieldIfIncluded(fields, key, value, format);
     }
   }
 

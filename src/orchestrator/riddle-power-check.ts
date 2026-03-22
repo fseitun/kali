@@ -213,6 +213,48 @@ export class RiddlePowerCheckHandler {
     return { handled: true, passed: false, turnAdvanced: turnAdvanced ?? undefined };
   }
 
+  private getPowerCheckContext(state: GameState): {
+    pending: { position: number; power: number; playerId: string; phase?: string };
+    playerId: string;
+    position: number;
+    power: number;
+    isRevenge: boolean;
+  } | null {
+    const game = state.game as Record<string, unknown> | undefined;
+    const currentTurn = game?.turn as string | undefined;
+    const pending = game?.pendingAnimalEncounter as
+      | {
+          position: number;
+          power: number;
+          playerId: string;
+          phase?: string;
+          riddleCorrect?: boolean;
+        }
+      | null
+      | undefined;
+    if (
+      !pending ||
+      !currentTurn ||
+      pending.playerId !== currentTurn ||
+      (pending.phase !== "powerCheck" && pending.phase !== "revenge")
+    ) {
+      return null;
+    }
+    return {
+      pending,
+      playerId: pending.playerId,
+      position: pending.position,
+      power: pending.power ?? 0,
+      isRevenge: pending.phase === "revenge",
+    };
+  }
+
+  private parsePowerCheckRoll(answer: string): number | null {
+    const rollStr = answer.trim().replace(/\D/g, "") || answer.trim();
+    const roll = parseInt(rollStr, 10);
+    return !isNaN(roll) && roll >= 1 && roll <= 12 ? roll : null;
+  }
+
   async tryHandlePowerCheckAnswer(
     answer: string,
     context: ExecutionContext,
@@ -226,40 +268,19 @@ export class RiddlePowerCheckHandler {
       }
   > {
     const state = this.deps.stateManager.getState();
-    const game = state.game as Record<string, unknown> | undefined;
-    const currentTurn = game?.turn as string | undefined;
-    const pending = game?.pendingAnimalEncounter as
-      | {
-          position: number;
-          power: number;
-          playerId: string;
-          phase?: string;
-          riddleCorrect?: boolean;
-        }
-      | null
-      | undefined;
-
-    if (
-      !pending ||
-      !currentTurn ||
-      pending.playerId !== currentTurn ||
-      (pending.phase !== "powerCheck" && pending.phase !== "revenge")
-    ) {
+    const ctx = this.getPowerCheckContext(state);
+    if (!ctx) {
       return false;
     }
 
-    const rollStr = answer.trim().replace(/\D/g, "") || answer.trim();
-    const roll = parseInt(rollStr, 10);
-    if (isNaN(roll) || roll < 1 || roll > 12) {
+    const roll = this.parsePowerCheckRoll(answer);
+    if (roll === null) {
       return false;
     }
 
-    const power = pending.power ?? 0;
-    const isRevenge = pending.phase === "revenge";
+    const { pending, playerId, position, power, isRevenge } = ctx;
     const win = isRevenge ? roll >= power : roll > power;
 
-    const playerId = pending.playerId;
-    const position = pending.position;
     const board = state.board as Record<string, unknown> | undefined;
     const squares = (board?.squares as Record<string, Record<string, unknown>>) ?? {};
     const squareData = squares[position.toString()] ?? {};
