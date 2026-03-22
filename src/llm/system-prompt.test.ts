@@ -24,7 +24,7 @@ describe("formatStateContext", () => {
         p1: { id: "p1", name: "Alice", position: 0, activeChoices: { 0: 1 } },
         p2: { id: "p2", name: "Bob", position: 0, activeChoices: {} },
       },
-      decisionPoints: [{ position: 0, prompt: "Choose A or B?" }],
+      board: { squares: { "0": { type: "empty", next: [1, 15], prev: [] } } },
     } as Record<string, unknown>;
 
     const result = formatStateContext(state);
@@ -40,13 +40,13 @@ describe("formatStateContext", () => {
         p1: { id: "p1", name: "Alice", position: 0, activeChoices: {} },
         p2: { id: "p2", name: "Bob", position: 0, activeChoices: {} },
       },
-      decisionPoints: [{ position: 0, prompt: "Choose A or B?" }],
+      board: { squares: { "0": { type: "empty", next: [1, 15], prev: [] } } },
     } as Record<string, unknown>;
 
     const result = formatStateContext(state);
 
     expect(result).toContain("DECISION (Alice)");
-    expect(result).toContain("Choose A or B?");
+    expect(result).toContain("izquierda"); // Inferred prompt for fork at 0
     expect(result).toContain("If user asks what to do or for help");
     expect(result).toContain("do NOT emit PLAYER_ANSWERED");
     expect(result).toContain("[current]");
@@ -59,13 +59,11 @@ describe("formatStateContext", () => {
       players: {
         p1: { id: "p1", name: "Alice", position: 0, activeChoices: {} },
       },
-      decisionPoints: [
-        {
-          position: 0,
-          prompt: "¿Izquierda o derecha?",
-          choiceKeywords: { "1": ["izquierda"], "15": ["derecha"] },
+      board: {
+        squares: {
+          "0": { type: "empty", next: { "1": ["izquierda"], "15": ["derecha"] }, prev: [] },
         },
-      ],
+      },
     } as Record<string, unknown>;
 
     const result = formatStateContext(state);
@@ -83,7 +81,7 @@ describe("formatStateContext", () => {
         p1: { id: "p1", name: "Alice", position: 3, activeChoices: { 0: 1 } },
         p2: { id: "p2", name: "Bob", position: 0, activeChoices: {} },
       },
-      decisionPoints: [{ position: 0, prompt: "Choose A or B?" }],
+      board: { squares: { "0": { type: "empty", next: [1, 15], prev: [] } } },
     } as Record<string, unknown>;
 
     const result = formatStateContext(state);

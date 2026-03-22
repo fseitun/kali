@@ -6,7 +6,6 @@ import type { StatusIndicator } from "../src/components/status-indicator";
 import { resolveInitialState } from "../src/game-loader/game-loader";
 import type { GameConfigInput } from "../src/game-loader/types";
 import { MockLLMClient } from "../src/llm/MockLLMClient";
-import { inferDecisionPoints } from "../src/orchestrator/decision-point-inference";
 import { Orchestrator } from "../src/orchestrator/orchestrator";
 import { GamePhase } from "../src/orchestrator/types";
 import type { GameState, PrimitiveAction } from "../src/orchestrator/types";
@@ -30,7 +29,7 @@ function loadGameConfig(gameId: string): GameConfigInput {
  * Builds initial state by merging scenario overrides onto the game's base state.
  * Base state comes from resolveInitialState (built from config.squares).
  * Nested objects (game, players, board) are merged so partial overrides work.
- * decisionPoints are inferred from board.
+ * decisionPoints are derived from board.squares at runtime by consumers.
  */
 function buildInitialState(game: GameConfigInput, scenario: Scenario): GameState {
   const base = resolveInitialState(game) as Record<string, unknown>;
@@ -48,14 +47,6 @@ function buildInitialState(game: GameConfigInput, scenario: Scenario): GameState
 
   const hasBoardOverride = overrides.board !== undefined;
   if (hasBoardOverride) merged.board = overrides.board;
-
-  const board = merged.board as
-    | {
-        squares?: Record<string, { next?: number[] | Record<string, string[]> }>;
-      }
-    | undefined;
-  const decisionPoints = inferDecisionPoints(board);
-  if (decisionPoints.length) merged.decisionPoints = decisionPoints;
 
   if (game.stateDisplay) merged.stateDisplay = game.stateDisplay;
 

@@ -65,7 +65,7 @@ This is deterministic and happens BEFORE turn advancement.
 
 ## Decision Point Pattern
 
-If player lands on a position with `decisionPoints` entry (or graph fork: squares[pos].next.length > 1):
+If player lands on a position with a graph fork (squares[pos].next.length > 1):
 
 - Check if `activeChoices[position]` is set
 - If not, inject synthetic LLM transcript to prompt decision

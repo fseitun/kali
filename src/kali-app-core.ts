@@ -109,11 +109,6 @@ export class KaliAppCore {
     this.stateManager = new StateManager();
     this.stateManager.init(this.gameModule.initialState);
 
-    const decisionPoints = inferDecisionPoints(this.gameModule.initialState.board);
-    if (decisionPoints.length) {
-      this.stateManager.set("decisionPoints", decisionPoints);
-    }
-
     if (this.gameModule.stateDisplay) {
       this.stateManager.set("stateDisplay", this.gameModule.stateDisplay);
     }
@@ -122,10 +117,7 @@ export class KaliAppCore {
     this.llmClient = createLLMClient();
     this.llmClient.setGameRules(this.formatGameRules(this.gameModule));
 
-    const initialState = {
-      ...this.gameModule.initialState,
-      ...(decisionPoints.length ? { decisionPoints } : {}),
-    };
+    const initialState = this.gameModule.initialState;
     const indicator = this.uiService.getStatusIndicator();
     this.orchestrator = new Orchestrator(
       this.llmClient,
@@ -207,10 +199,6 @@ ${summary ? `**Summary (for NARRATE explanations):** ${summary}\n` : ""}${exampl
     } catch (error) {
       Logger.error(`Error handling saved game: ${error}. Starting fresh.`);
       this.stateManager.resetState(this.gameModule.initialState);
-      const decisionPoints = inferDecisionPoints(this.gameModule.initialState.board);
-      if (decisionPoints.length) {
-        this.stateManager.set("decisionPoints", decisionPoints);
-      }
       await this.runNameCollection();
       return true;
     }

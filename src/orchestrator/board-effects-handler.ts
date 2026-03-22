@@ -1,3 +1,4 @@
+import { findSquareByEffect, getWinPosition } from "./board-helpers";
 import { getSquareKind, isAnimalEncounterKind, isDeferredRewardKind } from "./square-types";
 import type { ExecutionContext } from "./types";
 import type { StateManager } from "@/state-manager";
@@ -89,19 +90,19 @@ export class BoardEffectsHandler {
       }
     }
 
-    // Magic door bounce (Kalimba): overshooting 186 bounces back
+    // Magic door bounce (Kalimba): overshooting door bounces back
     const finalPosition = this.stateManager.get(path) as number;
-    const magicDoor = board?.magicDoorPosition as number | undefined;
-    const winPosition = board?.winPosition as number | undefined;
+    const magicDoorFound = findSquareByEffect(squares, "magicDoorCheck");
+    const magicDoorPosition = magicDoorFound?.position;
+    const winPosition = getWinPosition(squares);
     if (
-      typeof magicDoor === "number" &&
-      typeof winPosition === "number" &&
-      finalPosition > magicDoor &&
+      typeof magicDoorPosition === "number" &&
+      finalPosition > magicDoorPosition &&
       finalPosition < winPosition
     ) {
-      const bounceTo = magicDoor - (finalPosition - magicDoor);
+      const bounceTo = magicDoorPosition - (finalPosition - magicDoorPosition);
       Logger.info(
-        `Magic door bounce: overshot ${finalPosition} (door ${magicDoor}), bouncing to ${bounceTo}`,
+        `Magic door bounce: overshot ${finalPosition} (door ${magicDoorPosition}), bouncing to ${bounceTo}`,
       );
       this.stateManager.set(path, bounceTo);
     }

@@ -37,7 +37,7 @@ Each game lives in `public/games/[game-name]/config.json`:
 
 ## Config format
 
-Define `squares` at top level. Board (winPosition, moves, magicDoor), game state, and players are derived at load. See `deriveBoardFromSquares` in game-loader.
+Define `squares` at top level. Board, game state, and players are derived at load. winPosition and magicDoor are derived from squares at runtime (board-helpers). See `deriveBoardFromSquares` in game-loader.
 
 ## Decision Points
 

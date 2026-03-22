@@ -28,9 +28,9 @@ export interface Player {
 
 /**
  * Board configuration with common fields.
+ * winPosition, magicDoorPosition, magicDoorTarget are derived from squares at runtime (board-helpers).
  */
 export interface BoardConfig {
-  winPosition?: number;
   squares?: Record<string, SquareData>;
   [key: string]: unknown; // Allow game-specific fields
 }
@@ -79,13 +79,13 @@ export interface DecisionPoint {
 
 /**
  * Complete game state structure.
- * All games have game, players, and optionally board/decisionPoints.
+ * All games have game, players, and optionally board.
+ * decisionPoints are derived from board.squares at runtime (getDecisionPoints).
  */
 export interface GameState {
   game: GameMeta;
   players: Record<string, Player>;
   board?: BoardConfig;
-  decisionPoints?: DecisionPoint[];
   [key: string]: unknown; // Allow additional top-level fields
 }
 

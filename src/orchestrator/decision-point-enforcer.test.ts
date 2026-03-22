@@ -27,7 +27,6 @@ describe("DecisionPointEnforcer", () => {
       board: {
         squares: {},
       },
-      decisionPoints: [],
     });
 
     mockProcessTranscript = vi.fn().mockResolvedValue(true);
@@ -50,8 +49,7 @@ describe("DecisionPointEnforcer", () => {
     });
 
     it("should do nothing when decision points array is empty", async () => {
-      stateManager.set("decisionPoints", []);
-
+      // board.squares is empty from beforeEach, so no decision points
       await decisionPointEnforcer.enforceDecisionPoints(baseContext);
 
       expect(mockProcessTranscript).not.toHaveBeenCalled();
@@ -59,7 +57,9 @@ describe("DecisionPointEnforcer", () => {
 
     it("should do nothing when no current turn set", async () => {
       stateManager.set("game.turn", null);
-      stateManager.set("decisionPoints", [{ position: 5, prompt: "Choose your path" }]);
+      stateManager.set("board.squares", {
+        "5": { type: "empty", next: [6, 7], prev: [4] },
+      });
 
       await decisionPointEnforcer.enforceDecisionPoints(baseContext);
 
@@ -67,7 +67,9 @@ describe("DecisionPointEnforcer", () => {
     });
 
     it("should do nothing when current player not at decision point", async () => {
-      stateManager.set("decisionPoints", [{ position: 10, prompt: "Choose your path" }]);
+      stateManager.set("board.squares", {
+        "10": { type: "empty", next: [11, 12], prev: [9] },
+      });
       stateManager.set("players.p1.position", 5); // Not at position 10
 
       await decisionPointEnforcer.enforceDecisionPoints(baseContext);
@@ -76,7 +78,9 @@ describe("DecisionPointEnforcer", () => {
     });
 
     it("should do nothing when decision already filled", async () => {
-      stateManager.set("decisionPoints", [{ position: 5, prompt: "Choose your path" }]);
+      stateManager.set("board.squares", {
+        "5": { type: "empty", next: [6, 7], prev: [4] },
+      });
       stateManager.set("players.p1.position", 5);
       stateManager.set("players.p1.activeChoices", { 5: 6 }); // Decision filled
 
@@ -86,7 +90,9 @@ describe("DecisionPointEnforcer", () => {
     });
 
     it("should trigger processTranscript when decision pending (null value)", async () => {
-      stateManager.set("decisionPoints", [{ position: 5, prompt: "Choose your path" }]);
+      stateManager.set("board.squares", {
+        "5": { type: "empty", next: [6, 7], prev: [4] },
+      });
       stateManager.set("players.p1.position", 5);
       stateManager.set("players.p1.activeChoices", {}); // Decision pending
 
@@ -96,7 +102,9 @@ describe("DecisionPointEnforcer", () => {
     });
 
     it("should trigger processTranscript when decision pending (undefined value)", async () => {
-      stateManager.set("decisionPoints", [{ position: 5, prompt: "Choose your path" }]);
+      stateManager.set("board.squares", {
+        "5": { type: "empty", next: [6, 7], prev: [4] },
+      });
       stateManager.set("players.p1.position", 5);
       // activeChoices[5] is undefined
 
@@ -106,21 +114,29 @@ describe("DecisionPointEnforcer", () => {
     });
 
     it("should include correct prompt in synthetic transcript", async () => {
-      const prompt = "Choose your path: Desert or Forest?";
-      stateManager.set("decisionPoints", [{ position: 5, prompt }]);
+      stateManager.set("board.squares", {
+        "5": { type: "empty", next: [6, 7], prev: [4] },
+      });
       stateManager.set("players.p1.position", 5);
       stateManager.set("players.p1.activeChoices", {});
 
       await decisionPointEnforcer.enforceDecisionPoints(baseContext);
 
+      // inferDecisionPoints generates "¿Querés ir al 6 o al 7?" for fork at 5
       expect(mockProcessTranscript).toHaveBeenCalledWith(
-        expect.stringContaining(prompt),
+        expect.stringContaining("6"),
+        expect.anything(),
+      );
+      expect(mockProcessTranscript).toHaveBeenCalledWith(
+        expect.stringContaining("7"),
         expect.anything(),
       );
     });
 
     it("should include player name in synthetic transcript", async () => {
-      stateManager.set("decisionPoints", [{ position: 5, prompt: "Choose your path" }]);
+      stateManager.set("board.squares", {
+        "5": { type: "empty", next: [6, 7], prev: [4] },
+      });
       stateManager.set("players.p1.position", 5);
       stateManager.set("players.p1.name", "Alice");
       stateManager.set("players.p1.activeChoices", {});
@@ -134,7 +150,9 @@ describe("DecisionPointEnforcer", () => {
     });
 
     it("should include player ID in synthetic transcript", async () => {
-      stateManager.set("decisionPoints", [{ position: 5, prompt: "Choose your path" }]);
+      stateManager.set("board.squares", {
+        "5": { type: "empty", next: [6, 7], prev: [4] },
+      });
       stateManager.set("players.p1.position", 5);
       stateManager.set("players.p1.activeChoices", {});
 
@@ -147,7 +165,9 @@ describe("DecisionPointEnforcer", () => {
     });
 
     it("should include position in synthetic transcript", async () => {
-      stateManager.set("decisionPoints", [{ position: 5, prompt: "Choose your path" }]);
+      stateManager.set("board.squares", {
+        "5": { type: "empty", next: [6, 7], prev: [4] },
+      });
       stateManager.set("players.p1.position", 5);
       stateManager.set("players.p1.activeChoices", {});
 
@@ -160,7 +180,9 @@ describe("DecisionPointEnforcer", () => {
     });
 
     it("should include direction at fork in synthetic transcript", async () => {
-      stateManager.set("decisionPoints", [{ position: 5, prompt: "Choose your path" }]);
+      stateManager.set("board.squares", {
+        "5": { type: "empty", next: [6, 7], prev: [4] },
+      });
       stateManager.set("players.p1.position", 5);
       stateManager.set("players.p1.activeChoices", {});
 
@@ -173,7 +195,9 @@ describe("DecisionPointEnforcer", () => {
     });
 
     it("should pass isNestedCall: true when invoking processTranscript", async () => {
-      stateManager.set("decisionPoints", [{ position: 5, prompt: "Choose your path" }]);
+      stateManager.set("board.squares", {
+        "5": { type: "empty", next: [6, 7], prev: [4] },
+      });
       stateManager.set("players.p1.position", 5);
       stateManager.set("players.p1.activeChoices", {});
 
@@ -185,11 +209,11 @@ describe("DecisionPointEnforcer", () => {
     });
 
     it("should handle multiple decision points (only enforce current position)", async () => {
-      stateManager.set("decisionPoints", [
-        { position: 3, prompt: "Choose path A or B" },
-        { position: 5, prompt: "Choose tool X or Y" },
-        { position: 10, prompt: "Go left or right" },
-      ]);
+      stateManager.set("board.squares", {
+        "3": { type: "empty", next: [4, 5], prev: [2] },
+        "5": { type: "empty", next: [6, 7], prev: [4] },
+        "10": { type: "empty", next: [11, 12], prev: [9] },
+      });
       stateManager.set("players.p1.position", 5);
       stateManager.set("players.p1.activeChoices", {});
 
@@ -197,14 +221,16 @@ describe("DecisionPointEnforcer", () => {
 
       expect(mockProcessTranscript).toHaveBeenCalledTimes(1);
       expect(mockProcessTranscript).toHaveBeenCalledWith(
-        expect.stringContaining("Choose tool X or Y"),
+        expect.stringContaining("6"),
         expect.anything(),
       );
     });
 
     it("should handle missing player gracefully", async () => {
       stateManager.set("game.turn", "p99");
-      stateManager.set("decisionPoints", [{ position: 5, prompt: "Choose your path" }]);
+      stateManager.set("board.squares", {
+        "5": { type: "empty", next: [6, 7], prev: [4] },
+      });
 
       await decisionPointEnforcer.enforceDecisionPoints(baseContext);
 
@@ -212,7 +238,9 @@ describe("DecisionPointEnforcer", () => {
     });
 
     it("should handle player without position field", async () => {
-      stateManager.set("decisionPoints", [{ position: 5, prompt: "Choose your path" }]);
+      stateManager.set("board.squares", {
+        "5": { type: "empty", next: [6, 7], prev: [4] },
+      });
       // Remove position field
       const player = stateManager.get("players.p1") as Record<string, unknown>;
       delete player.position;
@@ -224,7 +252,9 @@ describe("DecisionPointEnforcer", () => {
     });
 
     it("should handle errors gracefully", async () => {
-      stateManager.set("decisionPoints", [{ position: 5, prompt: "Choose your path" }]);
+      stateManager.set("board.squares", {
+        "5": { type: "empty", next: [6, 7], prev: [4] },
+      });
       stateManager.set("players.p1.position", 5);
       stateManager.set("players.p1.activeChoices", {});
 

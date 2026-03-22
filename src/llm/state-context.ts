@@ -1,4 +1,6 @@
 import type { StateDisplayConfig, StateDisplayMetadata } from "@/game-loader/types";
+import { getDecisionPoints } from "@/orchestrator/decision-point-inference";
+import type { GameState } from "@/orchestrator/types";
 
 export type { StateDisplayConfig, StateDisplayMetadata };
 
@@ -87,15 +89,9 @@ export interface FormatStateContextOptions {
 }
 
 function formatDecisionPointContext(state: Record<string, unknown>): string {
-  const decisionPoints = state.decisionPoints as
-    | Array<{
-        position: number;
-        prompt: string;
-        choiceKeywords?: Record<string, string[]>;
-      }>
-    | undefined;
+  const decisionPoints = getDecisionPoints(state as GameState);
 
-  if (!decisionPoints || decisionPoints.length === 0) {
+  if (decisionPoints.length === 0) {
     return "";
   }
 

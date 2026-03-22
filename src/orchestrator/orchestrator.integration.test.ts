@@ -64,12 +64,11 @@ describe("Orchestrator Integration Tests", () => {
           p2: { id: "p2", name: "Bob", position: 0 },
         },
         board: {
-          winPosition: 100,
-          squares: { "0": { type: "empty", next: [1, 15] } },
+          squares: {
+            "0": { type: "empty", next: [1, 15] },
+            "100": { type: "special", effect: "win" },
+          },
         },
-        decisionPoints: [
-          { position: 0, prompt: "Choose path A or B?", positionOptions: { "1": 1, "15": 15 } },
-        ],
       };
 
       setupGame(initialState);
@@ -99,12 +98,11 @@ describe("Orchestrator Integration Tests", () => {
           p2: { id: "p2", name: "Bob", position: 0 },
         },
         board: {
-          winPosition: 100,
-          squares: { "0": { type: "empty", next: [1, 15] } },
+          squares: {
+            "0": { type: "empty", next: [1, 15] },
+            "100": { type: "special", effect: "win" },
+          },
         },
-        decisionPoints: [
-          { position: 0, prompt: "Choose path A or B?", positionOptions: { "1": 1, "15": 15 } },
-        ],
       };
 
       setupGame(initialState);
@@ -144,8 +142,10 @@ describe("Orchestrator Integration Tests", () => {
           p2: { id: "p2", name: "Bob", position: 0 },
         },
         board: {
-          winPosition: 100,
-          squares: { "4": { type: "portal", destination: 14 } },
+          squares: {
+            "4": { type: "portal", destination: 14 },
+            "100": { type: "special", effect: "win" },
+          },
         },
       };
 
@@ -181,8 +181,10 @@ describe("Orchestrator Integration Tests", () => {
           p2: { id: "p2", name: "Bob", position: 0 },
         },
         board: {
-          winPosition: 100,
-          squares: { "17": { type: "portal", destination: 7 } },
+          squares: {
+            "17": { type: "portal", destination: 7 },
+            "100": { type: "special", effect: "win" },
+          },
         },
       };
 
@@ -217,8 +219,10 @@ describe("Orchestrator Integration Tests", () => {
           p1: { id: "p1", name: "Alice", position: 1 },
         },
         board: {
-          winPosition: 100,
-          squares: { "4": { type: "portal", destination: 14 } },
+          squares: {
+            "4": { type: "portal", destination: 14 },
+            "100": { type: "special", effect: "win" },
+          },
         },
       };
 
@@ -262,9 +266,9 @@ describe("Orchestrator Integration Tests", () => {
           p2: { id: "p2", name: "Bob", position: 0 },
         },
         board: {
-          winPosition: 100,
           squares: {
             "5": { type: "animal", name: "Cobra", power: 4, points: 4 },
+            "100": { type: "special", effect: "win" },
           },
         },
       };
@@ -300,8 +304,10 @@ describe("Orchestrator Integration Tests", () => {
           p2: { id: "p2", name: "Bob", position: 0 },
         },
         board: {
-          winPosition: 100,
-          squares: { "5": { type: "animal", name: "Cobra", power: 4, points: 4 } },
+          squares: {
+            "5": { type: "animal", name: "Cobra", power: 4, points: 4 },
+            "100": { type: "special", effect: "win" },
+          },
         },
       };
 
@@ -377,9 +383,9 @@ describe("Orchestrator Integration Tests", () => {
           p2: { id: "p2", name: "Bob", position: 0 },
         },
         board: {
-          winPosition: 100,
           squares: {
             "5": { type: "animal", name: "Cobra", power: 4, points: 4 },
+            "100": { type: "special", effect: "win" },
           },
         },
       };
@@ -426,8 +432,7 @@ describe("Orchestrator Integration Tests", () => {
           p2: { id: "p2", name: "Bob", position: 0 },
         },
         board: {
-          winPosition: 100,
-          squares: {},
+          squares: { "100": { type: "special", effect: "win" } },
         },
       };
 
@@ -466,12 +471,11 @@ describe("Orchestrator Integration Tests", () => {
           p2: { id: "p2", name: "Bob", position: 0 },
         },
         board: {
-          winPosition: 100,
-          squares: { "0": { type: "empty", next: [1, 15] } },
+          squares: {
+            "0": { type: "empty", next: [1, 15] },
+            "100": { type: "special", effect: "win" },
+          },
         },
-        decisionPoints: [
-          { position: 0, prompt: "Choose path A or B?", positionOptions: { "1": 1, "15": 15 } },
-        ],
       };
 
       setupGame(initialState);
@@ -510,12 +514,11 @@ describe("Orchestrator Integration Tests", () => {
           p2: { id: "p2", name: "Bob", position: 0 },
         },
         board: {
-          winPosition: 100,
-          squares: { "0": { type: "empty", next: [1, 15] } },
+          squares: {
+            "0": { type: "empty", next: [1, 15] },
+            "100": { type: "special", effect: "win" },
+          },
         },
-        decisionPoints: [
-          { position: 0, prompt: "Choose path A or B?", positionOptions: { "1": 1, "15": 15 } },
-        ],
       };
 
       setupGame(initialState);
@@ -564,10 +567,8 @@ describe("Orchestrator Integration Tests", () => {
           p2: { id: "p2", name: "Pedro", position: 0, activeChoices: { 0: 15 } },
         },
         board: {
-          winPosition: 196,
           squares,
         },
-        decisionPoints: [],
       };
 
       setupGame(initialState);
@@ -593,8 +594,12 @@ describe("Orchestrator Integration Tests", () => {
           p1: { id: "p1", name: "Alice", position: 0, activeChoices: { 0: 1 } },
           p2: { id: "p2", name: "Bob", position: 0, activeChoices: {} },
         },
-        board: { winPosition: 100, squares: {} },
-        decisionPoints: [{ position: 0, prompt: "Choose A or B?" }],
+        board: {
+          squares: {
+            "0": { type: "empty", next: [1, 15], prev: [] },
+            "100": { type: "special", effect: "win" },
+          },
+        },
       };
 
       mockLLM = createScriptedLLM([]);
@@ -643,7 +648,6 @@ describe("Orchestrator Integration Tests", () => {
           p1: { id: "p1", name: "Alice", position: 43, inverseMode: false },
         },
         board: {
-          winPosition: 196,
           squares: {
             "45": {
               type: "portal",
@@ -703,7 +707,6 @@ describe("Orchestrator Integration Tests", () => {
           p1: { id: "p1", name: "Alice", position: 80, inverseMode: false },
         },
         board: {
-          winPosition: 196,
           squares: {
             "82": {
               type: "portal",
@@ -759,8 +762,7 @@ describe("Orchestrator Integration Tests", () => {
           p2: { id: "p2", name: "Bob", position: 0 },
         },
         board: {
-          winPosition: 100,
-          squares: {},
+          squares: { "100": { type: "special", effect: "win" } },
         },
       };
 
@@ -807,9 +809,9 @@ describe("Orchestrator Integration Tests", () => {
           p2: { id: "p2", name: "Bob", position: 5 },
         },
         board: {
-          winPosition: 100,
           squares: {
             "11": { type: "hazard", name: "Quicksand", effect: "skipTurn" },
+            "100": { type: "special", effect: "win" },
           },
         },
       };
@@ -850,8 +852,7 @@ describe("Orchestrator Integration Tests", () => {
           p2: { id: "p2", name: "Bob", position: 50 },
         },
         board: {
-          winPosition: 100,
-          squares: {},
+          squares: { "100": { type: "special", effect: "win" } },
         },
       };
 
@@ -882,7 +883,7 @@ describe("Orchestrator Integration Tests", () => {
           lastRoll: 0,
         },
         players: { p1: { id: "p1", name: "A", position: 0 } },
-        board: { winPosition: 100, squares: {} },
+        board: { squares: { "100": { type: "special", effect: "win" } } },
       };
       const sm = new StateManager();
       sm.init(initialState);
@@ -906,7 +907,7 @@ describe("Orchestrator Integration Tests", () => {
           p1: { id: "p1", name: "Alice", position: 98 },
           p2: { id: "p2", name: "Bob", position: 80 },
         },
-        board: { winPosition: 100, squares: {} },
+        board: { squares: { "100": { type: "special", effect: "win" } } },
       };
       const sm = new StateManager();
       sm.init(initialState);
@@ -933,8 +934,7 @@ describe("Orchestrator Integration Tests", () => {
           p2: { id: "p2", name: "Bob", position: 80 },
         },
         board: {
-          winPosition: 100,
-          squares: {},
+          squares: { "100": { type: "special", effect: "win" } },
         },
       };
       mockLLM = createScriptedLLM([]);
@@ -975,8 +975,7 @@ describe("Orchestrator Integration Tests", () => {
           p2: { id: "p2", name: "Bob", position: 80 },
         },
         board: {
-          winPosition: 100,
-          squares: {},
+          squares: { "100": { type: "special", effect: "win" } },
         },
       };
 
@@ -1015,8 +1014,7 @@ describe("Orchestrator Integration Tests", () => {
           p2: { id: "p2", name: "Bob", position: 80 },
         },
         board: {
-          winPosition: 100,
-          squares: {},
+          squares: { "100": { type: "special", effect: "win" } },
         },
       };
 
@@ -1062,9 +1060,6 @@ describe("Orchestrator Integration Tests", () => {
           p1: { id: "p1", name: "Alice", position: 184, hearts: 2 },
         },
         board: {
-          winPosition: 196,
-          magicDoorPosition: 186,
-          magicDoorTarget: 6,
           squares: {
             "186": {
               type: "special",
@@ -1124,7 +1119,6 @@ describe("Orchestrator Integration Tests", () => {
           },
         },
         board: {
-          winPosition: 196,
           moves: {},
           squares: {
             "59": {
@@ -1174,7 +1168,7 @@ describe("Orchestrator Integration Tests", () => {
           },
           p2: { id: "p2", name: "Bob", position: 0 },
         },
-        board: { winPosition: 196, squares: {} },
+        board: { squares: {} },
       };
 
       setupGame(initialState);
@@ -1203,12 +1197,8 @@ describe("Orchestrator Integration Tests", () => {
           p2: { id: "p2", name: "Bob", position: 0 },
         },
         board: {
-          winPosition: 196,
-          squares: { "0": { type: "empty", next: [1, 15] } },
+          squares: { "0": { type: "empty", next: [1, 15], prev: [] } },
         },
-        decisionPoints: [
-          { position: 0, prompt: "Choose path?", positionOptions: { "1": 1, "15": 15 } },
-        ],
       };
 
       setupGame(initialState);

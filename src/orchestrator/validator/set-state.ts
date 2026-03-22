@@ -1,4 +1,5 @@
 import type { StateManager } from "../../state-manager";
+import { getDecisionPoints } from "../decision-point-inference";
 import type { GameState, PrimitiveAction } from "../types";
 import { validateField } from "./common";
 import { validateSquareEffectPathRestriction } from "./square-effect";
@@ -71,11 +72,9 @@ function validateDecisionBeforeMove(
     return { valid: true };
   }
 
-  const decisionPoints = state.decisionPoints as
-    | Array<{ position: number; prompt: string }>
-    | undefined;
+  const decisionPoints = getDecisionPoints(state);
 
-  if (!decisionPoints || decisionPoints.length === 0) {
+  if (decisionPoints.length === 0) {
     return { valid: true };
   }
 

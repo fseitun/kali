@@ -249,7 +249,9 @@ describe("Validator - New Primitives", () => {
         string,
         number
       >) = {};
-      mockState.decisionPoints = [{ position: 0, prompt: "Choose A or B?" }];
+      (mockState as Record<string, unknown>).board = {
+        squares: { "0": { type: "empty", next: [1, 15], prev: [] } },
+      };
       (mockState.game as Record<string, unknown>).turn = "p1";
 
       const actions = [{ action: "PLAYER_ANSWERED", answer: "B" }];
@@ -271,7 +273,9 @@ describe("Validator - New Primitives", () => {
         string,
         number
       >) = {};
-      mockState.decisionPoints = [{ position: 0, prompt: "Choose A or B?" }];
+      (mockState as Record<string, unknown>).board = {
+        squares: { "0": { type: "empty", next: [1, 15], prev: [] } },
+      };
 
       const actions = [{ action: "PLAYER_ANSWERED", answer: "A" }];
       const result = validateActions(
@@ -520,9 +524,9 @@ describe("Validator - New Primitives", () => {
             activeChoices: { 0: 1 },
           },
         },
-        decisionPoints: [
-          { position: 0, prompt: "Choose path?", positionOptions: { "1": 1, "15": 15 } },
-        ],
+        board: {
+          squares: { "0": { type: "empty", next: [1, 15], prev: [] } },
+        },
       } as unknown as GameState;
       const result = validateActions(
         [{ action: "PLAYER_ANSWERED", answer: "1" }],
@@ -557,9 +561,9 @@ describe("Validator - New Primitives", () => {
             activeChoices: { 0: 1 },
           },
         },
-        decisionPoints: [
-          { position: 0, prompt: "Choose path?", positionOptions: { "1": 1, "15": 15 } },
-        ],
+        board: {
+          squares: { "0": { type: "empty", next: [1, 15], prev: [] } },
+        },
       } as unknown as GameState;
       const result = validateActions(
         [{ action: "PLAYER_ANSWERED", answer: "1" }],
@@ -591,9 +595,9 @@ describe("Validator - New Primitives", () => {
             position: 16,
           },
         },
-        decisionPoints: [
-          { position: 0, prompt: "Choose path?", positionOptions: { "1": 1, "15": 15 } },
-        ],
+        board: {
+          squares: { "0": { type: "empty", next: [1, 15], prev: [] } },
+        },
       } as unknown as GameState;
       const result = validateActions(
         [{ action: "PLAYER_ANSWERED", answer: "7" }],
@@ -624,9 +628,9 @@ describe("Validator - New Primitives", () => {
             position: 16,
           },
         },
-        decisionPoints: [
-          { position: 0, prompt: "Choose path?", positionOptions: { "1": 1, "15": 15 } },
-        ],
+        board: {
+          squares: { "0": { type: "empty", next: [1, 15], prev: [] } },
+        },
       } as unknown as GameState;
       const result = validateActions(
         [{ action: "PLAYER_ANSWERED", answer: "7" }],
@@ -658,9 +662,9 @@ describe("Validator - New Primitives", () => {
             position: 16,
           },
         },
-        decisionPoints: [
-          { position: 0, prompt: "Choose path?", positionOptions: { "1": 1, "15": 15 } },
-        ],
+        board: {
+          squares: { "0": { type: "empty", next: [1, 15], prev: [] } },
+        },
       } as unknown as GameState;
       const result = validateActions(
         [{ action: "PLAYER_ANSWERED", answer: "3" }],
@@ -879,12 +883,10 @@ describe("Validator - New Primitives", () => {
 
   describe("Decision Points - Orchestrator Enforcement", () => {
     beforeEach(() => {
-      mockState.decisionPoints = [
-        {
-          position: 5,
-          prompt: "Choose your path: A or B?",
-        },
-      ];
+      (mockState as Record<string, unknown>).board = {
+        squares: { "5": { type: "empty", next: [6, 7], prev: [4] } },
+      };
+      (mockState.players as Record<string, Record<string, unknown>>).p1.position = 5;
       (mockState.players as Record<string, Record<string, unknown>>).p1.activeChoices = {};
     });
 
@@ -944,7 +946,7 @@ describe("Validator - New Primitives", () => {
     });
 
     it("allows moves when no decision points exist", () => {
-      mockState.decisionPoints = [];
+      (mockState as Record<string, unknown>).board = { squares: {} };
       const actions = [{ action: "SET_STATE", path: "players.p1.position", value: 10 }];
       const result = validateActions(
         actions,

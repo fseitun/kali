@@ -1,5 +1,16 @@
 import { getForkKeywordsWithImplicitTargets, getNextTargets, isNextFork } from "./board-next";
-import type { BoardConfig, DecisionPoint } from "./types";
+import type { BoardConfig, DecisionPoint, GameState } from "./types";
+
+/**
+ * Returns decision points for the given state, derived from board.squares at runtime.
+ * Squares are the single source of truth; decisionPoints are not persisted on state.
+ *
+ * @param state - Game state containing board
+ * @returns Decision points inferred from board graph
+ */
+export function getDecisionPoints(state: GameState): DecisionPoint[] {
+  return inferDecisionPoints(state.board);
+}
 
 /**
  * Infers decision points from the board graph.

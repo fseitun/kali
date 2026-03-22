@@ -1,4 +1,5 @@
 import type { GameConfigInput, GameModule } from "./types";
+import { getWinPosition } from "@/orchestrator/board-helpers";
 import type { BoardConfig, GameState, Player, SquareData } from "@/orchestrator/types";
 import { GamePhase } from "@/orchestrator/types";
 import type { ISpeechService } from "@/services/speech-service";
@@ -39,38 +40,13 @@ function validateBoardTopology(
 }
 
 /**
- * Derives board config from squares. winPosition from effect=win, magicDoor from effect=magicDoorCheck.
- * Teleports (portals, returnTo187) are read from squares at runtime; no board.moves.
+ * Derives board config from squares. Win position used only for topology validation (local).
+ * Magic door and teleports (portals, returnTo187) are read from squares at runtime.
  */
-function deriveBoardFromSquares(
-  squares: Record<string, SquareData>,
-): Omit<BoardConfig, "squares"> & { squares: Record<string, SquareData> } {
-  let winPosition = 196;
-  let magicDoorPosition: number | undefined;
-  let magicDoorTarget = 6;
-
-  for (const [key, sq] of Object.entries(squares)) {
-    const pos = parseInt(key, 10);
-    if (Number.isNaN(pos)) continue;
-    const effect = sq.effect;
-
-    if (effect === "win") winPosition = pos;
-    if (effect === "magicDoorCheck") {
-      magicDoorPosition = pos;
-      const target = (sq as { target?: number }).target;
-      if (typeof target === "number") magicDoorTarget = target;
-    }
-  }
-
-  const result: BoardConfig & { squares: Record<string, SquareData> } = {
-    winPosition,
-    squares,
-  };
-  if (magicDoorPosition !== undefined) {
-    result.magicDoorPosition = magicDoorPosition;
-    result.magicDoorTarget = magicDoorTarget;
-  }
-  return result;
+function deriveBoardFromSquares(squares: Record<string, SquareData>): {
+  squares: Record<string, SquareData>;
+} {
+  return { squares };
 }
 
 /**
@@ -91,9 +67,8 @@ function buildInitialStateFromParts(config: GameConfigInput): GameState {
   }
 
   const boardDerived = deriveBoardFromSquares(rawSquares);
-  const boardLength = typeof boardDerived.winPosition === "number" ? boardDerived.winPosition : 196;
-  validateBoardTopology(rawSquares, boardLength);
-  const board: BoardConfig = { ...boardDerived, squares: rawSquares };
+  validateBoardTopology(rawSquares, getWinPosition(rawSquares));
+  const board: BoardConfig = { ...boardDerived };
 
   const playerOrder = Array.from({ length: metadata.minPlayers }, (_, i) => `p${i + 1}`);
   const players: Record<string, Player> = {};

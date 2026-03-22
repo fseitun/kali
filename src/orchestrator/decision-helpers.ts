@@ -1,4 +1,5 @@
 import { matchAnswerToChoiceKeywords } from "./board-next";
+import { getDecisionPoints } from "./decision-point-inference";
 import type { GameState } from "./types";
 
 /**
@@ -46,16 +47,9 @@ export function getDecisionPointApplyState(
 ): { path: string; value: string | number } | null {
   const game = state.game as Record<string, unknown> | undefined;
   const currentTurn = game?.turn as string | undefined;
-  const decisionPoints = state.decisionPoints as
-    | Array<{
-        position: number;
-        prompt: string;
-        positionOptions?: Record<string, number>;
-        choiceKeywords?: Record<string, string[]>;
-      }>
-    | undefined;
+  const decisionPoints = getDecisionPoints(state);
 
-  if (!currentTurn || !decisionPoints?.length) return null;
+  if (!currentTurn || !decisionPoints.length) return null;
 
   const players = state.players as Record<string, Record<string, unknown>> | undefined;
   const currentPlayer = players?.[currentTurn];

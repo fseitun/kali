@@ -7,6 +7,7 @@ import {
   executeSetState,
 } from "./action-executors";
 import { BoardEffectsHandler } from "./board-effects-handler";
+import { getWinPosition } from "./board-helpers";
 import { getCurrentDecisionPoint, narrateCoversDecision } from "./decision-helpers";
 import { DecisionPointEnforcer } from "./decision-point-enforcer";
 import { reorderPowerCheckBeforeRoll } from "./reorder-power-check";
@@ -651,8 +652,8 @@ export class Orchestrator {
     if (typeof position !== "number") return;
 
     const state = this.stateManager.getState();
-    const board = state.board as { winPosition?: number } | undefined;
-    const winPosition = board?.winPosition;
+    const board = state.board as { squares?: Record<string, Record<string, unknown>> } | undefined;
+    const winPosition = getWinPosition(board?.squares);
     if (typeof winPosition !== "number") return;
 
     if (position >= winPosition) {

@@ -41,7 +41,6 @@ describe("Orchestrator Authority - LLM Adversarial Tests", () => {
         },
       },
       board: {
-        winPosition: 100,
         squares: {
           "15": { type: "portal", destination: 30 },
           "20": {
@@ -50,9 +49,9 @@ describe("Orchestrator Authority - LLM Adversarial Tests", () => {
             description: "Fight or flee",
           },
           "25": { type: "portal", destination: 10 },
+          "100": { type: "special", effect: "win" },
         },
       },
-      decisionPoints: [],
     };
 
     mockStateManager = {
@@ -233,7 +232,12 @@ describe("Orchestrator Authority - LLM Adversarial Tests", () => {
     });
 
     it("LLM cannot bypass decision points", async () => {
-      testState.decisionPoints = [{ position: 10, prompt: "Choose A or B" }];
+      (testState.board as any).squares["10"] = {
+        type: "empty",
+        next: [11, 12],
+        prev: [9],
+      };
+      (testState.players as any).p1.position = 10;
       (testState.players as any).p1.activeChoices = {};
 
       mockLLM.getActions = vi.fn(async () => [
@@ -276,8 +280,13 @@ describe("Orchestrator Authority - LLM Adversarial Tests", () => {
           prev: i > 0 ? [i - 1] : [],
         };
       }
+      (squares["100"] as Record<string, unknown>) = {
+        type: "special",
+        effect: "win",
+        next: [],
+        prev: [99],
+      };
       (testState.board as any).squares = squares;
-      (testState.board as any).winPosition = 100;
       (testState.players as any).p1.position = 28;
       (testState.game as any).turn = "p1";
 
@@ -305,7 +314,11 @@ describe("Orchestrator Authority - LLM Adversarial Tests", () => {
 
   describe("State Consistency - Validation Matches Execution", () => {
     it("validates sequential state changes correctly", async () => {
-      testState.decisionPoints = [{ position: 10, prompt: "Choose A or B" }];
+      (testState.board as any).squares["10"] = {
+        type: "empty",
+        next: [11, 12],
+        prev: [9],
+      };
       (testState.players as any).p1.activeChoices = {};
       (testState.players as any).p1.position = 10;
 
@@ -427,7 +440,12 @@ describe("Orchestrator Authority - LLM Adversarial Tests", () => {
     });
 
     it("does not check decision points for turn advancement", async () => {
-      testState.decisionPoints = [{ position: 10, prompt: "Choose A or B" }];
+      (testState.board as any).squares["10"] = {
+        type: "empty",
+        next: [11, 12],
+        prev: [9],
+      };
+      (testState.players as any).p1.position = 10;
       (testState.players as any).p1.activeChoices = {};
 
       const actions: PrimitiveAction[] = [{ action: "NARRATE", text: "Done" }];
@@ -601,7 +619,12 @@ describe("Orchestrator Authority - LLM Adversarial Tests", () => {
     });
 
     it("orchestrator validates before and enforces during execution", async () => {
-      testState.decisionPoints = [{ position: 10, prompt: "Choose A or B" }];
+      (testState.board as any).squares["10"] = {
+        type: "empty",
+        next: [11, 12],
+        prev: [9],
+      };
+      (testState.players as any).p1.position = 10;
       (testState.players as any).p1.activeChoices = {};
 
       const actions: PrimitiveAction[] = [
@@ -616,9 +639,11 @@ describe("Orchestrator Authority - LLM Adversarial Tests", () => {
     it("does not double-inject decision point when LLM returns NARRATE from nested flow", async () => {
       (testState.players as any).p1.position = 0;
       (testState.players as any).p1.activeChoices = {};
-      testState.decisionPoints = [
-        { position: 0, prompt: "¿Querés ir por la izquierda o por la derecha?" },
-      ];
+      (testState.board as any).squares["0"] = {
+        type: "empty",
+        next: [1, 15],
+        prev: [],
+      };
 
       const getActionsCalls: string[] = [];
       mockLLM.getActions = vi.fn(async (transcript: string) => {

@@ -27,7 +27,6 @@ describe("BoardEffectsHandler", () => {
       board: {
         squares: {},
       },
-      decisionPoints: [],
     });
 
     mockProcessTranscript = vi.fn().mockResolvedValue(true);
@@ -61,7 +60,7 @@ describe("BoardEffectsHandler", () => {
     });
 
     it("should do nothing when no board.squares config exists", async () => {
-      stateManager.set("board", { winPosition: 100 });
+      stateManager.set("board", {});
       stateManager.set("players.p1.position", 5);
 
       await boardEffectsHandler.checkAndApplyBoardMoves("players.p1.position");

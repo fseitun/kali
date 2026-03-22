@@ -1,3 +1,4 @@
+import { getDecisionPoints } from "./decision-point-inference";
 import type { ExecutionContext } from "./types";
 import type { StateManager } from "@/state-manager";
 import { Logger } from "@/utils/logger";
@@ -35,11 +36,9 @@ export class DecisionPointEnforcer {
       return;
     }
 
-    const decisionPoints = state.decisionPoints as
-      | Array<{ position: number; prompt: string }>
-      | undefined;
+    const decisionPoints = getDecisionPoints(state);
 
-    if (!decisionPoints || decisionPoints.length === 0) {
+    if (decisionPoints.length === 0) {
       return;
     }
 

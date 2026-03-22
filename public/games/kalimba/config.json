@@ -20,7 +20,7 @@
     "board": {
       "primary": [],
       "secondary": [],
-      "hidden": ["winPosition", "magicDoorPosition", "moves", "squares", "magicDoorTarget"]
+      "hidden": ["moves", "squares"]
     }
   },
   "soundEffects": { "animal_collect": "/sounds/animal_collect.wav", "item_collect": "/sounds/item_collect.wav", "portal": "/sounds/portal.wav", "hazard": "/sounds/hazard.wav", "victory": "/sounds/victory.wav" },

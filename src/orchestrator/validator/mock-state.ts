@@ -1,5 +1,6 @@
 import { computeNewPositionFromState } from "../board-traversal";
 import { getDecisionPointApplyState } from "../decision-helpers";
+import { getDecisionPoints } from "../decision-point-inference";
 import { isStrictRiddleCorrect } from "../riddle-answer";
 import type { GameState, PrimitiveAction } from "../types";
 
@@ -10,10 +11,8 @@ export function hasPendingDecisionsInState(state: GameState): boolean {
   const game = state.game as Record<string, unknown> | undefined;
   const currentTurn = game?.turn as string | undefined;
   if (!currentTurn) return false;
-  const decisionPoints = state.decisionPoints as
-    | Array<{ position: number; prompt: string }>
-    | undefined;
-  if (!decisionPoints?.length) return false;
+  const decisionPoints = getDecisionPoints(state);
+  if (!decisionPoints.length) return false;
   const players = state.players as Record<string, Record<string, unknown>> | undefined;
   const currentPlayer = players?.[currentTurn];
   if (!currentPlayer) return false;

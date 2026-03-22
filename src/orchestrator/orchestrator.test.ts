@@ -33,8 +33,7 @@ describe("Orchestrator - New Action Handlers", () => {
         },
       },
       board: {
-        winPosition: 100,
-        squares: {},
+        squares: { "100": { type: "special", effect: "win" } },
       },
     };
 
@@ -112,16 +111,13 @@ describe("Orchestrator - New Action Handlers", () => {
       expect(mockStateManager.set).toHaveBeenCalledWith("game.lastAnswer", "fight the dragon");
     });
 
-    const fork0DecisionPoint = {
-      position: 0,
-      prompt: "Choose path?",
-      positionOptions: { "1": 1, "15": 15 },
-    };
-
     it("auto-applies answer to pending fork decision point", async () => {
       (testState.players as any).p1.position = 0;
       (testState.players as any).p1.activeChoices = {};
-      testState.decisionPoints = [fork0DecisionPoint];
+      (testState.board as any).squares = {
+        "0": { type: "empty", next: [1, 15], prev: [] },
+        "100": { type: "special", effect: "win" },
+      };
       mockStateManager.get = vi.fn((path: string) => {
         if (path === "players.p1.position") return 0;
         if (path === "players.p1.activeChoices.0") return undefined;
@@ -139,7 +135,10 @@ describe("Orchestrator - New Action Handlers", () => {
     it("auto-applies position 15 to fork at 0 via positionOptions", async () => {
       (testState.players as any).p1.position = 0;
       (testState.players as any).p1.activeChoices = {};
-      testState.decisionPoints = [fork0DecisionPoint];
+      (testState.board as any).squares = {
+        "0": { type: "empty", next: [1, 15], prev: [] },
+        "100": { type: "special", effect: "win" },
+      };
 
       const actions: PrimitiveAction[] = [{ action: "PLAYER_ANSWERED", answer: "15" }];
 
@@ -152,15 +151,14 @@ describe("Orchestrator - New Action Handlers", () => {
     it("auto-applies choiceKeywords phrase (e.g. derecha) to fork at 0", async () => {
       (testState.players as any).p1.position = 0;
       (testState.players as any).p1.activeChoices = {};
-      testState.decisionPoints = [
-        {
-          ...fork0DecisionPoint,
-          choiceKeywords: {
-            "1": ["izquierda", "corto", "1"],
-            "15": ["derecha", "largo", "15"],
-          },
+      (testState.board as any).squares = {
+        "0": {
+          type: "empty",
+          next: { "1": ["izquierda", "corto"], "15": ["derecha", "largo"] },
+          prev: [],
         },
-      ];
+        "100": { type: "special", effect: "win" },
+      };
 
       const actions: PrimitiveAction[] = [{ action: "PLAYER_ANSWERED", answer: "derecha" }];
 
@@ -173,7 +171,10 @@ describe("Orchestrator - New Action Handlers", () => {
     it("PLAYER_ANSWERED path choice at position 0 does not set shouldAdvanceTurn", async () => {
       (testState.players as any).p1.position = 0;
       (testState.players as any).p1.activeChoices = {};
-      testState.decisionPoints = [fork0DecisionPoint];
+      (testState.board as any).squares = {
+        "0": { type: "empty", next: [1, 15], prev: [] },
+        "100": { type: "special", effect: "win" },
+      };
       mockStateManager.get = vi.fn((path: string) => {
         if (path === "players.p1.position") return 0;
         return undefined;
@@ -190,7 +191,10 @@ describe("Orchestrator - New Action Handlers", () => {
     it("PLAYER_ANSWERED + NARRATE at fork 0 does not advance turn", async () => {
       (testState.players as any).p1.position = 0;
       (testState.players as any).p1.activeChoices = {};
-      testState.decisionPoints = [fork0DecisionPoint];
+      (testState.board as any).squares = {
+        "0": { type: "empty", next: [1, 15], prev: [] },
+        "100": { type: "special", effect: "win" },
+      };
       mockStateManager.get = vi.fn((path: string) => {
         if (path === "players.p1.position") return 0;
         return undefined;
@@ -381,8 +385,10 @@ describe("Orchestrator - New Action Handlers", () => {
   describe("Board Mechanics - Orchestrator Control", () => {
     it("auto-applies ladder after position change", async () => {
       testState.board = {
-        winPosition: 100,
-        squares: { "10": { type: "portal", destination: 25 } },
+        squares: {
+          "10": { type: "portal", destination: 25 },
+          "100": { type: "special", effect: "win" },
+        },
       };
       testState.players.p1.position = 5;
 
@@ -406,8 +412,10 @@ describe("Orchestrator - New Action Handlers", () => {
 
     it("auto-applies snake after position change", async () => {
       testState.board = {
-        winPosition: 100,
-        squares: { "15": { type: "portal", destination: 5 } },
+        squares: {
+          "15": { type: "portal", destination: 5 },
+          "100": { type: "special", effect: "win" },
+        },
       };
       testState.players.p1.position = 10;
 
@@ -431,8 +439,10 @@ describe("Orchestrator - New Action Handlers", () => {
 
     it("applies board moves after PLAYER_ROLLED", async () => {
       testState.board = {
-        winPosition: 100,
-        squares: { "10": { type: "portal", destination: 25 } },
+        squares: {
+          "10": { type: "portal", destination: 25 },
+          "100": { type: "special", effect: "win" },
+        },
       };
       (testState.players as any).p1.position = 8;
 
@@ -456,8 +466,10 @@ describe("Orchestrator - New Action Handlers", () => {
 
     it("LLM cannot bypass board moves (orchestrator always applies)", async () => {
       testState.board = {
-        winPosition: 100,
-        squares: { "10": { type: "portal", destination: 25 } },
+        squares: {
+          "10": { type: "portal", destination: 25 },
+          "100": { type: "special", effect: "win" },
+        },
       };
       testState.players.p1.position = 5;
 
@@ -483,13 +495,13 @@ describe("Orchestrator - New Action Handlers", () => {
   describe("Square Effects - Orchestrator Triggers", () => {
     it("triggers LLM call when landing on special square", async () => {
       testState.board = {
-        winPosition: 100,
         squares: {
           "20": {
             type: "challenge",
             name: "Dragon Square",
             description: "Fight or flee",
           },
+          "100": { type: "special", effect: "win" },
         },
       };
       testState.players.p1.position = 15;
@@ -548,13 +560,11 @@ describe("Orchestrator - New Action Handlers", () => {
           p2: { id: "p2", name: "Fede", position: 0, hearts: 0, points: 0, activeChoices: {} },
         },
         board: {
-          winPosition: 196,
           squares: {
             "16": { type: "animal", name: "Escarabajo", power: 1, points: 1, habitat: "desierto" },
             "21": { type: "animal", name: "Camello", power: 2, points: 2, habitat: "desierto" },
           },
         },
-        decisionPoints: [],
       } as GameState);
 
       const mockLLMChain = {
@@ -818,14 +828,18 @@ describe("Orchestrator - New Action Handlers", () => {
   });
 
   describe("Decision-point ask undupe", () => {
-    const decisionPrompt = "¿Querés ir por el A o por el B?";
+    // Inferred prompt for fork at 0 with next [1, 15] from decision-point-inference
+    const decisionPrompt = "¿Querés ir por la izquierda o por la derecha?";
     const longNarrate =
       "Federico, estás en el inicio. ¿Querés ir por el camino A, que es más corto, o por el B, que es más largo?";
 
     beforeEach(() => {
       (testState.players as any).p1.position = 0;
       (testState.players as any).p1.activeChoices = {};
-      testState.decisionPoints = [{ position: 0, prompt: decisionPrompt }];
+      (testState.board as any).squares = {
+        "0": { type: "empty", next: [1, 15], prev: [] },
+        "100": { type: "special", effect: "win" },
+      };
       mockStateManager.getState = vi.fn(() => testState);
       mockStateManager.get = vi.fn((path: string) => {
         if (path === "players.p1.position") return 0;

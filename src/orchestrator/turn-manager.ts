@@ -1,3 +1,4 @@
+import { getDecisionPoints } from "./decision-point-inference";
 import { GamePhase } from "./types";
 import type { StateManager } from "@/state-manager";
 import { Logger } from "@/utils/logger";
@@ -30,11 +31,9 @@ export class TurnManager {
       return null;
     }
 
-    const decisionPoints = state.decisionPoints as
-      | Array<{ position: number; prompt: string }>
-      | undefined;
+    const decisionPoints = getDecisionPoints(state);
 
-    if (!decisionPoints || decisionPoints.length === 0) {
+    if (decisionPoints.length === 0) {
       return null;
     }
 
@@ -99,11 +98,9 @@ export class TurnManager {
       return false;
     }
 
-    const decisionPoints = state.decisionPoints as
-      | Array<{ position: number; prompt: string }>
-      | undefined;
+    const decisionPoints = getDecisionPoints(state);
 
-    if (!decisionPoints || decisionPoints.length === 0) {
+    if (decisionPoints.length === 0) {
       return false;
     }
 

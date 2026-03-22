@@ -34,7 +34,7 @@ describe("computeNewPositionFromState", () => {
           activeChoices: {},
         },
       },
-      board: { squares, winPosition: 20 },
+      board: { squares },
     } as GameState;
 
     const result = computeNewPositionFromState(state, "p1", 5, 3);
@@ -62,7 +62,7 @@ describe("computeNewPositionFromState", () => {
           activeChoices: {},
         },
       },
-      board: { squares, winPosition: 20 },
+      board: { squares },
     } as GameState;
 
     const result = computeNewPositionFromState(state, "p1", 5, 3);
@@ -97,7 +97,7 @@ describe("computeNewPositionFromState", () => {
           activeChoices: {},
         },
       },
-      board: { squares, winPosition: 25 },
+      board: { squares },
     } as GameState;
 
     const result = computeNewPositionFromState(state, "p1", 8, 2);
@@ -132,7 +132,7 @@ describe("computeNewPositionFromState", () => {
           activeChoices: {},
         },
       },
-      board: { squares, winPosition: 100 },
+      board: { squares },
     } as GameState;
 
     const result = computeNewPositionFromState(state, "p1", 2, 2);
