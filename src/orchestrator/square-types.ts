@@ -20,6 +20,66 @@ export const SPECIAL_SQUARE_KINDS = [
 
 export type SpecialSquareKind = (typeof SPECIAL_SQUARE_KINDS)[number];
 
+function resolveItemKind(item: string | undefined): SpecialSquareKind | null {
+  if (item === "scimitar") {
+    return "heart";
+  }
+  if (item === "torch" || item === "anti-wasp") {
+    return "protectionItem";
+  }
+  return null;
+}
+
+function resolveHazardKind(effect: string | undefined): SpecialSquareKind | null {
+  if (effect === "skipTurn") {
+    return "trap";
+  }
+  if (effect === "checkTorch" || effect === "checkAntiWasp") {
+    return "hazard";
+  }
+  return null;
+}
+
+const SPECIAL_EFFECT_MAP: Record<string, SpecialSquareKind> = {
+  jumpToLeader: "goldenFox",
+  magicDoorCheck: "magicDoor",
+  returnTo187: "skull",
+  win: "win",
+  roll2d6Advance: "rollAdvance",
+};
+
+const ROLL_DIRECTIONAL_EFFECTS = ["roll1d6Directional", "roll2d6Directional", "roll3d6Directional"];
+
+function resolveSpecialKind(effect: string | undefined): SpecialSquareKind | null {
+  if (effect && SPECIAL_EFFECT_MAP[effect]) {
+    return SPECIAL_EFFECT_MAP[effect];
+  }
+  if (effect && ROLL_DIRECTIONAL_EFFECTS.includes(effect)) {
+    return "rollDirectional";
+  }
+  return null;
+}
+
+const TYPE_RESOLVERS: Record<
+  string,
+  (effect: string | undefined, item: string | undefined) => SpecialSquareKind | null
+> = {
+  animal: () => "animal",
+  portal: () => "portal",
+  item: (_effect, item) => resolveItemKind(item),
+  hazard: (effect) => resolveHazardKind(effect),
+  special: (effect) => resolveSpecialKind(effect),
+};
+
+function getSquareKindFromTypeEffect(
+  type: string | undefined,
+  effect: string | undefined,
+  item: string | undefined,
+): SpecialSquareKind | null {
+  const fn = TYPE_RESOLVERS[type ?? ""];
+  return fn ? fn(effect, item) : null;
+}
+
 /**
  * Derives the square kind from config data. Prefers `kind` if present; otherwise derives from type/effect/item.
  */
@@ -28,59 +88,10 @@ export function getSquareKind(squareData: Record<string, unknown>): SpecialSquar
   if (kind && SPECIAL_SQUARE_KINDS.includes(kind)) {
     return kind;
   }
-
   const type = squareData.type as string | undefined;
   const effect = squareData.effect as string | undefined;
-
-  if (type === "animal") {
-    return "animal";
-  }
-  if (type === "portal") {
-    return "portal";
-  }
-  if (type === "item") {
-    const item = squareData.item as string | undefined;
-    if (item === "scimitar") {
-      return "heart";
-    }
-    if (item === "torch" || item === "anti-wasp") {
-      return "protectionItem";
-    }
-  }
-  if (type === "hazard") {
-    if (effect === "skipTurn") {
-      return "trap";
-    }
-    if (effect === "checkTorch" || effect === "checkAntiWasp") {
-      return "hazard";
-    }
-  }
-  if (type === "special") {
-    if (effect === "jumpToLeader") {
-      return "goldenFox";
-    }
-    if (effect === "magicDoorCheck") {
-      return "magicDoor";
-    }
-    if (effect === "returnTo187") {
-      return "skull";
-    }
-    if (effect === "win") {
-      return "win";
-    }
-    if (effect === "roll2d6Advance") {
-      return "rollAdvance";
-    }
-    if (
-      effect === "roll1d6Directional" ||
-      effect === "roll2d6Directional" ||
-      effect === "roll3d6Directional"
-    ) {
-      return "rollDirectional";
-    }
-  }
-
-  return null;
+  const item = squareData.item as string | undefined;
+  return getSquareKindFromTypeEffect(type, effect, item);
 }
 
 /**

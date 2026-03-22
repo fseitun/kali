@@ -131,29 +131,38 @@ function buildDecisionPointHint(decisionPoint: {
   return ` When intent is clear, return PLAYER_ANSWERED with the target position number; if unclear, NARRATE to ask again.`;
 }
 
-function getCurrentPlayerAtFork(state: Record<string, unknown>): {
-  playerName: string;
-  position: number;
-  decisionPoint: { prompt: string; choiceKeywords?: Record<string, string[]> };
-} | null {
-  const decisionPoints = getDecisionPoints(state as GameState);
-  if (decisionPoints.length === 0) {
-    return null;
-  }
+function getCurrentPlayerAtPosition(
+  state: Record<string, unknown>,
+): { currentPlayer: Record<string, unknown>; position: number; currentTurn: string } | null {
   const players = state.players as Record<string, Record<string, unknown>> | undefined;
   const game = state.game as Record<string, unknown> | undefined;
   const currentTurn = game?.turn as string | undefined;
-  if (!players || !currentTurn) {
-    return null;
-  }
-  const currentPlayer = players[currentTurn];
-  if (!currentPlayer) {
+  const currentPlayer = currentTurn ? players?.[currentTurn] : undefined;
+  if (!currentTurn || !currentPlayer) {
     return null;
   }
   const position = currentPlayer.position as number | undefined;
   if (typeof position !== "number") {
     return null;
   }
+  return { currentPlayer, position, currentTurn };
+}
+
+function getPlayerAndPositionAtFork(state: Record<string, unknown>): {
+  currentPlayer: Record<string, unknown>;
+  position: number;
+  currentTurn: string;
+  decisionPoint: { prompt: string; choiceKeywords?: Record<string, string[]> };
+} | null {
+  const decisionPoints = getDecisionPoints(state as GameState);
+  if (decisionPoints.length === 0) {
+    return null;
+  }
+  const playerInfo = getCurrentPlayerAtPosition(state);
+  if (!playerInfo) {
+    return null;
+  }
+  const { currentPlayer, position, currentTurn } = playerInfo;
   const decisionPoint = decisionPoints.find((dp) => dp.position === position);
   if (!decisionPoint) {
     return null;
@@ -162,6 +171,19 @@ function getCurrentPlayerAtFork(state: Record<string, unknown>): {
   if (choices?.[String(position)] !== undefined) {
     return null;
   }
+  return { currentPlayer, position, currentTurn, decisionPoint };
+}
+
+function getCurrentPlayerAtFork(state: Record<string, unknown>): {
+  playerName: string;
+  position: number;
+  decisionPoint: { prompt: string; choiceKeywords?: Record<string, string[]> };
+} | null {
+  const info = getPlayerAndPositionAtFork(state);
+  if (!info) {
+    return null;
+  }
+  const { currentPlayer, position, currentTurn, decisionPoint } = info;
   const playerName = (currentPlayer.name as string) || currentTurn;
   return { playerName, position, decisionPoint };
 }
@@ -176,61 +198,74 @@ function formatDecisionPointContext(state: Record<string, unknown>): string {
   return `⚠️ DECISION (${playerName}) fork choice at ${position}. Ask: "${playerName}, ${decisionPoint.prompt}" Always name the player when asking. If user asks what to do or for help → NARRATE the path options (e.g. from the prompt); do NOT emit PLAYER_ANSWERED.${hint} If they state a choice, emit PLAYER_ANSWERED with the correct target number. [current]`;
 }
 
-function formatAnimalEncounterContext(state: Record<string, unknown>): string {
+function formatRiddlePhaseContext(
+  playerName: string,
+  pending: { riddlePrompt?: string; riddleOptions?: string[]; correctOption?: string },
+): string {
+  const options = pending.riddleOptions;
+  const hasStructuredRiddle = options?.length === 4 && pending.correctOption;
+  const antiLeak =
+    " When asking the riddle: ask only the riddle and the four options. Do NOT include the correct answer in that NARRATE.";
+  const helpInst =
+    hasStructuredRiddle && pending.riddlePrompt
+      ? " If user asks what to do, NARRATE re-asking the same riddle and the four options."
+      : " If user asks what to do or says they didn't hear, you MUST return ASK_RIDDLE (text, options, correctOption, optional correctOptionSynonyms) followed by NARRATE speaking that same riddle and options. Do NOT return only a NARRATE saying 'choose an option' without speaking the actual riddle.";
+  if (!hasStructuredRiddle) {
+    return `⚠️ RIDDLE (${playerName}) phase=riddle.${antiLeak} Ask a riddle with exactly FOUR options. The riddle MUST be about the animal kingdom (e.g. animals, habitats, behavior, diet, classification). Return ASK_RIDDLE with "text", "options" (array of 4 strings), "correctOption" (exact text of the correct option), optionally "correctOptionSynonyms" (array of synonyms). Then NARRATE the riddle and options. When user answers, return PLAYER_ANSWERED with what they said - do NOT use RIDDLE_RESOLVED.${helpInst} [current]`;
+  }
+  const optionsList = options?.join(", ") ?? "";
+  const mapInst =
+    optionsList &&
+    ` Current options: ${optionsList}. Return PLAYER_ANSWERED with the user's answer (option text or what they said).`;
+  return `⚠️ RIDDLE (${playerName}) phase=riddle. User must choose one of the four options. Return PLAYER_ANSWERED with what the user said - do NOT use RIDDLE_RESOLVED. Orchestrator resolves correct/incorrect (strict match then LLM).${mapInst}${helpInst} [current]`;
+}
+
+function formatPowerCheckContext(playerName: string, riddleCorrect?: boolean): string {
+  const diceCount = riddleCorrect ? "2" : "1";
+  return `⚠️ POWER CHECK (${playerName}) phase=powerCheck. If user REPORTS their roll (e.g. "tire un dos y un seis", "ocho", "siete") → PLAYER_ANSWERED with the number (sum for 2d6). Do NOT ask "decime el resultado", "¿alcanza?", "is that enough?", "¿sirve?" — they gave the number; process it immediately. Do NOT NARRATE the roll. Return only PLAYER_ANSWERED. Orchestrator announces pass/fail. If user asks what to do → NARRATE "Tirá ${diceCount} dado(s)... decime el resultado." [current]`;
+}
+
+function formatRevengeContext(playerName: string, power: number): string {
+  return `⚠️ REVENGE (${playerName}) phase=revenge. Same player, not next. 1 die, roll >= ${power} wins. User reports roll → PLAYER_ANSWERED with the number (1-6). Do NOT ask "¿alcanza?", "is that enough?" — process it immediately. Do NOT NARRATE the roll. Return only PLAYER_ANSWERED. Orchestrator announces pass/fail. If user asks what to do → NARRATE that they should roll one die and report the number (need ${power} or more). If prompting, name the player: "${playerName}, tirá el dado." [current]`;
+}
+
+function getPendingEncounterContext(state: Record<string, unknown>): {
+  playerName: string;
+  pending: { phase?: string; power?: number; riddleCorrect?: boolean };
+} | null {
   const game = state.game as Record<string, unknown> | undefined;
   const players = state.players as Record<string, Record<string, unknown>> | undefined;
   const currentTurn = game?.turn as string | undefined;
   const pending = game?.pendingAnimalEncounter as
-    | { phase?: string; power?: number; playerId?: string }
+    | { phase?: string; power?: number; playerId?: string; riddleCorrect?: boolean }
     | null
     | undefined;
-
   if (!pending || !currentTurn || pending.playerId !== currentTurn || !players?.[currentTurn]) {
+    return null;
+  }
+  const playerName = (players[currentTurn].name as string) || currentTurn;
+  return { playerName, pending };
+}
+
+function formatAnimalEncounterContext(state: Record<string, unknown>): string {
+  const ctx = getPendingEncounterContext(state);
+  if (!ctx) {
     return "";
   }
-
-  const playerName = (players[currentTurn].name as string) || currentTurn;
+  const { playerName, pending } = ctx;
   const power = pending.power ?? 0;
-
   if (pending.phase === "riddle") {
-    const riddleCtx = pending as {
-      riddlePrompt?: string;
-      riddleOptions?: string[];
-      correctOption?: string;
-    };
-    const prompt = riddleCtx.riddlePrompt;
-    const options = riddleCtx.riddleOptions;
-    const hasStructuredRiddle = options?.length === 4 && riddleCtx.correctOption;
-    const antiLeak =
-      " When asking the riddle: ask only the riddle and the four options. Do NOT include the correct answer in that NARRATE.";
-    let helpInst: string;
-    if (hasStructuredRiddle && prompt) {
-      helpInst =
-        " If user asks what to do, NARRATE re-asking the same riddle and the four options.";
-    } else {
-      helpInst =
-        " If user asks what to do or says they didn't hear, you MUST return ASK_RIDDLE (text, options, correctOption, optional correctOptionSynonyms) followed by NARRATE speaking that same riddle and options. Do NOT return only a NARRATE saying 'choose an option' without speaking the actual riddle.";
-    }
-    if (!hasStructuredRiddle) {
-      return `⚠️ RIDDLE (${playerName}) phase=riddle.${antiLeak} Ask a riddle with exactly FOUR options. The riddle MUST be about the animal kingdom (e.g. animals, habitats, behavior, diet, classification). Return ASK_RIDDLE with "text", "options" (array of 4 strings), "correctOption" (exact text of the correct option), optionally "correctOptionSynonyms" (array of synonyms). Then NARRATE the riddle and options. When user answers, return PLAYER_ANSWERED with what they said - do NOT use RIDDLE_RESOLVED.${helpInst} [current]`;
-    }
-    const optionsList = options?.join(", ") ?? "";
-    const mapInst =
-      optionsList &&
-      ` Current options: ${optionsList}. Return PLAYER_ANSWERED with the user's answer (option text or what they said).`;
-    return `⚠️ RIDDLE (${playerName}) phase=riddle. User must choose one of the four options. Return PLAYER_ANSWERED with what the user said - do NOT use RIDDLE_RESOLVED. Orchestrator resolves correct/incorrect (strict match then LLM).${mapInst}${helpInst} [current]`;
+    return formatRiddlePhaseContext(
+      playerName,
+      pending as { riddlePrompt?: string; riddleOptions?: string[]; correctOption?: string },
+    );
   }
-
   if (pending.phase === "powerCheck") {
-    const riddleCorrect = (pending as { riddleCorrect?: boolean }).riddleCorrect;
-    const diceCount = riddleCorrect ? "2" : "1";
-    return `⚠️ POWER CHECK (${playerName}) phase=powerCheck. If user REPORTS their roll (e.g. "tire un dos y un seis", "ocho", "siete") → PLAYER_ANSWERED with the number (sum for 2d6). Do NOT ask "decime el resultado", "¿alcanza?", "is that enough?", "¿sirve?" — they gave the number; process it immediately. Do NOT NARRATE the roll. Return only PLAYER_ANSWERED. Orchestrator announces pass/fail. If user asks what to do → NARRATE "Tirá ${diceCount} dado(s)... decime el resultado." [current]`;
+    return formatPowerCheckContext(playerName, pending.riddleCorrect);
   }
-
   if (pending.phase === "revenge") {
-    return `⚠️ REVENGE (${playerName}) phase=revenge. Same player, not next. 1 die, roll >= ${power} wins. User reports roll → PLAYER_ANSWERED with the number (1-6). Do NOT ask "¿alcanza?", "is that enough?" — process it immediately. Do NOT NARRATE the roll. Return only PLAYER_ANSWERED. Orchestrator announces pass/fail. If user asks what to do → NARRATE that they should roll one die and report the number (need ${power} or more). If prompting, name the player: "${playerName}, tirá el dado." [current]`;
+    return formatRevengeContext(playerName, power);
   }
-
   return "";
 }
 

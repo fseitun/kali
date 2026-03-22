@@ -48,6 +48,37 @@ export class RiddlePowerCheckHandler {
     Logger.info(`Riddle resolved: correct=${primitive.correct}, phase→powerCheck`);
   }
 
+  private isValidAskRiddleInput(primitive: { options: unknown; correctOption: unknown }): boolean {
+    return (
+      Array.isArray(primitive.options) &&
+      primitive.options.length === 4 &&
+      typeof primitive.correctOption === "string" &&
+      primitive.correctOption.trim().length > 0
+    );
+  }
+
+  private buildPendingWithRiddle(
+    pending: Record<string, unknown>,
+    primitive: {
+      text: string;
+      options: [string, string, string, string];
+      correctOption: string;
+      correctOptionSynonyms?: string[];
+    },
+  ): Record<string, unknown> {
+    const synonyms =
+      Array.isArray(primitive.correctOptionSynonyms) && primitive.correctOptionSynonyms.length > 0
+        ? { correctOptionSynonyms: primitive.correctOptionSynonyms }
+        : {};
+    return {
+      ...pending,
+      riddlePrompt: primitive.text,
+      riddleOptions: primitive.options,
+      correctOption: primitive.correctOption,
+      ...synonyms,
+    };
+  }
+
   handleAskRiddle(primitive: {
     action: "ASK_RIDDLE";
     text: string;
@@ -61,27 +92,16 @@ export class RiddlePowerCheckHandler {
     if (pending?.phase !== "riddle") {
       return;
     }
-    if (
-      !Array.isArray(primitive.options) ||
-      primitive.options.length !== 4 ||
-      typeof primitive.correctOption !== "string" ||
-      !primitive.correctOption.trim()
-    ) {
+    if (!this.isValidAskRiddleInput(primitive)) {
       Logger.warn(
         `ASK_RIDDLE ignored: need options length 4 and non-empty correctOption, got ${primitive.options?.length ?? 0}, correctOption=${String(primitive.correctOption ?? "").slice(0, 20)}`,
       );
       return;
     }
-    this.deps.stateManager.set("game.pendingAnimalEncounter", {
-      ...pending,
-      riddlePrompt: primitive.text,
-      riddleOptions: primitive.options,
-      correctOption: primitive.correctOption,
-      ...(Array.isArray(primitive.correctOptionSynonyms) &&
-      primitive.correctOptionSynonyms.length > 0
-        ? { correctOptionSynonyms: primitive.correctOptionSynonyms }
-        : {}),
-    } as Record<string, unknown>);
+    this.deps.stateManager.set(
+      "game.pendingAnimalEncounter",
+      this.buildPendingWithRiddle(pending, primitive),
+    );
     Logger.info(
       `Ask riddle stored; correctOption=${primitive.correctOption.slice(0, 30)}${primitive.correctOptionSynonyms?.length ? `, synonyms=${primitive.correctOptionSynonyms.length}` : ""}`,
     );
@@ -136,6 +156,63 @@ export class RiddlePowerCheckHandler {
     return { correct: result.correct };
   }
 
+  private async handlePowerCheckWin(
+    playerId: string,
+    _position: number,
+    squareData: Record<string, unknown>,
+    currentPos: number,
+    roll: number,
+    context: ExecutionContext,
+  ): Promise<{ handled: true; passed: true }> {
+    const state = this.deps.stateManager.getState();
+    const passMsg = t("game.powerCheckPass");
+    this.deps.setLastNarration(passMsg);
+    this.deps.statusIndicator.setState("speaking");
+    await this.deps.speechService.speak(passMsg);
+
+    const winJumpTo = squareData?.winJumpTo as number | undefined;
+    const newPosition =
+      typeof winJumpTo === "number"
+        ? winJumpTo
+        : computeNewPositionFromState(state as GameState, playerId, currentPos, roll);
+
+    this.deps.stateManager.set(`players.${playerId}.position`, newPosition);
+    this.applyAnimalEncounterRewards(playerId, squareData);
+    this.deps.stateManager.set("game.pendingAnimalEncounter", null);
+    Logger.info(`Power check WIN: ${playerId} advances to ${newPosition}`);
+
+    await this.deps.boardEffectsHandler.checkAndApplyBoardMoves(`players.${playerId}.position`);
+    await this.deps.boardEffectsHandler.checkAndApplySquareEffects(
+      `players.${playerId}.position`,
+      context,
+    );
+    this.deps.checkAndApplyWinCondition(`players.${playerId}.position`);
+    return { handled: true, passed: true };
+  }
+
+  private async handlePowerCheckLose(pending: {
+    position: number;
+    power: number;
+    playerId: string;
+    phase?: string;
+  }): Promise<{
+    handled: true;
+    passed: false;
+    turnAdvanced?: { playerId: string; name: string; position: number };
+  }> {
+    const failMsg = t("game.powerCheckFail");
+    this.deps.setLastNarration(failMsg);
+    this.deps.statusIndicator.setState("speaking");
+    await this.deps.speechService.speak(failMsg);
+    this.deps.stateManager.set("game.pendingAnimalEncounter", {
+      ...pending,
+      phase: "revenge",
+    });
+    Logger.info(`Power check LOSE: phase→revenge, advancing turn to next player`);
+    const turnAdvanced = this.deps.turnManager.advanceTurnMechanical();
+    return { handled: true, passed: false, turnAdvanced: turnAdvanced ?? undefined };
+  }
+
   async tryHandlePowerCheckAnswer(
     answer: string,
     context: ExecutionContext,
@@ -185,47 +262,15 @@ export class RiddlePowerCheckHandler {
     const position = pending.position;
     const board = state.board as Record<string, unknown> | undefined;
     const squares = (board?.squares as Record<string, Record<string, unknown>>) ?? {};
-    const squareData = squares[position.toString()];
+    const squareData = squares[position.toString()] ?? {};
 
     if (win) {
-      const passMsg = t("game.powerCheckPass");
-      this.deps.setLastNarration(passMsg);
-      this.deps.statusIndicator.setState("speaking");
-      await this.deps.speechService.speak(passMsg);
-
       const currentPos = this.deps.stateManager.get(`players.${playerId}.position`) as number;
-      const winJumpTo = squareData?.winJumpTo as number | undefined;
-      const newPosition =
-        typeof winJumpTo === "number"
-          ? winJumpTo
-          : computeNewPositionFromState(state as GameState, playerId, currentPos, roll);
-
-      this.deps.stateManager.set(`players.${playerId}.position`, newPosition);
-      this.applyAnimalEncounterRewards(playerId, squareData ?? {});
-      this.deps.stateManager.set("game.pendingAnimalEncounter", null);
-      Logger.info(`Power check WIN: ${playerId} advances to ${newPosition}`);
-
-      await this.deps.boardEffectsHandler.checkAndApplyBoardMoves(`players.${playerId}.position`);
-      await this.deps.boardEffectsHandler.checkAndApplySquareEffects(
-        `players.${playerId}.position`,
-        context,
-      );
-      this.deps.checkAndApplyWinCondition(`players.${playerId}.position`);
-      return { handled: true, passed: true };
+      return this.handlePowerCheckWin(playerId, position, squareData, currentPos, roll, context);
     }
 
     if (pending.phase === "powerCheck") {
-      const failMsg = t("game.powerCheckFail");
-      this.deps.setLastNarration(failMsg);
-      this.deps.statusIndicator.setState("speaking");
-      await this.deps.speechService.speak(failMsg);
-      this.deps.stateManager.set("game.pendingAnimalEncounter", {
-        ...pending,
-        phase: "revenge",
-      });
-      Logger.info(`Power check LOSE: phase→revenge, advancing turn to next player`);
-      const turnAdvanced = this.deps.turnManager.advanceTurnMechanical();
-      return { handled: true, passed: false, turnAdvanced: turnAdvanced ?? undefined };
+      return this.handlePowerCheckLose(pending);
     }
 
     return { handled: true, passed: false };

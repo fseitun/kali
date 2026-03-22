@@ -91,6 +91,93 @@ function handlePlayerRolled(
   player.position = computeNewPositionFromState(mockState, currentTurn, player.position, rollValue);
 }
 
+function applyRiddleAnswerToMock(
+  game: Record<string, unknown>,
+  pending: {
+    phase?: string;
+    playerId?: string;
+    correctOption?: string;
+    correctOptionSynonyms?: string[];
+    riddleOptions?: string[];
+  },
+  currentTurn: string,
+  answer: string,
+  mockState: GameState,
+): GameState | null {
+  if (
+    pending.phase !== "riddle" ||
+    pending.playerId !== currentTurn ||
+    !pending.correctOption ||
+    !Array.isArray(pending.riddleOptions) ||
+    pending.riddleOptions.length !== 4
+  ) {
+    return null;
+  }
+  const correct = isStrictRiddleCorrect(
+    answer,
+    pending.riddleOptions,
+    pending.correctOption,
+    pending.correctOptionSynonyms,
+  );
+  game.pendingAnimalEncounter = {
+    ...pending,
+    phase: "powerCheck",
+    riddleCorrect: correct,
+  };
+  return mockState;
+}
+
+function parsePowerCheckRoll(answer: string): number | null {
+  const rollStr = answer.replace(/\D/g, "").trim() || answer.trim();
+  const roll = parseInt(rollStr, 10);
+  return !isNaN(roll) && roll >= 1 && roll <= 12 ? roll : null;
+}
+
+function applyPowerCheckAnswerToMock(
+  game: Record<string, unknown>,
+  pending: { phase?: string; playerId?: string },
+  currentTurn: string,
+  answer: string,
+  mockState: GameState,
+): GameState | null {
+  const isPowerPhase =
+    (pending.phase === "powerCheck" || pending.phase === "revenge") &&
+    pending.playerId === currentTurn;
+  if (!isPowerPhase) {
+    return null;
+  }
+  const roll = parsePowerCheckRoll(answer);
+  if (roll === null) {
+    return null;
+  }
+  game.pendingAnimalEncounter = null;
+  const playersMap = mockState.players as Record<string, Record<string, unknown>>;
+  const player = playersMap?.[currentTurn];
+  if (player && typeof player.position === "number") {
+    player.position = player.position + roll;
+  }
+  return mockState;
+}
+
+function applyDecisionPointAnswerToMock(mockState: GameState, answer: string): void {
+  const apply = getDecisionPointApplyState(mockState, answer);
+  if (!apply) {
+    return;
+  }
+  const parts = apply.path.split(".");
+  let current: Record<string, unknown> = mockState;
+  for (let i = 0; i < parts.length - 1; i++) {
+    const part = parts[i];
+    let next = current[part] as Record<string, unknown> | undefined;
+    if (typeof next !== "object" || next === null) {
+      next = {};
+      current[part] = next;
+    }
+    current = next;
+  }
+  current[parts[parts.length - 1]] = apply.value;
+}
+
 function handlePlayerAnswered(
   primitive: PrimitiveAction,
   mockState: GameState,
@@ -113,60 +200,22 @@ function handlePlayerAnswered(
     | undefined;
   const answer = primitive.answer.trim();
 
-  if (
-    pending?.phase === "riddle" &&
-    pending.playerId === currentTurn &&
-    pending.correctOption &&
-    Array.isArray(pending.riddleOptions) &&
-    pending.riddleOptions.length === 4
-  ) {
-    const correct = isStrictRiddleCorrect(
-      answer,
-      pending.riddleOptions,
-      pending.correctOption,
-      pending.correctOptionSynonyms,
-    );
-    game.pendingAnimalEncounter = {
-      ...pending,
-      phase: "powerCheck",
-      riddleCorrect: correct,
-    };
-    return mockState;
+  if (!pending || !currentTurn) {
+    applyDecisionPointAnswerToMock(mockState, answer);
+    return;
   }
 
-  if (
-    (pending?.phase === "powerCheck" || pending?.phase === "revenge") &&
-    pending.playerId === currentTurn
-  ) {
-    const rollStr = answer.replace(/\D/g, "").trim() || answer.trim();
-    const roll = parseInt(rollStr, 10);
-    if (isNaN(roll) || roll < 1 || roll > 12) {
-      return;
-    }
-    game.pendingAnimalEncounter = null;
-    const playersMap = mockState.players as Record<string, Record<string, unknown>>;
-    const player = currentTurn ? playersMap?.[currentTurn] : undefined;
-    if (player && typeof player.position === "number") {
-      player.position = player.position + roll;
-    }
-    return mockState;
+  const riddleResult = applyRiddleAnswerToMock(game, pending, currentTurn, answer, mockState);
+  if (riddleResult) {
+    return riddleResult;
   }
 
-  const apply = getDecisionPointApplyState(mockState, answer);
-  if (apply) {
-    const parts = apply.path.split(".");
-    let current: Record<string, unknown> = mockState;
-    for (let i = 0; i < parts.length - 1; i++) {
-      const part = parts[i];
-      let next = current[part] as Record<string, unknown> | undefined;
-      if (typeof next !== "object" || next === null) {
-        next = {};
-        current[part] = next;
-      }
-      current = next;
-    }
-    current[parts[parts.length - 1]] = apply.value;
+  const powerResult = applyPowerCheckAnswerToMock(game, pending, currentTurn, answer, mockState);
+  if (powerResult) {
+    return powerResult;
   }
+
+  applyDecisionPointAnswerToMock(mockState, answer);
 }
 
 function handleAskRiddle(

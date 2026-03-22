@@ -149,6 +149,93 @@ export class TurnManager {
    * @param isProcessingSquareEffect - Flag indicating if square effect is currently being processed
    * @returns The next player's ID and details, or null if unable to advance. Includes skippedPlayers (all skipped in order).
    */
+  private canAdvanceTurn(
+    game: Record<string, unknown>,
+    isProcessingSquareEffect: boolean,
+  ): string | null {
+    const phase = game.phase as string | undefined;
+    if (phase !== GamePhase.PLAYING) {
+      return null;
+    }
+    if (game.winner) {
+      Logger.info("Game has winner, not advancing turn");
+      return null;
+    }
+    const currentTurn = game.turn as string | undefined;
+    if (!currentTurn) {
+      Logger.warn("No current turn set, cannot advance");
+      return null;
+    }
+    const playerOrder = game.playerOrder as string[] | undefined;
+    if (!playerOrder || playerOrder.length === 0) {
+      Logger.warn("No playerOrder set, cannot advance");
+      return null;
+    }
+    if (isProcessingSquareEffect) {
+      Logger.info("Turn advancement blocked: square effect being processed");
+      return null;
+    }
+    if (this.hasPendingDecisions()) {
+      Logger.info("Turn advancement blocked: current player has pending decisions");
+      return null;
+    }
+    if (this.hasPendingAnimalEncounter()) {
+      Logger.info("Turn advancement blocked: pending animal encounter");
+      return null;
+    }
+    return currentTurn;
+  }
+
+  private async advanceTurnWithSkips(
+    nextPlayerId: string,
+    nextPlayer: Record<string, unknown> | undefined,
+    nextPlayerName: string,
+    skipTurns: number,
+    isProcessingSquareEffect: boolean,
+  ): Promise<{
+    playerId: string;
+    name: string;
+    position: number;
+    skippedPlayers: Array<{ playerId: string; name: string }>;
+  }> {
+    this.stateManager.set(`players.${nextPlayerId}.skipTurns`, skipTurns - 1);
+    Logger.info(`⏭️ Skipping ${nextPlayerName} (had ${skipTurns} skip(s), now ${skipTurns - 1})`);
+    this.stateManager.set("game.turn", nextPlayerId);
+    const currentSkipped = { playerId: nextPlayerId, name: nextPlayerName };
+    const afterSkipped = await this.advanceTurn(isProcessingSquareEffect);
+    if (afterSkipped) {
+      return {
+        ...afterSkipped,
+        skippedPlayers: [currentSkipped, ...afterSkipped.skippedPlayers],
+      };
+    }
+    return {
+      playerId: nextPlayerId,
+      name: nextPlayerName,
+      position: (nextPlayer?.position as number) || 0,
+      skippedPlayers: [currentSkipped],
+    };
+  }
+
+  private getNextPlayerInfo(
+    players: Record<string, Record<string, unknown>>,
+    playerOrder: string[],
+    currentTurn: string,
+  ): {
+    nextPlayerId: string;
+    nextPlayer: Record<string, unknown> | undefined;
+    nextPlayerName: string;
+    skipTurns: number;
+  } {
+    const currentIndex = playerOrder.indexOf(currentTurn);
+    const nextIndex = (currentIndex + 1) % playerOrder.length;
+    const nextPlayerId = playerOrder[nextIndex];
+    const nextPlayer = players[nextPlayerId];
+    const nextPlayerName = (nextPlayer?.name as string) || nextPlayerId;
+    const skipTurns = (nextPlayer?.skipTurns as number) ?? 0;
+    return { nextPlayerId, nextPlayer, nextPlayerName, skipTurns };
+  }
+
   async advanceTurn(isProcessingSquareEffect: boolean): Promise<{
     playerId: string;
     name: string;
@@ -158,78 +245,33 @@ export class TurnManager {
     const state = this.stateManager.getState();
     const game = state.game as Record<string, unknown> | undefined;
     const players = state.players as Record<string, Record<string, unknown>> | undefined;
-
     if (!game || !players) {
       return null;
     }
 
-    const currentTurn = game.turn as string | undefined;
-    const winner = game.winner as string | undefined;
-    const phase = game.phase as string | undefined;
-    const playerOrder = game.playerOrder as string[] | undefined;
-
-    if (phase !== GamePhase.PLAYING) {
-      return null;
-    }
-
-    if (winner) {
-      Logger.info("Game has winner, not advancing turn");
-      return null;
-    }
-
+    const currentTurn = this.canAdvanceTurn(game, isProcessingSquareEffect);
     if (!currentTurn) {
-      Logger.warn("No current turn set, cannot advance");
       return null;
     }
 
-    if (!playerOrder || playerOrder.length === 0) {
-      Logger.warn("No playerOrder set, cannot advance");
+    const playerOrder = game.playerOrder as string[] | undefined;
+    if (!playerOrder) {
       return null;
     }
 
-    if (isProcessingSquareEffect) {
-      Logger.info("Turn advancement blocked: square effect being processed");
-      return null;
-    }
-
-    if (this.hasPendingDecisions()) {
-      Logger.info("Turn advancement blocked: current player has pending decisions");
-      return null;
-    }
-
-    if (this.hasPendingAnimalEncounter()) {
-      Logger.info("Turn advancement blocked: pending animal encounter");
-      return null;
-    }
+    const nextInfo = this.getNextPlayerInfo(players, playerOrder, currentTurn);
 
     try {
-      const currentIndex = playerOrder.indexOf(currentTurn);
-      const nextIndex = (currentIndex + 1) % playerOrder.length;
-      const nextPlayerId = playerOrder[nextIndex];
-      const nextPlayer = players[nextPlayerId];
-      const nextPlayerName = (nextPlayer?.name as string) || nextPlayerId;
-      const skipTurns = (nextPlayer?.skipTurns as number) ?? 0;
+      const { nextPlayerId, nextPlayer, nextPlayerName, skipTurns } = nextInfo;
 
       if (skipTurns > 0) {
-        this.stateManager.set(`players.${nextPlayerId}.skipTurns`, skipTurns - 1);
-        Logger.info(
-          `⏭️ Skipping ${nextPlayerName} (had ${skipTurns} skip(s), now ${skipTurns - 1})`,
+        return this.advanceTurnWithSkips(
+          nextPlayerId,
+          nextPlayer,
+          nextPlayerName,
+          skipTurns,
+          isProcessingSquareEffect,
         );
-        this.stateManager.set("game.turn", nextPlayerId);
-        const currentSkipped = { playerId: nextPlayerId, name: nextPlayerName };
-        const afterSkipped = await this.advanceTurn(isProcessingSquareEffect);
-        if (afterSkipped) {
-          return {
-            ...afterSkipped,
-            skippedPlayers: [currentSkipped, ...afterSkipped.skippedPlayers],
-          };
-        }
-        return {
-          playerId: nextPlayerId,
-          name: nextPlayerName,
-          position: (nextPlayer?.position as number) || 0,
-          skippedPlayers: [currentSkipped],
-        };
       }
 
       Logger.info(`Auto-advancing turn: ${currentTurn} → ${nextPlayerId}`);
