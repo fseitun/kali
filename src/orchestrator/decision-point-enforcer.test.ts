@@ -25,7 +25,6 @@ describe("DecisionPointEnforcer", () => {
         p2: { id: "p2", name: "Bob", position: 0 },
       },
       board: {
-        moves: {},
         squares: {},
       },
       decisionPoints: [],

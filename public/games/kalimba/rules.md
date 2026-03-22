@@ -257,12 +257,11 @@ Los portales están en los casilleros 45 y 82, y conectan entre sí.
 
 - Si caés en el 82, viajás automáticamente al 45\.
 
-- Si el portal te hace retroceder (por ejemplo, del 82 al 45), se activa el poder inverso de Kalimba:
+- Si el portal te hace retroceder (del 82 al 45), se activa el poder inverso de Kalimba:
 
-✨ Desde ese momento, hasta volver a pasar por el portal opuesto (el del 82),  
-todos los casilleros que normalmente te harían retroceder, ahora te hacen avanzar.
+✨ Desde ese momento, **solo** los casilleros que normalmente te harían retroceder ahora te hacen avanzar. Tus tiradas normales de dados siguen siendo hacia adelante. Si un casillero te hace avanzar, sigues avanzando igual. Solo se invierten las penalidades de retroceso.
 
-Esto solo aplica a retrocesos, no a trampas que hacen perder turno ni a eventos como “Cae la noche” o “Ataque de avispas”.
+Esto no aplica a trampas que hacen perder turno ni a eventos como “Cae la noche” o “Ataque de avispas”.
 
 ---
 
@@ -318,9 +317,9 @@ Ramificaciones
 
 Casilleros especiales
 
-- Si caes en el casillero 45 “portal” te lleva al casillero 82\.
-- Si caes en el casillero 54, es el “Zorro dorado” te lleva a la primera posición.
-- Si caes en el casillero 82 “portal” te lleva al casillero 45\. Si esto ocurre, se implementa una regla nueva: cada vez que caigas en un casillero que te haga retroceder, solo avanzaras. Se invierte la carga del recorrido. Ya no retrocedes nunca.
+- Si caes en el casillero 45 “portal”: vas al casillero 82\.
+- Si caes en el casillero 54 “Zorro dorado”: vas a la primera posición.
+- Si caes en el casillero 82 “portal”: vas al casillero 45\. Si esto ocurre, se activa el **Poder Inverso de Kalimba**: a partir de ese momento, **solo** los casilleros que te harían retroceder se invierten — en lugar de retroceder, avanzas. Tus tiradas normales de dados siguen siendo hacia adelante. Los casilleros que te hacen avanzar (ej\. 93, 141, 145) siguen funcionando igual. Solo las penalidades de retroceso se convierten en avance.
 - Si caes en el 93, subis al 97
 - Si caes en el casillero 141, te lleva al casillero 165\.
 - Si caes en el casillero 145 y le ganas a la jirafa, te lleva al casillero 162\.

@@ -10,19 +10,23 @@ globs: src/orchestrator/**/*.ts
 The orchestrator uses modular subsystems:
 
 ### TurnManager
+
 - `hasPendingDecisions()` - Check if current player needs to make a decision
 - `advanceTurn()` - Advance to next player with automatic blocking
 - `assertPlayerTurnOwnership(path)` - Validate mutations target correct player
 
 ### BoardEffectsHandler
-- `checkAndApplyBoardMoves(path)` - Auto-apply board moves (portals, path merge) after position changes
+
+- `checkAndApplyBoardMoves(path)` - Auto-apply teleports from squares (portals, returnTo187) after position changes
 - `checkAndApplySquareEffects(path, context)` - Trigger square effects via LLM
 - `isProcessingEffect()` - Check if currently processing a square effect
 
 ### DecisionPointEnforcer
+
 - `enforceDecisionPoints(context)` - Enforce required decisions at special positions
 
 ### Orchestrator
+
 - Core coordination and primitive execution
 - Delegates to subsystems for specialized logic
 - Maintains processing lock to prevent concurrent LLM requests
@@ -44,6 +48,7 @@ The orchestrator uses `isProcessing` to serialize LLM requests. See `architectur
 ## Turn Advancement Blocking
 
 Turns auto-advance, but are blocked when:
+
 - Current player has pending decisions (activeChoices at forks, etc.)
 - Square effect is being processed
 - Game has a winner
@@ -52,7 +57,8 @@ Turns auto-advance, but are blocked when:
 ## Board Effects Pattern
 
 After any position change:
-1. Check `board.moves` for portals/teleports → auto-apply silently
+
+1. Check `board.squares[position]` for teleports (portal, returnTo187) → auto-apply silently
 2. Check `board.squares` for special content → inject LLM prompt
 
 This is deterministic and happens BEFORE turn advancement.
@@ -60,6 +66,7 @@ This is deterministic and happens BEFORE turn advancement.
 ## Decision Point Pattern
 
 If player lands on a position with `decisionPoints` entry (or graph fork: squares[pos].next.length > 1):
+
 - Check if `activeChoices[position]` is set
 - If not, inject synthetic LLM transcript to prompt decision
 - Block turn advancement until decision is made
@@ -70,10 +77,7 @@ If player lands on a position with `decisionPoints` entry (or graph fork: square
 The orchestrator can inject "fake" user commands to ensure critical steps happen:
 
 ```typescript
-await this.processTranscript(
-  `[SYSTEM: Player landed on square 5. Process encounter.]`,
-  context
-)
+await this.processTranscript(`[SYSTEM: Player landed on square 5. Process encounter.]`, context);
 ```
 
 This guarantees the LLM processes important game events without trusting it to remember.

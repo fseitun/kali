@@ -65,7 +65,6 @@ describe("Orchestrator Integration Tests", () => {
         },
         board: {
           winPosition: 100,
-          moves: {},
           squares: { "0": { type: "empty", next: [1, 15] } },
         },
         decisionPoints: [
@@ -101,7 +100,6 @@ describe("Orchestrator Integration Tests", () => {
         },
         board: {
           winPosition: 100,
-          moves: {},
           squares: { "0": { type: "empty", next: [1, 15] } },
         },
         decisionPoints: [
@@ -147,8 +145,7 @@ describe("Orchestrator Integration Tests", () => {
         },
         board: {
           winPosition: 100,
-          moves: { "4": 14 },
-          squares: {},
+          squares: { "4": { type: "portal", destination: 14 } },
         },
       };
 
@@ -185,8 +182,7 @@ describe("Orchestrator Integration Tests", () => {
         },
         board: {
           winPosition: 100,
-          moves: { "17": 7 },
-          squares: {},
+          squares: { "17": { type: "portal", destination: 7 } },
         },
       };
 
@@ -222,8 +218,7 @@ describe("Orchestrator Integration Tests", () => {
         },
         board: {
           winPosition: 100,
-          moves: { "4": 14 },
-          squares: {},
+          squares: { "4": { type: "portal", destination: 14 } },
         },
       };
 
@@ -268,7 +263,6 @@ describe("Orchestrator Integration Tests", () => {
         },
         board: {
           winPosition: 100,
-          moves: {},
           squares: {
             "5": { type: "animal", name: "Cobra", power: 4, points: 4 },
           },
@@ -307,7 +301,6 @@ describe("Orchestrator Integration Tests", () => {
         },
         board: {
           winPosition: 100,
-          moves: {},
           squares: { "5": { type: "animal", name: "Cobra", power: 4, points: 4 } },
         },
       };
@@ -385,7 +378,6 @@ describe("Orchestrator Integration Tests", () => {
         },
         board: {
           winPosition: 100,
-          moves: {},
           squares: {
             "5": { type: "animal", name: "Cobra", power: 4, points: 4 },
           },
@@ -435,7 +427,6 @@ describe("Orchestrator Integration Tests", () => {
         },
         board: {
           winPosition: 100,
-          moves: {},
           squares: {},
         },
       };
@@ -476,7 +467,6 @@ describe("Orchestrator Integration Tests", () => {
         },
         board: {
           winPosition: 100,
-          moves: {},
           squares: { "0": { type: "empty", next: [1, 15] } },
         },
         decisionPoints: [
@@ -521,7 +511,6 @@ describe("Orchestrator Integration Tests", () => {
         },
         board: {
           winPosition: 100,
-          moves: {},
           squares: { "0": { type: "empty", next: [1, 15] } },
         },
         decisionPoints: [
@@ -576,7 +565,6 @@ describe("Orchestrator Integration Tests", () => {
         },
         board: {
           winPosition: 196,
-          moves: {},
           squares,
         },
         decisionPoints: [],
@@ -605,7 +593,7 @@ describe("Orchestrator Integration Tests", () => {
           p1: { id: "p1", name: "Alice", position: 0, activeChoices: { 0: 1 } },
           p2: { id: "p2", name: "Bob", position: 0, activeChoices: {} },
         },
-        board: { winPosition: 100, moves: {}, squares: {} },
+        board: { winPosition: 100, squares: {} },
         decisionPoints: [{ position: 0, prompt: "Choose A or B?" }],
       };
 
@@ -656,13 +644,12 @@ describe("Orchestrator Integration Tests", () => {
         },
         board: {
           winPosition: 196,
-          moves: { "45": 82 },
           squares: {
             "45": {
               type: "portal",
               name: "Portal Forward",
               destination: 82,
-              inverseMode: "deactivate",
+              inverseMode: "activate",
             },
             "82": {
               type: "portal",
@@ -717,13 +704,12 @@ describe("Orchestrator Integration Tests", () => {
         },
         board: {
           winPosition: 196,
-          moves: { "82": 45 },
           squares: {
             "82": {
               type: "portal",
               name: "Portal Backward",
               destination: 45,
-              inverseMode: "activate",
+              inverseMode: "deactivate",
             },
             "45": {
               type: "portal",
@@ -774,7 +760,6 @@ describe("Orchestrator Integration Tests", () => {
         },
         board: {
           winPosition: 100,
-          moves: {},
           squares: {},
         },
       };
@@ -823,7 +808,6 @@ describe("Orchestrator Integration Tests", () => {
         },
         board: {
           winPosition: 100,
-          moves: {},
           squares: {
             "11": { type: "hazard", name: "Quicksand", effect: "skipTurn" },
           },
@@ -867,7 +851,6 @@ describe("Orchestrator Integration Tests", () => {
         },
         board: {
           winPosition: 100,
-          moves: {},
           squares: {},
         },
       };
@@ -899,7 +882,7 @@ describe("Orchestrator Integration Tests", () => {
           lastRoll: 0,
         },
         players: { p1: { id: "p1", name: "A", position: 0 } },
-        board: { winPosition: 100, moves: {}, squares: {} },
+        board: { winPosition: 100, squares: {} },
       };
       const sm = new StateManager();
       sm.init(initialState);
@@ -923,7 +906,7 @@ describe("Orchestrator Integration Tests", () => {
           p1: { id: "p1", name: "Alice", position: 98 },
           p2: { id: "p2", name: "Bob", position: 80 },
         },
-        board: { winPosition: 100, moves: {}, squares: {} },
+        board: { winPosition: 100, squares: {} },
       };
       const sm = new StateManager();
       sm.init(initialState);
@@ -951,7 +934,6 @@ describe("Orchestrator Integration Tests", () => {
         },
         board: {
           winPosition: 100,
-          moves: {},
           squares: {},
         },
       };
@@ -994,7 +976,6 @@ describe("Orchestrator Integration Tests", () => {
         },
         board: {
           winPosition: 100,
-          moves: {},
           squares: {},
         },
       };
@@ -1035,7 +1016,6 @@ describe("Orchestrator Integration Tests", () => {
         },
         board: {
           winPosition: 100,
-          moves: {},
           squares: {},
         },
       };
@@ -1085,7 +1065,6 @@ describe("Orchestrator Integration Tests", () => {
           winPosition: 196,
           magicDoorPosition: 186,
           magicDoorTarget: 6,
-          moves: {},
           squares: {
             "186": {
               type: "special",
@@ -1195,7 +1174,7 @@ describe("Orchestrator Integration Tests", () => {
           },
           p2: { id: "p2", name: "Bob", position: 0 },
         },
-        board: { winPosition: 196, moves: {}, squares: {} },
+        board: { winPosition: 196, squares: {} },
       };
 
       setupGame(initialState);
@@ -1225,7 +1204,6 @@ describe("Orchestrator Integration Tests", () => {
         },
         board: {
           winPosition: 196,
-          moves: {},
           squares: { "0": { type: "empty", next: [1, 15] } },
         },
         decisionPoints: [

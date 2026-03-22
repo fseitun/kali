@@ -42,16 +42,14 @@ describe("Orchestrator Authority - LLM Adversarial Tests", () => {
       },
       board: {
         winPosition: 100,
-        moves: {
-          "15": 30,
-          "25": 10,
-        },
         squares: {
+          "15": { type: "portal", destination: 30 },
           "20": {
             type: "challenge",
             name: "Dragon",
             description: "Fight or flee",
           },
+          "25": { type: "portal", destination: 10 },
         },
       },
       decisionPoints: [],
@@ -280,7 +278,6 @@ describe("Orchestrator Authority - LLM Adversarial Tests", () => {
       }
       (testState.board as any).squares = squares;
       (testState.board as any).winPosition = 100;
-      (testState.board as any).moves = {};
       (testState.players as any).p1.position = 28;
       (testState.game as any).turn = "p1";
 

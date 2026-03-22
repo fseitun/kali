@@ -34,7 +34,6 @@ describe("Orchestrator - New Action Handlers", () => {
       },
       board: {
         winPosition: 100,
-        moves: {},
         squares: {},
       },
     };
@@ -383,8 +382,7 @@ describe("Orchestrator - New Action Handlers", () => {
     it("auto-applies ladder after position change", async () => {
       testState.board = {
         winPosition: 100,
-        moves: { "10": 25 },
-        squares: {},
+        squares: { "10": { type: "portal", destination: 25 } },
       };
       testState.players.p1.position = 5;
 
@@ -409,8 +407,7 @@ describe("Orchestrator - New Action Handlers", () => {
     it("auto-applies snake after position change", async () => {
       testState.board = {
         winPosition: 100,
-        moves: { "15": 5 },
-        squares: {},
+        squares: { "15": { type: "portal", destination: 5 } },
       };
       testState.players.p1.position = 10;
 
@@ -435,8 +432,7 @@ describe("Orchestrator - New Action Handlers", () => {
     it("applies board moves after PLAYER_ROLLED", async () => {
       testState.board = {
         winPosition: 100,
-        moves: { "10": 25 },
-        squares: {},
+        squares: { "10": { type: "portal", destination: 25 } },
       };
       (testState.players as any).p1.position = 8;
 
@@ -461,8 +457,7 @@ describe("Orchestrator - New Action Handlers", () => {
     it("LLM cannot bypass board moves (orchestrator always applies)", async () => {
       testState.board = {
         winPosition: 100,
-        moves: { "10": 25 },
-        squares: {},
+        squares: { "10": { type: "portal", destination: 25 } },
       };
       testState.players.p1.position = 5;
 
@@ -489,7 +484,6 @@ describe("Orchestrator - New Action Handlers", () => {
     it("triggers LLM call when landing on special square", async () => {
       testState.board = {
         winPosition: 100,
-        moves: {},
         squares: {
           "20": {
             type: "challenge",
@@ -555,7 +549,6 @@ describe("Orchestrator - New Action Handlers", () => {
         },
         board: {
           winPosition: 196,
-          moves: {},
           squares: {
             "16": { type: "animal", name: "Escarabajo", power: 1, points: 1, habitat: "desierto" },
             "21": { type: "animal", name: "Camello", power: 2, points: 2, habitat: "desierto" },

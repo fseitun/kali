@@ -26,7 +26,6 @@ describe("TurnManager", () => {
         p3: { id: "p3", name: "Carol", position: 10 },
       },
       board: {
-        moves: {},
         squares: {},
       },
       decisionPoints: [],
@@ -263,7 +262,7 @@ describe("TurnManager", () => {
     it("should allow non-player paths", async () => {
       await expect(turnManager.assertPlayerTurnOwnership("game.lastRoll")).resolves.not.toThrow();
 
-      await expect(turnManager.assertPlayerTurnOwnership("board.moves")).resolves.not.toThrow();
+      await expect(turnManager.assertPlayerTurnOwnership("board.squares")).resolves.not.toThrow();
     });
 
     it("should handle malformed paths gracefully", async () => {

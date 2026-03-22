@@ -7,7 +7,7 @@ import { Logger } from "@/utils/logger";
  * Handles automatic board mechanics and square-based effects for Kalimba.
  *
  * Responsibilities:
- * - Auto-apply board moves (board.moves: portals, path merge)
+ * - Auto-apply teleports from squares (portals, returnTo187); skip backward when inverseMode
  * - Magic door bounce (overshooting 186)
  * - Apply deterministic square effects from config (points, hearts, skipTurn, item, instrument)
  * - Trigger LLM for narration only (no game-rule state from LLM)
@@ -33,8 +33,8 @@ export class BoardEffectsHandler {
   }
 
   /**
-   * Automatically applies board moves (snakes/ladders) after position changes.
-   * Reads board.moves config and silently applies destination changes.
+   * Applies teleports from squares (portals, returnTo187) after position changes.
+   * Skips backward teleports when player has inverseMode.
    *
    * @param path - State path that was mutated
    */
@@ -51,18 +51,42 @@ export class BoardEffectsHandler {
 
     const state = this.stateManager.getState();
     const board = state.board as Record<string, unknown> | undefined;
-    const moves = board?.moves as Record<string, number> | undefined;
+    const squares = board?.squares as Record<string, Record<string, unknown>> | undefined;
 
-    if (!moves) {
+    if (!squares) {
       return;
     }
 
-    const destination = moves[position.toString()];
-    if (destination !== undefined && destination !== position) {
-      const isLadder = destination > position;
-      const moveType = isLadder ? "ladder" : "snake";
-      Logger.info(`Auto-applying ${moveType}: position ${position} → ${destination}`);
-      this.stateManager.set(path, destination);
+    const squareData = squares[position.toString()];
+    if (squareData) {
+      let destination: number | undefined;
+
+      if (squareData.type === "portal" && typeof squareData.destination === "number") {
+        destination = squareData.destination;
+      } else if (squareData.effect === "returnTo187") {
+        destination = 187;
+      }
+
+      if (destination !== undefined && destination !== position) {
+        const isBackward = destination < position;
+        const match = path.match(/^players\.([^.]+)\.position$/);
+        const playerId = match?.[1];
+        const player = playerId
+          ? (state.players as Record<string, Record<string, unknown>>)?.[playerId]
+          : undefined;
+        const inverseMode = !!player?.inverseMode;
+
+        if (isBackward && inverseMode) {
+          Logger.info(
+            `Skipping backward teleport (inverseMode): position ${position} → ${destination}`,
+          );
+          // Do not apply; player stays
+        } else {
+          const moveType = isBackward ? "snake" : "ladder";
+          Logger.info(`Auto-applying ${moveType}: position ${position} → ${destination}`);
+          this.stateManager.set(path, destination);
+        }
+      }
     }
 
     // Magic door bounce (Kalimba): overshooting 186 bounces back

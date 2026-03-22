@@ -25,7 +25,6 @@ describe("BoardEffectsHandler", () => {
         p2: { id: "p2", name: "Bob", position: 0 },
       },
       board: {
-        moves: {},
         squares: {},
       },
       decisionPoints: [],
@@ -43,7 +42,7 @@ describe("BoardEffectsHandler", () => {
 
   describe("checkAndApplyBoardMoves()", () => {
     it("should do nothing for non-position paths", async () => {
-      stateManager.set("board.moves", { "5": 12 });
+      stateManager.set("board.squares", { "5": { type: "portal", destination: 12 } });
       stateManager.set("players.p1.hearts", 3);
 
       await boardEffectsHandler.checkAndApplyBoardMoves("players.p1.hearts");
@@ -53,7 +52,7 @@ describe("BoardEffectsHandler", () => {
     });
 
     it("should do nothing for non-player paths", async () => {
-      stateManager.set("board.moves", { "5": 12 });
+      stateManager.set("board.squares", { "5": { type: "portal", destination: 12 } });
       stateManager.set("game.lastRoll", 5);
 
       await boardEffectsHandler.checkAndApplyBoardMoves("game.lastRoll");
@@ -61,7 +60,8 @@ describe("BoardEffectsHandler", () => {
       expect(stateManager.get("game.lastRoll")).toBe(5);
     });
 
-    it("should do nothing when no board.moves config exists", async () => {
+    it("should do nothing when no board.squares config exists", async () => {
+      stateManager.set("board", { winPosition: 100 });
       stateManager.set("players.p1.position", 5);
 
       await boardEffectsHandler.checkAndApplyBoardMoves("players.p1.position");
@@ -70,53 +70,93 @@ describe("BoardEffectsHandler", () => {
       expect(stateManager.get("players.p1.position")).toBe(5);
     });
 
-    it("should apply ladder move (destination > current position)", async () => {
-      stateManager.set("board.moves", { "5": 15 }); // Ladder from 5 to 15
+    it("should apply ladder (portal forward)", async () => {
+      stateManager.set("board.squares", {
+        "5": { type: "portal", destination: 15 },
+      });
       stateManager.set("players.p1.position", 5);
 
       await boardEffectsHandler.checkAndApplyBoardMoves("players.p1.position");
 
-      // Position should have moved to ladder destination
       expect(stateManager.get("players.p1.position")).toBe(15);
     });
 
-    it("should apply snake move (destination < current position)", async () => {
-      stateManager.set("board.moves", { "15": 5 }); // Snake from 15 to 5
+    it("should apply snake (portal backward)", async () => {
+      stateManager.set("board.squares", {
+        "15": { type: "portal", destination: 5 },
+      });
       stateManager.set("players.p1.position", 15);
 
       await boardEffectsHandler.checkAndApplyBoardMoves("players.p1.position");
 
-      // Position should have moved to snake destination
       expect(stateManager.get("players.p1.position")).toBe(5);
     });
 
-    it("should do nothing when no move exists for position", async () => {
-      stateManager.set("board.moves", { "10": 20 });
+    it("should apply returnTo187", async () => {
+      stateManager.set("board.squares", {
+        "190": { type: "special", effect: "returnTo187", name: "Calavera" },
+      });
+      stateManager.set("players.p1.position", 190);
+
+      await boardEffectsHandler.checkAndApplyBoardMoves("players.p1.position");
+
+      expect(stateManager.get("players.p1.position")).toBe(187);
+    });
+
+    it("should skip backward teleport when player has inverseMode", async () => {
+      stateManager.set("board.squares", {
+        "82": { type: "portal", destination: 45 },
+      });
+      stateManager.set("players.p1.position", 82);
+      stateManager.set("players.p1.inverseMode", true);
+
+      await boardEffectsHandler.checkAndApplyBoardMoves("players.p1.position");
+
+      // Player stays at 82 (backward teleport skipped)
+      expect(stateManager.get("players.p1.position")).toBe(82);
+    });
+
+    it("should apply forward teleport even when inverseMode", async () => {
+      stateManager.set("board.squares", {
+        "45": { type: "portal", destination: 82 },
+      });
+      stateManager.set("players.p1.position", 45);
+      stateManager.set("players.p1.inverseMode", true);
+
+      await boardEffectsHandler.checkAndApplyBoardMoves("players.p1.position");
+
+      expect(stateManager.get("players.p1.position")).toBe(82);
+    });
+
+    it("should do nothing when square has no teleport", async () => {
+      stateManager.set("board.squares", {
+        "5": { type: "empty", next: [6], prev: [4] },
+        "10": { type: "portal", destination: 20 },
+      });
       stateManager.set("players.p1.position", 5);
 
       await boardEffectsHandler.checkAndApplyBoardMoves("players.p1.position");
 
-      // Position should not have changed
       expect(stateManager.get("players.p1.position")).toBe(5);
     });
 
     it("should do nothing when destination equals current position", async () => {
-      stateManager.set("board.moves", { "5": 5 }); // Same position
+      stateManager.set("board.squares", {
+        "5": { type: "portal", destination: 5 },
+      });
       stateManager.set("players.p1.position", 5);
 
       await boardEffectsHandler.checkAndApplyBoardMoves("players.p1.position");
 
-      // Position should not have changed (no move applied)
       expect(stateManager.get("players.p1.position")).toBe(5);
     });
 
     it("should handle position value that is not a number", async () => {
-      stateManager.set("board.moves", { "5": 15 });
+      stateManager.set("board.squares", { "5": { type: "portal", destination: 15 } });
       stateManager.set("players.p1.position", "invalid" as unknown as number);
 
       await boardEffectsHandler.checkAndApplyBoardMoves("players.p1.position");
 
-      // Should not crash, position stays as-is
       expect(stateManager.get("players.p1.position")).toBe("invalid");
     });
   });

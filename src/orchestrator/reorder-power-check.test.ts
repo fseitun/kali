@@ -42,7 +42,7 @@ describe("reorder-power-check", () => {
         p1: { id: "p1", name: "Alice", position: 10 },
         p2: { id: "p2", name: "Bob", position: 5 },
       },
-      board: { winPosition: 100, moves: {}, squares: {} },
+      board: { winPosition: 100, squares: {} },
       decisionPoints: [],
     };
 

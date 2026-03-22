@@ -31,7 +31,6 @@ export interface Player {
  */
 export interface BoardConfig {
   winPosition?: number;
-  moves?: Record<string, number>;
   squares?: Record<string, SquareData>;
   [key: string]: unknown; // Allow game-specific fields
 }

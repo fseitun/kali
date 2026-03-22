@@ -39,14 +39,22 @@ export function computeNewPositionFromState(
           ? [current + 1]
           : []
         : getNextTargets(sq);
-    const dir = inverseMode ? (sq?.prev ?? (current > 0 ? [current - 1] : [])) : forwardDir;
+    // Normal dice always moves forward; inverseMode does not flip direction
+    const dir = forwardDir;
 
     const saved = activeChoices[current];
     current = saved !== undefined && dir.includes(saved) ? saved : (dir[0] ?? current);
 
     if (i === roll - 1) {
       const landedSq = squares?.[String(current)];
-      const landingHop = inverseMode ? landedSq?.prevOnLanding : landedSq?.nextOnLanding;
+      // inverseMode: only forward landing hops; backward (prevOnLanding) gets inverted to first next
+      let landingHop: number[] | undefined;
+      if (inverseMode && landedSq?.prevOnLanding?.length) {
+        const nextTargets = getNextTargets(landedSq);
+        landingHop = nextTargets?.length ? [nextTargets[0]] : undefined;
+      } else {
+        landingHop = landedSq?.nextOnLanding ?? landedSq?.prevOnLanding;
+      }
       if (landingHop?.length) current = landingHop[0];
     }
   }

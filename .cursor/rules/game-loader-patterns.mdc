@@ -61,7 +61,7 @@ Game metadata (objective, summary) is passed to LLM via system prompt:
 
 ## Current Scope
 
-MVP is Kalimba-only. `BoardEffectsHandler` contains Kalimba board logic (board.moves, magic door, square effects). Game rules come from config; orchestrator executes primitives deterministically.
+MVP is Kalimba-only. `BoardEffectsHandler` contains Kalimba board logic (teleports from squares, magic door, square effects). Game rules come from config; orchestrator executes primitives deterministically.
 
 ## Sound Effects
 

@@ -39,7 +39,8 @@ function validateBoardTopology(
 }
 
 /**
- * Derives board config from squares. winPosition from effect=win, magicDoor from effect=magicDoorCheck, moves from portals.
+ * Derives board config from squares. winPosition from effect=win, magicDoor from effect=magicDoorCheck.
+ * Teleports (portals, returnTo187) are read from squares at runtime; no board.moves.
  */
 function deriveBoardFromSquares(
   squares: Record<string, SquareData>,
@@ -47,22 +48,17 @@ function deriveBoardFromSquares(
   let winPosition = 196;
   let magicDoorPosition: number | undefined;
   let magicDoorTarget = 6;
-  const moves: Record<string, number> = {};
 
   for (const [key, sq] of Object.entries(squares)) {
     const pos = parseInt(key, 10);
     if (Number.isNaN(pos)) continue;
     const effect = sq.effect;
-    const dest = sq.destination;
 
     if (effect === "win") winPosition = pos;
     if (effect === "magicDoorCheck") {
       magicDoorPosition = pos;
       const target = (sq as { target?: number }).target;
       if (typeof target === "number") magicDoorTarget = target;
-    }
-    if (sq.type === "portal" && typeof dest === "number") {
-      moves[key] = dest;
     }
   }
 
@@ -74,7 +70,6 @@ function deriveBoardFromSquares(
     result.magicDoorPosition = magicDoorPosition;
     result.magicDoorTarget = magicDoorTarget;
   }
-  if (Object.keys(moves).length > 0) result.moves = moves;
   return result;
 }
 

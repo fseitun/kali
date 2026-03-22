@@ -42,7 +42,6 @@ describe("Orchestrator Architecture - Authority Model", () => {
     },
     board: {
       winPosition: 100,
-      moves: {},
       squares: {},
     },
   };
