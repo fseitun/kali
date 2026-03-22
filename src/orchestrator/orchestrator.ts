@@ -96,7 +96,7 @@ export class Orchestrator {
     });
 
     llmClient.onRetry = () => {
-      this.speechService.speak(t("llm.retrying"));
+      void this.speechService.speak(t("llm.retrying"));
     };
   }
 
@@ -620,29 +620,39 @@ export class Orchestrator {
     return false;
   }
 
+  private handleNarratePostExecute(
+    action: Extract<PrimitiveAction, { action: "NARRATE" }>,
+    context: ExecutionContext,
+  ): void {
+    const dp = getCurrentDecisionPoint(
+      () => this.stateManager.getState(),
+      () => this.turnManager.getPendingDecisionPrompt(),
+    );
+    const text = action.text;
+    if (dp && text && narrateCoversDecision(text, dp.position, dp.prompt)) {
+      context.justNarratedDecisionAsk = true;
+    }
+  }
+
+  private handlePlayerRolledPostExecute(): boolean {
+    const game = this.stateManager.getState().game as Record<string, unknown> | undefined;
+    const pending = game?.pendingAnimalEncounter as { phase?: string } | null | undefined;
+    return Boolean(pending && ["riddle", "powerCheck", "revenge"].includes(pending.phase ?? ""));
+  }
+
   /**
    * Updates context flags after executing an action. Returns true if skipTrailingNarrate should be set.
    */
   private handlePostExecute(action: PrimitiveAction, context: ExecutionContext): boolean {
     if (action.action === "NARRATE") {
-      const dp = getCurrentDecisionPoint(
-        () => this.stateManager.getState(),
-        () => this.turnManager.getPendingDecisionPrompt(),
-      );
-      const text = action.text;
-      if (dp && text && narrateCoversDecision(text, dp.position, dp.prompt)) {
-        context.justNarratedDecisionAsk = true;
-      }
+      this.handleNarratePostExecute(action, context);
+      return false;
     }
     if (action.action === "PLAYER_ANSWERED" && context.skipTrailingNarrateForPowerCheck) {
       return true;
     }
     if (action.action === "PLAYER_ROLLED") {
-      const game = this.stateManager.getState().game as Record<string, unknown> | undefined;
-      const pending = game?.pendingAnimalEncounter as { phase?: string } | null | undefined;
-      if (pending && ["riddle", "powerCheck", "revenge"].includes(pending.phase ?? "")) {
-        return true;
-      }
+      return this.handlePlayerRolledPostExecute();
     }
     return false;
   }

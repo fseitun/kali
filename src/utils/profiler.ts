@@ -47,7 +47,9 @@ class PerformanceProfiler {
     const grouped = new Map<string, number[]>();
 
     for (const measurement of this.history) {
-      if (!measurement.duration) continue;
+      if (!measurement.duration) {
+        continue;
+      }
 
       const durations = grouped.get(measurement.label) ?? [];
       durations.push(measurement.duration);

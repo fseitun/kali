@@ -46,7 +46,9 @@ export class StatusIndicator {
   }
 
   setState(state: IndicatorState): void {
-    if (this.currentState === state) return;
+    if (this.currentState === state) {
+      return;
+    }
 
     this.orb.classList.remove(this.currentState);
     this.orb.classList.add(state);

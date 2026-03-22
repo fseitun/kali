@@ -11,14 +11,18 @@ export function getCurrentDecisionPoint(
   getPendingDecisionPrompt: () => string | null,
 ): { position: number; prompt: string } | null {
   const prompt = getPendingDecisionPrompt();
-  if (!prompt) return null;
+  if (!prompt) {
+    return null;
+  }
   const state = getState();
   const game = state.game as Record<string, unknown> | undefined;
   const currentTurn = game?.turn as string | undefined;
   const players = state.players as Record<string, Record<string, unknown>> | undefined;
   const currentPlayer = currentTurn ? players?.[currentTurn] : undefined;
   const position = currentPlayer?.position as number | undefined;
-  if (typeof position !== "number") return null;
+  if (typeof position !== "number") {
+    return null;
+  }
   return { position, prompt };
 }
 
@@ -27,11 +31,15 @@ export function getCurrentDecisionPoint(
  */
 export function narrateCoversDecision(text: string, position: number, prompt: string): boolean {
   const t = (text ?? "").trim();
-  if (t.includes(prompt)) return true;
+  if (t.includes(prompt)) {
+    return true;
+  }
   if (position === 0) {
     const hasA = t.includes("camino A") || t.includes("por el A");
     const hasB = t.includes("camino B") || t.includes("por el B");
-    if (hasA && hasB) return true;
+    if (hasA && hasB) {
+      return true;
+    }
   }
   return false;
 }
@@ -49,28 +57,42 @@ export function getDecisionPointApplyState(
   const currentTurn = game?.turn as string | undefined;
   const decisionPoints = getDecisionPoints(state);
 
-  if (!currentTurn || !decisionPoints.length) return null;
+  if (!currentTurn || !decisionPoints.length) {
+    return null;
+  }
 
   const players = state.players as Record<string, Record<string, unknown>> | undefined;
   const currentPlayer = players?.[currentTurn];
-  if (!currentPlayer) return null;
+  if (!currentPlayer) {
+    return null;
+  }
 
   const position = currentPlayer.position as number | undefined;
-  if (typeof position !== "number") return null;
+  if (typeof position !== "number") {
+    return null;
+  }
 
   const decisionPoint = decisionPoints.find((dp) => dp.position === position);
-  if (!decisionPoint) return null;
+  if (!decisionPoint) {
+    return null;
+  }
 
   const choices = currentPlayer.activeChoices as Record<string, number> | undefined;
-  if (choices?.[String(position)] !== undefined) return null; // Already set
+  if (choices?.[String(position)] !== undefined) {
+    return null;
+  } // Already set
 
   const path = `players.${currentTurn}.activeChoices.${position}`;
 
   // Position 0: "A" -> 1, "B" -> 15 (fall through to positionOptions if no match)
   if (position === 0) {
     const first = answer.trim().charAt(0).toUpperCase();
-    if (first === "A") return { path, value: 1 };
-    if (first === "B") return { path, value: 15 };
+    if (first === "A") {
+      return { path, value: 1 };
+    }
+    if (first === "B") {
+      return { path, value: 15 };
+    }
   }
 
   // Branch choice with positionOptions: match answer to target position
@@ -79,14 +101,18 @@ export function getDecisionPointApplyState(
     const trimmed = answer.trim();
     const numMatch = trimmed.match(/\d+/);
     for (const [key, targetPos] of Object.entries(options)) {
-      if (trimmed === key || numMatch?.[0] === key) return { path, value: targetPos };
+      if (trimmed === key || numMatch?.[0] === key) {
+        return { path, value: targetPos };
+      }
     }
   }
 
   const keywords = decisionPoint.choiceKeywords;
   if (keywords) {
     const matched = matchAnswerToChoiceKeywords(answer, keywords);
-    if (matched !== null) return { path, value: matched };
+    if (matched !== null) {
+      return { path, value: matched };
+    }
   }
 
   return null;

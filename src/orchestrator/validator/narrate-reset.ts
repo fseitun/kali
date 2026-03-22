@@ -5,7 +5,9 @@ import type { ValidationResult } from "./types";
 export function validateNarrate(action: PrimitiveAction, index: number): ValidationResult {
   const actionRecord = action as unknown as Record<string, unknown>;
   const textValidation = validateField(actionRecord, "text", "string", "NARRATE", index);
-  if (!textValidation.valid) return textValidation;
+  if (!textValidation.valid) {
+    return textValidation;
+  }
 
   if (
     "soundEffect" in actionRecord &&

@@ -32,23 +32,45 @@ export function getSquareKind(squareData: Record<string, unknown>): SpecialSquar
   const type = squareData.type as string | undefined;
   const effect = squareData.effect as string | undefined;
 
-  if (type === "animal") return "animal";
-  if (type === "portal") return "portal";
+  if (type === "animal") {
+    return "animal";
+  }
+  if (type === "portal") {
+    return "portal";
+  }
   if (type === "item") {
     const item = squareData.item as string | undefined;
-    if (item === "scimitar") return "heart";
-    if (item === "torch" || item === "anti-wasp") return "protectionItem";
+    if (item === "scimitar") {
+      return "heart";
+    }
+    if (item === "torch" || item === "anti-wasp") {
+      return "protectionItem";
+    }
   }
   if (type === "hazard") {
-    if (effect === "skipTurn") return "trap";
-    if (effect === "checkTorch" || effect === "checkAntiWasp") return "hazard";
+    if (effect === "skipTurn") {
+      return "trap";
+    }
+    if (effect === "checkTorch" || effect === "checkAntiWasp") {
+      return "hazard";
+    }
   }
   if (type === "special") {
-    if (effect === "jumpToLeader") return "goldenFox";
-    if (effect === "magicDoorCheck") return "magicDoor";
-    if (effect === "returnTo187") return "skull";
-    if (effect === "win") return "win";
-    if (effect === "roll2d6Advance") return "rollAdvance";
+    if (effect === "jumpToLeader") {
+      return "goldenFox";
+    }
+    if (effect === "magicDoorCheck") {
+      return "magicDoor";
+    }
+    if (effect === "returnTo187") {
+      return "skull";
+    }
+    if (effect === "win") {
+      return "win";
+    }
+    if (effect === "roll2d6Advance") {
+      return "rollAdvance";
+    }
     if (
       effect === "roll1d6Directional" ||
       effect === "roll2d6Directional" ||

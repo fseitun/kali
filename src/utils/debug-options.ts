@@ -42,7 +42,9 @@ export function subscribeToCategoryChanges(callback: () => void): () => void {
   categoryChangeListeners.push(callback);
   return () => {
     const i = categoryChangeListeners.indexOf(callback);
-    if (i >= 0) categoryChangeListeners.splice(i, 1);
+    if (i >= 0) {
+      categoryChangeListeners.splice(i, 1);
+    }
   };
 }
 

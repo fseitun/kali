@@ -22,8 +22,12 @@ export function levenshtein(a: string, b: string): number {
   const cols = lenB + 1;
   const d: number[] = new Array(rows * cols);
 
-  for (let i = 0; i <= lenA; i++) d[i * cols] = i;
-  for (let j = 0; j <= lenB; j++) d[j] = j;
+  for (let i = 0; i <= lenA; i++) {
+    d[i * cols] = i;
+  }
+  for (let j = 0; j <= lenB; j++) {
+    d[j] = j;
+  }
 
   for (let i = 1; i <= lenA; i++) {
     for (let j = 1; j <= lenB; j++) {
@@ -60,7 +64,9 @@ export function isWakeWordMatch(
   variants: readonly string[],
   maxEditDistance = 1,
 ): boolean {
-  if (!transcript.trim()) return false;
+  if (!transcript.trim()) {
+    return false;
+  }
 
   const normalized = normalizeForWakeWord(transcript);
 
@@ -74,10 +80,16 @@ export function isWakeWordMatch(
   const normalizedVariants = variants.map((v) => normalizeForWakeWord(v));
 
   for (const word of words) {
-    if (word.length < 3 || word.length > 10) continue;
+    if (word.length < 3 || word.length > 10) {
+      continue;
+    }
     for (const variant of normalizedVariants) {
-      if (Math.abs(word.length - variant.length) > maxEditDistance) continue;
-      if (levenshtein(word, variant) <= maxEditDistance) return true;
+      if (Math.abs(word.length - variant.length) > maxEditDistance) {
+        continue;
+      }
+      if (levenshtein(word, variant) <= maxEditDistance) {
+        return true;
+      }
     }
   }
 

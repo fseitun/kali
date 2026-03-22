@@ -37,7 +37,9 @@ function handleVisibilityChange(): void {
  */
 export async function acquireScreenWakeLock(): Promise<void> {
   const wakeLock = getWakeLock();
-  if (!wakeLock) return;
+  if (!wakeLock) {
+    return;
+  }
 
   try {
     const s = await wakeLock.request("screen");
@@ -49,10 +51,11 @@ export async function acquireScreenWakeLock(): Promise<void> {
       document.addEventListener("visibilitychange", visibilityHandler);
     }
 
-    if (s)
+    if (s) {
       s.addEventListener("release", () => {
         sentinel = null;
       });
+    }
   } catch {
     // Permission denied, low battery, etc. Degrade silently.
   }

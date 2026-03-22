@@ -163,9 +163,13 @@ export class WakeWordDetector {
   }
 
   private processAudioData(pcm16: Int16Array): void {
-    if (!this.recognizer || !this.isListening) return;
+    if (!this.recognizer || !this.isListening) {
+      return;
+    }
 
-    if (pcm16.length === 0) return;
+    if (pcm16.length === 0) {
+      return;
+    }
 
     let hasNonZeroSamples = false;
     for (let i = 0; i < pcm16.length; i++) {
@@ -175,7 +179,9 @@ export class WakeWordDetector {
       }
     }
 
-    if (!hasNonZeroSamples) return;
+    if (!hasNonZeroSamples) {
+      return;
+    }
 
     try {
       const float32 = new Float32Array(pcm16.length);
@@ -189,43 +195,47 @@ export class WakeWordDetector {
     }
   }
 
+  private handleListeningResult(text: string): void {
+    const wakeWordDetected = isWakeWordMatch(
+      text,
+      CONFIG.WAKE_WORD.TEXT,
+      CONFIG.WAKE_WORD.FUZZY_MAX_EDIT_DISTANCE,
+    );
+    if (this.onRawTranscription) {
+      this.onRawTranscription(text, wakeWordDetected ? text : "...", wakeWordDetected);
+    }
+    if (wakeWordDetected) {
+      Logger.wakeWord("Wake word detected!");
+      this.state = DetectorState.TRANSCRIBING;
+      this.onWakeWord();
+      this.startTranscriptionTimeout();
+    }
+  }
+
+  private handleTranscribingResult(text: string): void {
+    let cleanedText = text;
+    CONFIG.WAKE_WORD.TEXT.forEach((word) => {
+      const regex = new RegExp(`\\b${word}\\b`, "gi");
+      cleanedText = cleanedText.replace(regex, "");
+    });
+    cleanedText = cleanedText.trim();
+    Logger.transcription(`Transcription: "${text}"`);
+    if (this.onRawTranscription) {
+      this.onRawTranscription(text, cleanedText, true);
+    }
+    this.onTranscription(cleanedText);
+    this.resetToWakeWordMode();
+  }
+
   private handleResult(result: RecognitionResult, isPartial: boolean): void {
     const text = result.text ?? result.partial ?? "";
-    if (!text.trim()) return;
-
+    if (!text.trim()) {
+      return;
+    }
     if (this.state === DetectorState.LISTENING_FOR_WAKE_WORD) {
-      const wakeWordDetected = isWakeWordMatch(
-        text,
-        CONFIG.WAKE_WORD.TEXT,
-        CONFIG.WAKE_WORD.FUZZY_MAX_EDIT_DISTANCE,
-      );
-
-      if (this.onRawTranscription) {
-        this.onRawTranscription(text, wakeWordDetected ? text : "...", wakeWordDetected);
-      }
-
-      if (wakeWordDetected) {
-        Logger.wakeWord("Wake word detected!");
-        this.state = DetectorState.TRANSCRIBING;
-        this.onWakeWord();
-        this.startTranscriptionTimeout();
-      }
-    } else if (this.state === DetectorState.TRANSCRIBING) {
-      if (!isPartial && text.trim()) {
-        let cleanedText = text;
-        CONFIG.WAKE_WORD.TEXT.forEach((word) => {
-          const regex = new RegExp(`\\b${word}\\b`, "gi");
-          cleanedText = cleanedText.replace(regex, "");
-        });
-        cleanedText = cleanedText.trim();
-
-        Logger.transcription(`Transcription: "${text}"`);
-        if (this.onRawTranscription) {
-          this.onRawTranscription(text, cleanedText, true);
-        }
-        this.onTranscription(cleanedText);
-        this.resetToWakeWordMode();
-      }
+      this.handleListeningResult(text);
+    } else if (this.state === DetectorState.TRANSCRIBING && !isPartial) {
+      this.handleTranscribingResult(text);
     }
   }
 

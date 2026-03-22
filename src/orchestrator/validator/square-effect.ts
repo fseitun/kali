@@ -23,10 +23,14 @@ export function validateSquareEffectPathRestriction(
   index: number,
   isProcessingEffect: boolean,
 ): ValidationResult {
-  if (!isProcessingEffect) return { valid: true };
+  if (!isProcessingEffect) {
+    return { valid: true };
+  }
 
   const playerMatch = path.match(/^players\.([^.]+)\.(.+)$/);
-  if (!playerMatch) return { valid: true };
+  if (!playerMatch) {
+    return { valid: true };
+  }
 
   const key = playerMatch[2];
   if (SQUARE_EFFECT_FORBIDDEN_PLAYER_KEYS.has(key)) {

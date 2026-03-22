@@ -22,7 +22,9 @@ export class SpeechService implements ISpeechService {
    * Required on some browsers to avoid delays on first TTS call.
    */
   prime(): void {
-    if (!window.speechSynthesis || this.primed) return;
+    if (!window.speechSynthesis || this.primed) {
+      return;
+    }
 
     window.speechSynthesis.cancel();
     const utterance = new SpeechSynthesisUtterance("");

@@ -38,7 +38,9 @@ export class DebugUIService implements IUIService {
   }
 
   private setupExportButton(): void {
-    if (!window.location.pathname.includes("/debug")) return;
+    if (!window.location.pathname.includes("/debug")) {
+      return;
+    }
     this.exportButton = createExportLogsButton();
     document.body.appendChild(this.exportButton);
   }
@@ -55,26 +57,29 @@ export class DebugUIService implements IUIService {
     return getEnabledCategories().has(entry.category);
   }
 
+  private formatErrorArg(arg: unknown): string {
+    if (arg && typeof arg === "object" && "message" in arg && "stack" in arg) {
+      const e = arg as { message?: string; stack?: string; name?: string };
+      return e.stack ?? `${e.name ?? "Error"}: ${e.message ?? ""}`;
+    }
+    return JSON.stringify(arg);
+  }
+
   private formatErrorContext(entry: LogEntry): string {
-    const parts: string[] = [];
     const args = entry.context?.args as unknown[] | undefined;
     if (args?.length) {
-      for (const a of args) {
-        if (a && typeof a === "object" && "message" in a && "stack" in a) {
-          const e = a as { message?: string; stack?: string; name?: string };
-          parts.push(e.stack ?? `${e.name ?? "Error"}: ${e.message ?? ""}`);
-        } else {
-          parts.push(JSON.stringify(a));
-        }
-      }
-    } else if (entry.stack) {
-      parts.push(entry.stack);
+      return args.map((a) => this.formatErrorArg(a)).join("\n");
     }
-    return parts.join("\n");
+    if (entry.stack) {
+      return entry.stack;
+    }
+    return "";
   }
 
   private getFullPromptOrResponse(entry: LogEntry): string | null {
-    if (entry.category !== "prompt") return null;
+    if (entry.category !== "prompt") {
+      return null;
+    }
     const args = entry.context?.args as unknown[] | undefined;
     const first = args?.[0];
     if (first && typeof first === "object") {
@@ -85,14 +90,54 @@ export class DebugUIService implements IUIService {
   }
 
   private getLlmContextArgs(entry: LogEntry): string | null {
-    if (entry.category !== "llm") return null;
+    if (entry.category !== "llm") {
+      return null;
+    }
     const args = entry.context?.args as unknown[] | undefined;
-    if (!args?.length) return null;
+    if (!args?.length) {
+      return null;
+    }
     try {
       return JSON.stringify(args, null, 2);
     } catch {
       return null;
     }
+  }
+
+  private appendErrorDetails(wrap: HTMLElement, entry: LogEntry): void {
+    const args = entry.context?.args as unknown[] | undefined;
+    const hasErrorDetails =
+      (entry.level === "error" || entry.level === "warn") &&
+      (Boolean(entry.stack) || (args?.length ?? 0) > 0);
+    if (!hasErrorDetails) {
+      return;
+    }
+    const details = document.createElement("pre");
+    details.className = "log-entry-details";
+    details.textContent = this.formatErrorContext(entry);
+    wrap.appendChild(details);
+  }
+
+  private appendFullPrompt(wrap: HTMLElement, entry: LogEntry): void {
+    const text = this.getFullPromptOrResponse(entry);
+    if (!text) {
+      return;
+    }
+    const details = document.createElement("pre");
+    details.className = "log-entry-prompt";
+    details.textContent = text;
+    wrap.appendChild(details);
+  }
+
+  private appendLlmContext(wrap: HTMLElement, entry: LogEntry): void {
+    const text = this.getLlmContextArgs(entry);
+    if (!text) {
+      return;
+    }
+    const details = document.createElement("pre");
+    details.className = "log-entry-details";
+    details.textContent = text;
+    wrap.appendChild(details);
   }
 
   private renderEntry(entry: LogEntry): void {
@@ -108,32 +153,9 @@ export class DebugUIService implements IUIService {
     }
     wrap.appendChild(main);
 
-    const args = entry.context?.args as unknown[] | undefined;
-    const hasErrorDetails =
-      (entry.level === "error" || entry.level === "warn") &&
-      (Boolean(entry.stack) || (args?.length ?? 0) > 0);
-    if (hasErrorDetails) {
-      const details = document.createElement("pre");
-      details.className = "log-entry-details";
-      details.textContent = this.formatErrorContext(entry);
-      wrap.appendChild(details);
-    }
-
-    const fullPromptOrResponse = this.getFullPromptOrResponse(entry);
-    if (fullPromptOrResponse) {
-      const details = document.createElement("pre");
-      details.className = "log-entry-prompt";
-      details.textContent = fullPromptOrResponse;
-      wrap.appendChild(details);
-    }
-
-    const llmContextArgs = this.getLlmContextArgs(entry);
-    if (llmContextArgs) {
-      const details = document.createElement("pre");
-      details.className = "log-entry-details";
-      details.textContent = llmContextArgs;
-      wrap.appendChild(details);
-    }
+    this.appendErrorDetails(wrap, entry);
+    this.appendFullPrompt(wrap, entry);
+    this.appendLlmContext(wrap, entry);
 
     this.consoleElement.appendChild(wrap);
     this.consoleElement.scrollTop = this.consoleElement.scrollHeight;

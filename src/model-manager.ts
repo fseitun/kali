@@ -94,7 +94,9 @@ export class ModelManager {
       while (true) {
         const { done, value } = await reader.read();
 
-        if (done) break;
+        if (done) {
+          break;
+        }
 
         chunks.push(value);
         receivedLength += value.length;

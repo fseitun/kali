@@ -55,7 +55,9 @@ export function computeNewPositionFromState(
       } else {
         landingHop = landedSq?.nextOnLanding ?? landedSq?.prevOnLanding;
       }
-      if (landingHop?.length) current = landingHop[0];
+      if (landingHop?.length) {
+        current = landingHop[0];
+      }
     }
   }
 

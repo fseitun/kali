@@ -336,33 +336,60 @@ ${summary ? `**Summary (for NARRATE explanations):** ${summary}\n` : ""}${exampl
     }
   }
 
+  private getCurrentPlayerNameAndPosition(state: {
+    game?: { turn?: string | null };
+    players?: Record<string, { name?: string; position?: number }>;
+  }): { name: string; position: number } | null {
+    const game = state.game as Record<string, unknown> | undefined;
+    const players = state.players as Record<string, Record<string, unknown>> | undefined;
+    const currentTurn = game?.turn as string | undefined;
+    if (!currentTurn || !players?.[currentTurn]) {
+      return null;
+    }
+    const player = players[currentTurn];
+    const name = (player?.name as string) || currentTurn;
+    const position = (player?.position as number) ?? 0;
+    return { name, position };
+  }
+
+  private getCurrentTurnAnnouncementContext(): {
+    name: string;
+    position: number;
+    prompt: string;
+    orchestrator: NonNullable<KaliAppCore["orchestrator"]>;
+  } | null {
+    if (!this.orchestrator || !this.stateManager) {
+      return null;
+    }
+    const pendingPrompt = this.orchestrator.getPendingDecisionPrompt();
+    if (!pendingPrompt) {
+      return null;
+    }
+    const playerInfo = this.getCurrentPlayerNameAndPosition(this.stateManager.getState());
+    if (!playerInfo) {
+      return null;
+    }
+    return {
+      ...playerInfo,
+      prompt: pendingPrompt,
+      orchestrator: this.orchestrator,
+    };
+  }
+
   /**
    * Speaks the current player's turn announcement when they have a pending decision.
    * Used at game start before proactive welcome to ensure one clear "your turn, which path?"
    */
   private async announceCurrentTurnIfPending(): Promise<void> {
-    if (!this.orchestrator || !this.stateManager) return;
-    const pendingPrompt = this.orchestrator.getPendingDecisionPrompt();
-    if (!pendingPrompt) return;
-
-    const state = this.stateManager.getState();
-    const game = state.game as Record<string, unknown> | undefined;
-    const players = state.players as Record<string, Record<string, unknown>> | undefined;
-    const currentTurn = game?.turn as string | undefined;
-    if (!currentTurn || !players?.[currentTurn]) return;
-
-    const player = players[currentTurn];
-    const name = (player?.name as string) || currentTurn;
-    const position = (player?.position as number) ?? 0;
-
-    const message = t("game.turnAnnouncementWithDecision", {
-      name,
-      position,
-      prompt: pendingPrompt,
-    });
-    Logger.info(`Announcing current turn (decision pending): ${name} at ${position}`);
+    const ctx = this.getCurrentTurnAnnouncementContext();
+    if (!ctx) {
+      return;
+    }
+    const { orchestrator, ...tParams } = ctx;
+    const message = t("game.turnAnnouncementWithDecision", tParams);
+    Logger.info(`Announcing current turn (decision pending): ${ctx.name} at ${ctx.position}`);
     await this.speechService.speak(message);
-    this.orchestrator.setLastNarrationForVoicePolicy(message);
+    orchestrator.setLastNarrationForVoicePolicy(message);
   }
 
   /**

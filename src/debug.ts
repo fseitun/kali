@@ -72,12 +72,18 @@ class KaliDebugApp {
     statusElement.textContent = t("ui.clickToStart");
 
     const llmIndicator = document.getElementById("llm-indicator");
-    if (llmIndicator) llmIndicator.textContent = getLLMDisplayLabel();
+    if (llmIndicator) {
+      llmIndicator.textContent = getLLMDisplayLabel();
+    }
 
     const versionNoticeMessage = document.getElementById("version-notice-message");
     const versionRefresh = document.getElementById("version-refresh");
-    if (versionNoticeMessage) versionNoticeMessage.textContent = t("ui.versionNoticeMessage");
-    if (versionRefresh) versionRefresh.textContent = t("ui.versionRefreshButton");
+    if (versionNoticeMessage) {
+      versionNoticeMessage.textContent = t("ui.versionNoticeMessage");
+    }
+    if (versionRefresh) {
+      versionRefresh.textContent = t("ui.versionRefreshButton");
+    }
 
     const versionCurrent = document.getElementById("version-current");
     if (versionCurrent) {
@@ -97,7 +103,9 @@ class KaliDebugApp {
 
   private setupLogOptions(): void {
     const container = document.getElementById("log-categories");
-    if (!container) return;
+    if (!container) {
+      return;
+    }
 
     const defaultEnabled = new Set(["user", "narration"]);
 
@@ -125,7 +133,9 @@ class KaliDebugApp {
     startButton.textContent = t("ui.startKali");
 
     startButton.addEventListener("click", async () => {
-      if (this.core.isInitialized()) return;
+      if (this.core.isInitialized()) {
+        return;
+      }
 
       this.speechService.prime();
       this.uiService.setButtonState(t("ui.status.initializing"), true);
@@ -133,7 +143,9 @@ class KaliDebugApp {
       await this.core.initialize();
 
       const submitButton = document.getElementById("submit-transcript-button") as HTMLButtonElement;
-      if (submitButton) submitButton.disabled = false;
+      if (submitButton) {
+        submitButton.disabled = false;
+      }
     });
   }
 
@@ -149,7 +161,9 @@ class KaliDebugApp {
 
     const submit = async (): Promise<void> => {
       const text = input.value.trim();
-      if (!text) return;
+      if (!text) {
+        return;
+      }
 
       if (!this.core.canAcceptTranscript()) {
         Logger.warn("Kali not initialized");

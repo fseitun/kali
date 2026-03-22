@@ -1,7 +1,56 @@
 import { getDecisionPoints } from "./decision-point-inference";
-import type { ExecutionContext } from "./types";
+import type { DecisionPoint, ExecutionContext, GameState } from "./types";
 import type { StateManager } from "@/state-manager";
 import { Logger } from "@/utils/logger";
+
+function getCurrentPlayerAtDecisionPoint(
+  state: GameState,
+  currentTurn: string,
+): { position: number; playerName: string; decisionPoint: DecisionPoint } | null {
+  const decisionPoints = getDecisionPoints(state);
+  if (decisionPoints.length === 0) {
+    return null;
+  }
+  const players = state.players as Record<string, Record<string, unknown>> | undefined;
+  const currentPlayer = players?.[currentTurn];
+  if (!currentPlayer) {
+    return null;
+  }
+  const position = currentPlayer.position as number | undefined;
+  if (typeof position !== "number") {
+    return null;
+  }
+  const decisionPoint = decisionPoints.find((dp) => dp.position === position);
+  if (!decisionPoint) {
+    return null;
+  }
+  const choices = currentPlayer.activeChoices as Record<string, number> | undefined;
+  if (choices?.[String(position)] !== undefined) {
+    return null;
+  }
+  const playerName = (currentPlayer.name as string) || currentTurn;
+  return { position, playerName, decisionPoint };
+}
+
+function getEnforceableDecisionPoint(
+  state: GameState,
+): { playerId: string; playerName: string; position: number; decisionPoint: DecisionPoint } | null {
+  const game = state.game as Record<string, unknown> | undefined;
+  const currentTurn = game?.turn as string | undefined;
+  if (!currentTurn) {
+    return null;
+  }
+  const info = getCurrentPlayerAtDecisionPoint(state, currentTurn);
+  if (!info) {
+    return null;
+  }
+  return {
+    playerId: currentTurn,
+    playerName: info.playerName,
+    position: info.position,
+    decisionPoint: info.decisionPoint,
+  };
+}
 
 /**
  * Enforces decision point requirements in game flow.
@@ -28,55 +77,22 @@ export class DecisionPointEnforcer {
    * @param context - Execution context
    */
   async enforceDecisionPoints(_context: ExecutionContext): Promise<void> {
-    const state = this.stateManager.getState();
-    const game = state.game as Record<string, unknown> | undefined;
-    const currentTurn = game?.turn as string | undefined;
-
-    if (!currentTurn) {
-      return;
-    }
-
-    const decisionPoints = getDecisionPoints(state);
-
-    if (decisionPoints.length === 0) {
-      return;
-    }
-
     try {
-      const players = state.players as Record<string, Record<string, unknown>> | undefined;
-      const currentPlayer = players?.[currentTurn];
-
-      if (!currentPlayer) {
+      const state = this.stateManager.getState();
+      const info = getEnforceableDecisionPoint(state);
+      if (!info) {
         return;
       }
 
-      const playerName = (currentPlayer.name as string) || currentTurn;
-      const position = currentPlayer.position as number | undefined;
-
-      if (typeof position !== "number") {
-        return;
-      }
-
-      const decisionPoint = decisionPoints.find((dp) => dp.position === position);
-      if (!decisionPoint) {
-        return;
-      }
-
-      const choices = currentPlayer.activeChoices as Record<string, number> | undefined;
-      const hasChoice = choices?.[String(position)] !== undefined;
-
-      if (!hasChoice) {
-        Logger.info(
-          `Orchestrator enforcing decision point for ${playerName} at position ${position}`,
-        );
-
-        const newContext: ExecutionContext = { isNestedCall: true };
-
-        await this.processTranscriptFn(
-          `[SYSTEM: ${playerName} (${currentTurn}) is at position ${position} and MUST choose direction at fork before proceeding. Ask them: "${playerName}, ${decisionPoint.prompt}"]`,
-          newContext,
-        );
-      }
+      const { playerId, playerName, position, decisionPoint } = info;
+      Logger.info(
+        `Orchestrator enforcing decision point for ${playerName} at position ${position}`,
+      );
+      const newContext: ExecutionContext = { isNestedCall: true };
+      await this.processTranscriptFn(
+        `[SYSTEM: ${playerName} (${playerId}) is at position ${position} and MUST choose direction at fork before proceeding. Ask them: "${playerName}, ${decisionPoint.prompt}"]`,
+        newContext,
+      );
     } catch (error) {
       Logger.error("Error enforcing decision points:", error);
     }

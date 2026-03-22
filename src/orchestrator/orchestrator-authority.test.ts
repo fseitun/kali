@@ -69,7 +69,9 @@ describe("Orchestrator Authority - LLM Adversarial Tests", () => {
         const parts = path.split(".");
         let current: Record<string, unknown> = state;
         for (const part of parts) {
-          if (!(part in current)) return false;
+          if (!(part in current)) {
+            return false;
+          }
           current = current[part] as Record<string, unknown>;
         }
         return true;
@@ -183,7 +185,9 @@ describe("Orchestrator Authority - LLM Adversarial Tests", () => {
     it("allows SET_STATE for position but orchestrator still applies board moves", async () => {
       let currentPosition = 10;
       mockStateManager.get = vi.fn((path: string) => {
-        if (path === "players.p1.position") return currentPosition;
+        if (path === "players.p1.position") {
+          return currentPosition;
+        }
         return undefined;
       });
       mockStateManager.set = vi.fn(async (path: string, value: unknown) => {
@@ -206,7 +210,9 @@ describe("Orchestrator Authority - LLM Adversarial Tests", () => {
       (testState.players as any).p1.position = 15;
 
       mockStateManager.get = vi.fn((path: string) => {
-        if (path === "players.p1.position") return testState.players.p1.position;
+        if (path === "players.p1.position") {
+          return testState.players.p1.position;
+        }
         return undefined;
       });
       mockStateManager.set = vi.fn(async (path: string, value: unknown) => {
@@ -255,7 +261,9 @@ describe("Orchestrator Authority - LLM Adversarial Tests", () => {
     it("orchestrator applies board moves after PLAYER_ROLLED", async () => {
       let currentPosition = 10;
       mockStateManager.get = vi.fn((path: string) => {
-        if (path === "players.p1.position") return currentPosition;
+        if (path === "players.p1.position") {
+          return currentPosition;
+        }
         return undefined;
       });
       mockStateManager.set = vi.fn(async (path: string, value: unknown) => {
@@ -292,7 +300,9 @@ describe("Orchestrator Authority - LLM Adversarial Tests", () => {
 
       mockStateManager.getState = vi.fn(() => testState);
       mockStateManager.get = vi.fn((path: string) => {
-        if (path === "players.p1.position") return testState.players.p1.position;
+        if (path === "players.p1.position") {
+          return testState.players.p1.position;
+        }
         return undefined;
       });
       mockStateManager.set = vi.fn(async (path: string, value: unknown) => {
@@ -482,7 +492,9 @@ describe("Orchestrator Authority - LLM Adversarial Tests", () => {
 
       mockStateManager.getState = vi.fn(() => testState);
       mockStateManager.get = vi.fn((path: string) => {
-        if (path === "players.p1.position") return testState.players.p1.position;
+        if (path === "players.p1.position") {
+          return testState.players.p1.position;
+        }
         return undefined;
       });
       mockStateManager.set = vi.fn(async (path: string, value: unknown) => {
@@ -524,7 +536,9 @@ describe("Orchestrator Authority - LLM Adversarial Tests", () => {
 
       mockStateManager.getState = vi.fn(() => testState);
       mockStateManager.get = vi.fn((path: string) => {
-        if (path === "players.p1.position") return testState.players.p1.position;
+        if (path === "players.p1.position") {
+          return testState.players.p1.position;
+        }
         return undefined;
       });
       mockStateManager.set = vi.fn(async (path: string, value: unknown) => {
@@ -563,8 +577,12 @@ describe("Orchestrator Authority - LLM Adversarial Tests", () => {
 
       mockStateManager.getState = vi.fn(() => testState);
       mockStateManager.get = vi.fn((path: string) => {
-        if (path === "players.p1.position") return testState.players.p1.position;
-        if (path === "players.p1.points") return testState.players.p1.points;
+        if (path === "players.p1.position") {
+          return testState.players.p1.position;
+        }
+        if (path === "players.p1.points") {
+          return testState.players.p1.points;
+        }
         return undefined;
       });
       mockStateManager.set = vi.fn(async (path: string, value: unknown) => {

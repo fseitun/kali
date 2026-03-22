@@ -44,17 +44,25 @@ class KaliApp {
   }
 
   private setupExportButton(): void {
-    if (!CONFIG.UI.SHOW_EXPORT_BUTTON) return;
+    if (!CONFIG.UI.SHOW_EXPORT_BUTTON) {
+      return;
+    }
     initLogBuffer();
     document.body.appendChild(createExportLogsButton());
   }
 
   private setupIosInstallHint(): void {
-    if (this.isAlreadyInstalled()) return;
-    if (!this.isIos()) return;
+    if (this.isAlreadyInstalled()) {
+      return;
+    }
+    if (!this.isIos()) {
+      return;
+    }
 
     const hint = document.getElementById("ios-install-hint");
-    if (!hint) return;
+    if (!hint) {
+      return;
+    }
 
     hint.textContent = t("ui.iosInstallHint");
     hint.hidden = false;
@@ -75,7 +83,9 @@ class KaliApp {
     startButton.textContent = t("ui.startKali");
 
     startButton.addEventListener("click", async () => {
-      if (this.core.isInitialized()) return;
+      if (this.core.isInitialized()) {
+        return;
+      }
 
       this.speechService.prime();
       this.uiService.setButtonState(t("ui.status.initializing"), true);
@@ -102,8 +112,12 @@ document.addEventListener("DOMContentLoaded", () => {
   console.log("Kali build:", CONFIG.BUILD_ID);
   const versionNoticeMessage = document.getElementById("version-notice-message");
   const versionRefresh = document.getElementById("version-refresh");
-  if (versionNoticeMessage) versionNoticeMessage.textContent = t("ui.versionNoticeMessage");
-  if (versionRefresh) versionRefresh.textContent = t("ui.versionRefreshButton");
+  if (versionNoticeMessage) {
+    versionNoticeMessage.textContent = t("ui.versionNoticeMessage");
+  }
+  if (versionRefresh) {
+    versionRefresh.textContent = t("ui.versionRefreshButton");
+  }
   setupVersionRefreshPrompt();
   const versionCurrent = document.getElementById("version-current");
   if (versionCurrent) {

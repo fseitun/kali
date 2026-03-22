@@ -16,7 +16,9 @@ export function validatePlayerAnswered(
     "PLAYER_ANSWERED",
     index,
   );
-  if (!answerValidation.valid) return answerValidation;
+  if (!answerValidation.valid) {
+    return answerValidation;
+  }
 
   // Answer cannot be empty
   if ("answer" in action && typeof action.answer === "string") {
@@ -37,7 +39,9 @@ export function validatePlayerAnswered(
   ];
   const decisionPoints = getDecisionPoints(state);
 
-  if (!currentTurn || !currentPlayer) return { valid: true };
+  if (!currentTurn || !currentPlayer) {
+    return { valid: true };
+  }
 
   // Riddle phase with structured options: accept any non-empty answer; orchestrator does strict match then LLM
   const pending = game?.pendingAnimalEncounter as
@@ -66,7 +70,9 @@ export function validatePlayerAnswered(
   ) {
     const rollStr = answer.trim().replace(/\D/g, "") || answer.trim();
     const roll = parseInt(rollStr, 10);
-    if (Number.isNaN(roll)) return { valid: true }; // non-numeric falls through to other rules
+    if (Number.isNaN(roll)) {
+      return { valid: true };
+    } // non-numeric falls through to other rules
     const is2d6 =
       pendingWithRiddle.phase === "powerCheck" && pendingWithRiddle.riddleCorrect === true;
     const minRoll = is2d6 ? 2 : 1;
@@ -89,7 +95,9 @@ export function validatePlayerAnswered(
   const firstChar = answer.charAt(0).toUpperCase();
   if (firstChar === "A" || firstChar === "B") {
     const pathChoiceDp = decisionPoints.find((dp) => dp.position === 0);
-    if (!pathChoiceDp) return { valid: true };
+    if (!pathChoiceDp) {
+      return { valid: true };
+    }
     const atDecisionSquare = typeof position === "number" && position === 0;
     const hasPendingPathChoice = atDecisionSquare && !hasChoiceAt(0);
     if (!hasPendingPathChoice) {
@@ -104,19 +112,27 @@ export function validatePlayerAnswered(
 
   // positionOptions answers (e.g. "1", "15", "97", "99") can only be applied when at that fork with pending choice.
   // Only validate when we're actually at a decision point; otherwise "1" at position 1 would wrongly match position 0's option "1".
-  if (!decisionPoints.length) return { valid: true };
+  if (!decisionPoints.length) {
+    return { valid: true };
+  }
   const numMatch = answer.match(/\d+/);
   for (const dp of decisionPoints) {
     const atFork = typeof position === "number" && position === dp.position;
     const hasPending = atFork && !hasChoiceAt(dp.position);
-    if (!atFork || !hasPending) continue;
+    if (!atFork || !hasPending) {
+      continue;
+    }
 
     const options = dp.positionOptions;
-    if (!options) continue;
+    if (!options) {
+      continue;
+    }
     const matchesOption = Object.keys(options).some(
       (key) => answer === key || numMatch?.[0] === key,
     );
-    if (matchesOption) return { valid: true };
+    if (matchesOption) {
+      return { valid: true };
+    }
   }
 
   return { valid: true };

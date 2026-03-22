@@ -294,7 +294,9 @@ describe("NameCollector - Runtime Flow", () => {
 
     const sendAsync = async (text: string): Promise<void> => {
       const fn = transcriptHandler;
-      if (!fn) throw new Error("transcriptHandler not set");
+      if (!fn) {
+        throw new Error("transcriptHandler not set");
+      }
       await (fn as (t: string) => Promise<void>)(text);
     };
 
@@ -326,7 +328,9 @@ describe("NameCollector - Runtime Flow", () => {
 
     const sendAsync = async (text: string): Promise<void> => {
       const fn = transcriptHandler;
-      if (!fn) throw new Error("transcriptHandler not set");
+      if (!fn) {
+        throw new Error("transcriptHandler not set");
+      }
       await (fn as (t: string) => Promise<void>)(text);
     };
 

@@ -1,7 +1,21 @@
 import { getDecisionPoints } from "./decision-point-inference";
+import type { DecisionPoint } from "./types";
 import { GamePhase } from "./types";
 import type { StateManager } from "@/state-manager";
 import { Logger } from "@/utils/logger";
+
+function getPendingDecisionPromptAt(
+  decisionPoints: DecisionPoint[],
+  position: number,
+  activeChoices: Record<string, number> | undefined,
+): string | null {
+  const decisionPoint = decisionPoints.find((dp) => dp.position === position);
+  if (!decisionPoint) {
+    return null;
+  }
+  const hasChoice = activeChoices?.[String(position)] !== undefined;
+  return hasChoice ? null : decisionPoint.prompt;
+}
 
 /**
  * Manages turn-based gameplay mechanics.
@@ -26,13 +40,11 @@ export class TurnManager {
     const state = this.stateManager.getState();
     const game = state.game as Record<string, unknown> | undefined;
     const currentTurn = game?.turn as string | undefined;
-
     if (!currentTurn) {
       return null;
     }
 
     const decisionPoints = getDecisionPoints(state);
-
     if (decisionPoints.length === 0) {
       return null;
     }
@@ -40,29 +52,17 @@ export class TurnManager {
     try {
       const players = state.players as Record<string, Record<string, unknown>> | undefined;
       const currentPlayer = players?.[currentTurn];
-
       if (!currentPlayer) {
         return null;
       }
 
       const position = currentPlayer.position as number | undefined;
-
       if (typeof position !== "number") {
         return null;
       }
 
-      const decisionPoint = decisionPoints.find((dp) => dp.position === position);
-      if (!decisionPoint) {
-        return null;
-      }
-
-      const choices = currentPlayer.activeChoices as Record<string, number> | undefined;
-      const hasChoice = choices?.[String(position)] !== undefined;
-      if (!hasChoice) {
-        return decisionPoint.prompt;
-      }
-
-      return null;
+      const activeChoices = currentPlayer.activeChoices as Record<string, number> | undefined;
+      return getPendingDecisionPromptAt(decisionPoints, position, activeChoices);
     } catch (error) {
       Logger.error("Error getting pending decision prompt:", error);
       return null;
@@ -266,7 +266,9 @@ export class TurnManager {
     const currentTurn = game?.turn as string | undefined;
     const playerOrder = game?.playerOrder as string[] | undefined;
 
-    if (!game || !players || !currentTurn || !playerOrder?.length) return null;
+    if (!game || !players || !currentTurn || !playerOrder?.length) {
+      return null;
+    }
 
     const currentIndex = playerOrder.indexOf(currentTurn);
     const nextIndex = (currentIndex + 1) % playerOrder.length;

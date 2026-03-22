@@ -152,6 +152,36 @@ export async function executePlayerAnswered(
   }
 }
 
+function extractPlayerNames(state: unknown): Map<string, string> {
+  const playerNames = new Map<string, string>();
+  const players = (state as { players?: Record<string, { name: string }> }).players;
+  if (!players) {
+    return playerNames;
+  }
+  for (const [id, player] of Object.entries(players)) {
+    playerNames.set(id, player.name);
+  }
+  return playerNames;
+}
+
+function restorePlayerNames(ctx: ActionExecutorContext, playerNames: Map<string, string>): void {
+  const state = ctx.stateManager.getState();
+  const game = state.game as Record<string, unknown> | undefined;
+  const playerOrder = game?.playerOrder as string[] | undefined;
+  if (!playerOrder?.length) {
+    Logger.warn("keepPlayerNames=true but no playerOrder found after reset");
+    return;
+  }
+  Logger.info(`Restoring ${playerNames.size} player names`);
+  for (const playerId of playerOrder) {
+    const savedName = playerNames.get(playerId);
+    if (savedName) {
+      ctx.stateManager.set(`players.${playerId}.name`, savedName);
+      Logger.info(`Restored player ${playerId}: "${savedName}"`);
+    }
+  }
+}
+
 export async function executeResetGame(
   ctx: ActionExecutorContext,
   primitive: Extract<PrimitiveAction, { action: "RESET_GAME" }>,
@@ -159,14 +189,11 @@ export async function executeResetGame(
 ): Promise<void> {
   Logger.info(`Resetting game state (keepPlayerNames: ${primitive.keepPlayerNames})`);
 
-  const playerNames: Map<string, string> = new Map();
+  let playerNames = new Map<string, string>();
   if (primitive.keepPlayerNames) {
     const currentState = ctx.stateManager.getState();
-    const players = currentState.players as Record<string, { name: string }> | undefined;
-    if (players) {
-      for (const [id, player] of Object.entries(players)) {
-        playerNames.set(id, player.name);
-      }
+    playerNames = extractPlayerNames(currentState);
+    if (playerNames.size > 0) {
       Logger.info(
         `Extracted ${playerNames.size} player names: [${Array.from(playerNames.values()).join(", ")}]`,
       );
@@ -179,22 +206,7 @@ export async function executeResetGame(
   Logger.info("State reset to initial state");
 
   if (primitive.keepPlayerNames && playerNames.size > 0) {
-    const state = ctx.stateManager.getState();
-    const game = state.game as Record<string, unknown> | undefined;
-    const playerOrder = game?.playerOrder as string[] | undefined;
-
-    if (playerOrder && playerOrder.length > 0) {
-      Logger.info(`Restoring ${playerNames.size} player names`);
-      for (const playerId of playerOrder) {
-        const savedName = playerNames.get(playerId);
-        if (savedName) {
-          ctx.stateManager.set(`players.${playerId}.name`, savedName);
-          Logger.info(`Restored player ${playerId}: "${savedName}"`);
-        }
-      }
-    } else {
-      Logger.warn("keepPlayerNames=true but no playerOrder found after reset");
-    }
+    restorePlayerNames(ctx, playerNames);
   }
 
   Logger.info("Game state reset complete");

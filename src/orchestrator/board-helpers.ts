@@ -20,11 +20,15 @@ export function findSquareByEffect(
   squares: Record<string, SquareLike> | undefined,
   effect: string,
 ): { position: number; square: SquareLike } | null {
-  if (!squares) return null;
+  if (!squares) {
+    return null;
+  }
   for (const [key, sq] of Object.entries(squares)) {
     if (sq?.effect === effect) {
       const pos = parseInt(key, 10);
-      if (!Number.isNaN(pos)) return { position: pos, square: sq };
+      if (!Number.isNaN(pos)) {
+        return { position: pos, square: sq };
+      }
     }
   }
   return null;

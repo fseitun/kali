@@ -24,17 +24,26 @@ function validateBoardTopology(
       (Array.isArray(sq.next) ? sq.next.length > 0 : Object.keys(sq.next as object).length > 0);
     const hasPrev = Array.isArray(sq.prev) && sq.prev.length > 0;
     if (i === 0) {
-      if (!hasNext) throw new Error(`Invalid game config: square 0 must have next`);
+      if (!hasNext) {
+        throw new Error(`Invalid game config: square 0 must have next`);
+      }
       if (sq.prev && (sq.prev as unknown[]).length > 0) {
         throw new Error(`Invalid game config: square 0 must have empty prev`);
       }
     } else if (i === boardLength) {
-      if (hasNext)
+      if (hasNext) {
         throw new Error(`Invalid game config: square ${boardLength} must have empty next`);
-      if (!hasPrev) throw new Error(`Invalid game config: square ${boardLength} must have prev`);
+      }
+      if (!hasPrev) {
+        throw new Error(`Invalid game config: square ${boardLength} must have prev`);
+      }
     } else {
-      if (!hasNext) throw new Error(`Invalid game config: square ${key} must have next`);
-      if (!hasPrev) throw new Error(`Invalid game config: square ${key} must have prev`);
+      if (!hasNext) {
+        throw new Error(`Invalid game config: square ${key} must have next`);
+      }
+      if (!hasPrev) {
+        throw new Error(`Invalid game config: square ${key} must have prev`);
+      }
     }
   }
 }
@@ -106,7 +115,9 @@ function buildInitialStateFromParts(config: GameConfigInput): GameState {
   };
 
   const state: GameState = { game, players, board };
-  if (stateDisplay) (state as Record<string, unknown>).stateDisplay = stateDisplay;
+  if (stateDisplay) {
+    (state as Record<string, unknown>).stateDisplay = stateDisplay;
+  }
   return state;
 }
 

@@ -57,7 +57,11 @@ export function getConfirmationWords(): { yes: string[]; no: string[] } {
 export function parseConfirmation(text: string): "yes" | "no" | "unclear" {
   const lower = text.toLowerCase().trim();
   const { yes, no } = getConfirmationWords();
-  if (yes.some((word) => lower.includes(word))) return "yes";
-  if (no.some((word) => lower.includes(word))) return "no";
+  if (yes.some((word) => lower.includes(word))) {
+    return "yes";
+  }
+  if (no.some((word) => lower.includes(word))) {
+    return "no";
+  }
   return "unclear";
 }

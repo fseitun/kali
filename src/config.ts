@@ -31,8 +31,12 @@ export const CONFIG = {
   LOCALE: (() => {
     const raw = import.meta.env.VITE_LOCALE ?? "es-AR";
     const s = String(raw).trim().toLowerCase();
-    if (s === "es" || s === "es-ar") return "es-AR";
-    if (s === "en" || s === "en-us") return "en-US";
+    if (s === "es" || s === "es-ar") {
+      return "es-AR";
+    }
+    if (s === "en" || s === "en-us") {
+      return "en-US";
+    }
     return raw as string as "es-AR" | "en-US";
   })(),
 

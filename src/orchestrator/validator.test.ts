@@ -43,7 +43,9 @@ describe("Validator - New Primitives", () => {
         const parts = path.split(".");
         let current: Record<string, unknown> = state as Record<string, unknown>;
         for (const part of parts) {
-          if (!(part in current)) return false;
+          if (!(part in current)) {
+            return false;
+          }
           current = current[part] as Record<string, unknown>;
         }
         return true;

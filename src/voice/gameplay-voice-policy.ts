@@ -10,7 +10,9 @@ import type { GameState, VoiceOutcomeHints } from "@/orchestrator/types";
 function currentPlayerDisplayName(state: GameState): string {
   const game = state.game as Record<string, unknown> | undefined;
   const turn = game?.turn as string | undefined;
-  if (!turn) return "";
+  if (!turn) {
+    return "";
+  }
   const players = state.players as Record<string, Record<string, unknown>> | undefined;
   const p = players?.[turn];
   const name = p?.name;

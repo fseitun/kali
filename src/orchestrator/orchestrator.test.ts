@@ -40,8 +40,12 @@ describe("Orchestrator - New Action Handlers", () => {
     mockStateManager = {
       getState: vi.fn(() => testState),
       get: vi.fn((path: string) => {
-        if (path === "players.p1.position") return 5;
-        if (path === "game.lastRoll") return 0;
+        if (path === "players.p1.position") {
+          return 5;
+        }
+        if (path === "game.lastRoll") {
+          return 0;
+        }
         return undefined;
       }),
       set: vi.fn((_path: string, _value: unknown) => {
@@ -119,8 +123,12 @@ describe("Orchestrator - New Action Handlers", () => {
         "100": { type: "special", effect: "win" },
       };
       mockStateManager.get = vi.fn((path: string) => {
-        if (path === "players.p1.position") return 0;
-        if (path === "players.p1.activeChoices.0") return undefined;
+        if (path === "players.p1.position") {
+          return 0;
+        }
+        if (path === "players.p1.activeChoices.0") {
+          return undefined;
+        }
         return undefined;
       });
 
@@ -176,7 +184,9 @@ describe("Orchestrator - New Action Handlers", () => {
         "100": { type: "special", effect: "win" },
       };
       mockStateManager.get = vi.fn((path: string) => {
-        if (path === "players.p1.position") return 0;
+        if (path === "players.p1.position") {
+          return 0;
+        }
         return undefined;
       });
 
@@ -196,7 +206,9 @@ describe("Orchestrator - New Action Handlers", () => {
         "100": { type: "special", effect: "win" },
       };
       mockStateManager.get = vi.fn((path: string) => {
-        if (path === "players.p1.position") return 0;
+        if (path === "players.p1.position") {
+          return 0;
+        }
         return undefined;
       });
 
@@ -221,10 +233,15 @@ describe("Orchestrator - New Action Handlers", () => {
         phase: "riddle",
       };
       mockStateManager.get = vi.fn((path: string) => {
-        if (path === "game.pendingAnimalEncounter")
+        if (path === "game.pendingAnimalEncounter") {
           return (testState.game as any).pendingAnimalEncounter;
-        if (path === "game.turn") return "p1";
-        if (path === "players.p1.position") return 5;
+        }
+        if (path === "game.turn") {
+          return "p1";
+        }
+        if (path === "players.p1.position") {
+          return 5;
+        }
         return undefined;
       });
 
@@ -265,10 +282,15 @@ describe("Orchestrator - New Action Handlers", () => {
       };
       mockStateManager.getState = vi.fn(() => testState);
       mockStateManager.get = vi.fn((path: string) => {
-        if (path === "game.pendingAnimalEncounter")
+        if (path === "game.pendingAnimalEncounter") {
           return (testState.game as any).pendingAnimalEncounter;
-        if (path === "game.turn") return "p1";
-        if (path === "players.p1.position") return 5;
+        }
+        if (path === "game.turn") {
+          return "p1";
+        }
+        if (path === "players.p1.position") {
+          return 5;
+        }
         return undefined;
       });
 
@@ -296,10 +318,15 @@ describe("Orchestrator - New Action Handlers", () => {
       };
       mockStateManager.getState = vi.fn(() => testState);
       mockStateManager.get = vi.fn((path: string) => {
-        if (path === "game.pendingAnimalEncounter")
+        if (path === "game.pendingAnimalEncounter") {
           return (testState.game as any).pendingAnimalEncounter;
-        if (path === "game.turn") return "p1";
-        if (path === "players.p1.position") return 5;
+        }
+        if (path === "game.turn") {
+          return "p1";
+        }
+        if (path === "players.p1.position") {
+          return 5;
+        }
         return undefined;
       });
       (mockLLM as any).validateRiddleAnswer = vi.fn(async () => ({ correct: false }));
@@ -328,10 +355,15 @@ describe("Orchestrator - New Action Handlers", () => {
       };
       mockStateManager.getState = vi.fn(() => testState);
       mockStateManager.get = vi.fn((path: string) => {
-        if (path === "game.pendingAnimalEncounter")
+        if (path === "game.pendingAnimalEncounter") {
           return (testState.game as any).pendingAnimalEncounter;
-        if (path === "game.turn") return "p1";
-        if (path === "players.p1.position") return 5;
+        }
+        if (path === "game.turn") {
+          return "p1";
+        }
+        if (path === "players.p1.position") {
+          return 5;
+        }
         return undefined;
       });
 
@@ -359,10 +391,15 @@ describe("Orchestrator - New Action Handlers", () => {
       };
       mockStateManager.getState = vi.fn(() => testState);
       mockStateManager.get = vi.fn((path: string) => {
-        if (path === "game.pendingAnimalEncounter")
+        if (path === "game.pendingAnimalEncounter") {
           return (testState.game as any).pendingAnimalEncounter;
-        if (path === "game.turn") return "p1";
-        if (path === "players.p1.position") return 5;
+        }
+        if (path === "game.turn") {
+          return "p1";
+        }
+        if (path === "players.p1.position") {
+          return 5;
+        }
         return undefined;
       });
       mockLLM.getActions = vi.fn(async () => [
@@ -394,7 +431,9 @@ describe("Orchestrator - New Action Handlers", () => {
 
       mockStateManager.getState = vi.fn(() => testState);
       mockStateManager.get = vi.fn((path: string) => {
-        if (path === "players.p1.position") return testState.players.p1.position;
+        if (path === "players.p1.position") {
+          return testState.players.p1.position;
+        }
         return undefined;
       });
       mockStateManager.set = vi.fn((path: string, value: unknown) => {
@@ -421,7 +460,9 @@ describe("Orchestrator - New Action Handlers", () => {
 
       mockStateManager.getState = vi.fn(() => testState);
       mockStateManager.get = vi.fn((path: string) => {
-        if (path === "players.p1.position") return testState.players.p1.position;
+        if (path === "players.p1.position") {
+          return testState.players.p1.position;
+        }
         return undefined;
       });
       mockStateManager.set = vi.fn((path: string, value: unknown) => {
@@ -448,7 +489,9 @@ describe("Orchestrator - New Action Handlers", () => {
 
       mockStateManager.getState = vi.fn(() => testState);
       mockStateManager.get = vi.fn((path: string) => {
-        if (path === "players.p1.position") return testState.players.p1.position;
+        if (path === "players.p1.position") {
+          return testState.players.p1.position;
+        }
         return undefined;
       });
       mockStateManager.set = vi.fn(async (path: string, value: unknown) => {
@@ -475,7 +518,9 @@ describe("Orchestrator - New Action Handlers", () => {
 
       mockStateManager.getState = vi.fn(() => testState);
       mockStateManager.get = vi.fn((path: string) => {
-        if (path === "players.p1.position") return testState.players.p1.position;
+        if (path === "players.p1.position") {
+          return testState.players.p1.position;
+        }
         return undefined;
       });
       mockStateManager.set = vi.fn((path: string, value: unknown) => {
@@ -508,7 +553,9 @@ describe("Orchestrator - New Action Handlers", () => {
 
       mockStateManager.getState = vi.fn(() => testState);
       mockStateManager.get = vi.fn((path: string) => {
-        if (path === "players.p1.position") return testState.players.p1.position;
+        if (path === "players.p1.position") {
+          return testState.players.p1.position;
+        }
         return undefined;
       });
       mockStateManager.set = vi.fn((path: string, value: unknown) => {
@@ -721,10 +768,15 @@ describe("Orchestrator - New Action Handlers", () => {
       };
       mockStateManager.getState = vi.fn(() => testState);
       mockStateManager.get = vi.fn((path: string) => {
-        if (path === "game.pendingAnimalEncounter")
+        if (path === "game.pendingAnimalEncounter") {
           return (testState.game as any).pendingAnimalEncounter;
-        if (path === "game.turn") return "p1";
-        if (path === "players.p1.position") return 5;
+        }
+        if (path === "game.turn") {
+          return "p1";
+        }
+        if (path === "players.p1.position") {
+          return 5;
+        }
         return undefined;
       });
       (mockLLM as any).validateRiddleAnswer = vi.fn(async () => ({ correct: false }));
@@ -842,7 +894,9 @@ describe("Orchestrator - New Action Handlers", () => {
       };
       mockStateManager.getState = vi.fn(() => testState);
       mockStateManager.get = vi.fn((path: string) => {
-        if (path === "players.p1.position") return 0;
+        if (path === "players.p1.position") {
+          return 0;
+        }
         return undefined;
       });
     });

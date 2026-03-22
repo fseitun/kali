@@ -20,8 +20,12 @@ export function isNextRecord(next: NextField | undefined): next is Record<string
  */
 export function getNextTargets(sq: { next?: NextField } | undefined): number[] {
   const next = sq?.next;
-  if (next === undefined || next === null) return [];
-  if (Array.isArray(next)) return [...next];
+  if (next === undefined || next === null) {
+    return [];
+  }
+  if (Array.isArray(next)) {
+    return [...next];
+  }
   const keys = Object.keys(next as Record<string, unknown>);
   const nums = keys.map((k) => parseInt(k, 10)).filter((n) => !Number.isNaN(n));
   return [...new Set(nums)].sort((a, b) => a - b);
@@ -45,15 +49,21 @@ export function getForkKeywordsWithImplicitTargets(
   sq: { next?: NextField } | undefined,
 ): Record<string, string[]> | undefined {
   const next = sq?.next;
-  if (!isNextRecord(next)) return undefined;
+  if (!isNextRecord(next)) {
+    return undefined;
+  }
   const obj = next;
   const result: Record<string, string[]> = {};
   for (const [key, phrases] of Object.entries(obj)) {
     const n = parseInt(key, 10);
-    if (Number.isNaN(n)) continue;
+    if (Number.isNaN(n)) {
+      continue;
+    }
     const keyStr = String(n);
     const list = Array.isArray(phrases) ? [...phrases] : [];
-    if (!list.includes(keyStr)) list.push(keyStr);
+    if (!list.includes(keyStr)) {
+      list.push(keyStr);
+    }
     result[keyStr] = list;
   }
   return Object.keys(result).length > 0 ? result : undefined;
@@ -77,14 +87,24 @@ export function matchAnswerToChoiceKeywords(
 
   for (const [targetStr, phrases] of Object.entries(choiceKeywords)) {
     const targetNum = parseInt(targetStr, 10);
-    if (Number.isNaN(targetNum)) continue;
-    if (numMatch?.[0] === targetStr) return targetNum;
+    if (Number.isNaN(targetNum)) {
+      continue;
+    }
+    if (numMatch?.[0] === targetStr) {
+      return targetNum;
+    }
 
     for (const phrase of phrases) {
       const p = phrase.trim().toLowerCase();
-      if (!p) continue;
-      if (lower === p) return targetNum;
-      if (p.length >= 3 && lower.includes(p)) return targetNum;
+      if (!p) {
+        continue;
+      }
+      if (lower === p) {
+        return targetNum;
+      }
+      if (p.length >= 3 && lower.includes(p)) {
+        return targetNum;
+      }
     }
   }
   return null;

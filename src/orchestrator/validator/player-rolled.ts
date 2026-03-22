@@ -11,7 +11,9 @@ export function validatePlayerRolled(
 ): ValidationResult {
   const actionRecord = action as unknown as Record<string, unknown>;
   const valueValidation = validateField(actionRecord, "value", "number", "PLAYER_ROLLED", index);
-  if (!valueValidation.valid) return valueValidation;
+  if (!valueValidation.valid) {
+    return valueValidation;
+  }
 
   // Value must be positive
   if ("value" in action && typeof action.value === "number") {

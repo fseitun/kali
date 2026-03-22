@@ -71,15 +71,23 @@ function handlePlayerRolled(
   mockState: GameState,
   _originalState: GameState,
 ): void {
-  if (!("value" in primitive)) return;
+  if (!("value" in primitive)) {
+    return;
+  }
   const rollValue = primitive.value;
-  if (typeof rollValue !== "number") return;
+  if (typeof rollValue !== "number") {
+    return;
+  }
   const game = mockState.game;
   const currentTurn = game?.turn;
-  if (!currentTurn || typeof currentTurn !== "string") return;
+  if (!currentTurn || typeof currentTurn !== "string") {
+    return;
+  }
   const players = mockState.players as Record<string, Record<string, unknown>>;
   const player = players?.[currentTurn];
-  if (!player || typeof player.position !== "number") return;
+  if (!player || typeof player.position !== "number") {
+    return;
+  }
   player.position = computeNewPositionFromState(mockState, currentTurn, player.position, rollValue);
 }
 

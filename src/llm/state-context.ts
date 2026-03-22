@@ -7,23 +7,33 @@ export type { StateDisplayConfig, StateDisplayMetadata };
 const LOG_FORMAT_MAX_DEPTH = 2;
 
 function formatFieldValue(value: unknown): string {
-  if (value === null || value === undefined) return "null";
+  if (value === null || value === undefined) {
+    return "null";
+  }
   if (Array.isArray(value)) {
     return value.length > 0 ? `[${value.join(",")}]` : "[]";
   }
-  if (typeof value === "object") return "{...}";
+  if (typeof value === "object") {
+    return "{...}";
+  }
   return String(value);
 }
 
 function formatFieldValueForLog(value: unknown, depth: number, maxDepth: number): string {
-  if (value === null || value === undefined) return "null";
+  if (value === null || value === undefined) {
+    return "null";
+  }
   if (Array.isArray(value)) {
-    if (value.length === 0) return "[]";
+    if (value.length === 0) {
+      return "[]";
+    }
     const formatted = value.map((v) => formatFieldValueForLog(v, depth + 1, maxDepth)).join(", ");
     return `[${formatted}]`;
   }
   if (typeof value === "object") {
-    if (depth >= maxDepth) return "{...}";
+    if (depth >= maxDepth) {
+      return "{...}";
+    }
     const entries = Object.entries(value as Record<string, unknown>)
       .filter(([key]) => key !== "stateDisplay")
       .map(([k, v]) => `${k}=${formatFieldValueForLog(v, depth + 1, maxDepth)}`);
@@ -48,34 +58,46 @@ function formatObjectFields(
     const hiddenSet = new Set(hidden);
 
     for (const key of primary) {
-      if (hiddenSet.has(key)) continue;
+      if (hiddenSet.has(key)) {
+        continue;
+      }
       processed.add(key);
       const value = obj[key];
       fields.push(`${key}=${format(value, 0)}`);
     }
 
     for (const key of secondary) {
-      if (hiddenSet.has(key) || processed.has(key)) continue;
+      if (hiddenSet.has(key) || processed.has(key)) {
+        continue;
+      }
       processed.add(key);
       const value = obj[key];
       if (value !== null && value !== undefined && value !== 0 && value !== false && value !== "") {
-        if (Array.isArray(value) && value.length === 0) continue;
+        if (Array.isArray(value) && value.length === 0) {
+          continue;
+        }
         fields.push(`${key}=${format(value, 0)}`);
       }
     }
 
     for (const key of Object.keys(obj)) {
-      if (hiddenSet.has(key) || processed.has(key)) continue;
+      if (hiddenSet.has(key) || processed.has(key)) {
+        continue;
+      }
       const value = obj[key];
       if (value !== null && value !== undefined && value !== 0 && value !== false && value !== "") {
-        if (Array.isArray(value) && value.length === 0) continue;
+        if (Array.isArray(value) && value.length === 0) {
+          continue;
+        }
         fields.push(`${key}=${format(value, 0)}`);
       }
     }
   } else {
     for (const [key, value] of Object.entries(obj)) {
       if (value !== null && value !== undefined && value !== 0 && value !== false && value !== "") {
-        if (Array.isArray(value) && value.length === 0) continue;
+        if (Array.isArray(value) && value.length === 0) {
+          continue;
+        }
         fields.push(`${key}=${format(value, 0)}`);
       }
     }
@@ -104,13 +126,19 @@ function formatDecisionPointContext(state: Record<string, unknown>): string {
   }
 
   const currentPlayer = players[currentTurn];
-  if (!currentPlayer) return "";
+  if (!currentPlayer) {
+    return "";
+  }
 
   const position = currentPlayer.position as number | undefined;
-  if (typeof position !== "number") return "";
+  if (typeof position !== "number") {
+    return "";
+  }
 
   const decisionPoint = decisionPoints.find((dp) => dp.position === position);
-  if (!decisionPoint) return "";
+  if (!decisionPoint) {
+    return "";
+  }
 
   const choices = currentPlayer.activeChoices as Record<string, number> | undefined;
   const hasChoice = choices?.[String(position)] !== undefined;
@@ -219,7 +247,9 @@ export function formatStateContext(
   const game = state.game as Record<string, unknown> | undefined;
   if (game) {
     const fields = formatObjectFields(game, displayConfig?.game, valueFormatter);
-    if (fields.length > 0) parts.push(`Game: ${fields.join(", ")}`);
+    if (fields.length > 0) {
+      parts.push(`Game: ${fields.join(", ")}`);
+    }
   }
 
   const players = state.players as Record<string, Record<string, unknown>> | undefined;
@@ -234,20 +264,28 @@ export function formatStateContext(
         const fields = formatObjectFields(player, displayConfig?.players, valueFormatter);
         return `${id}:${fields.join(",")}`;
       });
-    if (playerParts.length > 0) parts.push(`Players: ${playerParts.join(" | ")}`);
+    if (playerParts.length > 0) {
+      parts.push(`Players: ${playerParts.join(" | ")}`);
+    }
   }
 
   const board = state.board as Record<string, unknown> | undefined;
   if (board) {
     const fields = formatObjectFields(board, displayConfig?.board, valueFormatter);
-    if (fields.length > 0) parts.push(`Board: ${fields.join(", ")}`);
+    if (fields.length > 0) {
+      parts.push(`Board: ${fields.join(", ")}`);
+    }
   }
 
   const decisionContext = formatDecisionPointContext(state);
-  if (decisionContext) parts.push(decisionContext);
+  if (decisionContext) {
+    parts.push(decisionContext);
+  }
 
   const animalEncounterContext = formatAnimalEncounterContext(state);
-  if (animalEncounterContext) parts.push(animalEncounterContext);
+  if (animalEncounterContext) {
+    parts.push(animalEncounterContext);
+  }
 
   return parts.join("\n");
 }

@@ -57,8 +57,12 @@ function levenshteinDistance(str1: string, str2: string): number {
     .fill(null)
     .map(() => Array(n + 1).fill(0));
 
-  for (let i = 0; i <= m; i++) dp[i][0] = i;
-  for (let j = 0; j <= n; j++) dp[0][j] = j;
+  for (let i = 0; i <= m; i++) {
+    dp[i][0] = i;
+  }
+  for (let j = 0; j <= n; j++) {
+    dp[0][j] = j;
+  }
 
   for (let i = 1; i <= m; i++) {
     for (let j = 1; j <= n; j++) {
@@ -129,8 +133,12 @@ export function findNameConflicts(names: string[]): number[] {
   for (let i = 0; i < names.length; i++) {
     for (let j = i + 1; j < names.length; j++) {
       if (areNamesSimilar(names[i], names[j])) {
-        if (!conflicts.includes(i)) conflicts.push(i);
-        if (!conflicts.includes(j)) conflicts.push(j);
+        if (!conflicts.includes(i)) {
+          conflicts.push(i);
+        }
+        if (!conflicts.includes(j)) {
+          conflicts.push(j);
+        }
       }
     }
   }

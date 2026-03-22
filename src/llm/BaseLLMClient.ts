@@ -56,6 +56,45 @@ export abstract class BaseLLMClient implements LLMClient {
     Logger.info("System prompt updated with game rules");
   }
 
+  private async getActionsFirstAttempt(
+    transcript: string,
+    state: GameState,
+    lastBotUtterance?: string,
+  ): Promise<PrimitiveAction[]> {
+    const actions = await this.attemptLLMCall(transcript, state, lastBotUtterance);
+    if (actions.length > 0) {
+      this.recordTranscript(transcript);
+      return actions;
+    }
+    Logger.warn("LLM returned empty actions on first attempt");
+    return [];
+  }
+
+  private async getActionsRetry(
+    transcript: string,
+    state: GameState,
+    lastBotUtterance: string | undefined,
+    error: unknown,
+  ): Promise<PrimitiveAction[]> {
+    const isTransient = this.isTransientError(error);
+    Logger.error("LLM attempt 1 failed:", error);
+    Logger.info(isTransient ? "Retrying (transient error)..." : "Retrying with error feedback...");
+    if (isTransient) {
+      this.onRetry?.(1, 2);
+      await this.delay(CONFIG.LLM.RETRY_DELAY_MS);
+    }
+    const retryTranscript = isTransient
+      ? transcript
+      : `[RETRY: Previous response failed - ${error instanceof Error ? error.message : String(error)}] Original command: "${transcript}"`;
+    const actions = await this.attemptLLMCall(retryTranscript, state, lastBotUtterance);
+    if (actions.length > 0) {
+      this.recordTranscript(transcript);
+      return actions;
+    }
+    Logger.warn("LLM returned empty actions on retry");
+    return [];
+  }
+
   async getActions(
     transcript: string,
     state: GameState,
@@ -64,49 +103,15 @@ export abstract class BaseLLMClient implements LLMClient {
     if (!this.systemPrompt) {
       throw new Error("Game rules not set. Call setGameRules() first.");
     }
-
     if (this.isDuplicate(transcript)) {
       Logger.debug("Duplicate request detected, ignoring");
       return [];
     }
-
-    // First attempt
     try {
-      const actions = await this.attemptLLMCall(transcript, state, lastBotUtterance);
-
-      if (actions.length > 0) {
-        this.recordTranscript(transcript);
-        return actions;
-      }
-
-      Logger.warn("LLM returned empty actions on first attempt");
-      return [];
+      return await this.getActionsFirstAttempt(transcript, state, lastBotUtterance);
     } catch (error) {
-      const isTransient = this.isTransientError(error);
-      Logger.error("LLM attempt 1 failed:", error);
-      Logger.info(
-        isTransient ? "Retrying (transient error)..." : "Retrying with error feedback...",
-      );
-
-      if (isTransient) {
-        this.onRetry?.(1, 2);
-        await this.delay(CONFIG.LLM.RETRY_DELAY_MS);
-      }
-
       try {
-        const retryTranscript = isTransient
-          ? transcript
-          : `[RETRY: Previous response failed - ${error instanceof Error ? error.message : String(error)}] Original command: "${transcript}"`;
-
-        const actions = await this.attemptLLMCall(retryTranscript, state, lastBotUtterance);
-
-        if (actions.length > 0) {
-          this.recordTranscript(transcript);
-          return actions;
-        }
-
-        Logger.warn("LLM returned empty actions on retry");
-        return [];
+        return await this.getActionsRetry(transcript, state, lastBotUtterance, error);
       } catch (retryError) {
         Logger.error("LLM retry attempt failed:", retryError);
         Logger.warn("All LLM retries exhausted");
@@ -168,7 +173,9 @@ Name:`;
       });
 
       const content = result.content;
-      if (content) this.logPromptResponse("extractName", content);
+      if (content) {
+        this.logPromptResponse("extractName", content);
+      }
       const cleaned = content.trim().toLowerCase();
 
       if (cleaned === "null" || cleaned === "" || cleaned.length > 50) {
@@ -208,7 +215,9 @@ JSON:`;
       });
 
       const content = apiResult.content;
-      if (content) this.logPromptResponse("analyzeResponse", content);
+      if (content) {
+        this.logPromptResponse("analyzeResponse", content);
+      }
 
       const markdownMatch = content.match(/```(?:json)?\s*\n?([\s\S]*?)\n?```/);
       const jsonString = markdownMatch ? markdownMatch[1].trim() : content.trim();
@@ -261,7 +270,9 @@ JSON:`;
       });
 
       const content = apiResult.content;
-      if (content) this.logPromptResponse("validateRiddleAnswer", content);
+      if (content) {
+        this.logPromptResponse("validateRiddleAnswer", content);
+      }
 
       const markdownMatch = content.match(/```(?:json)?\s*\n?([\s\S]*?)\n?```/);
       const jsonString = markdownMatch ? markdownMatch[1].trim() : content.trim();

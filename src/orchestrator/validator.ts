@@ -10,6 +10,24 @@ import type { StateManager } from "@/state-manager";
 
 export type { ValidationResult } from "./validator/types";
 
+type ActionValidator = (
+  p: PrimitiveAction,
+  s: GameState,
+  sm: StateManager,
+  i: number,
+  ctx: ValidatorContext,
+) => ValidationResult;
+
+const ACTION_VALIDATORS: Record<string, ActionValidator> = {
+  NARRATE: (p, _, __, i) => validateNarrate(p, i),
+  RESET_GAME: (p, _, __, i) => validateResetGame(p, i),
+  SET_STATE: validateSetState,
+  PLAYER_ROLLED: (p, s, _, i, ctx) => validatePlayerRolled(p, s, i, ctx),
+  PLAYER_ANSWERED: (p, s, _, i) => validatePlayerAnswered(p, s, i),
+  ASK_RIDDLE: (p, s, _, i) => validateAskRiddle(p, s, i),
+  RIDDLE_RESOLVED: (p, s, _, i) => validateRiddleResolved(p, s, i),
+};
+
 /**
  * Validates an array of primitive actions against current game state.
  * Uses stateful validation - simulates each action's effect before validating the next.
@@ -74,26 +92,13 @@ function validateAction(
     };
   }
 
-  switch (primitive.action) {
-    case "NARRATE":
-      return validateNarrate(primitive, index);
-    case "RESET_GAME":
-      return validateResetGame(primitive, index);
-    case "SET_STATE":
-      return validateSetState(primitive, state, stateManager, index, context);
-    case "PLAYER_ROLLED":
-      return validatePlayerRolled(primitive, state, index, context);
-    case "PLAYER_ANSWERED":
-      return validatePlayerAnswered(primitive, state, index);
-    case "ASK_RIDDLE":
-      return validateAskRiddle(primitive, state, index);
-    case "RIDDLE_RESOLVED":
-      return validateRiddleResolved(primitive, state, index);
-    default:
-      return {
-        valid: false,
-        error: `Action at index ${index} has invalid action type: ${(primitive as { action: string }).action}`,
-        errorCode: "invalidActionFormat",
-      };
+  const fn = ACTION_VALIDATORS[primitive.action];
+  if (fn) {
+    return fn(primitive, state, stateManager, index, context);
   }
+  return {
+    valid: false,
+    error: `Action at index ${index} has invalid action type: ${(primitive as { action: string }).action}`,
+    errorCode: "invalidActionFormat",
+  };
 }

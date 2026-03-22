@@ -13,9 +13,13 @@ export function parsePositiveIntEnv(
   defaultVal: number,
   envKey?: string,
 ): number {
-  if (value === undefined || value === null) return defaultVal;
+  if (value === undefined || value === null) {
+    return defaultVal;
+  }
   const trimmed = String(value).trim();
-  if (trimmed === "") return defaultVal;
+  if (trimmed === "") {
+    return defaultVal;
+  }
 
   const normalized = trimmed.replace(/_/g, "").replace(/,/g, "");
   const num = Number(normalized);

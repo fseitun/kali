@@ -39,8 +39,12 @@ export default defineConfig({
         manifestTransforms: [
           (entries: ManifestTransformEntry[]): { manifest: ManifestTransformEntry[] } => ({
             manifest: entries.filter((e) => {
-              if (e.url.includes("/debug/")) return false;
-              if (e.url.includes("/assets/") && /[-.]debug[-.]/.test(e.url)) return false;
+              if (e.url.includes("/debug/")) {
+                return false;
+              }
+              if (e.url.includes("/assets/") && /[-.]debug[-.]/.test(e.url)) {
+                return false;
+              }
               return true;
             }),
           }),
@@ -122,15 +126,18 @@ export default defineConfig({
       output: {
         manualChunks(id) {
           // Intentionally large; loaded on demand via dynamic import in kali-app-core (voice only).
-          if (id.includes("vosk-browser")) return "vosk";
+          if (id.includes("vosk-browser")) {
+            return "vosk";
+          }
           if (
             id.includes("debug.ts") ||
             id.includes("debug/") ||
             id.includes("debug-ui-service") ||
             id.includes("debug-options") ||
             id.includes("styles/debug.css")
-          )
+          ) {
             return "debug";
+          }
         },
       },
     },

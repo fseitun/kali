@@ -5,6 +5,14 @@ import { CONFIG } from "@/config";
 /**
  * Ollama LLM client implementation that communicates with a local Ollama instance.
  */
+function parseOllamaResponse(data: unknown): string {
+  if (!data || typeof data !== "object") {
+    throw new Error("Invalid Ollama API response format");
+  }
+  const obj = data as { message?: { content?: string } };
+  return obj.message?.content ?? "";
+}
+
 export class OllamaClient extends BaseLLMClient {
   async makeApiCall(prompt: string, options: ApiCallOptions): Promise<ApiCallResult> {
     const controller = new AbortController();
@@ -36,20 +44,11 @@ export class OllamaClient extends BaseLLMClient {
     } finally {
       clearTimeout(timeoutId);
     }
-
     if (!response.ok) {
       throw new Error(`Ollama API error: ${response.status} ${response.statusText}`);
     }
-
     const data = await response.json();
-
-    // Validate response structure
-    if (!data || typeof data !== "object") {
-      throw new Error("Invalid Ollama API response format");
-    }
-
-    const content = data.message?.content ?? "";
-
+    const content = parseOllamaResponse(data);
     return { content };
   }
 }

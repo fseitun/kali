@@ -27,7 +27,9 @@ export class Logger {
     args: unknown[],
   ): void {
     const buffer = getLogBuffer();
-    if (!buffer) return;
+    if (!buffer) {
+      return;
+    }
 
     const context: Record<string, unknown> = {};
     if (args.length > 0) {

@@ -22,27 +22,61 @@ export function resolveRiddleAnswerToOption(
   riddleOptions: string[] | undefined,
 ): string | null {
   const trimmed = answer.trim();
-  if (!trimmed) return null;
+  if (!trimmed) {
+    return null;
+  }
 
-  if (!Array.isArray(riddleOptions) || riddleOptions.length !== 4) return null;
+  if (!Array.isArray(riddleOptions) || riddleOptions.length !== 4) {
+    return null;
+  }
 
   const normalizedAnswer = trimmed.toLowerCase();
   let matchedOption: string | null = null;
 
   for (let i = 0; i < 4; i++) {
     const opt = riddleOptions[i];
-    if (typeof opt !== "string") continue;
+    if (typeof opt !== "string") {
+      continue;
+    }
     const normalizedOpt = normalizeOptionText(opt);
     const equals = normalizedAnswer === normalizedOpt;
     const answerContainsOption = normalizedAnswer.includes(normalizedOpt);
     const optionContainsAnswer = normalizedOpt.includes(normalizedAnswer);
     if (equals || answerContainsOption || optionContainsAnswer) {
-      if (matchedOption !== null) return null;
+      if (matchedOption !== null) {
+        return null;
+      }
       matchedOption = opt;
     }
   }
 
   return matchedOption;
+}
+
+function matchesCorrectOptionSynonyms(
+  normalizedAnswer: string,
+  correctOptionSynonyms: string[] | undefined,
+): boolean {
+  if (!Array.isArray(correctOptionSynonyms)) {
+    return false;
+  }
+  for (const syn of correctOptionSynonyms) {
+    if (typeof syn !== "string") {
+      continue;
+    }
+    const normalizedSyn = syn.trim().toLowerCase();
+    if (!normalizedSyn) {
+      continue;
+    }
+    if (
+      normalizedAnswer === normalizedSyn ||
+      normalizedAnswer.includes(normalizedSyn) ||
+      normalizedSyn.includes(normalizedAnswer)
+    ) {
+      return true;
+    }
+  }
+  return false;
 }
 
 /**
@@ -57,7 +91,9 @@ export function isStrictRiddleCorrect(
   correctOptionSynonyms?: string[],
 ): boolean {
   const trimmed = answer.trim();
-  if (!trimmed) return false;
+  if (!trimmed) {
+    return false;
+  }
 
   const normalizedAnswer = trimmed.toLowerCase();
   const normalizedCorrect = normalizeOptionText(correctOption);
@@ -68,21 +104,5 @@ export function isStrictRiddleCorrect(
     return true;
   }
 
-  // Match to correctOptionSynonyms
-  if (Array.isArray(correctOptionSynonyms)) {
-    for (const syn of correctOptionSynonyms) {
-      if (typeof syn !== "string") continue;
-      const normalizedSyn = syn.trim().toLowerCase();
-      if (!normalizedSyn) continue;
-      if (
-        normalizedAnswer === normalizedSyn ||
-        normalizedAnswer.includes(normalizedSyn) ||
-        normalizedSyn.includes(normalizedAnswer)
-      ) {
-        return true;
-      }
-    }
-  }
-
-  return false;
+  return matchesCorrectOptionSynonyms(normalizedAnswer, correctOptionSynonyms);
 }

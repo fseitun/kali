@@ -107,7 +107,9 @@ export function validateSetState(
 ): ValidationResult {
   const actionRecord = action as unknown as Record<string, unknown>;
   const pathValidation = validateField(actionRecord, "path", "string", "SET_STATE", index);
-  if (!pathValidation.valid) return pathValidation;
+  if (!pathValidation.valid) {
+    return pathValidation;
+  }
 
   if (!("value" in action)) {
     return {
@@ -123,7 +125,9 @@ export function validateSetState(
       index,
       context.isProcessingEffect,
     );
-    if (!squareEffectValidation.valid) return squareEffectValidation;
+    if (!squareEffectValidation.valid) {
+      return squareEffectValidation;
+    }
 
     if (action.path === "game.turn") {
       const game = state.game;
@@ -167,7 +171,9 @@ export function validateSetState(
     }
 
     const turnValidation = validateTurnOwnership(action.path, state, "SET_STATE", index);
-    if (!turnValidation.valid) return turnValidation;
+    if (!turnValidation.valid) {
+      return turnValidation;
+    }
 
     const decisionMoveValidation = validateDecisionBeforeMove(
       action.path,
@@ -175,7 +181,9 @@ export function validateSetState(
       "SET_STATE",
       index,
     );
-    if (!decisionMoveValidation.valid) return decisionMoveValidation;
+    if (!decisionMoveValidation.valid) {
+      return decisionMoveValidation;
+    }
 
     if (!stateManager.pathExists(state, action.path)) {
       return {

@@ -79,7 +79,9 @@ export class LogBuffer {
 
   removeSink(sink: LogSink): void {
     const i = this.sinks.indexOf(sink);
-    if (i >= 0) this.sinks.splice(i, 1);
+    if (i >= 0) {
+      this.sinks.splice(i, 1);
+    }
   }
 
   getFiltered(enabledCategories: Set<string>): LogEntry[] {

@@ -19,18 +19,26 @@ export function getDecisionPoints(state: GameState): DecisionPoint[] {
  */
 export function inferDecisionPoints(board: BoardConfig | undefined): DecisionPoint[] {
   const squares = board?.squares;
-  if (!squares) return [];
+  if (!squares) {
+    return [];
+  }
 
   const result: DecisionPoint[] = [];
   for (const [key, sq] of Object.entries(squares)) {
-    if (!isNextFork(sq)) continue;
+    if (!isNextFork(sq)) {
+      continue;
+    }
 
     const position = parseInt(key, 10);
-    if (Number.isNaN(position)) continue;
+    if (Number.isNaN(position)) {
+      continue;
+    }
 
     const sortedNext = [...getNextTargets(sq)].sort((a, b) => a - b);
     const positionOptions: Record<string, number> = {};
-    for (const n of sortedNext) positionOptions[String(n)] = n;
+    for (const n of sortedNext) {
+      positionOptions[String(n)] = n;
+    }
 
     const choiceKeywords = getForkKeywordsWithImplicitTargets(sq);
 
@@ -40,7 +48,9 @@ export function inferDecisionPoints(board: BoardConfig | undefined): DecisionPoi
         : `¿Querés ir al ${sortedNext.join(" o al ")}?`;
 
     const dp: DecisionPoint = { position, prompt, positionOptions };
-    if (choiceKeywords) dp.choiceKeywords = choiceKeywords;
+    if (choiceKeywords) {
+      dp.choiceKeywords = choiceKeywords;
+    }
     result.push(dp);
   }
 
