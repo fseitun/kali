@@ -127,6 +127,18 @@ describe("BoardEffectsHandler", () => {
       expect(stateManager.get("players.p1.position")).toBe(82);
     });
 
+    it("should apply portal teleport when square has nextOnLanding (e.g. Forest-Ocean portal 45→82)", async () => {
+      stateManager.set("board.squares", {
+        "45": { next: [46], prev: [44], name: "Forest-Ocean Portal", nextOnLanding: [82] },
+        "82": { next: [83], prev: [81], name: "Ocean-Forest Portal", nextOnLanding: [45] },
+      });
+      stateManager.set("players.p1.position", 45);
+
+      await boardEffectsHandler.checkAndApplyBoardMoves("players.p1.position");
+
+      expect(stateManager.get("players.p1.position")).toBe(82);
+    });
+
     it("should do nothing when square has no teleport", async () => {
       stateManager.set("board.squares", {
         "5": { next: [6], prev: [4] },

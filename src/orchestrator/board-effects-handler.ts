@@ -121,6 +121,12 @@ export class BoardEffectsHandler {
     if (typeof squareData.destination === "number") {
       return squareData.destination;
     }
+    if (Array.isArray(squareData.nextOnLanding) && squareData.nextOnLanding.length > 0) {
+      const dest = squareData.nextOnLanding[0];
+      if (typeof dest === "number") {
+        return dest;
+      }
+    }
     if (squareData.effect === "returnTo187") {
       return 187;
     }

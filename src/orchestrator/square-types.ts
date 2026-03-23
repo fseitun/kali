@@ -59,6 +59,13 @@ function kindFromEffect(effect: string | undefined): SpecialSquareKind | null {
   return null;
 }
 
+function isPortalSquare(sq: Record<string, unknown>): boolean {
+  return (
+    typeof sq.destination === "number" ||
+    (Array.isArray(sq.nextOnLanding) && sq.nextOnLanding.length > 0)
+  );
+}
+
 /**
  * Derives the square kind from config data.
  * Order: kind → effect → destination → item → animal (name+power, no effect) → null.
@@ -73,7 +80,7 @@ export function getSquareKind(squareData: Record<string, unknown>): SpecialSquar
   if (fromEffect) {
     return fromEffect;
   }
-  if (typeof squareData.destination === "number") {
+  if (isPortalSquare(squareData)) {
     return "portal";
   }
   const item = squareData.item as string | undefined;
@@ -89,26 +96,18 @@ export function getSquareKind(squareData: Record<string, unknown>): SpecialSquar
   return null;
 }
 
+const MECHANIC_CHECKS: Array<(sq: Record<string, unknown>) => boolean> = [
+  (sq) => typeof sq.destination === "number",
+  (sq) => Array.isArray(sq.nextOnLanding) && sq.nextOnLanding.length > 0,
+  (sq) => !!sq.effect && typeof sq.effect === "string",
+  (sq) => sq.heart === true,
+  (sq) => typeof sq.points === "number",
+  (sq) => typeof sq.instrument === "string" && sq.instrument.length > 0,
+  (sq) => typeof sq.item === "string" && sq.item.length > 0,
+];
+
 function hasMechanicField(sq: Record<string, unknown>): boolean {
-  if (typeof sq.destination === "number") {
-    return true;
-  }
-  if (sq.effect && typeof sq.effect === "string") {
-    return true;
-  }
-  if (sq.heart === true) {
-    return true;
-  }
-  if (typeof sq.points === "number") {
-    return true;
-  }
-  if (typeof sq.instrument === "string" && sq.instrument.length > 0) {
-    return true;
-  }
-  if (typeof sq.item === "string" && sq.item.length > 0) {
-    return true;
-  }
-  return false;
+  return MECHANIC_CHECKS.some((check) => check(sq));
 }
 
 /**
