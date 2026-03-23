@@ -431,9 +431,10 @@ export class BoardEffectsHandler {
     const noMoveHint = !isTeleport
       ? ` The player landed on and stays at square ${position}. Do NOT say they move to or go to square ${position} — they are already there. Narrate only the effect.`
       : "";
+    const teleportHint = isTeleport ? ` ${t("narration.stateSquareNumber")}` : "";
     return applied.length > 0
-      ? `[SYSTEM: Current player just landed on square ${position} (${squareName}).${appliedText} Narrate this encounter.${noMoveHint} Square data for flavour: ${squareInfo}]`
-      : `[SYSTEM: Current player just landed on square ${position} (${squareName}). Narrate this encounter. Do not change game state.${noMoveHint} Square data for flavour: ${squareInfo}]`;
+      ? `[SYSTEM: Current player just landed on square ${position} (${squareName}).${appliedText} Narrate this encounter.${noMoveHint}${teleportHint} Square data for flavour: ${squareInfo}]`
+      : `[SYSTEM: Current player just landed on square ${position} (${squareName}). Narrate this encounter. Do not change game state.${noMoveHint}${teleportHint} Square data for flavour: ${squareInfo}]`;
   }
 
   async checkAndApplySquareEffects(path: string, _context: ExecutionContext): Promise<void> {

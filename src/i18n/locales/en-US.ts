@@ -91,6 +91,10 @@ export const enUS = {
     "anti-wasp": "Anti-wasp suit",
     scimitar: "Scimitar",
   },
+  narration: {
+    stateSquareNumber:
+      "Always state the destination square number explicitly (e.g. 'You reached square 145' or 'You're at square 82'). Do not say 'look where you landed' — say the number directly so kids know where they are.",
+  },
   nicknames: [
     "the Great",
     "the Wise",

@@ -16,6 +16,7 @@ const NARRATION_EXAMPLES: Record<string, { good: string[]; bad: string[] }> = {
       "Estás en la 15, Sara en la 20. Te toca.",
       "Alicia se movió a la 8 y subió una escalera hasta la 14.",
       "Avanzaste cuatro casilleros.",
+      "Llegaste al casillero 145, el de la Jirafa.",
     ],
     bad: [
       "game.name is Kalimba, game.turn is p1...",
@@ -27,6 +28,7 @@ const NARRATION_EXAMPLES: Record<string, { good: string[]; bad: string[] }> = {
       "You're at 15, Sarah at 20. Your turn.",
       "Alice moved to 8 and climbed a ladder to 14.",
       "You moved four spaces.",
+      "You reached square 145, the Giraffe.",
     ],
     bad: [
       "game.name is Kalimba, game.turn is p1...",

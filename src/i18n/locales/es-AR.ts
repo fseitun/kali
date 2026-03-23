@@ -91,6 +91,10 @@ export const esAR = {
     "anti-wasp": "Traje anti-avispas",
     scimitar: "Cimitarra",
   },
+  narration: {
+    stateSquareNumber:
+      "Always state the destination square number explicitly in your narration (e.g. 'Llegaste al casillero 145' or 'Estás en el 82'). Do not say 'mirá dónde aterrizaste' — say the number directly so kids know where they are.",
+  },
   nicknames: [
     "el Grande",
     "el Sabio",
