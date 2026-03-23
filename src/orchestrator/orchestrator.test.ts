@@ -578,7 +578,7 @@ describe("Orchestrator - New Action Handlers", () => {
   });
 
   describe("Power-check chaining", () => {
-    it("power win from 16 with roll 5 lands on 21 (Camello), sets pending encounter, turn does not advance", async () => {
+    it("power win from 16 with roll 5 lands on 21 (Camel), sets pending encounter, turn does not advance", async () => {
       const stateManager = new StateManager();
       stateManager.init({
         game: {
@@ -607,15 +607,15 @@ describe("Orchestrator - New Action Handlers", () => {
         },
         board: {
           squares: {
-            "16": { name: "Escarabajo", power: 1, points: 1, habitat: "desierto" },
-            "21": { name: "Camello", power: 2, points: 2, habitat: "desierto" },
+            "16": { name: "Beetle", power: 1, points: 1, habitat: "desert" },
+            "21": { name: "Camel", power: 2, points: 2, habitat: "desert" },
           },
         },
       } as GameState);
 
       const mockLLMChain = {
         getActions: vi.fn(async (_transcript: string) => {
-          if (_transcript.includes("animal square 21") || _transcript.includes("Camello")) {
+          if (_transcript.includes("animal square 21") || _transcript.includes("Camel")) {
             return [
               {
                 action: "ASK_RIDDLE",

@@ -86,6 +86,11 @@ export const enUS = {
     allRetriesFailed: "I couldn't reach the assistant. Please try again in a moment.",
     networkError: "I'm having connection problems. Please try again.",
   },
+  items: {
+    torch: "Torch",
+    "anti-wasp": "Anti-wasp suit",
+    scimitar: "Scimitar",
+  },
   nicknames: [
     "the Great",
     "the Wise",

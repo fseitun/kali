@@ -86,6 +86,11 @@ export const esAR = {
     allRetriesFailed: "No pude conectar con el asistente. Probá de nuevo en un momento.",
     networkError: "Tengo problemas de conexión. Intentalo de nuevo.",
   },
+  items: {
+    torch: "Antorcha",
+    "anti-wasp": "Traje anti-avispas",
+    scimitar: "Cimitarra",
+  },
   nicknames: [
     "el Grande",
     "el Sabio",

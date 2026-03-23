@@ -10,7 +10,7 @@ export interface GameMetadata {
   maxPlayers: number;
   /** Win condition / objective for LLM context. */
   objective: string;
-  /** Initial habitat label for game.currentHabitat. Default "Inicio". */
+  /** Initial habitat label for game.currentHabitat. Default "Start". */
   initialHabitat?: string;
   /** Optional short summary for NARRATE explanations (2-3 sentences). Not sent as full rules. */
   summary?: string;

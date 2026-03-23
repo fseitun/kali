@@ -6,6 +6,7 @@ import {
   squareTriggersLandingPipeline,
 } from "./square-types";
 import type { ExecutionContext } from "./types";
+import { t } from "@/i18n/translations";
 import type { StateManager } from "@/state-manager";
 import { Logger } from "@/utils/logger";
 
@@ -383,7 +384,8 @@ export class BoardEffectsHandler {
     const match = path.match(/^players\.([^.]+)\.position$/);
     const playerId = match?.[1] ?? "";
     const kind = getSquareKind(squareData);
-    const squareName = (squareData.name as string) || "unknown";
+    const squareName =
+      (squareData.name as string) || (squareData.item ? t(`items.${squareData.item}`) : "unknown");
     const power = (squareData.power as number) ?? 0;
     return { position, squareData, squares, playerId, kind, squareName, power };
   }

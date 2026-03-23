@@ -415,7 +415,7 @@ describe("BoardEffectsHandler", () => {
 
     it("protectionItem and heart squares add item immediately", async () => {
       stateManager.set("board.squares", {
-        "63": { name: "Traje anti-avispas", item: "anti-wasp" },
+        "63": { type: "item", item: "anti-wasp" },
       });
       stateManager.set("players.p1.position", 63);
       stateManager.set("players.p1.items", []);
@@ -427,7 +427,7 @@ describe("BoardEffectsHandler", () => {
 
     it("heart square (Cimitarra) adds scimitar item immediately", async () => {
       stateManager.set("board.squares", {
-        "176": { name: "Cimitarra", item: "scimitar" },
+        "176": { type: "item", item: "scimitar" },
       });
       stateManager.set("players.p1.position", 176);
       stateManager.set("players.p1.items", []);
@@ -437,10 +437,10 @@ describe("BoardEffectsHandler", () => {
       expect(stateManager.get("players.p1.items")).toEqual(["scimitar"]);
     });
 
-    it("Águila (animal + extra power dice) sets pending encounter; no rewards on landing", async () => {
+    it("Eagle (animal + extra power dice) sets pending encounter; no rewards on landing", async () => {
       stateManager.set("board.squares", {
         "7": {
-          name: "Águila",
+          name: "Eagle",
           power: 3,
           points: 3,
           powerCheckDiceIfRiddleCorrect: 3,
@@ -471,7 +471,7 @@ describe("BoardEffectsHandler", () => {
     it("rollDirectional squares trigger narration only (no deterministic effects)", async () => {
       stateManager.set("board.squares", {
         "55": {
-          name: "Indios Jíbaros",
+          name: "Jivaro Indians",
           effect: "roll2d6Directional",
         },
       });
@@ -486,14 +486,14 @@ describe("BoardEffectsHandler", () => {
         expect.anything(),
       );
       expect(mockProcessTranscript).toHaveBeenCalledWith(
-        expect.stringContaining("Indios Jíbaros"),
+        expect.stringContaining("Jivaro Indians"),
         expect.anything(),
       );
     });
 
     it("checkTorch hazard applies skipTurn when player has no torch", async () => {
       stateManager.set("board.squares", {
-        "85": { name: "Cae la noche", effect: "checkTorch" },
+        "85": { name: "Night falls", effect: "checkTorch" },
       });
       stateManager.set("players.p1.position", 85);
       stateManager.set("players.p1.items", []);
@@ -510,7 +510,7 @@ describe("BoardEffectsHandler", () => {
 
     it("checkTorch hazard consumes torch and does not apply skipTurn when player has torch", async () => {
       stateManager.set("board.squares", {
-        "85": { name: "Cae la noche", effect: "checkTorch" },
+        "85": { name: "Night falls", effect: "checkTorch" },
       });
       stateManager.set("players.p1.position", 85);
       stateManager.set("players.p1.items", ["torch"]);
@@ -528,7 +528,7 @@ describe("BoardEffectsHandler", () => {
 
     it("checkAntiWasp hazard applies skipTurn when player has no anti-wasp", async () => {
       stateManager.set("board.squares", {
-        "116": { name: "Avispas", effect: "checkAntiWasp" },
+        "116": { name: "Wasps", effect: "checkAntiWasp" },
       });
       stateManager.set("players.p1.position", 116);
       stateManager.set("players.p1.items", []);
@@ -545,7 +545,7 @@ describe("BoardEffectsHandler", () => {
 
     it("checkAntiWasp hazard consumes anti-wasp and does not apply skipTurn when player has it", async () => {
       stateManager.set("board.squares", {
-        "116": { name: "Avispas", effect: "checkAntiWasp" },
+        "116": { name: "Wasps", effect: "checkAntiWasp" },
       });
       stateManager.set("players.p1.position", 116);
       stateManager.set("players.p1.items", ["anti-wasp"]);
@@ -563,7 +563,7 @@ describe("BoardEffectsHandler", () => {
 
     it("torch protectionItem square adds torch item immediately", async () => {
       stateManager.set("board.squares", {
-        "79": { name: "Antorcha", item: "torch" },
+        "79": { type: "item", item: "torch" },
       });
       stateManager.set("players.p1.position", 79);
       stateManager.set("players.p1.items", []);
