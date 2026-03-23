@@ -71,7 +71,7 @@
     "42": { "next": [43], "prev": [41], "habitat": "forest", "name": "Wolf", "power": 4, "points": 4 },
     "43": { "next": [44], "prev": [42], "habitat": "forest" },
     "44": { "next": [45], "prev": [43], "habitat": "forest" },
-    "45": { "next": [46], "prev": [44], "habitat": "forest", "name": "Forest-Ocean Portal", "nextOnLanding": [82], "inverseMode": "activate" },
+    "45": { "next": [46], "prev": [44], "habitat": "forest", "name": "Forest-Ocean Portal", "nextOnLanding": [82] },
     "46": { "next": [47], "prev": [45], "habitat": "forest" },
     "47": { "next": [48], "prev": [46], "habitat": "forest" },
     "48": { "next": [49], "prev": [47], "habitat": "forest" },
