@@ -139,6 +139,20 @@ describe("BoardEffectsHandler", () => {
       expect(stateManager.get("players.p1.position")).toBe(82);
     });
 
+    it("should set arrivedViaTeleportFrom when applying ladder and context is passed", async () => {
+      stateManager.set("board.squares", {
+        "45": { next: [46], prev: [44], name: "Forest-Ocean Portal", nextOnLanding: [82] },
+        "82": { next: [83], prev: [81], name: "Ocean-Forest Portal", nextOnLanding: [45] },
+      });
+      stateManager.set("players.p1.position", 45);
+      const context: ExecutionContext = {};
+
+      await boardEffectsHandler.checkAndApplyBoardMoves("players.p1.position", context);
+
+      expect(stateManager.get("players.p1.position")).toBe(82);
+      expect(context.arrivedViaTeleportFrom).toBe(45);
+    });
+
     it("should do nothing when square has no teleport", async () => {
       stateManager.set("board.squares", {
         "5": { next: [6], prev: [4] },
@@ -495,6 +509,31 @@ describe("BoardEffectsHandler", () => {
         expect.stringContaining("Jivaro Indians"),
         expect.anything(),
       );
+    });
+
+    it("portal at 82 when arrived from 45: no choice, stay, narrate briefly only", async () => {
+      stateManager.set("board.squares", {
+        "45": { next: [46], prev: [44], name: "Forest-Ocean Portal", nextOnLanding: [82] },
+        "82": {
+          next: [83],
+          prev: [81],
+          habitat: "ocean",
+          name: "Ocean-Forest Portal",
+          nextOnLanding: [45],
+          inverseMode: "deactivate",
+        },
+      });
+      stateManager.set("players.p1.position", 82);
+      const context: ExecutionContext = { arrivedViaTeleportFrom: 45 };
+
+      await boardEffectsHandler.checkAndApplySquareEffects("players.p1.position", context);
+
+      expect(mockProcessTranscript).toHaveBeenCalledTimes(1);
+      const transcript = mockProcessTranscript.mock.calls[0]?.[0] ?? "";
+      expect(transcript).toContain("arrived via the portal from square 45");
+      expect(transcript).toContain("Do NOT offer any choice");
+      expect(transcript).toContain("Do NOT ask questions");
+      expect(transcript).toContain("Narrate briefly only");
     });
 
     it("checkTorch hazard applies skipTurn when player has no torch", async () => {

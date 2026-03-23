@@ -44,8 +44,9 @@ export class BoardEffectsHandler {
    * Skips backward teleports when player has inverseMode.
    *
    * @param path - State path that was mutated
+   * @param context - Optional execution context; when a teleport is applied, sets arrivedViaTeleportFrom
    */
-  async checkAndApplyBoardMoves(path: string): Promise<void> {
+  async checkAndApplyBoardMoves(path: string, context?: ExecutionContext): Promise<void> {
     if (!path.endsWith(".position") || !path.startsWith("players.")) {
       return;
     }
@@ -65,7 +66,7 @@ export class BoardEffectsHandler {
     }
 
     const squareData = squares[position.toString()];
-    this.applyTeleportIfApplicable(path, position, squareData, state);
+    this.applyTeleportIfApplicable(path, position, squareData, state, context);
 
     // Magic door bounce (Kalimba): overshooting door bounces back
     const finalPosition = this.stateManager.get(path) as number;
@@ -166,6 +167,7 @@ export class BoardEffectsHandler {
       game?: Record<string, unknown>;
       players?: Record<string, Record<string, unknown>>;
     },
+    context?: ExecutionContext,
   ): void {
     if (!squareData) {
       return;
@@ -183,6 +185,9 @@ export class BoardEffectsHandler {
       return;
     }
 
+    if (context) {
+      context.arrivedViaTeleportFrom = position;
+    }
     const moveType = destination < position ? "snake" : "ladder";
     Logger.info(`Auto-applying ${moveType}: position ${position} → ${destination}`);
     this.stateManager.set(path, destination);
@@ -401,6 +406,54 @@ export class BoardEffectsHandler {
     }
   }
 
+  private buildNoChoicePortalHint(
+    kind: ReturnType<typeof getSquareKind>,
+    arrivedViaTeleportFrom: number | undefined,
+    squareData: Record<string, unknown> | undefined,
+  ): string {
+    const teleportKinds = ["portal", "goldenFox", "skull"] as const;
+    const isTeleport = kind && teleportKinds.includes(kind as (typeof teleportKinds)[number]);
+    const raw = squareData?.nextOnLanding;
+    const nextOnLanding = Array.isArray(raw) ? (raw as number[]) : [];
+    const isNoChoicePortal =
+      isTeleport &&
+      typeof arrivedViaTeleportFrom === "number" &&
+      nextOnLanding.includes(arrivedViaTeleportFrom);
+    return isNoChoicePortal
+      ? ` The player arrived via the portal from square ${arrivedViaTeleportFrom}. They stay here. Do NOT offer any choice. Do NOT ask questions. Narrate briefly only.`
+      : "";
+  }
+
+  private buildNonAnimalSquareEffectTranscript(
+    position: number,
+    squareName: string,
+    applied: string[],
+    squareInfo: string,
+    kind: ReturnType<typeof getSquareKind>,
+    arrivedViaTeleportFrom: number | undefined,
+    squareData: Record<string, unknown> | undefined,
+  ): string {
+    const appliedText = applied.length > 0 ? ` Orchestrator applied: ${applied.join(", ")}.` : "";
+    const teleportKinds = ["portal", "goldenFox", "skull"] as const;
+    const isTeleport = kind && teleportKinds.includes(kind as (typeof teleportKinds)[number]);
+    const noChoicePortalHint = this.buildNoChoicePortalHint(
+      kind,
+      arrivedViaTeleportFrom,
+      squareData,
+    );
+    const noMoveHint = !isTeleport
+      ? ` The player landed on and stays at square ${position}. Do NOT say they move to or go to square ${position} — they are already there. Narrate only the effect.`
+      : "";
+    const teleportHint =
+      isTeleport && !noChoicePortalHint ? ` ${t("narration.stateSquareNumber")}` : "";
+    const hints = `${noMoveHint}${noChoicePortalHint}${teleportHint}`;
+    const base =
+      applied.length > 0
+        ? `[SYSTEM: Current player just landed on square ${position} (${squareName}).${appliedText} Narrate this encounter.${hints} Square data for flavour: ${squareInfo}]`
+        : `[SYSTEM: Current player just landed on square ${position} (${squareName}). Narrate this encounter. Do not change game state.${hints} Square data for flavour: ${squareInfo}]`;
+    return base;
+  }
+
   private buildSquareEffectTranscript(
     kind: ReturnType<typeof getSquareKind>,
     position: number,
@@ -408,8 +461,9 @@ export class BoardEffectsHandler {
     power: number,
     applied: string[],
     squareInfo: string,
+    arrivedViaTeleportFrom?: number,
+    squareData?: Record<string, unknown>,
   ): string {
-    const appliedText = applied.length > 0 ? ` Orchestrator applied: ${applied.join(", ")}.` : "";
     if (isAnimalEncounterKind(kind)) {
       return (
         `[SYSTEM: Animal encounter at square ${position} (${squareName}, power ${power}), phase=riddle. ` +
@@ -418,18 +472,18 @@ export class BoardEffectsHandler {
         `Square data (flavour only): ${squareInfo}]`
       );
     }
-    const teleportKinds = ["portal", "goldenFox", "skull"] as const;
-    const isTeleport = kind && teleportKinds.includes(kind as (typeof teleportKinds)[number]);
-    const noMoveHint = !isTeleport
-      ? ` The player landed on and stays at square ${position}. Do NOT say they move to or go to square ${position} — they are already there. Narrate only the effect.`
-      : "";
-    const teleportHint = isTeleport ? ` ${t("narration.stateSquareNumber")}` : "";
-    return applied.length > 0
-      ? `[SYSTEM: Current player just landed on square ${position} (${squareName}).${appliedText} Narrate this encounter.${noMoveHint}${teleportHint} Square data for flavour: ${squareInfo}]`
-      : `[SYSTEM: Current player just landed on square ${position} (${squareName}). Narrate this encounter. Do not change game state.${noMoveHint}${teleportHint} Square data for flavour: ${squareInfo}]`;
+    return this.buildNonAnimalSquareEffectTranscript(
+      position,
+      squareName,
+      applied,
+      squareInfo,
+      kind,
+      arrivedViaTeleportFrom,
+      squareData,
+    );
   }
 
-  async checkAndApplySquareEffects(path: string, _context: ExecutionContext): Promise<void> {
+  async checkAndApplySquareEffects(path: string, context: ExecutionContext): Promise<void> {
     const params = this.getSquareEffectParams(path);
     if (!params) {
       return;
@@ -452,6 +506,8 @@ export class BoardEffectsHandler {
       power,
       applied,
       squareInfo,
+      context.arrivedViaTeleportFrom,
+      squareData,
     );
 
     this.syncAnimalEncounterState(kind, playerId, position, power, false);

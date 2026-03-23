@@ -105,6 +105,8 @@ export interface ExecutionContext {
   justNarratedDecisionAsk?: boolean;
   /** Paths (e.g. players.p1.position) set by PLAYER_ROLLED this run; SET_STATE for these is ignored to avoid overwriting the roll. */
   positionPathsSetByRoll?: Set<string>;
+  /** Set when checkAndApplyBoardMoves applies a ladder/teleport; the square the player came from. */
+  arrivedViaTeleportFrom?: number;
 }
 
 /**

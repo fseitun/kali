@@ -182,7 +182,10 @@ export class RiddlePowerCheckHandler {
     this.deps.stateManager.set("game.pendingAnimalEncounter", null);
     Logger.info(`Power check WIN: ${playerId} advances to ${newPosition}`);
 
-    await this.deps.boardEffectsHandler.checkAndApplyBoardMoves(`players.${playerId}.position`);
+    await this.deps.boardEffectsHandler.checkAndApplyBoardMoves(
+      `players.${playerId}.position`,
+      context,
+    );
     await this.deps.boardEffectsHandler.checkAndApplySquareEffects(
       `players.${playerId}.position`,
       context,

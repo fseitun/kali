@@ -68,7 +68,7 @@ export async function executeSetState(
   await ctx.turnManager.assertPlayerTurnOwnership(primitive.path);
   Logger.write(`Setting state: ${primitive.path} = ${JSON.stringify(primitive.value)}`);
   ctx.stateManager.set(primitive.path, primitive.value);
-  await ctx.boardEffectsHandler.checkAndApplyBoardMoves(primitive.path);
+  await ctx.boardEffectsHandler.checkAndApplyBoardMoves(primitive.path, context);
   await ctx.boardEffectsHandler.checkAndApplySquareEffects(primitive.path, context);
   ctx.checkAndApplyWinCondition(primitive.path);
 }
@@ -104,7 +104,7 @@ export async function executePlayerRolled(
   ctx.stateManager.set(path, newPosition);
   context.positionPathsSetByRoll?.add(path);
   ctx.stateManager.set("game.lastRoll", primitive.value);
-  await ctx.boardEffectsHandler.checkAndApplyBoardMoves(path);
+  await ctx.boardEffectsHandler.checkAndApplyBoardMoves(path, context);
   await ctx.boardEffectsHandler.checkAndApplySquareEffects(path, context);
   ctx.checkAndApplyWinCondition(path);
 }
@@ -172,7 +172,7 @@ export async function executePlayerAnswered(
       `Auto-applying PLAYER_ANSWERED to decision point: ${applyState.path} = ${JSON.stringify(applyState.value)}`,
     );
     ctx.stateManager.set(applyState.path, applyState.value);
-    await ctx.boardEffectsHandler.checkAndApplyBoardMoves(applyState.path);
+    await ctx.boardEffectsHandler.checkAndApplyBoardMoves(applyState.path, context);
     await ctx.boardEffectsHandler.checkAndApplySquareEffects(applyState.path, context);
   }
 }
