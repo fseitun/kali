@@ -14,7 +14,6 @@ export const SPECIAL_SQUARE_KINDS = [
   "magicDoor",
   "skull",
   "win",
-  "rollAdvance",
   "rollDirectional",
 ] as const;
 
@@ -45,7 +44,6 @@ const SPECIAL_EFFECT_MAP: Record<string, SpecialSquareKind> = {
   magicDoorCheck: "magicDoor",
   returnTo187: "skull",
   win: "win",
-  roll2d6Advance: "rollAdvance",
 };
 
 const ROLL_DIRECTIONAL_EFFECTS = ["roll1d6Directional", "roll2d6Directional", "roll3d6Directional"];
@@ -99,7 +97,7 @@ export function getSquareKind(squareData: Record<string, unknown>): SpecialSquar
  * must NOT be applied on landing; LLM applies after encounter resolution.
  */
 export function isDeferredRewardKind(kind: SpecialSquareKind | null): boolean {
-  return kind === "animal" || kind === "rollAdvance";
+  return kind === "animal";
 }
 
 /**

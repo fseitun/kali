@@ -1,5 +1,6 @@
 import type { BoardEffectsHandler } from "./board-effects-handler";
 import { computeNewPositionFromState } from "./board-traversal";
+import { getPowerCheckRollSpec } from "./power-check-dice";
 import { isStrictRiddleCorrect } from "./riddle-answer";
 import type { TurnManager } from "./turn-manager";
 import type { ExecutionContext, GameState } from "./types";
@@ -214,7 +215,13 @@ export class RiddlePowerCheckHandler {
   }
 
   private getPowerCheckContext(state: GameState): {
-    pending: { position: number; power: number; playerId: string; phase?: string };
+    pending: {
+      position: number;
+      power: number;
+      playerId: string;
+      phase?: string;
+      riddleCorrect?: boolean;
+    };
     playerId: string;
     position: number;
     power: number;
@@ -249,10 +256,10 @@ export class RiddlePowerCheckHandler {
     };
   }
 
-  private parsePowerCheckRoll(answer: string): number | null {
+  private parsePowerCheckRoll(answer: string, min: number, max: number): number | null {
     const rollStr = answer.trim().replace(/\D/g, "") || answer.trim();
     const roll = parseInt(rollStr, 10);
-    return !isNaN(roll) && roll >= 1 && roll <= 12 ? roll : null;
+    return !isNaN(roll) && roll >= min && roll <= max ? roll : null;
   }
 
   async tryHandlePowerCheckAnswer(
@@ -273,17 +280,18 @@ export class RiddlePowerCheckHandler {
       return false;
     }
 
-    const roll = this.parsePowerCheckRoll(answer);
-    if (roll === null) {
-      return false;
-    }
-
     const { pending, playerId, position, power, isRevenge } = ctx;
-    const win = isRevenge ? roll >= power : roll > power;
 
     const board = state.board as Record<string, unknown> | undefined;
     const squares = (board?.squares as Record<string, Record<string, unknown>>) ?? {};
     const squareData = squares[position.toString()] ?? {};
+    const rollSpec = getPowerCheckRollSpec(pending.phase, pending.riddleCorrect, squareData);
+    const roll = this.parsePowerCheckRoll(answer, rollSpec.min, rollSpec.max);
+    if (roll === null) {
+      return false;
+    }
+
+    const win = isRevenge ? roll >= power : roll > power;
 
     if (win) {
       const currentPos = this.deps.stateManager.get(`players.${playerId}.position`) as number;

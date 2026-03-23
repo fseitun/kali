@@ -580,6 +580,135 @@ describe("Validator - New Primitives", () => {
       expect(result.valid).toBe(true);
     });
 
+    it("rejects numeric answer 2 when powerCheck on Águila with 3d6 (riddleCorrect true)", () => {
+      const stateWithPowerCheck = {
+        ...mockState,
+        game: {
+          ...mockState.game,
+          turn: "p1",
+          pendingAnimalEncounter: {
+            position: 7,
+            power: 3,
+            playerId: "p1",
+            phase: "powerCheck",
+            riddleCorrect: true,
+          },
+        },
+        players: {
+          ...mockState.players,
+          p1: {
+            ...(mockState.players as Record<string, Record<string, unknown>>).p1,
+            position: 7,
+          },
+        },
+        board: {
+          squares: {
+            "7": {
+              type: "animal",
+              name: "Águila",
+              power: 3,
+              powerCheckDiceIfRiddleCorrect: 3,
+              powerCheckDiceIfRiddleWrong: 2,
+            },
+          },
+        },
+      } as unknown as GameState;
+      const result = validateActions(
+        [{ action: "PLAYER_ANSWERED", answer: "2" }],
+        stateWithPowerCheck,
+        mockStateManager as unknown as StateManager,
+        mockValidatorContext,
+      );
+      expect(result.valid).toBe(false);
+      expect(result.errorCode).toBe("invalidDiceRoll");
+      expect(result.error).toMatch(/3-18|3d6/);
+    });
+
+    it("allows numeric answer 15 when powerCheck on Águila with 3d6 (riddleCorrect true)", () => {
+      const stateWithPowerCheck = {
+        ...mockState,
+        game: {
+          ...mockState.game,
+          turn: "p1",
+          pendingAnimalEncounter: {
+            position: 7,
+            power: 3,
+            playerId: "p1",
+            phase: "powerCheck",
+            riddleCorrect: true,
+          },
+        },
+        players: {
+          ...mockState.players,
+          p1: {
+            ...(mockState.players as Record<string, Record<string, unknown>>).p1,
+            position: 7,
+          },
+        },
+        board: {
+          squares: {
+            "7": {
+              type: "animal",
+              name: "Águila",
+              power: 3,
+              powerCheckDiceIfRiddleCorrect: 3,
+              powerCheckDiceIfRiddleWrong: 2,
+            },
+          },
+        },
+      } as unknown as GameState;
+      const result = validateActions(
+        [{ action: "PLAYER_ANSWERED", answer: "15" }],
+        stateWithPowerCheck,
+        mockStateManager as unknown as StateManager,
+        mockValidatorContext,
+      );
+      expect(result.valid).toBe(true);
+    });
+
+    it("rejects numeric answer 1 when powerCheck on Águila with 2d6 after wrong riddle", () => {
+      const stateWithPowerCheck = {
+        ...mockState,
+        game: {
+          ...mockState.game,
+          turn: "p1",
+          pendingAnimalEncounter: {
+            position: 7,
+            power: 3,
+            playerId: "p1",
+            phase: "powerCheck",
+            riddleCorrect: false,
+          },
+        },
+        players: {
+          ...mockState.players,
+          p1: {
+            ...(mockState.players as Record<string, Record<string, unknown>>).p1,
+            position: 7,
+          },
+        },
+        board: {
+          squares: {
+            "7": {
+              type: "animal",
+              name: "Águila",
+              power: 3,
+              powerCheckDiceIfRiddleCorrect: 3,
+              powerCheckDiceIfRiddleWrong: 2,
+            },
+          },
+        },
+      } as unknown as GameState;
+      const result = validateActions(
+        [{ action: "PLAYER_ANSWERED", answer: "1" }],
+        stateWithPowerCheck,
+        mockStateManager as unknown as StateManager,
+        mockValidatorContext,
+      );
+      expect(result.valid).toBe(false);
+      expect(result.error).toMatch(/2-12|2d6/);
+    });
+
     it("allows numeric answer 7 when pendingAnimalEncounter is powerCheck with 2d6 (riddleCorrect true)", () => {
       const stateWithPowerCheck = {
         ...mockState,

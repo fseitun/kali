@@ -18,7 +18,7 @@ describe("SYSTEM_PROMPT", () => {
   it("distinguishes movement dice from POWER CHECK / REVENGE rolls in conventions", () => {
     expect(SYSTEM_PROMPT).toContain("⚠️ POWER CHECK");
     expect(SYSTEM_PROMPT).toContain("⚠️ REVENGE");
-    expect(SYSTEM_PROMPT).toMatch(/1d6 vs 2d6/);
+    expect(SYSTEM_PROMPT).toMatch(/1d6, 2d6, 3d6/);
   });
 });
 
@@ -151,7 +151,44 @@ describe("formatStateContext", () => {
     const result = formatStateContext(state);
 
     expect(result).toContain("2–12");
-    expect(result).toContain("two dice");
+    expect(result).toContain("2d6");
+    expect(result).not.toContain("on the die");
+  });
+
+  it("POWER CHECK on Águila (3d6) after correct riddle uses 3–18 wording", () => {
+    const state = {
+      game: {
+        turn: "p1",
+        phase: "PLAYING",
+        pendingAnimalEncounter: {
+          position: 7,
+          power: 3,
+          playerId: "p1",
+          phase: "powerCheck",
+          riddleCorrect: true,
+        },
+      },
+      players: {
+        p1: { id: "p1", name: "fico", position: 7, activeChoices: {} },
+        p2: { id: "p2", name: "pedro", position: 6, activeChoices: {} },
+      },
+      board: {
+        squares: {
+          "7": {
+            type: "animal",
+            name: "Águila",
+            power: 3,
+            powerCheckDiceIfRiddleCorrect: 3,
+            powerCheckDiceIfRiddleWrong: 2,
+          },
+        },
+      },
+    } as Record<string, unknown>;
+
+    const result = formatStateContext(state);
+
+    expect(result).toContain("3–18");
+    expect(result).toContain("3d6");
     expect(result).not.toContain("on the die");
   });
 

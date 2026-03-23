@@ -789,7 +789,7 @@ describe("Orchestrator - New Action Handlers", () => {
       expect(mockLLM.getActions).toHaveBeenLastCalledWith(
         "3",
         expect.any(Object),
-        t("game.riddleIncorrect"),
+        t("game.riddleIncorrect1d6"),
       );
     });
   });

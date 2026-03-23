@@ -1,6 +1,7 @@
 import type { BoardEffectsHandler } from "./board-effects-handler";
 import { computeNewPositionFromState } from "./board-traversal";
 import { getDecisionPointApplyState } from "./decision-helpers";
+import { getPowerCheckDiceConfig, getSquareDataAtPosition } from "./power-check-dice";
 import type { RiddlePowerCheckHandler } from "./riddle-power-check";
 import type { TurnManager } from "./turn-manager";
 import type { ExecutionContext, GameState, PrimitiveAction } from "./types";
@@ -108,6 +109,33 @@ export async function executePlayerRolled(
   ctx.checkAndApplyWinCondition(path);
 }
 
+function riddleOutcomeMessage(
+  correct: boolean,
+  dice: ReturnType<typeof getPowerCheckDiceConfig>,
+): string {
+  if (correct) {
+    return dice.ifRiddleCorrect === 3 ? t("game.riddleCorrect3d6") : t("game.riddleCorrect2d6");
+  }
+  return dice.ifRiddleWrong === 2 ? t("game.riddleIncorrect2d6") : t("game.riddleIncorrect1d6");
+}
+
+async function speakAfterRiddleResolved(
+  ctx: ActionExecutorContext,
+  riddleResult: { correct: boolean },
+): Promise<void> {
+  const st = ctx.stateManager.getState() as GameState;
+  const game = st.game as Record<string, unknown> | undefined;
+  const pendingEncounter = game?.pendingAnimalEncounter as { position?: number } | undefined;
+  const squareData =
+    typeof pendingEncounter?.position === "number"
+      ? getSquareDataAtPosition(st, pendingEncounter.position)
+      : undefined;
+  const msg = riddleOutcomeMessage(riddleResult.correct, getPowerCheckDiceConfig(squareData));
+  ctx.setLastNarration(msg);
+  ctx.statusIndicator.setState("speaking");
+  await ctx.speechService.speak(msg);
+}
+
 export async function executePlayerAnswered(
   ctx: ActionExecutorContext,
   primitive: Extract<PrimitiveAction, { action: "PLAYER_ANSWERED" }>,
@@ -122,10 +150,7 @@ export async function executePlayerAnswered(
   );
   if (riddleResult) {
     context.skipTrailingNarrateForPowerCheck = true;
-    const msg = riddleResult.correct ? t("game.riddleCorrect") : t("game.riddleIncorrect");
-    ctx.setLastNarration(msg);
-    ctx.statusIndicator.setState("speaking");
-    await ctx.speechService.speak(msg);
+    await speakAfterRiddleResolved(ctx, riddleResult);
     return;
   }
 

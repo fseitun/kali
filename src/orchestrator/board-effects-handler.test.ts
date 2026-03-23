@@ -438,26 +438,34 @@ describe("BoardEffectsHandler", () => {
       expect(stateManager.get("players.p1.items")).toEqual(["scimitar"]);
     });
 
-    it("rollAdvance squares get narration only, no rewards on landing (deferred to LLM)", async () => {
+    it("Águila (animal + extra power dice) sets pending encounter; no rewards on landing", async () => {
       stateManager.set("board.squares", {
         "7": {
-          type: "special",
+          type: "animal",
           name: "Águila",
-          effect: "roll2d6Advance",
-          instrument: "flauta del desierto",
+          power: 3,
           points: 3,
+          powerCheckDiceIfRiddleCorrect: 3,
+          powerCheckDiceIfRiddleWrong: 2,
         },
       });
       stateManager.set("players.p1.position", 7);
       stateManager.set("players.p1.instruments", []);
       stateManager.set("players.p1.points", 0);
+      stateManager.set("game.turn", "p1");
 
       await boardEffectsHandler.checkAndApplySquareEffects("players.p1.position", baseContext);
 
       expect(stateManager.get("players.p1.instruments")).toEqual([]);
       expect(stateManager.get("players.p1.points")).toBe(0);
+      expect(stateManager.get("game.pendingAnimalEncounter")).toMatchObject({
+        position: 7,
+        power: 3,
+        playerId: "p1",
+        phase: "riddle",
+      });
       expect(mockProcessTranscript).toHaveBeenCalledWith(
-        expect.stringContaining("Narrate this encounter"),
+        expect.stringContaining("Animal encounter"),
         expect.anything(),
       );
     });

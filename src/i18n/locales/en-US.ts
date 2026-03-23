@@ -30,8 +30,10 @@ export const enUS = {
     position: "You're at position {position}.",
     powerCheckPass: "You passed.",
     powerCheckFail: "No luck.",
-    riddleCorrect: "Correct! Roll 2 dice for the power check.",
-    riddleIncorrect: "Wrong. Roll 1 die for the power check.",
+    riddleCorrect2d6: "Correct! Roll 2 dice for the power check.",
+    riddleCorrect3d6: "Correct! Roll 3 dice for the power check.",
+    riddleIncorrect1d6: "Wrong. Roll 1 die for the power check.",
+    riddleIncorrect2d6: "Wrong. Roll 2 dice for the power check.",
     forkChoiceResolvedRoll: "{name}, you're set. Roll the dice.",
   },
   ui: {

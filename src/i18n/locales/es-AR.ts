@@ -30,8 +30,10 @@ export const esAR = {
     position: "Estás en el casillero {position}.",
     powerCheckPass: "Pasaste.",
     powerCheckFail: "No alcanzó.",
-    riddleCorrect: "¡Correcto! Tirá 2 dados para la prueba de poder.",
-    riddleIncorrect: "No acertaste. Tirá 1 dado para la prueba.",
+    riddleCorrect2d6: "¡Correcto! Tirá 2 dados para la prueba de poder.",
+    riddleCorrect3d6: "¡Correcto! Tirá 3 dados para la prueba de poder.",
+    riddleIncorrect1d6: "No acertaste. Tirá 1 dado para la prueba.",
+    riddleIncorrect2d6: "No acertaste. Tirá 2 dados para la prueba.",
     forkChoiceResolvedRoll: "{name}, listo. Tirá el dado.",
   },
   ui: {

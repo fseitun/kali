@@ -1,4 +1,5 @@
 import { getDecisionPoints } from "../decision-point-inference";
+import { getPowerCheckRollSpec, getSquareDataAtPosition } from "../power-check-dice";
 import type { GameState, PrimitiveAction } from "../types";
 import { validateField } from "./common";
 import type { ValidationResult } from "./types";
@@ -22,13 +23,17 @@ function validateRiddlePhaseAnswer(
   return { valid: true };
 }
 
-function getPowerCheckRollLimits(pending: { phase?: string; riddleCorrect?: boolean }): {
+function getPowerCheckRollLimits(
+  pending: { phase?: string; riddleCorrect?: boolean; position?: number },
+  state: GameState,
+): {
   min: number;
   max: number;
   label: string;
 } {
-  const is2d6 = pending.phase === "powerCheck" && pending.riddleCorrect === true;
-  return is2d6 ? { min: 2, max: 12, label: "2d6" } : { min: 1, max: 6, label: "1d6" };
+  const pos = pending.position;
+  const squareData = typeof pos === "number" ? getSquareDataAtPosition(state, pos) : undefined;
+  return getPowerCheckRollSpec(pending.phase, pending.riddleCorrect, squareData);
 }
 
 function parsePowerCheckRoll(answer: string): number | null {
@@ -39,10 +44,11 @@ function parsePowerCheckRoll(answer: string): number | null {
 
 function validatePowerCheckRoll(
   roll: number,
-  pending: { phase?: string; riddleCorrect?: boolean },
+  pending: { phase?: string; riddleCorrect?: boolean; position?: number },
+  state: GameState,
   index: number,
 ): ValidationResult {
-  const { min, max, label } = getPowerCheckRollLimits(pending);
+  const { min, max, label } = getPowerCheckRollLimits(pending, state);
   if (roll >= min && roll <= max) {
     return { valid: true };
   }
@@ -54,9 +60,13 @@ function validatePowerCheckRoll(
 }
 
 function validatePowerCheckAnswer(
-  pending: { phase?: string; playerId?: string; riddleCorrect?: boolean } | null | undefined,
+  pending:
+    | { phase?: string; playerId?: string; riddleCorrect?: boolean; position?: number }
+    | null
+    | undefined,
   currentTurn: string,
   answer: string,
+  state: GameState,
   index: number,
 ): ValidationResult | null {
   const isPowerPhase =
@@ -69,7 +79,7 @@ function validatePowerCheckAnswer(
   if (roll === null) {
     return { valid: true };
   }
-  return validatePowerCheckRoll(roll, pending, index);
+  return validatePowerCheckRoll(roll, pending, state, index);
 }
 
 function validatePathChoiceAB(
@@ -162,9 +172,15 @@ export function validatePlayerAnswered(
   }
 
   const powerResult = validatePowerCheckAnswer(
-    pending as { phase?: string; playerId?: string; riddleCorrect?: boolean },
+    pending as {
+      phase?: string;
+      playerId?: string;
+      riddleCorrect?: boolean;
+      position?: number;
+    },
     currentTurn,
     answer,
+    state,
     index,
   );
   if (powerResult !== null) {

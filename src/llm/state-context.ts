@@ -1,5 +1,10 @@
 import type { StateDisplayConfig, StateDisplayMetadata } from "@/game-loader/types";
 import { getDecisionPoints } from "@/orchestrator/decision-point-inference";
+import {
+  getPowerCheckDiceConfig,
+  getPowerCheckRollSpec,
+  getSquareDataAtPosition,
+} from "@/orchestrator/power-check-dice";
 import type { GameState } from "@/orchestrator/types";
 
 export type { StateDisplayConfig, StateDisplayMetadata };
@@ -227,13 +232,19 @@ function formatRiddlePhaseContext(
   return `⚠️ RIDDLE (${playerName}) phase=riddle. User must choose one of the four options. Return PLAYER_ANSWERED with what the user said - do NOT use RIDDLE_RESOLVED. Orchestrator resolves correct/incorrect (strict match then LLM).${mapInst}${helpInst} [current]`;
 }
 
-function formatPowerCheckContext(playerName: string, riddleCorrect?: boolean): string {
-  const diceCount = riddleCorrect ? "2" : "1";
+function formatPowerCheckContext(
+  playerName: string,
+  riddleCorrect: boolean | undefined,
+  squareData: Record<string, unknown> | undefined,
+): string {
+  const spec = getPowerCheckRollSpec("powerCheck", riddleCorrect, squareData);
+  const cfg = getPowerCheckDiceConfig(squareData);
+  const n = riddleCorrect === true ? cfg.ifRiddleCorrect : cfg.ifRiddleWrong;
   const rollInstruction =
-    riddleCorrect === true
-      ? `PLAYER_ANSWERED with the sum (2–12 from two dice). Examples: "tire un dos y un seis", "ocho", "siete".`
-      : `PLAYER_ANSWERED with the number on the die (1–6). Examples: "cuatro", "tiré un seis", "6".`;
-  return `⚠️ POWER CHECK (${playerName}) phase=powerCheck. If user REPORTS their roll → ${rollInstruction} Do NOT ask "decime el resultado", "¿alcanza?", "is that enough?", "¿sirve?" — they gave the number; process it immediately. Do NOT NARRATE the roll. Return only PLAYER_ANSWERED. Orchestrator announces pass/fail. If user asks what to do → NARRATE "Tirá ${diceCount} dado(s)... decime el resultado." [current]`;
+    n === 1
+      ? `PLAYER_ANSWERED with the number on the die (1–6). Examples: "cuatro", "tiré un seis", "6".`
+      : `PLAYER_ANSWERED with the sum (${spec.min}–${spec.max} from ${spec.label}). Examples: "tire un dos y un seis", "ocho", "quince".`;
+  return `⚠️ POWER CHECK (${playerName}) phase=powerCheck. If user REPORTS their roll → ${rollInstruction} Do NOT ask "decime el resultado", "¿alcanza?", "is that enough?", "¿sirve?" — they gave the number; process it immediately. Do NOT NARRATE the roll. Return only PLAYER_ANSWERED. Orchestrator announces pass/fail. If user asks what to do → NARRATE "Tirá ${n} dado(s)... decime el resultado." [current]`;
 }
 
 function formatRevengeContext(playerName: string, power: number): string {
@@ -242,13 +253,19 @@ function formatRevengeContext(playerName: string, power: number): string {
 
 function getPendingEncounterContext(state: Record<string, unknown>): {
   playerName: string;
-  pending: { phase?: string; power?: number; riddleCorrect?: boolean };
+  pending: { phase?: string; power?: number; riddleCorrect?: boolean; position?: number };
 } | null {
   const game = state.game as Record<string, unknown> | undefined;
   const players = state.players as Record<string, Record<string, unknown>> | undefined;
   const currentTurn = game?.turn as string | undefined;
   const pending = game?.pendingAnimalEncounter as
-    | { phase?: string; power?: number; playerId?: string; riddleCorrect?: boolean }
+    | {
+        phase?: string;
+        power?: number;
+        playerId?: string;
+        riddleCorrect?: boolean;
+        position?: number;
+      }
     | null
     | undefined;
   if (!pending || !currentTurn || pending.playerId !== currentTurn || !players?.[currentTurn]) {
@@ -272,7 +289,10 @@ function formatAnimalEncounterContext(state: Record<string, unknown>): string {
     );
   }
   if (pending.phase === "powerCheck") {
-    return formatPowerCheckContext(playerName, pending.riddleCorrect);
+    const pos = pending.position;
+    const squareData =
+      typeof pos === "number" ? getSquareDataAtPosition(state as GameState, pos) : undefined;
+    return formatPowerCheckContext(playerName, pending.riddleCorrect, squareData);
   }
   if (pending.phase === "revenge") {
     return formatRevengeContext(playerName, power);

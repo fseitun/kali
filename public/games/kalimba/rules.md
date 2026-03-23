@@ -6,7 +6,7 @@
 
 Casillero 2 | Halcón \- 3 pts  
 Casillero 5 | Cobra \- 4 pts  
-Casillero 7 | Águila \- Avanza con 2 dados  
+Casillero 7 | Águila \- 3 pts \- animal con excepción de dados (ver §2): **3 dados** si acertás la adivinanza en la primera prueba, **2 dados** si fallás  
 Casillero 11| Arenas movedizas \- pierdes 1 turno
 
 Casillero 16| Escarabajo \- 1 pts  
@@ -75,7 +75,7 @@ Casillero 124| Oso negro \- 3pts
 
 Casillero 129| Perros salvajes \- 1 pts  
 Casillero 131| Cae la noche \- pierdes 1 turno  
-Casillero 132| Avestruz \- avanzas con 2 dados  
+Casillero 132| Avestruz \- 2 pts \- misma excepción que el Águila (§2): **3 dados** / **2 dados** en la primera prueba de poder  
 Casillero 133| Antorcha \- (no perderás 1 turno de caer en el casillero “cae la noche”)  
 Casillero 134| Cocodrilo \- 3 pts  
 Casillero 136| Pantano \- pierdes 1 turno  
@@ -170,10 +170,10 @@ Cuando caes en un casillero de animal, el enfrentamiento se resuelve en el sigui
 
 **A. El Acertijo (Solo en el primer intento)** Apenas llegas al animal, Kali te lee una adivinanza.
 
-- ✅ **Si aciertas:** Tiras **2 dados** para intentar superar a la bestia.
-- ❌ **Si fallas:** Tiras **1 solo dado** para intentar superar a la bestia.
+- ✅ **Si aciertas:** Tiras **2 dados** para intentar superar a la bestia (casilleros **7** y **132**: **3 dados**).
+- ❌ **Si fallas:** Tiras **1 solo dado** para intentar superar a la bestia (casilleros **7** y **132**: **2 dados**).
 
-**B. La Prueba de Poder (Primer turno)** Lanzas los dados correspondientes (1 o 2, según el acertijo).
+**B. La Prueba de Poder (Primer turno)** Lanzás la cantidad de dados que corresponda según el acertijo (1 o 2 en la mayoría de animales; **2 o 3** en los casilleros **7** y **132**).
 
 - **Condición de victoria:** El resultado de la suma debe ser **ESTRICTAMENTE MAYOR (\>)** al poder del animal.
   - _Ejemplo: Si el animal tiene poder 4, necesitas sacar un 5 o más._
@@ -192,7 +192,7 @@ Cuando caes en un casillero de animal, el enfrentamiento se resuelve en el sigui
 ### **3️⃣ Adivinanzas de Kalimba**
 
 - Todos los animales plantean un desafío intelectual antes del físico.
-- Acertar es clave porque **duplica tus probabilidades** de superar al animal (te permite usar 2 dados en vez de 1).
+- Acertar es clave porque **mejora fuerte** la primera prueba de poder: en casi todos los animales pasás de **1 dado** a **2 dados**; en los casilleros **7** (Águila) y **132** (Avestruz) pasás de **2 dados** a **3**.
 - **Importante:** La adivinanza solo se responde **una vez**, en el momento en que caes en el casillero. Si te quedas trabado varios turnos, no vuelves a responder adivinanzas, solo tiras el dado de revancha.
 
 ---
@@ -339,171 +339,3 @@ Casilleros especiales
 
 👉 **Kali es la Alexa de los juegos de mesa.**  
  Aporta dinamismo, elimina la lectura del manual y convierte cada partida en una experiencia inmersiva.
-
----
-
-## **2\. Propuesta de valor**
-
-- 🎮 **Juego físico \+ agente digital:** une lo táctil del tablero con la experiencia interactiva de una IA.
-
-- 🧠 **Aprendizaje y entretenimiento:** ideal para familias, colegios y adultos curiosos.
-
-- 🗣️ **Moderación con voz:** explica reglas, resuelve dudas y mantiene la partida fluida.
-
-- 🎵 **Música ambiental por hábitat:** jungla, océano, desierto, montaña, etc.
-
-- 🌎 **Conexión inclusiva:** sin necesidad de leer instrucciones, ideal para todo público.
-
----
-
-## **3\. Modelo de negocio**
-
-### **🧩 Producto base:**
-
-**Kalimba – Edición 1 (Juego físico \+ Kali)**
-
-- Precio al público: **USD 20**
-
-- Incluye:
-  - Tablero físico y componentes.
-
-  - Acceso a **Kali por 1 año** (licencia digital).
-
-  - **10 partidas mensuales** incluidas.
-
-  - Música y ambientación completa de los 7 hábitats.
-
-Tras el primer año, el usuario puede **renovar la licencia de Kali** para seguir jugando o acceder a nuevas expansiones.
-
----
-
-### **💰 Estructura de precios**
-
-| Concepto                               | Descripción                              | Precio (USD) |
-| -------------------------------------- | ---------------------------------------- | ------------ |
-| Juego base (Kalimba \+ Kali 1 año)     | Tablero físico \+ acceso digital         | **20**       |
-| Renovación anual de licencia Kali      | 12 meses adicionales                     | **10**       |
-| Pack de expansión (nuevo mapa/hábitat) | Tablero digital o físico adicional       | **5**        |
-| Pack de música o voz adicional         | Contenido temático (selva, océano, etc.) | **3**        |
-
----
-
-## **4\. Fuentes de ingresos**
-
-1. **Venta inicial del juego físico (B2C):**
-   - Canal online (e-commerce propio, Amazon, MercadoLibre).
-
-   - Retail (librerías, jugueterías, locales educativos).
-
-2. **Renovación anual de licencia Kali (SaaS lúdico):**
-   - Acceso digital vía QR \+ suscripción anual.
-
-3. **Expansiones y contenidos adicionales:**
-   - Nuevos hábitats, desafíos, música, modos de juego.
-
-4. **Licencias B2B:**
-   - Venta o sublicencia de Kali a otros editores de juegos de mesa o instituciones educativas.
-
----
-
-## **5\. Estructura de costos (por unidad)**
-
-| Componente                            | Costo estimado (USD) |
-| ------------------------------------- | -------------------- |
-| Producción del tablero \+ piezas      | 5,00                 |
-| Empaque y manual visual               | 1,00                 |
-| Acceso a Kali (IA \+ hosting)         | 2,00                 |
-| Marketing y distribución              | 3,00                 |
-| **Costo total estimado**              | **11,00**            |
-| **Margen por unidad (venta USD 20\)** | **45%**              |
-
----
-
-## **6\. Proyecciones iniciales (Año 1\)**
-
-| Escenario       | Ventas estimadas | Ingreso bruto | Renovaciones (Año 2\) |
-| --------------- | ---------------- | ------------- | --------------------- |
-| **Conservador** | 5.000 unidades   | USD 100.000   | USD 25.000            |
-| **Medio**       | 15.000 unidades  | USD 300.000   | USD 75.000            |
-| **Expansivo**   | 50.000 unidades  | USD 1.000.000 | USD 250.000           |
-
----
-
-## **7\. Roadmap de desarrollo**
-
-| Etapa         | Descripción                            | Duración |
-| ------------- | -------------------------------------- | -------- |
-| **Q1 – 2025** | Diseño final del tablero y componentes | 2 meses  |
-| **Q2 – 2025** | Integración Kali (voz \+ app QR)       | 2 meses  |
-| **Q3 – 2025** | Producción piloto (500 unidades)       | 1 mes    |
-| **Q4 – 2025** | Lanzamiento comercial LATAM            | 1 mes    |
-| **Q1 – 2026** | Licencia anual y nuevos hábitats       | Continuo |
-
----
-
-## **8\. Escalabilidad futura**
-
-- **App Kali Games:** plataforma que concentra todos los juegos compatibles con Kali.
-
-- **Licencias educativas:** versiones adaptadas para escuelas y talleres.
-
-- **Merchandising temático:** animales, hábitats, figuras coleccionables.
-
-- **Integración con altavoces inteligentes (Alexa, Google Home).**
-
----
-
-## **9\. Visión**
-
-“Crear una nueva categoría de entretenimiento donde la inteligencia artificial se convierta en parte del juego y no solo en un asistente.  
- Kali es la primera voz del juego del futuro.”
-
-# Kali como Agente Ai de Juego
-
-## **🌍 1\. Nivel Producto: Kali como Agente de Juego Universal**
-
-Si Kalimba es el primer “juego anfitrión”, Kali es el **core tecnológico**.  
-Ahí la visión grande sería:
-
-“Kali es el primer agente de inteligencia artificial diseñado para jugar con vos”.
-
-En ese sentido, Kali no pertenece solo a Kalimba, sino que Kalimba es el “juego embajador” — el primer caso de uso.  
-Después vendrán más.
-
-🔹 Rol funcional: Kali entiende reglas, controla turnos, mantiene inventarios, lanza adivinanzas, narra, ambienta, y adapta el juego según edad o estilo.  
- 🔹 Escalabilidad: cualquier creador de juegos puede integrar a Kali mediante un API o SDK, igual que Alexa se integra a distintos dispositivos o apps.  
- 🔹 Proyección: Kali puede volverse el estándar de “AI Moderator” para juegos físicos y digitales, uniendo mundos (voz \+ tablero \+ móvil).
-
-👉 En este nivel, Kali deja de ser parte del juego y se convierte en la plataforma que hace posible que los juegos “cobren vida”.
-
-## **💡 2\. Nivel Marca: Kali como símbolo de nueva categoría**
-
-Podés posicionarla como la **primera IA de entretenimiento familiar**.  
- No como una “Alexa” genérica, sino como una voz con personalidad propia: curiosa, divertida, inclusiva, adaptable.
-
-Ejemplo de definición de marca:
-
-“Kali es la voz del juego.  
- La que explica, guía, reta y celebra.  
- Siempre lista para convertir cualquier tablero en una aventura viva.”
-
-De este modo, Kali se ubica en un lugar de **marca reconocible** — algo entre Pixar (por su empatía), Alexa (por su funcionalidad) y Nintendo (por su magia y neutralidad intergeneracional).
-
-🔹 Logo, voz y tono deben ser consistentes (quizás una voz joven, cálida, con matices de sorpresa).  
- 🔹 En el futuro, Kali puede vivir más allá del juego: en apps, minijuegos móviles, experiencias educativas o incluso juguetes interactivos.
-
-## **🚀 3\. Estrategia | hoja de ruta posible**
-
-La hoja de ruta podría ser así:
-
-1. **Versión 1 (MVP de Kalimba)**  
-   Kali no es “IA generativa completa” todavía. Es un **asistente preconfigurado con voz**, con guiones, efectos de sonido y respuestas pregrabadas.  
-   → Esto se puede desarrollar sin un plan corporativo grande.
-
-2. **Versión 2 (Kali con IA conectada)**  
-   Cuando el juego crezca, se conecta a una IA real (GPT o similar) y ya **interpreta voz, responde libremente y modera dinámicamente**.  
-   → Ahí sí necesitás el plan corporativo y una infraestructura sólida.
-
-3. **Versión 3 (Kali como plataforma)**  
-   Kali deja de ser parte solo de Kalimba y empieza a integrarse en otros juegos, con API o licencia.  
-   → Es el modelo escalable, donde el negocio se multiplica.
