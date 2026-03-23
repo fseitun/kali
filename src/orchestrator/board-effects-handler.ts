@@ -1,5 +1,10 @@
 import { findSquareByEffect, getWinPosition } from "./board-helpers";
-import { getSquareKind, isAnimalEncounterKind, isDeferredRewardKind } from "./square-types";
+import {
+  getSquareKind,
+  isAnimalEncounterKind,
+  isDeferredRewardKind,
+  squareTriggersLandingPipeline,
+} from "./square-types";
 import type { ExecutionContext } from "./types";
 import type { StateManager } from "@/state-manager";
 import { Logger } from "@/utils/logger";
@@ -112,7 +117,7 @@ export class BoardEffectsHandler {
     path: string,
     state: { game?: Record<string, unknown>; players?: Record<string, Record<string, unknown>> },
   ): number | undefined {
-    if (squareData.type === "portal" && typeof squareData.destination === "number") {
+    if (typeof squareData.destination === "number") {
       return squareData.destination;
     }
     if (squareData.effect === "returnTo187") {
@@ -347,10 +352,8 @@ export class BoardEffectsHandler {
       return null;
     }
     const squareData = squares[position.toString()];
-    const isEmpty =
-      !squareData || squareData.type === "empty" || Object.keys(squareData).length === 0;
-    if (isEmpty) {
-      Logger.debug(`Square ${position} is empty or has no effects, skipping square effects`);
+    if (!squareTriggersLandingPipeline(squareData)) {
+      Logger.debug(`Square ${position} has no mechanics, skipping square effects`);
       return null;
     }
     return { squares, squareData };

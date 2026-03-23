@@ -6,7 +6,6 @@ function makeSquares(upTo: number): Record<string, SquareData> {
   const sq: Record<string, SquareData> = {};
   for (let i = 0; i <= upTo; i++) {
     sq[String(i)] = {
-      type: "empty",
       next: i < upTo ? [i + 1] : [],
       prev: i > 0 ? [i - 1] : [],
     };
@@ -74,7 +73,6 @@ describe("computeNewPositionFromState", () => {
     const squares = makeSquares(25);
     // Square 10 has prevOnLanding (backward penalty) - when inverseMode, should use first next instead
     squares["10"] = {
-      type: "special",
       next: [11],
       prev: [9],
       prevOnLanding: [5],
@@ -109,7 +107,6 @@ describe("computeNewPositionFromState", () => {
   it("uses nextOnLanding (forward) regardless of inverseMode", () => {
     const squares = makeSquares(100);
     squares["4"] = {
-      type: "special",
       next: [5],
       prev: [3],
       nextOnLanding: [14],

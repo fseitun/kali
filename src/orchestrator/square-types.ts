@@ -1,6 +1,8 @@
 /**
  * Special square kinds for Kalimba.
  * All squares in board.squares are special squares; `kind` encodes the primary mechanic.
+ * Mechanics are derived from properties. Precedence (first match wins):
+ * 1. Explicit `kind` 2. `effect` 3. `destination` (number) → portal 4. `item` 5. `name`+`power` (no effect) → animal 6. null
  */
 
 export const SPECIAL_SQUARE_KINDS = [
@@ -29,16 +31,6 @@ function resolveItemKind(item: string | undefined): SpecialSquareKind | null {
   return null;
 }
 
-function resolveHazardKind(effect: string | undefined): SpecialSquareKind | null {
-  if (effect === "skipTurn") {
-    return "trap";
-  }
-  if (effect === "checkTorch" || effect === "checkAntiWasp") {
-    return "hazard";
-  }
-  return null;
-}
-
 const SPECIAL_EFFECT_MAP: Record<string, SpecialSquareKind> = {
   jumpToLeader: "goldenFox",
   magicDoorCheck: "magicDoor",
@@ -48,48 +40,88 @@ const SPECIAL_EFFECT_MAP: Record<string, SpecialSquareKind> = {
 
 const ROLL_DIRECTIONAL_EFFECTS = ["roll1d6Directional", "roll2d6Directional", "roll3d6Directional"];
 
-function resolveSpecialKind(effect: string | undefined): SpecialSquareKind | null {
-  if (effect && SPECIAL_EFFECT_MAP[effect]) {
+function kindFromEffect(effect: string | undefined): SpecialSquareKind | null {
+  if (!effect) {
+    return null;
+  }
+  if (effect === "skipTurn") {
+    return "trap";
+  }
+  if (effect === "checkTorch" || effect === "checkAntiWasp") {
+    return "hazard";
+  }
+  if (SPECIAL_EFFECT_MAP[effect]) {
     return SPECIAL_EFFECT_MAP[effect];
   }
-  if (effect && ROLL_DIRECTIONAL_EFFECTS.includes(effect)) {
+  if (ROLL_DIRECTIONAL_EFFECTS.includes(effect)) {
     return "rollDirectional";
   }
   return null;
 }
 
-const TYPE_RESOLVERS: Record<
-  string,
-  (effect: string | undefined, item: string | undefined) => SpecialSquareKind | null
-> = {
-  animal: () => "animal",
-  portal: () => "portal",
-  item: (_effect, item) => resolveItemKind(item),
-  hazard: (effect) => resolveHazardKind(effect),
-  special: (effect) => resolveSpecialKind(effect),
-};
-
-function getSquareKindFromTypeEffect(
-  type: string | undefined,
-  effect: string | undefined,
-  item: string | undefined,
-): SpecialSquareKind | null {
-  const fn = TYPE_RESOLVERS[type ?? ""];
-  return fn ? fn(effect, item) : null;
-}
-
 /**
- * Derives the square kind from config data. Prefers `kind` if present; otherwise derives from type/effect/item.
+ * Derives the square kind from config data.
+ * Order: kind → effect → destination → item → animal (name+power, no effect) → null.
  */
 export function getSquareKind(squareData: Record<string, unknown>): SpecialSquareKind | null {
   const kind = squareData.kind as SpecialSquareKind | undefined;
   if (kind && SPECIAL_SQUARE_KINDS.includes(kind)) {
     return kind;
   }
-  const type = squareData.type as string | undefined;
   const effect = squareData.effect as string | undefined;
+  const fromEffect = kindFromEffect(effect);
+  if (fromEffect) {
+    return fromEffect;
+  }
+  if (typeof squareData.destination === "number") {
+    return "portal";
+  }
   const item = squareData.item as string | undefined;
-  return getSquareKindFromTypeEffect(type, effect, item);
+  const fromItem = resolveItemKind(item);
+  if (fromItem) {
+    return fromItem;
+  }
+  const name = squareData.name as string | undefined;
+  const power = squareData.power;
+  if (typeof power === "number" && typeof name === "string" && name.length > 0 && !effect) {
+    return "animal";
+  }
+  return null;
+}
+
+function hasMechanicField(sq: Record<string, unknown>): boolean {
+  if (typeof sq.destination === "number") {
+    return true;
+  }
+  if (sq.effect && typeof sq.effect === "string") {
+    return true;
+  }
+  if (sq.heart === true) {
+    return true;
+  }
+  if (typeof sq.points === "number") {
+    return true;
+  }
+  if (typeof sq.instrument === "string" && sq.instrument.length > 0) {
+    return true;
+  }
+  if (typeof sq.item === "string" && sq.item.length > 0) {
+    return true;
+  }
+  return false;
+}
+
+/**
+ * Returns true if the square triggers the landing pipeline (effects, narration).
+ * True when any mechanic field is present; false for topology/flavor-only squares.
+ */
+export function squareTriggersLandingPipeline(
+  sq: Record<string, unknown> | null | undefined,
+): boolean {
+  if (!sq || typeof sq !== "object" || Object.keys(sq).length === 0) {
+    return false;
+  }
+  return getSquareKind(sq) !== null || hasMechanicField(sq);
 }
 
 /**

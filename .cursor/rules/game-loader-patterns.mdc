@@ -22,11 +22,11 @@ Each game lives in `public/games/[game-name]/config.json`:
     "summary": "Optional short summary for NARRATE"
   },
   "squares": {
-    "0": { "type": "empty", "next": { "1": ["left"], "15": ["right"] } },
-    "10": { "type": "animal", "name": "Wolf", "power": 3 },
-    "45": { "type": "portal", "destination": 82 },
-    "186": { "type": "special", "effect": "magicDoorCheck", "target": 6 },
-    "196": { "type": "special", "effect": "win" }
+    "0": { "next": { "1": ["left"], "15": ["right"] }, "prev": [] },
+    "10": { "name": "Wolf", "power": 3, "next": [11], "prev": [9] },
+    "45": { "destination": 82, "next": [46], "prev": [44] },
+    "186": { "effect": "magicDoorCheck", "target": 6, "next": [187], "prev": [185] },
+    "196": { "effect": "win", "next": [], "prev": [195] }
   },
   "soundEffects": {
     "roll": "/games/[game-name]/sounds/roll.mp3",
@@ -38,6 +38,10 @@ Each game lives in `public/games/[game-name]/config.json`:
 ## Config format
 
 Define `squares` at top level. Board, game state, and players are derived at load. winPosition and magicDoor are derived from squares at runtime (board-helpers). See `deriveBoardFromSquares` in game-loader.
+
+### Mechanics from properties
+
+Mechanics are inferred from properties (first match wins): explicit `kind` → `effect` → `destination` (portal) → `item` → `name`+`power` without `effect` (animal) → topology-only. Use `effect`, `destination`, `item`, `heart`, `points`, `instrument` for behavior; optional `kind` overrides.
 
 ## Decision Points
 

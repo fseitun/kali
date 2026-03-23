@@ -58,7 +58,7 @@ describe("DecisionPointEnforcer", () => {
     it("should do nothing when no current turn set", async () => {
       stateManager.set("game.turn", null);
       stateManager.set("board.squares", {
-        "5": { type: "empty", next: [6, 7], prev: [4] },
+        "5": { next: [6, 7], prev: [4] },
       });
 
       await decisionPointEnforcer.enforceDecisionPoints(baseContext);
@@ -68,7 +68,7 @@ describe("DecisionPointEnforcer", () => {
 
     it("should do nothing when current player not at decision point", async () => {
       stateManager.set("board.squares", {
-        "10": { type: "empty", next: [11, 12], prev: [9] },
+        "10": { next: [11, 12], prev: [9] },
       });
       stateManager.set("players.p1.position", 5); // Not at position 10
 
@@ -79,7 +79,7 @@ describe("DecisionPointEnforcer", () => {
 
     it("should do nothing when decision already filled", async () => {
       stateManager.set("board.squares", {
-        "5": { type: "empty", next: [6, 7], prev: [4] },
+        "5": { next: [6, 7], prev: [4] },
       });
       stateManager.set("players.p1.position", 5);
       stateManager.set("players.p1.activeChoices", { 5: 6 }); // Decision filled
@@ -91,7 +91,7 @@ describe("DecisionPointEnforcer", () => {
 
     it("should trigger processTranscript when decision pending (null value)", async () => {
       stateManager.set("board.squares", {
-        "5": { type: "empty", next: [6, 7], prev: [4] },
+        "5": { next: [6, 7], prev: [4] },
       });
       stateManager.set("players.p1.position", 5);
       stateManager.set("players.p1.activeChoices", {}); // Decision pending
@@ -103,7 +103,7 @@ describe("DecisionPointEnforcer", () => {
 
     it("should trigger processTranscript when decision pending (undefined value)", async () => {
       stateManager.set("board.squares", {
-        "5": { type: "empty", next: [6, 7], prev: [4] },
+        "5": { next: [6, 7], prev: [4] },
       });
       stateManager.set("players.p1.position", 5);
       // activeChoices[5] is undefined
@@ -115,7 +115,7 @@ describe("DecisionPointEnforcer", () => {
 
     it("should include correct prompt in synthetic transcript", async () => {
       stateManager.set("board.squares", {
-        "5": { type: "empty", next: [6, 7], prev: [4] },
+        "5": { next: [6, 7], prev: [4] },
       });
       stateManager.set("players.p1.position", 5);
       stateManager.set("players.p1.activeChoices", {});
@@ -135,7 +135,7 @@ describe("DecisionPointEnforcer", () => {
 
     it("should include player name in synthetic transcript", async () => {
       stateManager.set("board.squares", {
-        "5": { type: "empty", next: [6, 7], prev: [4] },
+        "5": { next: [6, 7], prev: [4] },
       });
       stateManager.set("players.p1.position", 5);
       stateManager.set("players.p1.name", "Alice");
@@ -151,7 +151,7 @@ describe("DecisionPointEnforcer", () => {
 
     it("should include player ID in synthetic transcript", async () => {
       stateManager.set("board.squares", {
-        "5": { type: "empty", next: [6, 7], prev: [4] },
+        "5": { next: [6, 7], prev: [4] },
       });
       stateManager.set("players.p1.position", 5);
       stateManager.set("players.p1.activeChoices", {});
@@ -166,7 +166,7 @@ describe("DecisionPointEnforcer", () => {
 
     it("should include position in synthetic transcript", async () => {
       stateManager.set("board.squares", {
-        "5": { type: "empty", next: [6, 7], prev: [4] },
+        "5": { next: [6, 7], prev: [4] },
       });
       stateManager.set("players.p1.position", 5);
       stateManager.set("players.p1.activeChoices", {});
@@ -181,7 +181,7 @@ describe("DecisionPointEnforcer", () => {
 
     it("should include direction at fork in synthetic transcript", async () => {
       stateManager.set("board.squares", {
-        "5": { type: "empty", next: [6, 7], prev: [4] },
+        "5": { next: [6, 7], prev: [4] },
       });
       stateManager.set("players.p1.position", 5);
       stateManager.set("players.p1.activeChoices", {});
@@ -196,7 +196,7 @@ describe("DecisionPointEnforcer", () => {
 
     it("should pass isNestedCall: true when invoking processTranscript", async () => {
       stateManager.set("board.squares", {
-        "5": { type: "empty", next: [6, 7], prev: [4] },
+        "5": { next: [6, 7], prev: [4] },
       });
       stateManager.set("players.p1.position", 5);
       stateManager.set("players.p1.activeChoices", {});
@@ -210,9 +210,9 @@ describe("DecisionPointEnforcer", () => {
 
     it("should handle multiple decision points (only enforce current position)", async () => {
       stateManager.set("board.squares", {
-        "3": { type: "empty", next: [4, 5], prev: [2] },
-        "5": { type: "empty", next: [6, 7], prev: [4] },
-        "10": { type: "empty", next: [11, 12], prev: [9] },
+        "3": { next: [4, 5], prev: [2] },
+        "5": { next: [6, 7], prev: [4] },
+        "10": { next: [11, 12], prev: [9] },
       });
       stateManager.set("players.p1.position", 5);
       stateManager.set("players.p1.activeChoices", {});
@@ -229,7 +229,7 @@ describe("DecisionPointEnforcer", () => {
     it("should handle missing player gracefully", async () => {
       stateManager.set("game.turn", "p99");
       stateManager.set("board.squares", {
-        "5": { type: "empty", next: [6, 7], prev: [4] },
+        "5": { next: [6, 7], prev: [4] },
       });
 
       await decisionPointEnforcer.enforceDecisionPoints(baseContext);
@@ -239,7 +239,7 @@ describe("DecisionPointEnforcer", () => {
 
     it("should handle player without position field", async () => {
       stateManager.set("board.squares", {
-        "5": { type: "empty", next: [6, 7], prev: [4] },
+        "5": { next: [6, 7], prev: [4] },
       });
       // Remove position field
       const player = stateManager.get("players.p1") as Record<string, unknown>;
@@ -253,7 +253,7 @@ describe("DecisionPointEnforcer", () => {
 
     it("should handle errors gracefully", async () => {
       stateManager.set("board.squares", {
-        "5": { type: "empty", next: [6, 7], prev: [4] },
+        "5": { next: [6, 7], prev: [4] },
       });
       stateManager.set("players.p1.position", 5);
       stateManager.set("players.p1.activeChoices", {});

@@ -47,8 +47,8 @@ describe("GameLoader", () => {
           objective: "Test objective",
         },
         squares: {
-          "0": { type: "empty", next: [1], prev: [] },
-          "1": { type: "special", effect: "win", next: [], prev: [0] },
+          "0": { next: [1], prev: [] },
+          "1": { effect: "win", next: [], prev: [0] },
         },
       };
 
@@ -86,7 +86,7 @@ describe("GameLoader", () => {
     it("should validate game module metadata", async () => {
       const invalidModule = {
         metadata: { objective: "Test objective" },
-        squares: { "0": { type: "empty", next: [1], prev: [] } },
+        squares: { "0": { next: [1], prev: [] } },
       };
 
       mockFetch.mockResolvedValueOnce({
@@ -107,7 +107,7 @@ describe("GameLoader", () => {
           minPlayers: 2,
           maxPlayers: 4,
         },
-        squares: { "0": { type: "empty", next: [1], prev: [] } },
+        squares: { "0": { next: [1], prev: [] } },
       };
 
       mockFetch.mockResolvedValueOnce({
@@ -144,7 +144,7 @@ describe("GameLoader", () => {
     it("should validate metadata id and name", async () => {
       const invalidModule = {
         metadata: { objective: "Test objective" },
-        squares: { "0": { type: "empty", next: [1], prev: [] } },
+        squares: { "0": { next: [1], prev: [] } },
       };
 
       mockFetch.mockResolvedValueOnce({

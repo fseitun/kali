@@ -41,7 +41,7 @@ describe("TurnManager", () => {
 
     it("should return false when player not at decision point position", () => {
       stateManager.set("board.squares", {
-        "10": { type: "empty", next: [11, 12], prev: [9] },
+        "10": { next: [11, 12], prev: [9] },
       });
       stateManager.set("players.p1.position", 5);
 
@@ -51,7 +51,7 @@ describe("TurnManager", () => {
 
     it("should return true when player at decision point with null field", () => {
       stateManager.set("board.squares", {
-        "5": { type: "empty", next: [6, 7], prev: [4] },
+        "5": { next: [6, 7], prev: [4] },
       });
       stateManager.set("players.p1.position", 5);
       stateManager.set("players.p1.activeChoices", {});
@@ -62,7 +62,7 @@ describe("TurnManager", () => {
 
     it("should return true when player at decision point with undefined field", () => {
       stateManager.set("board.squares", {
-        "5": { type: "empty", next: [6, 7], prev: [4] },
+        "5": { next: [6, 7], prev: [4] },
       });
       stateManager.set("players.p1.position", 5);
 
@@ -72,7 +72,7 @@ describe("TurnManager", () => {
 
     it("should return false when decision point field is filled", () => {
       stateManager.set("board.squares", {
-        "5": { type: "empty", next: [6, 7], prev: [4] },
+        "5": { next: [6, 7], prev: [4] },
       });
       stateManager.set("players.p1.position", 5);
       stateManager.set("players.p1.activeChoices", { 5: 6 });
@@ -84,7 +84,7 @@ describe("TurnManager", () => {
     it("should return false when no current turn set", () => {
       stateManager.set("game.turn", null);
       stateManager.set("board.squares", {
-        "5": { type: "empty", next: [6, 7], prev: [4] },
+        "5": { next: [6, 7], prev: [4] },
       });
 
       const result = turnManager.hasPendingDecisions();
@@ -184,7 +184,7 @@ describe("TurnManager", () => {
 
     it("should block when current player has pending decisions", async () => {
       stateManager.set("board.squares", {
-        "0": { type: "empty", next: [1, 15], prev: [] },
+        "0": { next: [1, 15], prev: [] },
       });
       stateManager.set("players.p1.position", 0);
       stateManager.set("players.p1.activeChoices", {});
@@ -198,7 +198,7 @@ describe("TurnManager", () => {
 
     it("should allow advancement when decision is resolved", async () => {
       stateManager.set("board.squares", {
-        "0": { type: "empty", next: [1, 15], prev: [] },
+        "0": { next: [1, 15], prev: [] },
       });
       stateManager.set("players.p1.position", 0);
       stateManager.set("players.p1.activeChoices", { 0: 1 }); // Decision filled

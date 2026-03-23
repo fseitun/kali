@@ -11,7 +11,7 @@ describe("findSquareByEffect", () => {
   });
 
   it("returns null when no square matches the effect", () => {
-    expect(findSquareByEffect({ "5": { type: "empty", effect: "portal" } }, "win")).toBeNull();
+    expect(findSquareByEffect({ "5": { effect: "portal" } }, "win")).toBeNull();
   });
 
   it("returns null when position key is not a number", () => {
@@ -28,7 +28,7 @@ describe("findSquareByEffect", () => {
   });
 
   it("finds magicDoorCheck and includes square data", () => {
-    const sq = { type: "special", effect: "magicDoorCheck", target: 6 };
+    const sq = { effect: "magicDoorCheck", target: 6 };
     const found = findSquareByEffect({ "186": sq }, "magicDoorCheck");
     expect(found).toEqual({ position: 186, square: sq });
   });

@@ -66,8 +66,8 @@ describe("Orchestrator Integration Tests", () => {
         },
         board: {
           squares: {
-            "0": { type: "empty", next: [1, 15] },
-            "100": { type: "special", effect: "win" },
+            "0": { next: [1, 15] },
+            "100": { effect: "win" },
           },
         },
       };
@@ -100,8 +100,8 @@ describe("Orchestrator Integration Tests", () => {
         },
         board: {
           squares: {
-            "0": { type: "empty", next: [1, 15] },
-            "100": { type: "special", effect: "win" },
+            "0": { next: [1, 15] },
+            "100": { effect: "win" },
           },
         },
       };
@@ -144,8 +144,8 @@ describe("Orchestrator Integration Tests", () => {
         },
         board: {
           squares: {
-            "4": { type: "portal", destination: 14 },
-            "100": { type: "special", effect: "win" },
+            "4": { destination: 14 },
+            "100": { effect: "win" },
           },
         },
       };
@@ -183,8 +183,8 @@ describe("Orchestrator Integration Tests", () => {
         },
         board: {
           squares: {
-            "17": { type: "portal", destination: 7 },
-            "100": { type: "special", effect: "win" },
+            "17": { destination: 7 },
+            "100": { effect: "win" },
           },
         },
       };
@@ -221,8 +221,8 @@ describe("Orchestrator Integration Tests", () => {
         },
         board: {
           squares: {
-            "4": { type: "portal", destination: 14 },
-            "100": { type: "special", effect: "win" },
+            "4": { destination: 14 },
+            "100": { effect: "win" },
           },
         },
       };
@@ -268,8 +268,8 @@ describe("Orchestrator Integration Tests", () => {
         },
         board: {
           squares: {
-            "5": { type: "animal", name: "Cobra", power: 4, points: 4 },
-            "100": { type: "special", effect: "win" },
+            "5": { name: "Cobra", power: 4, points: 4 },
+            "100": { effect: "win" },
           },
         },
       };
@@ -306,8 +306,8 @@ describe("Orchestrator Integration Tests", () => {
         },
         board: {
           squares: {
-            "5": { type: "animal", name: "Cobra", power: 4, points: 4 },
-            "100": { type: "special", effect: "win" },
+            "5": { name: "Cobra", power: 4, points: 4 },
+            "100": { effect: "win" },
           },
         },
       };
@@ -365,9 +365,9 @@ describe("Orchestrator Integration Tests", () => {
         },
         board: {
           squares: {
-            "0": { type: "empty", next: [1, 15] },
-            "5": { type: "animal", name: "Cobra", power: 4, points: 4 },
-            "100": { type: "special", effect: "win" },
+            "0": { next: [1, 15] },
+            "5": { name: "Cobra", power: 4, points: 4 },
+            "100": { effect: "win" },
           },
         },
       };
@@ -435,8 +435,8 @@ describe("Orchestrator Integration Tests", () => {
         },
         board: {
           squares: {
-            "5": { type: "animal", name: "Cobra", power: 4, points: 4 },
-            "100": { type: "special", effect: "win" },
+            "5": { name: "Cobra", power: 4, points: 4 },
+            "100": { effect: "win" },
           },
         },
       };
@@ -483,7 +483,7 @@ describe("Orchestrator Integration Tests", () => {
           p2: { id: "p2", name: "Bob", position: 0 },
         },
         board: {
-          squares: { "100": { type: "special", effect: "win" } },
+          squares: { "100": { effect: "win" } },
         },
       };
 
@@ -523,8 +523,8 @@ describe("Orchestrator Integration Tests", () => {
         },
         board: {
           squares: {
-            "0": { type: "empty", next: [1, 15] },
-            "100": { type: "special", effect: "win" },
+            "0": { next: [1, 15] },
+            "100": { effect: "win" },
           },
         },
       };
@@ -566,8 +566,8 @@ describe("Orchestrator Integration Tests", () => {
         },
         board: {
           squares: {
-            "0": { type: "empty", next: [1, 15] },
-            "100": { type: "special", effect: "win" },
+            "0": { next: [1, 15] },
+            "100": { effect: "win" },
           },
         },
       };
@@ -594,15 +594,14 @@ describe("Orchestrator Integration Tests", () => {
 
       mockLLM = createScriptedLLM(responses);
 
-      const squares: Record<string, { type: string; next?: number[]; prev?: number[] }> = {};
+      const squares: Record<string, { next?: number[]; prev?: number[] }> = {};
       for (let i = 0; i <= 196; i++) {
         squares[String(i)] = {
-          type: "empty",
           next: i < 196 ? [i + 1] : [],
           prev: i > 0 ? [i - 1] : [],
         };
       }
-      squares["0"] = { type: "empty", next: [1, 15], prev: [] };
+      squares["0"] = { next: [1, 15], prev: [] };
 
       const initialState: GameState = {
         game: {
@@ -647,8 +646,8 @@ describe("Orchestrator Integration Tests", () => {
         },
         board: {
           squares: {
-            "0": { type: "empty", next: [1, 15], prev: [] },
-            "100": { type: "special", effect: "win" },
+            "0": { next: [1, 15], prev: [] },
+            "100": { effect: "win" },
           },
         },
       };
@@ -701,13 +700,11 @@ describe("Orchestrator Integration Tests", () => {
         board: {
           squares: {
             "45": {
-              type: "portal",
               name: "Portal Forward",
               destination: 82,
               inverseMode: "activate",
             },
             "82": {
-              type: "portal",
               name: "Portal Destination",
               destination: 82,
               inverseMode: "deactivate",
@@ -760,13 +757,11 @@ describe("Orchestrator Integration Tests", () => {
         board: {
           squares: {
             "82": {
-              type: "portal",
               name: "Portal Backward",
               destination: 45,
               inverseMode: "deactivate",
             },
             "45": {
-              type: "portal",
               name: "Portal Destination",
               destination: 45,
               inverseMode: "activate",
@@ -813,7 +808,7 @@ describe("Orchestrator Integration Tests", () => {
           p2: { id: "p2", name: "Bob", position: 0 },
         },
         board: {
-          squares: { "100": { type: "special", effect: "win" } },
+          squares: { "100": { effect: "win" } },
         },
       };
 
@@ -861,8 +856,8 @@ describe("Orchestrator Integration Tests", () => {
         },
         board: {
           squares: {
-            "11": { type: "hazard", name: "Quicksand", effect: "skipTurn" },
-            "100": { type: "special", effect: "win" },
+            "11": { name: "Quicksand", effect: "skipTurn" },
+            "100": { effect: "win" },
           },
         },
       };
@@ -903,7 +898,7 @@ describe("Orchestrator Integration Tests", () => {
           p2: { id: "p2", name: "Bob", position: 50 },
         },
         board: {
-          squares: { "100": { type: "special", effect: "win" } },
+          squares: { "100": { effect: "win" } },
         },
       };
 
@@ -934,7 +929,7 @@ describe("Orchestrator Integration Tests", () => {
           lastRoll: 0,
         },
         players: { p1: { id: "p1", name: "A", position: 0 } },
-        board: { squares: { "100": { type: "special", effect: "win" } } },
+        board: { squares: { "100": { effect: "win" } } },
       };
       const sm = new StateManager();
       sm.init(initialState);
@@ -958,7 +953,7 @@ describe("Orchestrator Integration Tests", () => {
           p1: { id: "p1", name: "Alice", position: 98 },
           p2: { id: "p2", name: "Bob", position: 80 },
         },
-        board: { squares: { "100": { type: "special", effect: "win" } } },
+        board: { squares: { "100": { effect: "win" } } },
       };
       const sm = new StateManager();
       sm.init(initialState);
@@ -985,7 +980,7 @@ describe("Orchestrator Integration Tests", () => {
           p2: { id: "p2", name: "Bob", position: 80 },
         },
         board: {
-          squares: { "100": { type: "special", effect: "win" } },
+          squares: { "100": { effect: "win" } },
         },
       };
       mockLLM = createScriptedLLM([]);
@@ -1026,7 +1021,7 @@ describe("Orchestrator Integration Tests", () => {
           p2: { id: "p2", name: "Bob", position: 80 },
         },
         board: {
-          squares: { "100": { type: "special", effect: "win" } },
+          squares: { "100": { effect: "win" } },
         },
       };
 
@@ -1065,7 +1060,7 @@ describe("Orchestrator Integration Tests", () => {
           p2: { id: "p2", name: "Bob", position: 80 },
         },
         board: {
-          squares: { "100": { type: "special", effect: "win" } },
+          squares: { "100": { effect: "win" } },
         },
       };
 
@@ -1113,7 +1108,6 @@ describe("Orchestrator Integration Tests", () => {
         board: {
           squares: {
             "186": {
-              type: "special",
               name: "Magic Door",
               effect: "magicDoorCheck",
             },
@@ -1173,7 +1167,6 @@ describe("Orchestrator Integration Tests", () => {
           moves: {},
           squares: {
             "59": {
-              type: "animal",
               name: "Bear",
               power: 3,
               points: 3,
@@ -1248,7 +1241,7 @@ describe("Orchestrator Integration Tests", () => {
           p2: { id: "p2", name: "Bob", position: 0 },
         },
         board: {
-          squares: { "0": { type: "empty", next: [1, 15], prev: [] } },
+          squares: { "0": { next: [1, 15], prev: [] } },
         },
       };
 

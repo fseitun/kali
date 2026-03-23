@@ -30,7 +30,7 @@ describe("formatStateContext", () => {
         p1: { id: "p1", name: "Alice", position: 0, activeChoices: { 0: 1 } },
         p2: { id: "p2", name: "Bob", position: 0, activeChoices: {} },
       },
-      board: { squares: { "0": { type: "empty", next: [1, 15], prev: [] } } },
+      board: { squares: { "0": { next: [1, 15], prev: [] } } },
     } as Record<string, unknown>;
 
     const result = formatStateContext(state);
@@ -46,7 +46,7 @@ describe("formatStateContext", () => {
         p1: { id: "p1", name: "Alice", position: 0, activeChoices: {} },
         p2: { id: "p2", name: "Bob", position: 0, activeChoices: {} },
       },
-      board: { squares: { "0": { type: "empty", next: [1, 15], prev: [] } } },
+      board: { squares: { "0": { next: [1, 15], prev: [] } } },
     } as Record<string, unknown>;
 
     const result = formatStateContext(state);
@@ -67,7 +67,7 @@ describe("formatStateContext", () => {
       },
       board: {
         squares: {
-          "0": { type: "empty", next: { "1": ["izquierda"], "15": ["derecha"] }, prev: [] },
+          "0": { next: { "1": ["izquierda"], "15": ["derecha"] }, prev: [] },
         },
       },
     } as Record<string, unknown>;
@@ -87,7 +87,7 @@ describe("formatStateContext", () => {
         p1: { id: "p1", name: "Alice", position: 3, activeChoices: { 0: 1 } },
         p2: { id: "p2", name: "Bob", position: 0, activeChoices: {} },
       },
-      board: { squares: { "0": { type: "empty", next: [1, 15], prev: [] } } },
+      board: { squares: { "0": { next: [1, 15], prev: [] } } },
     } as Record<string, unknown>;
 
     const result = formatStateContext(state);

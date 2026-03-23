@@ -42,14 +42,14 @@ describe("Orchestrator Authority - LLM Adversarial Tests", () => {
       },
       board: {
         squares: {
-          "15": { type: "portal", destination: 30 },
+          "15": { destination: 30 },
           "20": {
-            type: "challenge",
             name: "Dragon",
             description: "Fight or flee",
+            effect: "skipTurn",
           },
-          "25": { type: "portal", destination: 10 },
-          "100": { type: "special", effect: "win" },
+          "25": { destination: 10 },
+          "100": { effect: "win" },
         },
       },
     };
@@ -239,7 +239,6 @@ describe("Orchestrator Authority - LLM Adversarial Tests", () => {
 
     it("LLM cannot bypass decision points", async () => {
       (testState.board as any).squares["10"] = {
-        type: "empty",
         next: [11, 12],
         prev: [9],
       };
@@ -280,16 +279,14 @@ describe("Orchestrator Authority - LLM Adversarial Tests", () => {
     });
 
     it("SET_STATE for position after PLAYER_ROLLED in same batch is ignored (position from roll wins)", async () => {
-      const squares: Record<string, { type: string; next?: number[]; prev?: number[] }> = {};
+      const squares: Record<string, { next?: number[]; prev?: number[] }> = {};
       for (let i = 0; i <= 40; i++) {
         squares[String(i)] = {
-          type: "empty",
           next: i < 40 ? [i + 1] : [],
           prev: i > 0 ? [i - 1] : [],
         };
       }
       (squares["100"] as Record<string, unknown>) = {
-        type: "special",
         effect: "win",
         next: [],
         prev: [99],
@@ -325,7 +322,6 @@ describe("Orchestrator Authority - LLM Adversarial Tests", () => {
   describe("State Consistency - Validation Matches Execution", () => {
     it("validates sequential state changes correctly", async () => {
       (testState.board as any).squares["10"] = {
-        type: "empty",
         next: [11, 12],
         prev: [9],
       };
@@ -451,7 +447,6 @@ describe("Orchestrator Authority - LLM Adversarial Tests", () => {
 
     it("does not check decision points for turn advancement", async () => {
       (testState.board as any).squares["10"] = {
-        type: "empty",
         next: [11, 12],
         prev: [9],
       };
@@ -482,7 +477,6 @@ describe("Orchestrator Authority - LLM Adversarial Tests", () => {
     it("blocks PLAYER_ROLLED during square effect processing", async () => {
       (testState.board as any).squares = {
         "5": {
-          type: "animal",
           name: "Cobra",
           power: 4,
         },
@@ -529,7 +523,6 @@ describe("Orchestrator Authority - LLM Adversarial Tests", () => {
     it("allows NARRATE during square effect processing", async () => {
       (testState.board as any).squares = {
         "10": {
-          type: "hazard",
           name: "Trap",
           effect: "skipTurn",
         },
@@ -571,7 +564,6 @@ describe("Orchestrator Authority - LLM Adversarial Tests", () => {
     it("animal squares: orchestrator does not apply points on landing; LLM applies after riddle", async () => {
       (testState.board as any).squares = {
         "8": {
-          type: "animal",
           name: "Wolf",
           power: 3,
           points: 3,
@@ -647,7 +639,6 @@ describe("Orchestrator Authority - LLM Adversarial Tests", () => {
 
     it("orchestrator validates before and enforces during execution", async () => {
       (testState.board as any).squares["10"] = {
-        type: "empty",
         next: [11, 12],
         prev: [9],
       };
@@ -667,7 +658,6 @@ describe("Orchestrator Authority - LLM Adversarial Tests", () => {
       (testState.players as any).p1.position = 0;
       (testState.players as any).p1.activeChoices = {};
       (testState.board as any).squares["0"] = {
-        type: "empty",
         next: [1, 15],
         prev: [],
       };
@@ -702,8 +692,17 @@ describe("Orchestrator Authority - LLM Adversarial Tests", () => {
       };
       (testState.players as any).p1.position = 10;
       (testState.board as any).squares = {
-        "10": { type: "animal", name: "Cobra", power: 5 },
-        "17": { type: "hazard", name: "Carnivorous plants", skipTurn: true },
+        "9": { next: [10], prev: [8] },
+        "10": { name: "Cobra", power: 5, next: [11], prev: [9] },
+        "11": { next: [12], prev: [10] },
+        "12": { next: [13], prev: [11] },
+        "13": { next: [14], prev: [12] },
+        "14": { next: [15], prev: [13] },
+        "15": { next: [16], prev: [14] },
+        "16": { next: [17], prev: [15] },
+        "17": { name: "Carnivorous plants", effect: "skipTurn", next: [18], prev: [16] },
+        "18": { next: [19], prev: [17] },
+        "100": { effect: "win", next: [], prev: [99] },
       };
 
       mockStateManager.getState = vi.fn(() => testState);

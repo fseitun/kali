@@ -41,7 +41,7 @@ describe("Orchestrator Architecture - Authority Model", () => {
       },
     },
     board: {
-      squares: { "100": { type: "special", effect: "win" } },
+      squares: { "100": { effect: "win" } },
     },
   };
 
@@ -232,7 +232,7 @@ describe("Orchestrator Architecture - Authority Model", () => {
 
     it("advanceTurn() blocks when pending decisions exist", async () => {
       stateManager.set("board.squares", {
-        "0": { type: "empty", next: [1, 15], prev: [] },
+        "0": { next: [1, 15], prev: [] },
       });
       stateManager.set("players.p1.activeChoices", {});
 
@@ -248,7 +248,7 @@ describe("Orchestrator Architecture - Authority Model", () => {
 
     it("advanceTurn() allows advancement when decision is resolved", async () => {
       stateManager.set("board.squares", {
-        "0": { type: "empty", next: [1, 15], prev: [] },
+        "0": { next: [1, 15], prev: [] },
       });
       stateManager.set("players.p1.activeChoices", { 0: 1 });
 
@@ -277,7 +277,7 @@ describe("Orchestrator Architecture - Authority Model", () => {
 
     it("hasPendingDecisions() returns false when player not at decision point", () => {
       stateManager.set("board.squares", {
-        "10": { type: "empty", next: [11, 12], prev: [9] },
+        "10": { next: [11, 12], prev: [9] },
       });
       stateManager.set("players.p1.position", 0);
 
@@ -287,7 +287,7 @@ describe("Orchestrator Architecture - Authority Model", () => {
 
     it("hasPendingDecisions() returns true when player at decision point with null choice", () => {
       stateManager.set("board.squares", {
-        "0": { type: "empty", next: [1, 15], prev: [] },
+        "0": { next: [1, 15], prev: [] },
       });
       stateManager.set("players.p1.position", 0);
       stateManager.set("players.p1.activeChoices", {});
@@ -298,7 +298,7 @@ describe("Orchestrator Architecture - Authority Model", () => {
 
     it("hasPendingDecisions() returns false when decision is resolved", () => {
       stateManager.set("board.squares", {
-        "0": { type: "empty", next: [1, 15], prev: [] },
+        "0": { next: [1, 15], prev: [] },
       });
       stateManager.set("players.p1.position", 0);
       stateManager.set("players.p1.activeChoices", { 0: 1 });

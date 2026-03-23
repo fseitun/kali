@@ -256,7 +256,7 @@ describe("Validator - New Primitives", () => {
         number
       >) = {};
       (mockState as Record<string, unknown>).board = {
-        squares: { "0": { type: "empty", next: [1, 15], prev: [] } },
+        squares: { "0": { next: [1, 15], prev: [] } },
       };
       (mockState.game as Record<string, unknown>).turn = "p1";
 
@@ -280,7 +280,7 @@ describe("Validator - New Primitives", () => {
         number
       >) = {};
       (mockState as Record<string, unknown>).board = {
-        squares: { "0": { type: "empty", next: [1, 15], prev: [] } },
+        squares: { "0": { next: [1, 15], prev: [] } },
       };
 
       const actions = [{ action: "PLAYER_ANSWERED", answer: "A" }];
@@ -531,7 +531,7 @@ describe("Validator - New Primitives", () => {
           },
         },
         board: {
-          squares: { "0": { type: "empty", next: [1, 15], prev: [] } },
+          squares: { "0": { next: [1, 15], prev: [] } },
         },
       } as unknown as GameState;
       const result = validateActions(
@@ -568,7 +568,7 @@ describe("Validator - New Primitives", () => {
           },
         },
         board: {
-          squares: { "0": { type: "empty", next: [1, 15], prev: [] } },
+          squares: { "0": { next: [1, 15], prev: [] } },
         },
       } as unknown as GameState;
       const result = validateActions(
@@ -731,7 +731,7 @@ describe("Validator - New Primitives", () => {
           },
         },
         board: {
-          squares: { "0": { type: "empty", next: [1, 15], prev: [] } },
+          squares: { "0": { next: [1, 15], prev: [] } },
         },
       } as unknown as GameState;
       const result = validateActions(
@@ -764,7 +764,7 @@ describe("Validator - New Primitives", () => {
           },
         },
         board: {
-          squares: { "0": { type: "empty", next: [1, 15], prev: [] } },
+          squares: { "0": { next: [1, 15], prev: [] } },
         },
       } as unknown as GameState;
       const result = validateActions(
@@ -798,7 +798,7 @@ describe("Validator - New Primitives", () => {
           },
         },
         board: {
-          squares: { "0": { type: "empty", next: [1, 15], prev: [] } },
+          squares: { "0": { next: [1, 15], prev: [] } },
         },
       } as unknown as GameState;
       const result = validateActions(
@@ -1019,7 +1019,7 @@ describe("Validator - New Primitives", () => {
   describe("Decision Points - Orchestrator Enforcement", () => {
     beforeEach(() => {
       (mockState as Record<string, unknown>).board = {
-        squares: { "5": { type: "empty", next: [6, 7], prev: [4] } },
+        squares: { "5": { next: [6, 7], prev: [4] } },
       };
       (mockState.players as Record<string, Record<string, unknown>>).p1.position = 5;
       (mockState.players as Record<string, Record<string, unknown>>).p1.activeChoices = {};

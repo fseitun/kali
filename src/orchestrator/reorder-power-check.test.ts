@@ -42,7 +42,7 @@ describe("reorder-power-check", () => {
         p1: { id: "p1", name: "Alice", position: 10 },
         p2: { id: "p2", name: "Bob", position: 5 },
       },
-      board: { squares: { "100": { type: "special", effect: "win" } } },
+      board: { squares: { "100": { effect: "win" } } },
     };
 
     it("moves PLAYER_ANSWERED (numeric) before PLAYER_ROLLED when state has powerCheck", () => {

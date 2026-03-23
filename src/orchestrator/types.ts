@@ -37,10 +37,10 @@ export interface BoardConfig {
 
 /**
  * Square data for board squares.
+ * Mechanics are inferred from properties (effect, destination, item, name+power, etc.); optional `kind` overrides.
  * Graph topology: next/prev define edges; nextOnLanding/prevOnLanding apply only when the square is the final step of a roll.
  */
 export interface SquareData {
-  type: string;
   name?: string;
   power?: number;
   points?: number;

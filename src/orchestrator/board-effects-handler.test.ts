@@ -41,7 +41,7 @@ describe("BoardEffectsHandler", () => {
 
   describe("checkAndApplyBoardMoves()", () => {
     it("should do nothing for non-position paths", async () => {
-      stateManager.set("board.squares", { "5": { type: "portal", destination: 12 } });
+      stateManager.set("board.squares", { "5": { destination: 12 } });
       stateManager.set("players.p1.hearts", 3);
 
       await boardEffectsHandler.checkAndApplyBoardMoves("players.p1.hearts");
@@ -51,7 +51,7 @@ describe("BoardEffectsHandler", () => {
     });
 
     it("should do nothing for non-player paths", async () => {
-      stateManager.set("board.squares", { "5": { type: "portal", destination: 12 } });
+      stateManager.set("board.squares", { "5": { destination: 12 } });
       stateManager.set("game.lastRoll", 5);
 
       await boardEffectsHandler.checkAndApplyBoardMoves("game.lastRoll");
@@ -71,7 +71,7 @@ describe("BoardEffectsHandler", () => {
 
     it("should apply ladder (portal forward)", async () => {
       stateManager.set("board.squares", {
-        "5": { type: "portal", destination: 15 },
+        "5": { destination: 15 },
       });
       stateManager.set("players.p1.position", 5);
 
@@ -82,7 +82,7 @@ describe("BoardEffectsHandler", () => {
 
     it("should apply snake (portal backward)", async () => {
       stateManager.set("board.squares", {
-        "15": { type: "portal", destination: 5 },
+        "15": { destination: 5 },
       });
       stateManager.set("players.p1.position", 15);
 
@@ -93,7 +93,7 @@ describe("BoardEffectsHandler", () => {
 
     it("should apply returnTo187", async () => {
       stateManager.set("board.squares", {
-        "190": { type: "special", effect: "returnTo187", name: "Calavera" },
+        "190": { effect: "returnTo187", name: "Calavera" },
       });
       stateManager.set("players.p1.position", 190);
 
@@ -104,7 +104,7 @@ describe("BoardEffectsHandler", () => {
 
     it("should skip backward teleport when player has inverseMode", async () => {
       stateManager.set("board.squares", {
-        "82": { type: "portal", destination: 45 },
+        "82": { destination: 45 },
       });
       stateManager.set("players.p1.position", 82);
       stateManager.set("players.p1.inverseMode", true);
@@ -117,7 +117,7 @@ describe("BoardEffectsHandler", () => {
 
     it("should apply forward teleport even when inverseMode", async () => {
       stateManager.set("board.squares", {
-        "45": { type: "portal", destination: 82 },
+        "45": { destination: 82 },
       });
       stateManager.set("players.p1.position", 45);
       stateManager.set("players.p1.inverseMode", true);
@@ -129,8 +129,8 @@ describe("BoardEffectsHandler", () => {
 
     it("should do nothing when square has no teleport", async () => {
       stateManager.set("board.squares", {
-        "5": { type: "empty", next: [6], prev: [4] },
-        "10": { type: "portal", destination: 20 },
+        "5": { next: [6], prev: [4] },
+        "10": { destination: 20 },
       });
       stateManager.set("players.p1.position", 5);
 
@@ -141,7 +141,7 @@ describe("BoardEffectsHandler", () => {
 
     it("should do nothing when destination equals current position", async () => {
       stateManager.set("board.squares", {
-        "5": { type: "portal", destination: 5 },
+        "5": { destination: 5 },
       });
       stateManager.set("players.p1.position", 5);
 
@@ -151,7 +151,7 @@ describe("BoardEffectsHandler", () => {
     });
 
     it("should handle position value that is not a number", async () => {
-      stateManager.set("board.squares", { "5": { type: "portal", destination: 15 } });
+      stateManager.set("board.squares", { "5": { destination: 15 } });
       stateManager.set("players.p1.position", "invalid" as unknown as number);
 
       await boardEffectsHandler.checkAndApplyBoardMoves("players.p1.position");
@@ -161,7 +161,7 @@ describe("BoardEffectsHandler", () => {
 
     it("should apply jumpToLeader (goldenFox) - move to leader position", async () => {
       stateManager.set("board.squares", {
-        "54": { type: "special", effect: "jumpToLeader", name: "Zorro dorado" },
+        "54": { effect: "jumpToLeader", name: "Zorro dorado" },
       });
       stateManager.set("game.playerOrder", ["p1", "p2"]);
       stateManager.set("players.p1.position", 54);
@@ -174,7 +174,7 @@ describe("BoardEffectsHandler", () => {
 
     it("should keep position when jumpToLeader but current player is already leader", async () => {
       stateManager.set("board.squares", {
-        "54": { type: "special", effect: "jumpToLeader", name: "Zorro dorado" },
+        "54": { effect: "jumpToLeader", name: "Zorro dorado" },
       });
       stateManager.set("game.playerOrder", ["p1", "p2"]);
       stateManager.set("players.p1.position", 54);
@@ -191,7 +191,7 @@ describe("BoardEffectsHandler", () => {
 
     it("should do nothing for non-position paths", async () => {
       stateManager.set("board.squares", {
-        "5": { type: "encounter", name: "Bear" },
+        "5": { name: "Bear", power: 1 },
       });
 
       await boardEffectsHandler.checkAndApplySquareEffects("players.p1.hearts", baseContext);
@@ -201,7 +201,7 @@ describe("BoardEffectsHandler", () => {
 
     it("should do nothing for non-player paths", async () => {
       stateManager.set("board.squares", {
-        "5": { type: "encounter", name: "Bear" },
+        "5": { name: "Bear", power: 1 },
       });
 
       await boardEffectsHandler.checkAndApplySquareEffects("game.lastRoll", baseContext);
@@ -235,9 +235,9 @@ describe("BoardEffectsHandler", () => {
       expect(mockProcessTranscript).not.toHaveBeenCalled();
     });
 
-    it("should do nothing for hydrated topology-only squares (type: empty)", async () => {
+    it("should do nothing for hydrated topology-only squares", async () => {
       stateManager.set("board.squares", {
-        "5": { type: "empty", next: [6], prev: [4] },
+        "5": { next: [6], prev: [4] },
       });
       stateManager.set("players.p1.position", 5);
 
@@ -248,8 +248,8 @@ describe("BoardEffectsHandler", () => {
 
     it("should trigger processTranscript callback for square with effects", async () => {
       const squareData = {
-        type: "encounter",
         name: "Bear",
+        power: 1,
         difficulty: "hard",
       };
       stateManager.set("board.squares", { "10": squareData });
@@ -261,7 +261,7 @@ describe("BoardEffectsHandler", () => {
     });
 
     it("should set isProcessingSquareEffect flag during processing", async () => {
-      const squareData = { type: "encounter", name: "Bear" };
+      const squareData = { name: "Bear", power: 1 };
       stateManager.set("board.squares", { "5": squareData });
       stateManager.set("players.p1.position", 5);
 
@@ -277,7 +277,7 @@ describe("BoardEffectsHandler", () => {
     });
 
     it("should clear flag after processing completes", async () => {
-      const squareData = { type: "encounter", name: "Bear" };
+      const squareData = { name: "Bear", power: 1 };
       stateManager.set("board.squares", { "5": squareData });
       stateManager.set("players.p1.position", 5);
 
@@ -287,7 +287,7 @@ describe("BoardEffectsHandler", () => {
     });
 
     it("should clear flag even if processTranscript throws error", async () => {
-      const squareData = { type: "encounter", name: "Bear" };
+      const squareData = { name: "Bear", power: 1 };
       stateManager.set("board.squares", { "5": squareData });
       stateManager.set("players.p1.position", 5);
 
@@ -302,7 +302,7 @@ describe("BoardEffectsHandler", () => {
     });
 
     it("should pass isNestedCall: true when invoking processTranscript", async () => {
-      const squareData = { type: "encounter", name: "Bear" };
+      const squareData = { name: "Quicksand", effect: "skipTurn" };
       stateManager.set("board.squares", { "5": squareData });
       stateManager.set("players.p1.position", 5);
 
@@ -316,8 +316,8 @@ describe("BoardEffectsHandler", () => {
 
     it("should include square data in synthetic transcript", async () => {
       const squareData = {
-        type: "encounter",
         name: "Bear",
+        power: 1,
         difficulty: "hard",
       };
       stateManager.set("board.squares", { "8": squareData });
@@ -337,7 +337,7 @@ describe("BoardEffectsHandler", () => {
 
     it("animal squares get narration only, no rewards on landing (orchestrator applies after power check)", async () => {
       stateManager.set("board.squares", {
-        "5": { type: "animal", name: "Halcón", power: 3, points: 3 },
+        "5": { name: "Halcón", power: 3, points: 3 },
       });
       stateManager.set("players.p1.position", 5);
       stateManager.set("players.p1.points", 0);
@@ -365,7 +365,7 @@ describe("BoardEffectsHandler", () => {
 
     it("trap squares apply skipTurn and request narration", async () => {
       stateManager.set("board.squares", {
-        "10": { type: "hazard", name: "Quicksand", effect: "skipTurn" },
+        "10": { name: "Quicksand", effect: "skipTurn" },
       });
       stateManager.set("players.p2.position", 10);
       stateManager.set("players.p2.skipTurns", 0);
@@ -381,7 +381,7 @@ describe("BoardEffectsHandler", () => {
 
     it("clears pendingAnimalEncounter when applying hazard (non-animal) square effect", async () => {
       stateManager.set("board.squares", {
-        "18": { type: "hazard", name: "Plantas carnívoras", effect: "skipTurn" },
+        "18": { name: "Plantas carnívoras", effect: "skipTurn" },
       });
       stateManager.set("players.p1.position", 18);
       stateManager.set("players.p1.skipTurns", 0);
@@ -401,7 +401,6 @@ describe("BoardEffectsHandler", () => {
     it("should apply skipTurn effect from square config", async () => {
       stateManager.set("board.squares", {
         "11": {
-          type: "hazard",
           name: "Arenas movedizas",
           effect: "skipTurn",
         },
@@ -416,7 +415,7 @@ describe("BoardEffectsHandler", () => {
 
     it("protectionItem and heart squares add item immediately", async () => {
       stateManager.set("board.squares", {
-        "63": { type: "item", name: "Traje anti-avispas", item: "anti-wasp" },
+        "63": { name: "Traje anti-avispas", item: "anti-wasp" },
       });
       stateManager.set("players.p1.position", 63);
       stateManager.set("players.p1.items", []);
@@ -428,7 +427,7 @@ describe("BoardEffectsHandler", () => {
 
     it("heart square (Cimitarra) adds scimitar item immediately", async () => {
       stateManager.set("board.squares", {
-        "176": { type: "item", name: "Cimitarra", item: "scimitar" },
+        "176": { name: "Cimitarra", item: "scimitar" },
       });
       stateManager.set("players.p1.position", 176);
       stateManager.set("players.p1.items", []);
@@ -441,7 +440,6 @@ describe("BoardEffectsHandler", () => {
     it("Águila (animal + extra power dice) sets pending encounter; no rewards on landing", async () => {
       stateManager.set("board.squares", {
         "7": {
-          type: "animal",
           name: "Águila",
           power: 3,
           points: 3,
@@ -473,7 +471,6 @@ describe("BoardEffectsHandler", () => {
     it("rollDirectional squares trigger narration only (no deterministic effects)", async () => {
       stateManager.set("board.squares", {
         "55": {
-          type: "special",
           name: "Indios Jíbaros",
           effect: "roll2d6Directional",
         },
@@ -496,7 +493,7 @@ describe("BoardEffectsHandler", () => {
 
     it("checkTorch hazard applies skipTurn when player has no torch", async () => {
       stateManager.set("board.squares", {
-        "85": { type: "hazard", name: "Cae la noche", effect: "checkTorch" },
+        "85": { name: "Cae la noche", effect: "checkTorch" },
       });
       stateManager.set("players.p1.position", 85);
       stateManager.set("players.p1.items", []);
@@ -513,7 +510,7 @@ describe("BoardEffectsHandler", () => {
 
     it("checkTorch hazard consumes torch and does not apply skipTurn when player has torch", async () => {
       stateManager.set("board.squares", {
-        "85": { type: "hazard", name: "Cae la noche", effect: "checkTorch" },
+        "85": { name: "Cae la noche", effect: "checkTorch" },
       });
       stateManager.set("players.p1.position", 85);
       stateManager.set("players.p1.items", ["torch"]);
@@ -531,7 +528,7 @@ describe("BoardEffectsHandler", () => {
 
     it("checkAntiWasp hazard applies skipTurn when player has no anti-wasp", async () => {
       stateManager.set("board.squares", {
-        "116": { type: "hazard", name: "Avispas", effect: "checkAntiWasp" },
+        "116": { name: "Avispas", effect: "checkAntiWasp" },
       });
       stateManager.set("players.p1.position", 116);
       stateManager.set("players.p1.items", []);
@@ -548,7 +545,7 @@ describe("BoardEffectsHandler", () => {
 
     it("checkAntiWasp hazard consumes anti-wasp and does not apply skipTurn when player has it", async () => {
       stateManager.set("board.squares", {
-        "116": { type: "hazard", name: "Avispas", effect: "checkAntiWasp" },
+        "116": { name: "Avispas", effect: "checkAntiWasp" },
       });
       stateManager.set("players.p1.position", 116);
       stateManager.set("players.p1.items", ["anti-wasp"]);
@@ -566,7 +563,7 @@ describe("BoardEffectsHandler", () => {
 
     it("torch protectionItem square adds torch item immediately", async () => {
       stateManager.set("board.squares", {
-        "79": { type: "item", name: "Antorcha", item: "torch" },
+        "79": { name: "Antorcha", item: "torch" },
       });
       stateManager.set("players.p1.position", 79);
       stateManager.set("players.p1.items", []);
@@ -577,7 +574,7 @@ describe("BoardEffectsHandler", () => {
     });
 
     it("should handle position value that is not a number", async () => {
-      stateManager.set("board.squares", { "5": { type: "encounter" } });
+      stateManager.set("board.squares", { "5": { name: "Bear", power: 1 } });
       stateManager.set("players.p1.position", "invalid" as unknown as number);
 
       await boardEffectsHandler.checkAndApplySquareEffects("players.p1.position", baseContext);
@@ -592,7 +589,7 @@ describe("BoardEffectsHandler", () => {
     });
 
     it("should return true during effect processing", async () => {
-      const squareData = { type: "encounter", name: "Bear" };
+      const squareData = { name: "Bear", power: 1 };
       stateManager.set("board.squares", { "5": squareData });
       stateManager.set("players.p1.position", 5);
 
@@ -608,7 +605,7 @@ describe("BoardEffectsHandler", () => {
     });
 
     it("should return false after processing completes", async () => {
-      const squareData = { type: "encounter", name: "Bear" };
+      const squareData = { name: "Bear", power: 1 };
       stateManager.set("board.squares", { "5": squareData });
       stateManager.set("players.p1.position", 5);
 

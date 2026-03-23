@@ -12,8 +12,8 @@ describe("inferDecisionPoints", () => {
   it("returns empty when no forks (next.length <= 1)", () => {
     const board: BoardConfig = {
       squares: {
-        "0": { type: "empty", next: [1] },
-        "1": { type: "empty", next: [2] },
+        "0": { next: [1] },
+        "1": { next: [2] },
       },
     };
     expect(inferDecisionPoints(board)).toEqual([]);
@@ -22,7 +22,7 @@ describe("inferDecisionPoints", () => {
   it("infers fork at position 0 with izquierda/derecha prompt", () => {
     const board: BoardConfig = {
       squares: {
-        "0": { type: "empty", next: [1, 15] },
+        "0": { next: [1, 15] },
       },
     };
     const result = inferDecisionPoints(board);
@@ -37,7 +37,7 @@ describe("inferDecisionPoints", () => {
   it("infers numeric fork prompt for non-zero positions", () => {
     const board: BoardConfig = {
       squares: {
-        "96": { type: "empty", next: [97, 99] },
+        "96": { next: [97, 99] },
       },
     };
     const result = inferDecisionPoints(board);
@@ -52,7 +52,7 @@ describe("inferDecisionPoints", () => {
   it("sorts next options so prompt and positionOptions order are deterministic", () => {
     const board: BoardConfig = {
       squares: {
-        "96": { type: "empty", next: [99, 97] },
+        "96": { next: [99, 97] },
       },
     };
     const result = inferDecisionPoints(board);
@@ -64,9 +64,9 @@ describe("inferDecisionPoints", () => {
   it("infers multiple forks sorted by position", () => {
     const board: BoardConfig = {
       squares: {
-        "101": { type: "animal", name: "Morsa", next: [102, 105] },
-        "0": { type: "empty", next: [1, 15] },
-        "96": { type: "empty", next: [97, 99] },
+        "101": { name: "Morsa", next: [102, 105] },
+        "0": { next: [1, 15] },
+        "96": { next: [97, 99] },
       },
     };
     const result = inferDecisionPoints(board);
@@ -80,7 +80,6 @@ describe("inferDecisionPoints", () => {
     const board: BoardConfig = {
       squares: {
         "0": {
-          type: "empty",
           next: { "1": ["izquierda", "corto"], "15": ["derecha", "largo"] },
         },
       },

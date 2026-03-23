@@ -33,7 +33,7 @@ describe("Orchestrator - New Action Handlers", () => {
         },
       },
       board: {
-        squares: { "100": { type: "special", effect: "win" } },
+        squares: { "100": { effect: "win" } },
       },
     };
 
@@ -119,8 +119,8 @@ describe("Orchestrator - New Action Handlers", () => {
       (testState.players as any).p1.position = 0;
       (testState.players as any).p1.activeChoices = {};
       (testState.board as any).squares = {
-        "0": { type: "empty", next: [1, 15], prev: [] },
-        "100": { type: "special", effect: "win" },
+        "0": { next: [1, 15], prev: [] },
+        "100": { effect: "win" },
       };
       mockStateManager.get = vi.fn((path: string) => {
         if (path === "players.p1.position") {
@@ -144,8 +144,8 @@ describe("Orchestrator - New Action Handlers", () => {
       (testState.players as any).p1.position = 0;
       (testState.players as any).p1.activeChoices = {};
       (testState.board as any).squares = {
-        "0": { type: "empty", next: [1, 15], prev: [] },
-        "100": { type: "special", effect: "win" },
+        "0": { next: [1, 15], prev: [] },
+        "100": { effect: "win" },
       };
 
       const actions: PrimitiveAction[] = [{ action: "PLAYER_ANSWERED", answer: "15" }];
@@ -161,11 +161,10 @@ describe("Orchestrator - New Action Handlers", () => {
       (testState.players as any).p1.activeChoices = {};
       (testState.board as any).squares = {
         "0": {
-          type: "empty",
           next: { "1": ["izquierda", "corto"], "15": ["derecha", "largo"] },
           prev: [],
         },
-        "100": { type: "special", effect: "win" },
+        "100": { effect: "win" },
       };
 
       const actions: PrimitiveAction[] = [{ action: "PLAYER_ANSWERED", answer: "derecha" }];
@@ -180,8 +179,8 @@ describe("Orchestrator - New Action Handlers", () => {
       (testState.players as any).p1.position = 0;
       (testState.players as any).p1.activeChoices = {};
       (testState.board as any).squares = {
-        "0": { type: "empty", next: [1, 15], prev: [] },
-        "100": { type: "special", effect: "win" },
+        "0": { next: [1, 15], prev: [] },
+        "100": { effect: "win" },
       };
       mockStateManager.get = vi.fn((path: string) => {
         if (path === "players.p1.position") {
@@ -202,8 +201,8 @@ describe("Orchestrator - New Action Handlers", () => {
       (testState.players as any).p1.position = 0;
       (testState.players as any).p1.activeChoices = {};
       (testState.board as any).squares = {
-        "0": { type: "empty", next: [1, 15], prev: [] },
-        "100": { type: "special", effect: "win" },
+        "0": { next: [1, 15], prev: [] },
+        "100": { effect: "win" },
       };
       mockStateManager.get = vi.fn((path: string) => {
         if (path === "players.p1.position") {
@@ -423,8 +422,8 @@ describe("Orchestrator - New Action Handlers", () => {
     it("auto-applies ladder after position change", async () => {
       testState.board = {
         squares: {
-          "10": { type: "portal", destination: 25 },
-          "100": { type: "special", effect: "win" },
+          "10": { destination: 25 },
+          "100": { effect: "win" },
         },
       };
       testState.players.p1.position = 5;
@@ -452,8 +451,8 @@ describe("Orchestrator - New Action Handlers", () => {
     it("auto-applies snake after position change", async () => {
       testState.board = {
         squares: {
-          "15": { type: "portal", destination: 5 },
-          "100": { type: "special", effect: "win" },
+          "15": { destination: 5 },
+          "100": { effect: "win" },
         },
       };
       testState.players.p1.position = 10;
@@ -481,8 +480,8 @@ describe("Orchestrator - New Action Handlers", () => {
     it("applies board moves after PLAYER_ROLLED", async () => {
       testState.board = {
         squares: {
-          "10": { type: "portal", destination: 25 },
-          "100": { type: "special", effect: "win" },
+          "10": { destination: 25 },
+          "100": { effect: "win" },
         },
       };
       (testState.players as any).p1.position = 8;
@@ -510,8 +509,8 @@ describe("Orchestrator - New Action Handlers", () => {
     it("LLM cannot bypass board moves (orchestrator always applies)", async () => {
       testState.board = {
         squares: {
-          "10": { type: "portal", destination: 25 },
-          "100": { type: "special", effect: "win" },
+          "10": { destination: 25 },
+          "100": { effect: "win" },
         },
       };
       testState.players.p1.position = 5;
@@ -542,11 +541,11 @@ describe("Orchestrator - New Action Handlers", () => {
       testState.board = {
         squares: {
           "20": {
-            type: "challenge",
             name: "Dragon Square",
             description: "Fight or flee",
+            effect: "skipTurn",
           },
-          "100": { type: "special", effect: "win" },
+          "100": { effect: "win" },
         },
       };
       testState.players.p1.position = 15;
@@ -608,8 +607,8 @@ describe("Orchestrator - New Action Handlers", () => {
         },
         board: {
           squares: {
-            "16": { type: "animal", name: "Escarabajo", power: 1, points: 1, habitat: "desierto" },
-            "21": { type: "animal", name: "Camello", power: 2, points: 2, habitat: "desierto" },
+            "16": { name: "Escarabajo", power: 1, points: 1, habitat: "desierto" },
+            "21": { name: "Camello", power: 2, points: 2, habitat: "desierto" },
           },
         },
       } as GameState);
@@ -889,8 +888,8 @@ describe("Orchestrator - New Action Handlers", () => {
       (testState.players as any).p1.position = 0;
       (testState.players as any).p1.activeChoices = {};
       (testState.board as any).squares = {
-        "0": { type: "empty", next: [1, 15], prev: [] },
-        "100": { type: "special", effect: "win" },
+        "0": { next: [1, 15], prev: [] },
+        "100": { effect: "win" },
       };
       mockStateManager.getState = vi.fn(() => testState);
       mockStateManager.get = vi.fn((path: string) => {
