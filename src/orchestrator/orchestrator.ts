@@ -673,7 +673,17 @@ export class Orchestrator {
       await this.decisionPointEnforcer.enforceDecisionPoints(context);
     }
 
+    return this.buildActionResult(context, shouldAdvanceTurn, voiceOutcomeHints);
+  }
+
+  private buildActionResult(
+    context: ExecutionContext,
+    shouldAdvanceTurn: boolean,
+    voiceOutcomeHints: VoiceOutcomeHints | undefined,
+  ): OrchestratorGameplayResult {
     const turnAdvanced = context.turnAdvancedAfterPowerCheckFail;
+    const effectiveShouldAdvance =
+      !turnAdvanced && !context.skipTrailingNarrateForPowerCheck && shouldAdvanceTurn;
     return turnAdvanced
       ? {
           success: true,
@@ -681,7 +691,7 @@ export class Orchestrator {
           turnAdvancedAfterPowerCheckFail: turnAdvanced,
           voiceOutcomeHints,
         }
-      : { success: true, shouldAdvanceTurn, voiceOutcomeHints };
+      : { success: true, shouldAdvanceTurn: effectiveShouldAdvance, voiceOutcomeHints };
   }
 
   private shouldSkipAction(
