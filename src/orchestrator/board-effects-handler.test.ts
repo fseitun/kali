@@ -415,7 +415,7 @@ describe("BoardEffectsHandler", () => {
 
     it("protectionItem and heart squares add item immediately", async () => {
       stateManager.set("board.squares", {
-        "63": { type: "item", item: "anti-wasp" },
+        "63": { item: "anti-wasp" },
       });
       stateManager.set("players.p1.position", 63);
       stateManager.set("players.p1.items", []);
@@ -427,7 +427,7 @@ describe("BoardEffectsHandler", () => {
 
     it("heart square (Cimitarra) adds scimitar item immediately", async () => {
       stateManager.set("board.squares", {
-        "176": { type: "item", item: "scimitar" },
+        "176": { item: "scimitar" },
       });
       stateManager.set("players.p1.position", 176);
       stateManager.set("players.p1.items", []);
@@ -563,7 +563,7 @@ describe("BoardEffectsHandler", () => {
 
     it("torch protectionItem square adds torch item immediately", async () => {
       stateManager.set("board.squares", {
-        "79": { type: "item", item: "torch" },
+        "79": { item: "torch" },
       });
       stateManager.set("players.p1.position", 79);
       stateManager.set("players.p1.items", []);

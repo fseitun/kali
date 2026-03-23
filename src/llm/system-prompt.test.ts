@@ -175,7 +175,6 @@ describe("formatStateContext", () => {
       board: {
         squares: {
           "7": {
-            type: "animal",
             name: "Águila",
             power: 3,
             powerCheckDiceIfRiddleCorrect: 3,

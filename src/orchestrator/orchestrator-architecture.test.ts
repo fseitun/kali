@@ -219,7 +219,7 @@ describe("Orchestrator Architecture - Authority Model", () => {
     it("advanceTurn() blocks when square effect is processing", async () => {
       // Add a square effect to trigger processing
       stateManager.set("board.squares", {
-        "5": { type: "enemy", name: "Test Enemy" },
+        "5": { name: "Test Enemy", power: 1 },
       });
 
       // Move player to trigger effect (this would set isProcessingSquareEffect internally)
