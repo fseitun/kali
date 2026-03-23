@@ -14,7 +14,6 @@
         "name": "Player 1",
         "position": 0,
         "hearts": 0,
-        "points": 0,
         "activeChoices": { "0": 1 },
         "skipTurns": 0
       },
@@ -23,7 +22,6 @@
         "name": "Player 2",
         "position": 0,
         "hearts": 0,
-        "points": 0,
         "activeChoices": { "0": 1 },
         "skipTurns": 0
       }
@@ -31,15 +29,10 @@
   },
   "steps": [
     {
-      "description": "p1 rolls 2, lands on Halcón (animal square; points from LLM after riddle)",
+      "description": "p1 rolls 2, lands on Halcón (animal square; rewards from orchestrator after riddle)",
       "roll": 2,
-      "llmResponses": [
-        [
-          { "action": "SET_STATE", "path": "players.p1.points", "value": 3 },
-          { "action": "NARRATE", "text": "Halcón encounter! +3 points." }
-        ]
-      ],
-      "expect": { "players.p1.position": 2, "players.p1.points": 3 }
+      "llmResponses": [[{ "action": "NARRATE", "text": "Halcón encounter!" }]],
+      "expect": { "players.p1.position": 2 }
     }
   ]
 }

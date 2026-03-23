@@ -14,7 +14,6 @@
         "name": "Player 1",
         "position": 0,
         "hearts": 0,
-        "points": 0,
         "activeChoices": { "0": 1 },
         "skipTurns": 0
       },
@@ -23,7 +22,6 @@
         "name": "Player 2",
         "position": 0,
         "hearts": 0,
-        "points": 0,
         "activeChoices": { "0": 1 },
         "skipTurns": 0
       }

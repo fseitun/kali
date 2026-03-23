@@ -268,7 +268,7 @@ describe("Orchestrator Integration Tests", () => {
         },
         board: {
           squares: {
-            "5": { name: "Cobra", power: 4, points: 4 },
+            "5": { name: "Cobra", power: 4 },
             "100": { effect: "win" },
           },
         },
@@ -306,7 +306,7 @@ describe("Orchestrator Integration Tests", () => {
         },
         board: {
           squares: {
-            "5": { name: "Cobra", power: 4, points: 4 },
+            "5": { name: "Cobra", power: 4 },
             "100": { effect: "win" },
           },
         },
@@ -361,7 +361,7 @@ describe("Orchestrator Integration Tests", () => {
         },
         board: {
           squares: {
-            "5": { name: "Cobra", power: 4, points: 4 },
+            "5": { name: "Cobra", power: 4 },
             "100": { effect: "win" },
           },
         },
@@ -413,7 +413,7 @@ describe("Orchestrator Integration Tests", () => {
         board: {
           squares: {
             "0": { next: [1, 15] },
-            "5": { name: "Cobra", power: 4, points: 4 },
+            "5": { name: "Cobra", power: 4 },
             "100": { effect: "win" },
           },
         },
@@ -448,13 +448,8 @@ describe("Orchestrator Integration Tests", () => {
             value: true,
           },
           {
-            action: "SET_STATE",
-            path: "players.p1.points",
-            value: 4,
-          },
-          {
             action: "NARRATE",
-            text: "You passed the power check and riddle! +4 points and bonus dice!",
+            text: "You passed the power check and riddle! Bonus dice!",
           },
         ],
       ];
@@ -476,13 +471,12 @@ describe("Orchestrator Integration Tests", () => {
             name: "Alice",
             position: 3,
             bonusDiceNextTurn: false,
-            points: 0,
           },
           p2: { id: "p2", name: "Bob", position: 0 },
         },
         board: {
           squares: {
-            "5": { name: "Cobra", power: 4, points: 4 },
+            "5": { name: "Cobra", power: 4 },
             "100": { effect: "win" },
           },
         },
@@ -494,11 +488,9 @@ describe("Orchestrator Integration Tests", () => {
 
       const p1Position = stateManager.get("players.p1.position");
       const bonusDice = stateManager.get("players.p1.bonusDiceNextTurn");
-      const points = stateManager.get("players.p1.points");
 
       expect(p1Position).toBe(5);
       expect(bonusDice).toBe(true);
-      expect(points).toBe(4);
     });
 
     it("applies bonus dice after riddle success", async () => {
@@ -1179,13 +1171,8 @@ describe("Orchestrator Integration Tests", () => {
         [
           { action: "SET_STATE", path: "players.p1.instruments", value: [] },
           {
-            action: "SET_STATE",
-            path: "players.p1.points",
-            value: 3,
-          },
-          {
             action: "NARRATE",
-            text: "You used the drum of the forest! The bear sleeps. +3 points.",
+            text: "You used the drum of the forest! The bear sleeps.",
           },
         ],
       ];
@@ -1207,7 +1194,6 @@ describe("Orchestrator Integration Tests", () => {
             name: "Alice",
             position: 57,
             instruments: ["drum_forest"],
-            points: 0,
           },
         },
         board: {
@@ -1216,7 +1202,6 @@ describe("Orchestrator Integration Tests", () => {
             "59": {
               name: "Bear",
               power: 3,
-              points: 3,
               habitat: "forest",
               instrument: "drum_forest",
             },
@@ -1229,10 +1214,8 @@ describe("Orchestrator Integration Tests", () => {
       await orchestrator.handleTranscript("I rolled a 2");
 
       const instruments = stateManager.get("players.p1.instruments");
-      const points = stateManager.get("players.p1.points");
 
       expect(instruments).toEqual([]);
-      expect(points).toBe(3);
     });
   });
 

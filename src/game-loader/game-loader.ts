@@ -112,7 +112,6 @@ function buildInitialStateFromParts(config: GameConfigInput): GameState {
             name,
             position: 0,
             hearts: 0,
-            points: 0,
             items: [],
             instruments: [],
             bonusDiceNextTurn: false,

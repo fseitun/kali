@@ -144,7 +144,7 @@ export async function runScenario(scenario: Scenario): Promise<void> {
     }
 
     // When step has llmResponses, execute the first batch (e.g. square-effect outcome) before advancing turn,
-    // so SET_STATE on the current player (e.g. players.p2.points) is valid.
+    // so SET_STATE on the current player (e.g. players.p2.hearts) is valid.
     if (step.llmResponses?.[0]?.length) {
       const effectResult = await orchestrator.testExecuteActions(step.llmResponses[0]);
       if (!effectResult.success) {

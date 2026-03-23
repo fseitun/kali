@@ -16,7 +16,7 @@ import { Logger } from "@/utils/logger";
  * Responsibilities:
  * - Auto-apply teleports from squares (portals, returnTo187); skip backward when inverseMode
  * - Magic door bounce (overshooting 186)
- * - Apply deterministic square effects from config (points, hearts, skipTurn, item, instrument)
+ * - Apply deterministic square effects from config (hearts, skipTurn, item, instrument)
  * - Trigger LLM for narration only (no game-rule state from LLM)
  */
 export class BoardEffectsHandler {
@@ -188,16 +188,6 @@ export class BoardEffectsHandler {
     this.stateManager.set(path, destination);
   }
 
-  private applyPointsEffect(playerId: string, squareData: Record<string, unknown>): string | null {
-    const points = squareData.points as number | undefined;
-    if (typeof points !== "number" || points <= 0) {
-      return null;
-    }
-    const current = (this.stateManager.get(`players.${playerId}.points`) as number) ?? 0;
-    this.stateManager.set(`players.${playerId}.points`, current + points);
-    return `+${points} points`;
-  }
-
   private applyHeartEffect(playerId: string, squareData: Record<string, unknown>): string | null {
     if (squareData.heart !== true) {
       return null;
@@ -283,7 +273,7 @@ export class BoardEffectsHandler {
   }
 
   /**
-   * Applies deterministic square effects from config (points, heart, skipTurn, item, instrument).
+   * Applies deterministic square effects from config (heart, skipTurn, item, instrument).
    * Mutates state for the current player only. Used before asking LLM to narrate.
    *
    * @param path - State path that was mutated (e.g. players.p1.position)
@@ -305,10 +295,6 @@ export class BoardEffectsHandler {
     const applied: string[] = [];
 
     if (!deferRewards) {
-      const pointsResult = this.applyPointsEffect(playerId, squareData);
-      if (pointsResult) {
-        applied.push(pointsResult);
-      }
       const heartResult = this.applyHeartEffect(playerId, squareData);
       if (heartResult) {
         applied.push(heartResult);

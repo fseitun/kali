@@ -247,8 +247,8 @@ describe("formatStateContext", () => {
         pendingAnimalEncounter: { phase: "powerCheck", power: 7, playerId: "p2" },
       },
       players: {
-        p1: { id: "p1", position: 32, points: 5, activeChoices: { 32: 99 }, name: "fico" },
-        p2: { id: "p2", position: 26, points: 3, activeChoices: {}, name: "pepe" },
+        p1: { id: "p1", position: 32, activeChoices: { 32: 99 }, name: "fico" },
+        p2: { id: "p2", position: 26, activeChoices: {}, name: "pepe" },
       },
     } as Record<string, unknown>;
 
@@ -266,8 +266,8 @@ describe("formatStateContext", () => {
         pendingAnimalEncounter: { phase: "powerCheck", power: 7, playerId: "p2" },
       },
       players: {
-        p1: { id: "p1", position: 32, points: 5, activeChoices: { 32: 99 }, name: "fico" },
-        p2: { id: "p2", position: 26, points: 3, activeChoices: {}, name: "pepe" },
+        p1: { id: "p1", position: 32, activeChoices: { 32: 99 }, name: "fico" },
+        p2: { id: "p2", position: 26, activeChoices: {}, name: "pepe" },
       },
     } as Record<string, unknown>;
 

@@ -101,7 +101,6 @@ const MECHANIC_CHECKS: Array<(sq: Record<string, unknown>) => boolean> = [
   (sq) => Array.isArray(sq.nextOnLanding) && sq.nextOnLanding.length > 0,
   (sq) => !!sq.effect && typeof sq.effect === "string",
   (sq) => sq.heart === true,
-  (sq) => typeof sq.points === "number",
   (sq) => typeof sq.instrument === "string" && sq.instrument.length > 0,
   (sq) => typeof sq.item === "string" && sq.item.length > 0,
 ];
@@ -124,7 +123,7 @@ export function squareTriggersLandingPipeline(
 }
 
 /**
- * Squares that require power check + riddle before rewards. Rewards (points, heart, instrument)
+ * Squares that require power check + riddle before rewards. Rewards (heart, instrument)
  * must NOT be applied on landing; LLM applies after encounter resolution.
  */
 export function isDeferredRewardKind(kind: SpecialSquareKind | null): boolean {

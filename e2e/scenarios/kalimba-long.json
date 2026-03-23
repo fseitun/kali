@@ -27,13 +27,12 @@
       ]
     },
     {
-      "description": "p2 lands on Halcón (+3 points)",
+      "description": "p2 lands on Halcón",
       "roll": 2,
       "llmResponses": [
         [
           { "action": "SET_STATE", "path": "game.pendingAnimalEncounter", "value": null },
-          { "action": "SET_STATE", "path": "players.p2.points", "value": 3 },
-          { "action": "NARRATE", "text": "Halcón encounter! +3 points." }
+          { "action": "NARRATE", "text": "Halcón encounter!" }
         ]
       ]
     },
@@ -47,37 +46,34 @@
     { "roll": 1 },
     { "roll": 2 },
     {
-      "description": "p2 lands on Cobra (+4 points)",
+      "description": "p2 lands on Cobra",
       "roll": 3,
       "llmResponses": [
         [
           { "action": "SET_STATE", "path": "game.pendingAnimalEncounter", "value": null },
-          { "action": "SET_STATE", "path": "players.p2.points", "value": 4 },
-          { "action": "NARRATE", "text": "Cobra! +4 points." }
+          { "action": "NARRATE", "text": "Cobra!" }
         ]
       ]
     },
     { "roll": 2 },
     {
-      "description": "p1 lands on Águila (+3 points)",
+      "description": "p1 lands on Águila",
       "roll": 4,
       "llmResponses": [
         [
           { "action": "SET_STATE", "path": "game.pendingAnimalEncounter", "value": null },
-          { "action": "SET_STATE", "path": "players.p1.points", "value": 3 },
-          { "action": "NARRATE", "text": "Águila encounter! +3 points." }
+          { "action": "NARRATE", "text": "Águila encounter!" }
         ]
       ]
     },
     { "roll": 4 },
     {
-      "description": "p3 lands on Águila (+3 points)",
+      "description": "p3 lands on Águila",
       "roll": 4,
       "llmResponses": [
         [
           { "action": "SET_STATE", "path": "game.pendingAnimalEncounter", "value": null },
-          { "action": "SET_STATE", "path": "players.p3.points", "value": 3 },
-          { "action": "NARRATE", "text": "Águila! +3 points." }
+          { "action": "NARRATE", "text": "Águila!" }
         ]
       ]
     },
@@ -107,32 +103,32 @@
     { "roll": 1 },
     { "roll": 2 },
     {
-      "description": "Land on Escorpión (+4 points)",
+      "description": "Land on Escorpión",
       "roll": 2,
       "llmResponses": [
         [
           { "action": "SET_STATE", "path": "game.pendingAnimalEncounter", "value": null },
-          { "action": "NARRATE", "text": "Escorpión! +4 points." }
+          { "action": "NARRATE", "text": "Escorpión!" }
         ]
       ]
     },
     {
-      "description": "Land on Escorpión (+4 points)",
+      "description": "Land on Escorpión",
       "roll": 2,
       "llmResponses": [
         [
           { "action": "SET_STATE", "path": "game.pendingAnimalEncounter", "value": null },
-          { "action": "NARRATE", "text": "Escorpión! +4 points." }
+          { "action": "NARRATE", "text": "Escorpión!" }
         ]
       ]
     },
     {
-      "description": "Land on Escorpión (+4 points)",
+      "description": "Land on Escorpión",
       "roll": 2,
       "llmResponses": [
         [
           { "action": "SET_STATE", "path": "game.pendingAnimalEncounter", "value": null },
-          { "action": "NARRATE", "text": "Escorpión! +4 points." }
+          { "action": "NARRATE", "text": "Escorpión!" }
         ]
       ]
     }

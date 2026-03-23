@@ -21,7 +21,7 @@ The system is built on a clear separation of concerns between deterministic cont
 - Ensures required decisions are made
 - Guarantees data integrity
 - Blocks invalid actions
-- **Calculates all state changes** (position math, score updates, etc.)
+- **Calculates all state changes** (position math, hearts, items, instruments, etc.)
 
 **Mindset:** "I don't care WHAT the user said. Just tell me: A or B?"
 
@@ -117,7 +117,6 @@ The orchestrator guarantees Santiago MUST choose before his turn advances. The L
 ```typescript
 // Orchestrator owns the math:
 newPosition = currentPosition + rollValue;
-newScore = currentScore + points;
 ```
 
 ### The Primitive Box Contract

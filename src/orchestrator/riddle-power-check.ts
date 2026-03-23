@@ -306,12 +306,6 @@ export class RiddlePowerCheckHandler {
   }
 
   applyAnimalEncounterRewards(playerId: string, squareData: Record<string, unknown>): void {
-    const points = squareData.points as number | undefined;
-    if (typeof points === "number" && points > 0) {
-      const current = (this.deps.stateManager.get(`players.${playerId}.points`) as number) ?? 0;
-      this.deps.stateManager.set(`players.${playerId}.points`, current + points);
-    }
-
     if (squareData.heart === true) {
       const current = (this.deps.stateManager.get(`players.${playerId}.hearts`) as number) ?? 0;
       this.deps.stateManager.set(`players.${playerId}.hearts`, current + 1);

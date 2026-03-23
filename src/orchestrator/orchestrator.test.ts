@@ -600,15 +600,14 @@ describe("Orchestrator - New Action Handlers", () => {
             name: "Fico",
             position: 16,
             hearts: 0,
-            points: 0,
             activeChoices: { 0: 15 },
           },
-          p2: { id: "p2", name: "Fede", position: 0, hearts: 0, points: 0, activeChoices: {} },
+          p2: { id: "p2", name: "Fede", position: 0, hearts: 0, activeChoices: {} },
         },
         board: {
           squares: {
-            "16": { name: "Beetle", power: 1, points: 1, habitat: "desert" },
-            "21": { name: "Camel", power: 2, points: 2, habitat: "desert" },
+            "16": { name: "Beetle", power: 1, habitat: "desert" },
+            "21": { name: "Camel", power: 2, habitat: "desert" },
           },
         },
       } as GameState);

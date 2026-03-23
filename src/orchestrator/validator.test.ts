@@ -1305,9 +1305,7 @@ describe("Validator - New Primitives", () => {
       expect(result.valid).toBe(true);
     });
 
-    it("allows SET_STATE for points during square effect (LLM applies after riddle)", () => {
-      (mockState.players as Record<string, Record<string, unknown>>).p1.points = 0;
-
+    it("rejects SET_STATE for points during square effect (points removed from game)", () => {
       const actions = [{ action: "SET_STATE", path: "players.p1.points", value: 3 }];
       const result = validateActions(
         actions,
@@ -1316,7 +1314,8 @@ describe("Validator - New Primitives", () => {
         { isProcessingEffect: true },
       );
 
-      expect(result.valid).toBe(true);
+      expect(result.valid).toBe(false);
+      expect(result.errorCode).toBe("resolveSquareEffectFirst");
     });
 
     it("rejects SET_STATE for skipTurns during square effect processing", () => {

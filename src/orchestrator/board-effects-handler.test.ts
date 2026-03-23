@@ -349,14 +349,11 @@ describe("BoardEffectsHandler", () => {
 
     it("animal squares get narration only, no rewards on landing (orchestrator applies after power check)", async () => {
       stateManager.set("board.squares", {
-        "5": { name: "Halcón", power: 3, points: 3 },
+        "5": { name: "Halcón", power: 3 },
       });
       stateManager.set("players.p1.position", 5);
-      stateManager.set("players.p1.points", 0);
 
       await boardEffectsHandler.checkAndApplySquareEffects("players.p1.position", baseContext);
-
-      expect(stateManager.get("players.p1.points")).toBe(0);
       expect(mockProcessTranscript).toHaveBeenCalledWith(
         expect.stringContaining("ASK_RIDDLE"),
         expect.anything(),
@@ -454,20 +451,17 @@ describe("BoardEffectsHandler", () => {
         "7": {
           name: "Eagle",
           power: 3,
-          points: 3,
           powerCheckDiceIfRiddleCorrect: 3,
           powerCheckDiceIfRiddleWrong: 2,
         },
       });
       stateManager.set("players.p1.position", 7);
       stateManager.set("players.p1.instruments", []);
-      stateManager.set("players.p1.points", 0);
       stateManager.set("game.turn", "p1");
 
       await boardEffectsHandler.checkAndApplySquareEffects("players.p1.position", baseContext);
 
       expect(stateManager.get("players.p1.instruments")).toEqual([]);
-      expect(stateManager.get("players.p1.points")).toBe(0);
       expect(stateManager.get("game.pendingAnimalEncounter")).toMatchObject({
         position: 7,
         power: 3,

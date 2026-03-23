@@ -43,7 +43,6 @@ export interface BoardConfig {
 export interface SquareData {
   name?: string;
   power?: number;
-  points?: number;
   habitat?: string;
   effect?: string;
   destination?: number;

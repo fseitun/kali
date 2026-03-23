@@ -561,25 +561,24 @@ describe("Orchestrator Authority - LLM Adversarial Tests", () => {
       expect(mockSpeech.speak).toHaveBeenCalledWith("You fell into a trap!");
     });
 
-    it("animal squares: orchestrator does not apply points on landing; LLM applies after riddle", async () => {
+    it("animal squares: orchestrator does not apply rewards on landing; defers to after riddle", async () => {
       (testState.board as any).squares = {
         "8": {
           name: "Wolf",
           power: 3,
-          points: 3,
         },
       };
       (testState.game as any).turn = "p1";
       (testState.players as any).p1.position = 5;
-      (testState.players as any).p1.points = 0;
+      (testState.players as any).p1.hearts = 0;
 
       mockStateManager.getState = vi.fn(() => testState);
       mockStateManager.get = vi.fn((path: string) => {
         if (path === "players.p1.position") {
           return testState.players.p1.position;
         }
-        if (path === "players.p1.points") {
-          return testState.players.p1.points;
+        if (path === "players.p1.hearts") {
+          return testState.players.p1.hearts;
         }
         return undefined;
       });
@@ -587,8 +586,8 @@ describe("Orchestrator Authority - LLM Adversarial Tests", () => {
         if (path === "players.p1.position") {
           (testState.players as any).p1.position = value as number;
         }
-        if (path === "players.p1.points") {
-          (testState.players as any).p1.points = value as number;
+        if (path === "players.p1.hearts") {
+          (testState.players as any).p1.hearts = value as number;
         }
       });
 
@@ -607,7 +606,7 @@ describe("Orchestrator Authority - LLM Adversarial Tests", () => {
       const { success } = await orchestrator.testExecuteActions(actions);
 
       expect(success).toBe(true);
-      expect(testState.players.p1.points).toBe(0);
+      expect(testState.players.p1.hearts).toBe(0);
     });
   });
 
