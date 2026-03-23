@@ -42,12 +42,14 @@ export abstract class BaseLLMClient implements LLMClient {
     });
   }
 
-  private logPromptResponse(purpose: PromptPurpose, content: string): void {
+  private logPromptResponse(purpose: PromptPurpose, content: string, durationMs?: number): void {
     const len = content.length;
-    Logger.prompt(`[${purpose}] response (${len} chars)`, {
+    const durationSuffix = durationMs != null ? ` — ${Math.round(durationMs)}ms` : "";
+    Logger.prompt(`[${purpose}] response (${len} chars)${durationSuffix}`, {
       purpose: `${purpose}Response`,
       fullResponse: content,
       responseLength: len,
+      ...(durationMs != null && { durationMs }),
     });
   }
 
@@ -135,12 +137,14 @@ export abstract class BaseLLMClient implements LLMClient {
 
     this.logPrompt("getActions", fullPrompt);
     Profiler.start("llm.network");
+    const startTime = performance.now();
     const result = await this.makeApiCall(fullPrompt, {
       temperature: 0.7,
       maxTokens: 512,
       contextParts: { systemPrompt: this.systemPrompt, userMessage },
       timeoutMs: CONFIG.LLM.GET_ACTIONS_TIMEOUT_MS,
     });
+    const durationMs = performance.now() - startTime;
     Profiler.end("llm.network");
 
     const content = result.content;
@@ -150,7 +154,7 @@ export abstract class BaseLLMClient implements LLMClient {
       return [];
     }
 
-    this.logPromptResponse("getActions", content);
+    this.logPromptResponse("getActions", content, durationMs);
     Profiler.start("llm.parsing");
     const actions = this.extractActions(content);
     Profiler.end("llm.parsing");
@@ -167,14 +171,16 @@ Text: "${transcript}"
 Name:`;
 
       this.logPrompt("extractName", prompt);
+      const startTime = performance.now();
       const result = await this.makeApiCall(prompt, {
         temperature: 0.3,
         maxTokens: 50,
       });
+      const durationMs = performance.now() - startTime;
 
       const content = result.content;
       if (content) {
-        this.logPromptResponse("extractName", content);
+        this.logPromptResponse("extractName", content, durationMs);
       }
       const cleaned = content.trim().toLowerCase();
 
@@ -208,15 +214,17 @@ or
 JSON:`;
 
       this.logPrompt("analyzeResponse", prompt);
+      const startTime = performance.now();
       const apiResult = await this.makeApiCall(prompt, {
         temperature: 0.3,
         maxTokens: 100,
         responseFormatJson: true,
       });
+      const durationMs = performance.now() - startTime;
 
       const content = apiResult.content;
       if (content) {
-        this.logPromptResponse("analyzeResponse", content);
+        this.logPromptResponse("analyzeResponse", content, durationMs);
       }
 
       const markdownMatch = content.match(/```(?:json)?\s*\n?([\s\S]*?)\n?```/);
@@ -263,15 +271,17 @@ El usuario respondió: "${userAnswer}"
 JSON:`;
 
       this.logPrompt("validateRiddleAnswer", prompt);
+      const startTime = performance.now();
       const apiResult = await this.makeApiCall(prompt, {
         temperature: 0.2,
         maxTokens: 20,
         responseFormatJson: true,
       });
+      const durationMs = performance.now() - startTime;
 
       const content = apiResult.content;
       if (content) {
-        this.logPromptResponse("validateRiddleAnswer", content);
+        this.logPromptResponse("validateRiddleAnswer", content, durationMs);
       }
 
       const markdownMatch = content.match(/```(?:json)?\s*\n?([\s\S]*?)\n?```/);
