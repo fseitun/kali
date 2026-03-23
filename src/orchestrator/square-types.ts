@@ -136,3 +136,7 @@ export function isDeferredRewardKind(kind: SpecialSquareKind | null): boolean {
 export function isAnimalEncounterKind(kind: SpecialSquareKind | null): boolean {
   return kind === "animal";
 }
+
+export function isRollDirectionalKind(kind: SpecialSquareKind | null): boolean {
+  return kind === "rollDirectional";
+}

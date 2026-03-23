@@ -62,13 +62,41 @@ function validatePlayerRolledPhaseRestrictions(
   return null;
 }
 
-function getRollLimits(state: GameState): { min: number; max: number; label: string } {
+const DIRECTIONAL_ROLL_RANGES: Record<string, { min: number; max: number; label: string }> = {
+  roll1d6Directional: { min: 1, max: 6, label: "1d6" },
+  roll2d6Directional: { min: 2, max: 12, label: "2d6" },
+  roll3d6Directional: { min: 3, max: 18, label: "3d6" },
+};
+
+function getDirectionalRollLimits(
+  pendingDir: unknown,
+  currentTurn: string | undefined,
+): { min: number; max: number; label: string } | null {
+  if (!currentTurn || !pendingDir || typeof pendingDir !== "object") {
+    return null;
+  }
+  const p = pendingDir as { playerId?: string; effect?: string };
+  if (p.playerId !== currentTurn || typeof p.effect !== "string") {
+    return null;
+  }
+  return DIRECTIONAL_ROLL_RANGES[p.effect] ?? null;
+}
+
+function getDefaultRollLimits(state: GameState): { min: number; max: number; label: string } {
   const players = state.players as Record<string, Record<string, unknown>> | undefined;
   const game = state.game as Record<string, unknown> | undefined;
   const currentTurn = game?.turn as string | undefined;
   const currentPlayer = currentTurn ? players?.[currentTurn] : undefined;
   const bonusDiceNextTurn = currentPlayer?.bonusDiceNextTurn === true;
   return bonusDiceNextTurn ? { min: 2, max: 12, label: "2d6" } : { min: 1, max: 6, label: "1d6" };
+}
+
+function getRollLimits(state: GameState): { min: number; max: number; label: string } {
+  const game = state.game as Record<string, unknown> | undefined;
+  const currentTurn = game?.turn as string | undefined;
+  const pendingDir = game?.pendingDirectionalRoll;
+  const directional = getDirectionalRollLimits(pendingDir, currentTurn);
+  return directional ?? getDefaultRollLimits(state);
 }
 
 function validatePlayerRolledValueRange(

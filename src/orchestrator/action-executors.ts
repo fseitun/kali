@@ -1,5 +1,5 @@
 import type { BoardEffectsHandler } from "./board-effects-handler";
-import { computeNewPositionFromState } from "./board-traversal";
+import { computeNewPositionBackward, computeNewPositionFromState } from "./board-traversal";
 import { getDecisionPointApplyState } from "./decision-helpers";
 import { getPowerCheckDiceConfig, getSquareDataAtPosition } from "./power-check-dice";
 import type { RiddlePowerCheckHandler } from "./riddle-power-check";
@@ -73,6 +73,57 @@ export async function executeSetState(
   ctx.checkAndApplyWinCondition(primitive.path);
 }
 
+function isPendingDirectionalRollFor(
+  pendingDir: unknown,
+  currentTurn: string,
+  currentPosition: number,
+): pendingDir is { playerId: string; position: number } {
+  return (
+    pendingDir !== null &&
+    typeof pendingDir === "object" &&
+    (pendingDir as { playerId?: string; position?: number }).playerId === currentTurn &&
+    (pendingDir as { playerId?: string; position?: number }).position === currentPosition
+  );
+}
+
+function logPlayerRolledOutcome(
+  isDirectional: boolean,
+  state: Record<string, unknown>,
+  currentTurn: string,
+  path: string,
+  currentPosition: number,
+  newPosition: number,
+  rollValue: number,
+): void {
+  if (!isDirectional) {
+    Logger.write(`Player rolled ${rollValue}: ${path} ${currentPosition} → ${newPosition}`);
+    return;
+  }
+  const player = (state.players as Record<string, Record<string, unknown>>)?.[currentTurn];
+  const inverseMode = !!(player?.inverseMode as boolean | undefined);
+  Logger.write(
+    `Directional roll (${inverseMode ? "inverseMode" : "retreat"}): ${path} ${currentPosition} → ${newPosition}`,
+  );
+}
+
+function computePositionFromRoll(
+  state: GameState,
+  currentTurn: string,
+  currentPosition: number,
+  rollValue: number,
+  pendingDir: { playerId: string; position: number } | null | undefined,
+): number {
+  if (!isPendingDirectionalRollFor(pendingDir, currentTurn, currentPosition)) {
+    return computeNewPositionFromState(state, currentTurn, currentPosition, rollValue);
+  }
+  const player = (state.players as Record<string, Record<string, unknown>>)?.[currentTurn];
+  const inverseMode = !!(player?.inverseMode as boolean | undefined);
+  if (inverseMode) {
+    return computeNewPositionFromState(state, currentTurn, currentPosition, rollValue);
+  }
+  return computeNewPositionBackward(state, currentTurn, currentPosition, rollValue);
+}
+
 export async function executePlayerRolled(
   ctx: ActionExecutorContext,
   primitive: Extract<PrimitiveAction, { action: "PLAYER_ROLLED" }>,
@@ -93,13 +144,33 @@ export async function executePlayerRolled(
     throw new Error(`Cannot process PLAYER_ROLLED: ${path} is not a number`);
   }
 
-  const newPosition = computeNewPositionFromState(
-    state,
+  const pendingDir = game?.pendingDirectionalRoll as
+    | { playerId: string; position: number }
+    | null
+    | undefined;
+  const isDirectional = isPendingDirectionalRollFor(pendingDir, currentTurn, currentPosition);
+
+  if (isDirectional) {
+    ctx.stateManager.set("game.pendingDirectionalRoll", null);
+  }
+
+  const newPosition = computePositionFromRoll(
+    state as GameState,
     currentTurn,
     currentPosition,
     primitive.value,
+    pendingDir,
   );
-  Logger.write(`Player rolled ${primitive.value}: ${path} ${currentPosition} → ${newPosition}`);
+
+  logPlayerRolledOutcome(
+    isDirectional,
+    state,
+    currentTurn,
+    path,
+    currentPosition,
+    newPosition,
+    primitive.value,
+  );
 
   ctx.stateManager.set(path, newPosition);
   context.positionPathsSetByRoll?.add(path);

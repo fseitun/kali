@@ -3,6 +3,7 @@ import {
   getSquareKind,
   isAnimalEncounterKind,
   isDeferredRewardKind,
+  isRollDirectionalKind,
   squareTriggersLandingPipeline,
 } from "./square-types";
 import type { ExecutionContext } from "./types";
@@ -406,6 +407,25 @@ export class BoardEffectsHandler {
     }
   }
 
+  private syncDirectionalRollState(
+    kind: ReturnType<typeof getSquareKind>,
+    playerId: string,
+    position: number,
+    squareData: Record<string, unknown>,
+    isSetup: boolean,
+  ): void {
+    const effect = squareData.effect as string | undefined;
+    if (isSetup && isRollDirectionalKind(kind) && playerId && effect) {
+      this.stateManager.set("game.pendingDirectionalRoll", {
+        playerId,
+        position,
+        effect,
+      });
+    } else if (!isSetup && !isRollDirectionalKind(kind)) {
+      this.stateManager.set("game.pendingDirectionalRoll", null);
+    }
+  }
+
   private buildNoChoicePortalHint(
     kind: ReturnType<typeof getSquareKind>,
     arrivedViaTeleportFrom: number | undefined,
@@ -496,6 +516,7 @@ export class BoardEffectsHandler {
     );
 
     this.syncAnimalEncounterState(kind, playerId, position, power, true);
+    this.syncDirectionalRollState(kind, playerId, position, squareData, true);
 
     const applied = this.applyDeterministicSquareEffects(path, squareData);
     const squareInfo = JSON.stringify(squareData);
@@ -511,6 +532,7 @@ export class BoardEffectsHandler {
     );
 
     this.syncAnimalEncounterState(kind, playerId, position, power, false);
+    this.syncDirectionalRollState(kind, playerId, position, squareData, false);
 
     this.isProcessingSquareEffect = true;
     try {

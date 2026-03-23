@@ -182,6 +182,19 @@ describe("TurnManager", () => {
       expect((stateManager.getState().game as Record<string, unknown>).turn).toBe("p1");
     });
 
+    it("should block when current player has pending directional roll", async () => {
+      stateManager.set("game.pendingDirectionalRoll", {
+        playerId: "p1",
+        position: 55,
+        effect: "roll2d6Directional",
+      });
+
+      const result = await turnManager.advanceTurn(false);
+
+      expect(result).toBeNull();
+      expect((stateManager.getState().game as Record<string, unknown>).turn).toBe("p1");
+    });
+
     it("should block when current player has pending decisions", async () => {
       stateManager.set("board.squares", {
         "0": { next: [1, 15], prev: [] },

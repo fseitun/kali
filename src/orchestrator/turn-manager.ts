@@ -86,6 +86,22 @@ export class TurnManager {
   }
 
   /**
+   * Checks if there is a pending directional roll that blocks turn advancement.
+   * @returns true if game.pendingDirectionalRoll is set for the current player
+   */
+  hasPendingDirectionalRoll(): boolean {
+    const state = this.stateManager.getState();
+    const game = state.game as Record<string, unknown> | undefined;
+    const currentTurn = game?.turn as string | undefined;
+    const pending = game?.pendingDirectionalRoll as { playerId: string } | null | undefined;
+
+    if (!currentTurn || !pending || typeof pending !== "object") {
+      return false;
+    }
+    return pending.playerId === currentTurn;
+  }
+
+  /**
    * Checks if the current player has pending decisions that must be resolved.
    * @returns true if there are unresolved decisions, false otherwise
    */
@@ -181,6 +197,10 @@ export class TurnManager {
     }
     if (this.hasPendingAnimalEncounter()) {
       Logger.info("Turn advancement blocked: pending animal encounter");
+      return null;
+    }
+    if (this.hasPendingDirectionalRoll()) {
+      Logger.info("Turn advancement blocked: pending directional roll");
       return null;
     }
     return currentTurn;

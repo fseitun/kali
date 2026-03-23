@@ -5,6 +5,27 @@ import { validateField } from "./common";
 import { validateSquareEffectPathRestriction } from "./square-effect";
 import type { ValidationResult, ValidatorContext } from "./types";
 
+const FORBIDDEN_PATH_ERRORS: Record<string, { allowScenarioNull?: boolean; error: string }> = {
+  "game.phase": {
+    error:
+      "Cannot manually change game.phase via SET_STATE. The orchestrator manages phase transitions.",
+  },
+  "game.winner": {
+    error:
+      "Cannot manually set game.winner via SET_STATE. The orchestrator detects and sets winners.",
+  },
+  "game.pendingAnimalEncounter": {
+    allowScenarioNull: true,
+    error:
+      "Cannot set game.pendingAnimalEncounter. The orchestrator owns encounter state. Use RIDDLE_RESOLVED or PLAYER_ANSWERED with roll value.",
+  },
+  "game.pendingDirectionalRoll": {
+    allowScenarioNull: true,
+    error:
+      "Cannot set game.pendingDirectionalRoll. The orchestrator owns directional roll state. User reports roll → PLAYER_ROLLED.",
+  },
+};
+
 function validateForbiddenSetStatePath(
   path: string,
   index: number,
@@ -13,41 +34,28 @@ function validateForbiddenSetStatePath(
   action: { value?: unknown },
 ): ValidationResult | null {
   if (path === "game.turn") {
-    const game = state.game;
-    if (game.phase !== "SETUP") {
-      return {
-        valid: false,
-        error: `SET_STATE at index ${index}: Cannot manually change game.turn. The orchestrator automatically advances turns when all effects are complete. Remove this action and let the orchestrator handle turn advancement.`,
-        errorCode: "setStateForbidden",
-      };
+    if (state.game?.phase === "SETUP") {
+      return null;
     }
+    return {
+      valid: false,
+      error: `SET_STATE at index ${index}: Cannot manually change game.turn. The orchestrator automatically advances turns when all effects are complete. Remove this action and let the orchestrator handle turn advancement.`,
+      errorCode: "setStateForbidden",
+    };
+  }
+
+  const rule = FORBIDDEN_PATH_ERRORS[path];
+  if (!rule) {
     return null;
   }
-  if (path === "game.phase") {
-    return {
-      valid: false,
-      error: `SET_STATE at index ${index}: Cannot manually change game.phase via SET_STATE. The orchestrator manages phase transitions.`,
-      errorCode: "setStateForbidden",
-    };
+  if (rule.allowScenarioNull && context.allowScenarioOnlyStatePaths && action.value === null) {
+    return { valid: true };
   }
-  if (path === "game.winner") {
-    return {
-      valid: false,
-      error: `SET_STATE at index ${index}: Cannot manually set game.winner via SET_STATE. The orchestrator detects and sets winners.`,
-      errorCode: "setStateForbidden",
-    };
-  }
-  if (path === "game.pendingAnimalEncounter") {
-    if (context.allowScenarioOnlyStatePaths && action.value === null) {
-      return { valid: true };
-    }
-    return {
-      valid: false,
-      error: `SET_STATE at index ${index}: Cannot set game.pendingAnimalEncounter. The orchestrator owns encounter state. Use RIDDLE_RESOLVED or PLAYER_ANSWERED with roll value.`,
-      errorCode: "setStateForbidden",
-    };
-  }
-  return null;
+  return {
+    valid: false,
+    error: `SET_STATE at index ${index}: ${rule.error}`,
+    errorCode: "setStateForbidden",
+  };
 }
 
 function validateTurnOwnership(

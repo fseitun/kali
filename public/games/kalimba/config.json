@@ -10,7 +10,7 @@
   "stateDisplay": {
     "game": {
       "primary": ["turn", "phase"],
-      "secondary": ["lastRoll", "pendingRoll", "currentHabitat", "pendingAnimalEncounter"],
+      "secondary": ["lastRoll", "pendingRoll", "currentHabitat", "pendingAnimalEncounter", "pendingDirectionalRoll"],
       "hidden": ["name", "lastAnswer", "playerOrder"]
     },
     "players": {

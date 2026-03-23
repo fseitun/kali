@@ -300,6 +300,27 @@ function formatAnimalEncounterContext(state: Record<string, unknown>): string {
   return "";
 }
 
+const DIRECTIONAL_ROLL_RANGES: Record<string, { min: number; max: number; label: string }> = {
+  roll1d6Directional: { min: 1, max: 6, label: "1d6" },
+  roll2d6Directional: { min: 2, max: 12, label: "2d6" },
+  roll3d6Directional: { min: 3, max: 18, label: "3d6" },
+};
+
+function formatDirectionalRollContext(state: Record<string, unknown>): string {
+  const game = state.game as Record<string, unknown> | undefined;
+  const currentTurn = game?.turn as string | undefined;
+  const pending = game?.pendingDirectionalRoll as
+    | { playerId?: string; effect?: string; position?: number }
+    | null
+    | undefined;
+  if (!pending || !currentTurn || pending.playerId !== currentTurn) {
+    return "";
+  }
+  const effect = pending.effect ?? "roll2d6Directional";
+  const range = DIRECTIONAL_ROLL_RANGES[effect] ?? { min: 2, max: 12, label: "2d6" };
+  return `⚠️ DIRECTIONAL ROLL: User reports dice sum → PLAYER_ROLLED (${range.min}-${range.max}, ${range.label}). Always retreat unless inverseMode (from square 82). [current]`;
+}
+
 /**
  * Formats game state into a concise, human-readable context for the LLM.
  * Uses game-specific stateDisplay metadata if available, otherwise shows all fields.
@@ -387,6 +408,10 @@ export function formatStateContext(
   const animalEncounterContext = formatAnimalEncounterContext(state);
   if (animalEncounterContext) {
     parts.push(animalEncounterContext);
+  }
+  const directionalRollContext = formatDirectionalRollContext(state);
+  if (directionalRollContext) {
+    parts.push(directionalRollContext);
   }
 
   return parts.join("\n");

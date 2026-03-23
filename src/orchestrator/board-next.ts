@@ -32,6 +32,20 @@ export function getNextTargets(sq: { next?: NextField } | undefined): number[] {
 }
 
 /**
+ * Returns target indices from a square's `prev` field (backward direction).
+ * @param sq - Square-like object with optional `prev`
+ * @param current - Current position (fallback when prev is missing)
+ * @returns List of reachable backward targets
+ */
+export function getPrevTargets(sq: { prev?: number[] } | undefined, current: number): number[] {
+  const prev = sq?.prev;
+  if (!Array.isArray(prev) || prev.length === 0) {
+    return current > 0 ? [current - 1] : [];
+  }
+  return [...prev];
+}
+
+/**
  * True when the square has more than one forward target (fork).
  * @param sq - Square-like object with optional `next`
  */

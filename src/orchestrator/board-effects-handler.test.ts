@@ -501,6 +501,11 @@ describe("BoardEffectsHandler", () => {
       await boardEffectsHandler.checkAndApplySquareEffects("players.p1.position", baseContext);
 
       expect(stateManager.get("players.p1.skipTurns")).toBe(0);
+      expect(stateManager.get("game.pendingDirectionalRoll")).toMatchObject({
+        playerId: "p1",
+        position: 55,
+        effect: "roll2d6Directional",
+      });
       expect(mockProcessTranscript).toHaveBeenCalledWith(
         expect.stringContaining("Narrate this encounter"),
         expect.anything(),

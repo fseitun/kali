@@ -125,7 +125,7 @@ export async function runScenario(scenario: Scenario): Promise<void> {
     mockSpeech,
     mockIndicator,
     initialState,
-    { allowScenarioOnlyStatePaths: true },
+    { allowScenarioOnlyStatePaths: true, allowBypassPositionDecisionGate: true },
   );
 
   if (scenario.players !== undefined) {
@@ -140,7 +140,10 @@ export async function runScenario(scenario: Scenario): Promise<void> {
 
     let result = await orchestrator.testExecuteActions(actions);
     if (!result.success) {
-      throw new Error(`E2E step ${i} failed: testExecuteActions returned success=false`);
+      const state = stateManager.getState() as Record<string, unknown>;
+      throw new Error(
+        `E2E step ${i} failed: testExecuteActions returned success=false. State: ${JSON.stringify(state, null, 0).slice(0, 500)}`,
+      );
     }
 
     // When step has llmResponses, execute the first batch (e.g. square-effect outcome) before advancing turn,

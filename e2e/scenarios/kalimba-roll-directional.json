@@ -1,0 +1,31 @@
+{
+  "game": "kalimba",
+  "players": 2,
+  "initialState": {
+    "game": {
+      "phase": "PLAYING",
+      "turn": "p1",
+      "playerOrder": ["p1", "p2"],
+      "winner": null
+    }
+  },
+  "steps": [
+    {
+      "description": "p1 at 52 rolls 3, lands on Jivaro Indians (roll2d6Directional); turn does not advance",
+      "actions": [
+        { "action": "SET_STATE", "path": "players.p1.position", "value": 52 },
+        { "action": "PLAYER_ROLLED", "value": 3 },
+        { "action": "NARRATE", "text": "Rolled 3" }
+      ],
+      "llmResponses": [
+        [{ "action": "NARRATE", "text": "Jivaro Indians! Tirá 2 dados y retrocedés ese número." }]
+      ],
+      "expect": { "players.p1.position": 55, "game.turn": "p1" }
+    },
+    {
+      "description": "p1 reports directional roll 7; retreats 7 to 48; turn advances to p2",
+      "actions": [{ "action": "PLAYER_ROLLED", "value": 7 }],
+      "expect": { "players.p1.position": 48, "game.turn": "p2" }
+    }
+  ]
+}

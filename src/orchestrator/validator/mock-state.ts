@@ -1,4 +1,4 @@
-import { computeNewPositionFromState } from "../board-traversal";
+import { computeNewPositionBackward, computeNewPositionFromState } from "../board-traversal";
 import { getDecisionPointApplyState } from "../decision-helpers";
 import { getDecisionPoints } from "../decision-point-inference";
 import { isStrictRiddleCorrect } from "../riddle-answer";
@@ -66,29 +66,92 @@ function handleSetState(
   current[parts[parts.length - 1]] = primitive.value;
 }
 
+function isMockPendingDirectionalRoll(
+  pending: unknown,
+  currentTurn: string,
+  playerPosition: number,
+): pending is { playerId: string; position: number } {
+  return (
+    pending !== null &&
+    typeof pending === "object" &&
+    (pending as { playerId?: string; position?: number }).playerId === currentTurn &&
+    (pending as { playerId?: string; position?: number }).position === playerPosition
+  );
+}
+
+function computeMockPositionAfterRoll(
+  mockState: GameState,
+  currentTurn: string,
+  currentPosition: number,
+  rollValue: number,
+  player: Record<string, unknown>,
+  pendingDir: { playerId: string; position: number } | null | undefined,
+): number {
+  if (!isMockPendingDirectionalRoll(pendingDir, currentTurn, currentPosition)) {
+    return computeNewPositionFromState(mockState, currentTurn, currentPosition, rollValue);
+  }
+  const inverseMode = !!(player?.inverseMode as boolean | undefined);
+  return inverseMode
+    ? computeNewPositionFromState(mockState, currentTurn, currentPosition, rollValue)
+    : computeNewPositionBackward(mockState, currentTurn, currentPosition, rollValue);
+}
+
+function getPlayerRolledContext(
+  primitive: PrimitiveAction,
+  mockState: GameState,
+): {
+  currentTurn: string;
+  player: Record<string, unknown>;
+  position: number;
+  rollValue: number;
+} | null {
+  if (!("value" in primitive) || typeof primitive.value !== "number") {
+    return null;
+  }
+  const game = mockState.game as Record<string, unknown>;
+  const currentTurn = game?.turn;
+  if (!currentTurn || typeof currentTurn !== "string") {
+    return null;
+  }
+  const players = mockState.players as Record<string, Record<string, unknown>>;
+  const player = players?.[currentTurn];
+  if (!player || typeof player.position !== "number") {
+    return null;
+  }
+  return {
+    currentTurn,
+    player,
+    position: player.position,
+    rollValue: primitive.value,
+  };
+}
+
 function handlePlayerRolled(
   primitive: PrimitiveAction,
   mockState: GameState,
   _originalState: GameState,
 ): void {
-  if (!("value" in primitive)) {
+  const ctx = getPlayerRolledContext(primitive, mockState);
+  if (!ctx) {
     return;
   }
-  const rollValue = primitive.value;
-  if (typeof rollValue !== "number") {
-    return;
+  const game = mockState.game as Record<string, unknown>;
+  const pendingDir = game?.pendingDirectionalRoll as
+    | { playerId: string; position: number }
+    | null
+    | undefined;
+
+  if (isMockPendingDirectionalRoll(pendingDir, ctx.currentTurn, ctx.position)) {
+    game.pendingDirectionalRoll = null;
   }
-  const game = mockState.game;
-  const currentTurn = game?.turn;
-  if (!currentTurn || typeof currentTurn !== "string") {
-    return;
-  }
-  const players = mockState.players as Record<string, Record<string, unknown>>;
-  const player = players?.[currentTurn];
-  if (!player || typeof player.position !== "number") {
-    return;
-  }
-  player.position = computeNewPositionFromState(mockState, currentTurn, player.position, rollValue);
+  ctx.player.position = computeMockPositionAfterRoll(
+    mockState,
+    ctx.currentTurn,
+    ctx.position,
+    ctx.rollValue,
+    ctx.player,
+    pendingDir,
+  );
 }
 
 function applyRiddleAnswerToMock(

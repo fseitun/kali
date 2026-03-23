@@ -1,4 +1,4 @@
-import { getNextTargets } from "./board-next";
+import { getNextTargets, getPrevTargets } from "./board-next";
 import type { GameState } from "./types";
 
 type SquareShape = {
@@ -16,6 +16,10 @@ function getForwardTargets(sq: SquareShape | undefined, current: number): number
   return getNextTargets(sq);
 }
 
+function getBackwardTargets(sq: SquareShape | undefined, current: number): number[] {
+  return getPrevTargets(sq, current);
+}
+
 function advanceOneStep(
   current: number,
   targets: number[],
@@ -23,6 +27,14 @@ function advanceOneStep(
 ): number {
   const saved = activeChoices[current];
   return saved !== undefined && targets.includes(saved) ? saved : (targets[0] ?? current);
+}
+
+function retreatOneStep(
+  current: number,
+  targets: number[],
+  _activeChoices: Record<string, number>,
+): number {
+  return targets[0] ?? current;
 }
 
 function getLandingHopTargets(
@@ -74,5 +86,27 @@ export function computeNewPositionFromState(
     }
   }
 
+  return current;
+}
+
+/**
+ * Steps backward from currentPosition by `steps` moves using each square's prev.
+ * Used for rollDirectional retreat (always back unless inverseMode).
+ */
+export function computeNewPositionBackward(
+  state: GameState,
+  _playerId: string,
+  currentPosition: number,
+  steps: number,
+): number {
+  const board = state.board as Record<string, unknown> | undefined;
+  const squares = board?.squares as Record<string, SquareShape> | undefined;
+
+  let current = currentPosition;
+  for (let i = 0; i < steps; i++) {
+    const sq = squares?.[String(current)];
+    const targets = getBackwardTargets(sq, current);
+    current = retreatOneStep(current, targets, {});
+  }
   return current;
 }
