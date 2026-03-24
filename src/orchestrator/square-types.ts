@@ -40,6 +40,19 @@ const SPECIAL_EFFECT_MAP: Record<string, SpecialSquareKind> = {
 
 const ROLL_DIRECTIONAL_EFFECTS = ["roll1d6Directional", "roll2d6Directional", "roll3d6Directional"];
 
+/**
+ * Parses dice count from rollDirectional effect string.
+ * @returns 1 | 2 | 3, or undefined if not a valid rollDirectional effect
+ */
+export function getDirectionalRollDice(effect: string | undefined): 1 | 2 | 3 | undefined {
+  if (!effect || !ROLL_DIRECTIONAL_EFFECTS.includes(effect)) {
+    return undefined;
+  }
+  const digits = effect.replace(/\D/g, "");
+  const n = parseInt(digits.charAt(0) ?? "0", 10);
+  return n >= 1 && n <= 3 ? (n as 1 | 2 | 3) : undefined;
+}
+
 function kindFromEffect(effect: string | undefined): SpecialSquareKind | null {
   if (!effect) {
     return null;

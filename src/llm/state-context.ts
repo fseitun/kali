@@ -251,74 +251,66 @@ function formatRevengeContext(playerName: string, power: number): string {
   return `⚠️ REVENGE (${playerName}) phase=revenge. Same player, not next. 1 die, roll >= ${power} wins. User reports roll → PLAYER_ANSWERED with the number (1-6). Do NOT ask "¿alcanza?", "is that enough?" — process it immediately. Do NOT NARRATE the roll. Return only PLAYER_ANSWERED. Orchestrator announces pass/fail. If user asks what to do → NARRATE that they should roll one die and report the number (need ${power} or more). If prompting, name the player: "${playerName}, tirá el dado." [current]`;
 }
 
-function getPendingEncounterContext(state: Record<string, unknown>): {
+function formatDirectionalRollContext(playerName: string, dice: 1 | 2 | 3): string {
+  const min = dice;
+  const max = dice * 6;
+  const label = `${dice}d6`;
+  const rollInstruction =
+    dice === 1
+      ? `PLAYER_ANSWERED with the number on the die (1–6).`
+      : `PLAYER_ANSWERED with the sum (${min}–${max} from ${label}). Examples: "ocho", "quince".`;
+  return `⚠️ DIRECTIONAL ROLL (${playerName}) Player must move backward. Roll ${label} and report the result. If user REPORTS their roll → ${rollInstruction} Do NOT NARRATE the roll. Return only PLAYER_ANSWERED. If user asks what to do → NARRATE "Tirá ${dice} dado(s)... decime el resultado." [current]`;
+}
+
+function getPendingContext(state: Record<string, unknown>): {
   playerName: string;
-  pending: { phase?: string; power?: number; riddleCorrect?: boolean; position?: number };
+  pending: Record<string, unknown>;
 } | null {
   const game = state.game as Record<string, unknown> | undefined;
   const players = state.players as Record<string, Record<string, unknown>> | undefined;
   const currentTurn = game?.turn as string | undefined;
-  const pending = game?.pendingAnimalEncounter as
-    | {
-        phase?: string;
-        power?: number;
-        playerId?: string;
-        riddleCorrect?: boolean;
-        position?: number;
-      }
-    | null
-    | undefined;
-  if (!pending || !currentTurn || pending.playerId !== currentTurn || !players?.[currentTurn]) {
+  const pending = game?.pending as Record<string, unknown> | null | undefined;
+  const playerId = pending?.playerId as string | undefined;
+  if (!pending || !currentTurn || playerId !== currentTurn || !players?.[currentTurn]) {
     return null;
   }
   const playerName = (players[currentTurn].name as string) || currentTurn;
   return { playerName, pending };
 }
 
-function formatAnimalEncounterContext(state: Record<string, unknown>): string {
-  const ctx = getPendingEncounterContext(state);
+function formatPendingContext(state: Record<string, unknown>): string {
+  const ctx = getPendingContext(state);
   if (!ctx) {
     return "";
   }
   const { playerName, pending } = ctx;
-  const power = pending.power ?? 0;
-  if (pending.phase === "riddle") {
+  const kind = pending.kind as string | undefined;
+  const power = (pending.power as number | undefined) ?? 0;
+
+  if (kind === "riddle") {
     return formatRiddlePhaseContext(
       playerName,
       pending as { riddlePrompt?: string; riddleOptions?: string[]; correctOption?: string },
     );
   }
-  if (pending.phase === "powerCheck") {
-    const pos = pending.position;
+  if (kind === "powerCheck") {
+    const pos = pending.position as number | undefined;
     const squareData =
       typeof pos === "number" ? getSquareDataAtPosition(state as GameState, pos) : undefined;
-    return formatPowerCheckContext(playerName, pending.riddleCorrect, squareData);
+    return formatPowerCheckContext(
+      playerName,
+      pending.riddleCorrect as boolean | undefined,
+      squareData,
+    );
   }
-  if (pending.phase === "revenge") {
+  if (kind === "revenge") {
     return formatRevengeContext(playerName, power);
   }
-  return "";
-}
-
-const DIRECTIONAL_ROLL_RANGES: Record<string, { min: number; max: number; label: string }> = {
-  roll1d6Directional: { min: 1, max: 6, label: "1d6" },
-  roll2d6Directional: { min: 2, max: 12, label: "2d6" },
-  roll3d6Directional: { min: 3, max: 18, label: "3d6" },
-};
-
-function formatDirectionalRollContext(state: Record<string, unknown>): string {
-  const game = state.game as Record<string, unknown> | undefined;
-  const currentTurn = game?.turn as string | undefined;
-  const pending = game?.pendingDirectionalRoll as
-    | { playerId?: string; effect?: string; position?: number }
-    | null
-    | undefined;
-  if (!pending || !currentTurn || pending.playerId !== currentTurn) {
-    return "";
+  if (kind === "directional") {
+    const dice = pending.dice as 1 | 2 | 3;
+    return formatDirectionalRollContext(playerName, dice);
   }
-  const effect = pending.effect ?? "roll2d6Directional";
-  const range = DIRECTIONAL_ROLL_RANGES[effect] ?? { min: 2, max: 12, label: "2d6" };
-  return `⚠️ DIRECTIONAL ROLL: User reports dice sum → PLAYER_ROLLED (${range.min}-${range.max}, ${range.label}). Always retreat unless inverseMode (from square 82). [current]`;
+  return "";
 }
 
 /**
@@ -405,13 +397,9 @@ export function formatStateContext(
   if (decisionContext) {
     parts.push(decisionContext);
   }
-  const animalEncounterContext = formatAnimalEncounterContext(state);
-  if (animalEncounterContext) {
-    parts.push(animalEncounterContext);
-  }
-  const directionalRollContext = formatDirectionalRollContext(state);
-  if (directionalRollContext) {
-    parts.push(directionalRollContext);
+  const pendingContext = formatPendingContext(state);
+  if (pendingContext) {
+    parts.push(pendingContext);
   }
 
   return parts.join("\n");

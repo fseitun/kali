@@ -292,11 +292,11 @@ describe("Orchestrator Integration Tests", () => {
           playerOrder: ["p1", "p2"],
           winner: null,
           lastRoll: 0,
-          pendingAnimalEncounter: {
+          pending: {
             position: 5,
             power: 4,
             playerId: "p1",
-            phase: "powerCheck",
+            kind: "powerCheck",
             riddleCorrect: false,
           },
         },
@@ -330,12 +330,12 @@ describe("Orchestrator Integration Tests", () => {
       const turn = stateManager.get("game.turn");
       expect(turn).toBe("p2");
 
-      const pending = stateManager.get("game.pendingAnimalEncounter") as {
+      const pending = stateManager.get("game.pending") as {
         playerId: string;
-        phase: string;
+        kind: string;
       };
       expect(pending.playerId).toBe("p1");
-      expect(pending.phase).toBe("revenge");
+      expect(pending.kind).toBe("revenge");
     });
 
     it("does not advance turn on power check win (shouldAdvanceTurn false)", async () => {
@@ -347,11 +347,11 @@ describe("Orchestrator Integration Tests", () => {
           playerOrder: ["p1", "p2"],
           winner: null,
           lastRoll: 0,
-          pendingAnimalEncounter: {
+          pending: {
             position: 5,
             power: 4,
             playerId: "p1",
-            phase: "powerCheck",
+            kind: "powerCheck",
             riddleCorrect: false,
           },
         },
@@ -381,7 +381,7 @@ describe("Orchestrator Integration Tests", () => {
       const turn = stateManager.get("game.turn");
       expect(turn).toBe("p1");
 
-      const pending = stateManager.get("game.pendingAnimalEncounter");
+      const pending = stateManager.get("game.pending");
       expect(pending).toBeNull();
     });
 
@@ -398,11 +398,11 @@ describe("Orchestrator Integration Tests", () => {
           playerOrder: ["p1", "p2"],
           winner: null,
           lastRoll: 0,
-          pendingAnimalEncounter: {
+          pending: {
             position: 5,
             power: 4,
             playerId: "p1",
-            phase: "powerCheck",
+            kind: "powerCheck",
             riddleCorrect: false,
           },
         },
@@ -1294,11 +1294,11 @@ describe("Orchestrator Integration Tests", () => {
           playerOrder: ["p1", "p2"],
           winner: null,
           lastRoll: 0,
-          pendingAnimalEncounter: {
+          pending: {
             position: 2,
             power: 3,
             playerId: "p1",
-            phase: "riddle",
+            kind: "riddle",
             riddlePrompt: "Which bird?",
             riddleOptions: ["Águila", "Búho", "Halcón", "Cóndor"],
             correctOption: "Halcón",
@@ -1317,8 +1317,8 @@ describe("Orchestrator Integration Tests", () => {
 
       expect(result.success).toBe(true);
       expect(stateManager.get("players.p1.position")).toBe(2);
-      const pendingAfter = stateManager.get("game.pendingAnimalEncounter") as { phase?: string };
-      expect(pendingAfter.phase).toBe("powerCheck");
+      const pendingAfter = stateManager.get("game.pending") as { kind?: string };
+      expect(pendingAfter.kind).toBe("powerCheck");
     });
 
     it("speaks answerRiddleFirst when LLM returns PLAYER_ROLLED during pending riddle", async () => {
@@ -1333,11 +1333,11 @@ describe("Orchestrator Integration Tests", () => {
           playerOrder: ["p1", "p2"],
           winner: null,
           lastRoll: 0,
-          pendingAnimalEncounter: {
+          pending: {
             position: 2,
             power: 3,
             playerId: "p1",
-            phase: "riddle",
+            kind: "riddle",
             riddlePrompt: "Which bird?",
             riddleOptions: ["Águila", "Búho", "Halcón", "Cóndor"],
             correctOption: "Halcón",
@@ -1371,11 +1371,11 @@ describe("Orchestrator Integration Tests", () => {
           playerOrder: ["p1", "p2"],
           winner: null,
           lastRoll: 0,
-          pendingAnimalEncounter: {
+          pending: {
             position: 5,
             power: 4,
             playerId: "p1",
-            phase: "powerCheck",
+            kind: "powerCheck",
             riddleCorrect: true,
           },
         },

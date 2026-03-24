@@ -225,15 +225,15 @@ describe("Orchestrator - New Action Handlers", () => {
 
   describe("ASK_RIDDLE", () => {
     it("stores riddle text, options, correctOption and optional synonyms in pendingAnimalEncounter", async () => {
-      (testState.game as any).pendingAnimalEncounter = {
+      (testState.game as any).pending = {
         position: 5,
         power: 3,
         playerId: "p1",
-        phase: "riddle",
+        kind: "riddle",
       };
       mockStateManager.get = vi.fn((path: string) => {
-        if (path === "game.pendingAnimalEncounter") {
-          return (testState.game as any).pendingAnimalEncounter;
+        if (path === "game.pending") {
+          return (testState.game as any).pending;
         }
         if (path === "game.turn") {
           return "p1";
@@ -257,9 +257,9 @@ describe("Orchestrator - New Action Handlers", () => {
       await orchestrator.testExecuteActions(actions);
 
       expect(mockStateManager.set).toHaveBeenCalledWith(
-        "game.pendingAnimalEncounter",
+        "game.pending",
         expect.objectContaining({
-          phase: "riddle",
+          kind: "riddle",
           riddlePrompt: "Where does the penguin live?",
           riddleOptions: ["Desert", "Ocean", "Arctic", "Forest"],
           correctOption: "Arctic",
@@ -271,18 +271,18 @@ describe("Orchestrator - New Action Handlers", () => {
 
   describe("PLAYER_ANSWERED riddle phase", () => {
     it("resolves correct riddle choice (strict match) and transitions to powerCheck", async () => {
-      (testState.game as any).pendingAnimalEncounter = {
+      (testState.game as any).pending = {
         position: 5,
         power: 3,
         playerId: "p1",
-        phase: "riddle",
+        kind: "riddle",
         correctOption: "Ocean",
         riddleOptions: ["Desert", "Ocean", "Arctic", "Forest"],
       };
       mockStateManager.getState = vi.fn(() => testState);
       mockStateManager.get = vi.fn((path: string) => {
-        if (path === "game.pendingAnimalEncounter") {
-          return (testState.game as any).pendingAnimalEncounter;
+        if (path === "game.pending") {
+          return (testState.game as any).pending;
         }
         if (path === "game.turn") {
           return "p1";
@@ -298,27 +298,27 @@ describe("Orchestrator - New Action Handlers", () => {
       await orchestrator.testExecuteActions(actions);
 
       expect(mockStateManager.set).toHaveBeenCalledWith(
-        "game.pendingAnimalEncounter",
+        "game.pending",
         expect.objectContaining({
-          phase: "powerCheck",
+          kind: "powerCheck",
           riddleCorrect: true,
         }),
       );
     });
 
     it("resolves wrong riddle choice: strict false then LLM says false", async () => {
-      (testState.game as any).pendingAnimalEncounter = {
+      (testState.game as any).pending = {
         position: 5,
         power: 3,
         playerId: "p1",
-        phase: "riddle",
+        kind: "riddle",
         correctOption: "Arctic",
         riddleOptions: ["Desert", "Ocean", "Arctic", "Forest"],
       };
       mockStateManager.getState = vi.fn(() => testState);
       mockStateManager.get = vi.fn((path: string) => {
-        if (path === "game.pendingAnimalEncounter") {
-          return (testState.game as any).pendingAnimalEncounter;
+        if (path === "game.pending") {
+          return (testState.game as any).pending;
         }
         if (path === "game.turn") {
           return "p1";
@@ -335,27 +335,27 @@ describe("Orchestrator - New Action Handlers", () => {
       await orchestrator.testExecuteActions(actions);
 
       expect(mockStateManager.set).toHaveBeenCalledWith(
-        "game.pendingAnimalEncounter",
+        "game.pending",
         expect.objectContaining({
-          phase: "powerCheck",
+          kind: "powerCheck",
           riddleCorrect: false,
         }),
       );
     });
 
     it("resolves option text (miércoles) and marks riddleCorrect true via strict match", async () => {
-      (testState.game as any).pendingAnimalEncounter = {
+      (testState.game as any).pending = {
         position: 5,
         power: 3,
         playerId: "p1",
-        phase: "riddle",
+        kind: "riddle",
         correctOption: "A) Miércoles",
         riddleOptions: ["A) Miércoles", "B) Jueves", "C) Lunes", "D) Sábado"],
       };
       mockStateManager.getState = vi.fn(() => testState);
       mockStateManager.get = vi.fn((path: string) => {
-        if (path === "game.pendingAnimalEncounter") {
-          return (testState.game as any).pendingAnimalEncounter;
+        if (path === "game.pending") {
+          return (testState.game as any).pending;
         }
         if (path === "game.turn") {
           return "p1";
@@ -371,27 +371,27 @@ describe("Orchestrator - New Action Handlers", () => {
       await orchestrator.testExecuteActions(actions);
 
       expect(mockStateManager.set).toHaveBeenCalledWith(
-        "game.pendingAnimalEncounter",
+        "game.pending",
         expect.objectContaining({
-          phase: "powerCheck",
+          kind: "powerCheck",
           riddleCorrect: true,
         }),
       );
     });
 
     it("prefers transcript over LLM answer: user said 'la hormiga', LLM returned wrong option → riddleCorrect true", async () => {
-      (testState.game as any).pendingAnimalEncounter = {
+      (testState.game as any).pending = {
         position: 5,
         power: 3,
         playerId: "p1",
-        phase: "riddle",
+        kind: "riddle",
         correctOption: "A) Hormiga",
         riddleOptions: ["A) Hormiga", "B) Elefante", "C) Puma", "D) Delfín"],
       };
       mockStateManager.getState = vi.fn(() => testState);
       mockStateManager.get = vi.fn((path: string) => {
-        if (path === "game.pendingAnimalEncounter") {
-          return (testState.game as any).pendingAnimalEncounter;
+        if (path === "game.pending") {
+          return (testState.game as any).pending;
         }
         if (path === "game.turn") {
           return "p1";
@@ -409,9 +409,9 @@ describe("Orchestrator - New Action Handlers", () => {
 
       expect(result.success).toBe(true);
       expect(mockStateManager.set).toHaveBeenCalledWith(
-        "game.pendingAnimalEncounter",
+        "game.pending",
         expect.objectContaining({
-          phase: "powerCheck",
+          kind: "powerCheck",
           riddleCorrect: true,
         }),
       );
@@ -586,11 +586,11 @@ describe("Orchestrator - New Action Handlers", () => {
           phase: "PLAYING",
           lastRoll: 2,
           playerOrder: ["p1", "p2"],
-          pendingAnimalEncounter: {
+          pending: {
             position: 16,
             power: 1,
             playerId: "p1",
-            phase: "powerCheck",
+            kind: "powerCheck",
             riddleCorrect: true,
           },
         },
@@ -642,10 +642,10 @@ describe("Orchestrator - New Action Handlers", () => {
       await chainOrchestrator.testExecuteActions([{ action: "PLAYER_ANSWERED", answer: "5" }]);
 
       expect(stateManager.get("players.p1.position")).toBe(21);
-      const pending = stateManager.get("game.pendingAnimalEncounter") as Record<string, unknown>;
+      const pending = stateManager.get("game.pending") as Record<string, unknown>;
       expect(pending).toBeDefined();
       expect(pending?.position).toBe(21);
-      expect(pending?.phase).toBe("riddle");
+      expect(pending?.kind).toBe("riddle");
       expect((stateManager.getState().game as Record<string, unknown>).turn).toBe("p1");
     });
   });
@@ -756,18 +756,18 @@ describe("Orchestrator - New Action Handlers", () => {
     });
 
     it("passes riddleIncorrect as lastBotUtterance after wrong riddle answer", async () => {
-      (testState.game as any).pendingAnimalEncounter = {
+      (testState.game as any).pending = {
         position: 5,
         power: 3,
         playerId: "p1",
-        phase: "riddle",
+        kind: "riddle",
         correctOption: "Arctic",
         riddleOptions: ["Desert", "Ocean", "Arctic", "Forest"],
       };
       mockStateManager.getState = vi.fn(() => testState);
       mockStateManager.get = vi.fn((path: string) => {
-        if (path === "game.pendingAnimalEncounter") {
-          return (testState.game as any).pendingAnimalEncounter;
+        if (path === "game.pending") {
+          return (testState.game as any).pending;
         }
         if (path === "game.turn") {
           return "p1";

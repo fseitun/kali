@@ -1,5 +1,6 @@
 import { findSquareByEffect, getWinPosition } from "./board-helpers";
 import {
+  getDirectionalRollDice,
   getSquareKind,
   isAnimalEncounterKind,
   isDeferredRewardKind,
@@ -396,33 +397,31 @@ export class BoardEffectsHandler {
     isSetup: boolean,
   ): void {
     if (isSetup && isAnimalEncounterKind(kind) && playerId) {
-      this.stateManager.set("game.pendingAnimalEncounter", {
+      this.stateManager.set("game.pending", {
+        kind: "riddle",
         position,
         power,
         playerId,
         phase: "riddle",
       });
-    } else if (!isSetup && !isAnimalEncounterKind(kind)) {
-      this.stateManager.set("game.pendingAnimalEncounter", null);
+    } else if (!isSetup && !isAnimalEncounterKind(kind) && !isRollDirectionalKind(kind)) {
+      this.stateManager.set("game.pending", null);
     }
   }
 
-  private syncDirectionalRollState(
-    kind: ReturnType<typeof getSquareKind>,
+  private setPendingDirectionalRoll(
     playerId: string,
     position: number,
-    squareData: Record<string, unknown>,
-    isSetup: boolean,
+    effect: string | undefined,
   ): void {
-    const effect = squareData.effect as string | undefined;
-    if (isSetup && isRollDirectionalKind(kind) && playerId && effect) {
-      this.stateManager.set("game.pendingDirectionalRoll", {
-        playerId,
+    const dice = getDirectionalRollDice(effect);
+    if (dice && playerId) {
+      this.stateManager.set("game.pending", {
+        kind: "directional",
         position,
-        effect,
+        playerId,
+        dice,
       });
-    } else if (!isSetup && !isRollDirectionalKind(kind)) {
-      this.stateManager.set("game.pendingDirectionalRoll", null);
     }
   }
 
@@ -492,6 +491,18 @@ export class BoardEffectsHandler {
         `Square data (flavour only): ${squareInfo}]`
       );
     }
+    if (kind === "rollDirectional") {
+      const dice = getDirectionalRollDice(squareData?.effect as string | undefined) ?? 2;
+      const min = dice;
+      const max = dice * 6;
+      return (
+        `[SYSTEM: Current player landed on square ${position} (${squareName}). ` +
+        `Follow the ⚠️ DIRECTIONAL ROLL line in state. ` +
+        `Narrate briefly, then ask the player to roll ${dice} d6 and report the result. ` +
+        `When they report their roll, return PLAYER_ANSWERED with the number (${min}–${max}). ` +
+        `Do not change game state. Square data for flavour: ${squareInfo}]`
+      );
+    }
     return this.buildNonAnimalSquareEffectTranscript(
       position,
       squareName,
@@ -516,7 +527,10 @@ export class BoardEffectsHandler {
     );
 
     this.syncAnimalEncounterState(kind, playerId, position, power, true);
-    this.syncDirectionalRollState(kind, playerId, position, squareData, true);
+
+    if (kind === "rollDirectional") {
+      this.setPendingDirectionalRoll(playerId, position, squareData.effect as string | undefined);
+    }
 
     const applied = this.applyDeterministicSquareEffects(path, squareData);
     const squareInfo = JSON.stringify(squareData);
@@ -532,7 +546,6 @@ export class BoardEffectsHandler {
     );
 
     this.syncAnimalEncounterState(kind, playerId, position, power, false);
-    this.syncDirectionalRollState(kind, playerId, position, squareData, false);
 
     this.isProcessingSquareEffect = true;
     try {

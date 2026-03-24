@@ -682,11 +682,11 @@ describe("Orchestrator Authority - LLM Adversarial Tests", () => {
 
   describe("Power check before square effect - narration order", () => {
     it("speaks powerCheckPass before square-effect narration when batch has PLAYER_ANSWERED then PLAYER_ROLLED", async () => {
-      (testState.game as any).pendingAnimalEncounter = {
+      (testState.game as any).pending = {
+        kind: "powerCheck",
         position: 10,
         power: 5,
         playerId: "p1",
-        phase: "powerCheck",
         riddleCorrect: true, // 2d6 so answer 7 is valid (2–12)
       };
       (testState.players as any).p1.position = 10;
@@ -717,8 +717,8 @@ describe("Orchestrator Authority - LLM Adversarial Tests", () => {
         if (path === "players.p1.position") {
           (testState.players as any).p1.position = value as number;
         }
-        if (path === "game.pendingAnimalEncounter") {
-          (testState.game as any).pendingAnimalEncounter = value;
+        if (path === "game.pending") {
+          (testState.game as any).pending = value;
         }
       });
 

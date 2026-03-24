@@ -376,11 +376,11 @@ describe("BoardEffectsHandler", () => {
         expect.stringMatching(/four options|FOUR options/i),
         expect.anything(),
       );
-      expect(stateManager.get("game.pendingAnimalEncounter")).toEqual({
+      expect(stateManager.get("game.pending")).toMatchObject({
+        kind: "riddle",
         position: 5,
         power: 3,
         playerId: "p1",
-        phase: "riddle",
       });
       const transcript = mockProcessTranscript.mock.calls[0]?.[0] ?? "";
       expect(transcript).not.toContain("Orchestrator applied");
@@ -408,16 +408,16 @@ describe("BoardEffectsHandler", () => {
       });
       stateManager.set("players.p1.position", 18);
       stateManager.set("players.p1.skipTurns", 0);
-      stateManager.set("game.pendingAnimalEncounter", {
+      stateManager.set("game.pending", {
+        kind: "riddle",
         position: 16,
         power: 1,
         playerId: "p1",
-        phase: "riddle",
       });
 
       await boardEffectsHandler.checkAndApplySquareEffects("players.p1.position", baseContext);
 
-      expect(stateManager.get("game.pendingAnimalEncounter")).toBeNull();
+      expect(stateManager.get("game.pending")).toBeNull();
       expect(stateManager.get("players.p1.skipTurns")).toBe(1);
     });
 
@@ -476,11 +476,11 @@ describe("BoardEffectsHandler", () => {
       await boardEffectsHandler.checkAndApplySquareEffects("players.p1.position", baseContext);
 
       expect(stateManager.get("players.p1.instruments")).toEqual([]);
-      expect(stateManager.get("game.pendingAnimalEncounter")).toMatchObject({
+      expect(stateManager.get("game.pending")).toMatchObject({
+        kind: "riddle",
         position: 7,
         power: 3,
         playerId: "p1",
-        phase: "riddle",
       });
       expect(mockProcessTranscript).toHaveBeenCalledWith(
         expect.stringContaining("Animal encounter"),
@@ -501,13 +501,14 @@ describe("BoardEffectsHandler", () => {
       await boardEffectsHandler.checkAndApplySquareEffects("players.p1.position", baseContext);
 
       expect(stateManager.get("players.p1.skipTurns")).toBe(0);
-      expect(stateManager.get("game.pendingDirectionalRoll")).toMatchObject({
+      expect(stateManager.get("game.pending")).toMatchObject({
+        kind: "directional",
         playerId: "p1",
         position: 55,
-        effect: "roll2d6Directional",
+        dice: 2,
       });
       expect(mockProcessTranscript).toHaveBeenCalledWith(
-        expect.stringContaining("Narrate this encounter"),
+        expect.stringMatching(/DIRECTIONAL ROLL|roll.*d6|Jivaro Indians/i),
         expect.anything(),
       );
       expect(mockProcessTranscript).toHaveBeenCalledWith(

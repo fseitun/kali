@@ -31,7 +31,7 @@
       "roll": 2,
       "llmResponses": [
         [
-          { "action": "SET_STATE", "path": "game.pendingAnimalEncounter", "value": null },
+          { "action": "SET_STATE", "path": "game.pending", "value": null },
           { "action": "NARRATE", "text": "Halcón encounter!" }
         ]
       ]
@@ -50,7 +50,7 @@
       "roll": 3,
       "llmResponses": [
         [
-          { "action": "SET_STATE", "path": "game.pendingAnimalEncounter", "value": null },
+          { "action": "SET_STATE", "path": "game.pending", "value": null },
           { "action": "NARRATE", "text": "Cobra!" }
         ]
       ]
@@ -61,7 +61,7 @@
       "roll": 4,
       "llmResponses": [
         [
-          { "action": "SET_STATE", "path": "game.pendingAnimalEncounter", "value": null },
+          { "action": "SET_STATE", "path": "game.pending", "value": null },
           { "action": "NARRATE", "text": "Águila encounter!" }
         ]
       ]
@@ -72,7 +72,7 @@
       "roll": 4,
       "llmResponses": [
         [
-          { "action": "SET_STATE", "path": "game.pendingAnimalEncounter", "value": null },
+          { "action": "SET_STATE", "path": "game.pending", "value": null },
           { "action": "NARRATE", "text": "Águila!" }
         ]
       ]
@@ -107,7 +107,7 @@
       "roll": 2,
       "llmResponses": [
         [
-          { "action": "SET_STATE", "path": "game.pendingAnimalEncounter", "value": null },
+          { "action": "SET_STATE", "path": "game.pending", "value": null },
           { "action": "NARRATE", "text": "Escorpión!" }
         ]
       ]
@@ -117,7 +117,7 @@
       "roll": 2,
       "llmResponses": [
         [
-          { "action": "SET_STATE", "path": "game.pendingAnimalEncounter", "value": null },
+          { "action": "SET_STATE", "path": "game.pending", "value": null },
           { "action": "NARRATE", "text": "Escorpión!" }
         ]
       ]
@@ -127,7 +127,7 @@
       "roll": 2,
       "llmResponses": [
         [
-          { "action": "SET_STATE", "path": "game.pendingAnimalEncounter", "value": null },
+          { "action": "SET_STATE", "path": "game.pending", "value": null },
           { "action": "NARRATE", "text": "Escorpión!" }
         ]
       ]

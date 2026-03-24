@@ -102,23 +102,20 @@ export function validateRiddleResolved(
 
   const game = state.game as Record<string, unknown> | undefined;
   const currentTurn = game?.turn as string | undefined;
-  const pending = game?.pendingAnimalEncounter as
-    | { phase?: string; playerId?: string }
-    | null
-    | undefined;
+  const pending = game?.pending as { kind?: string; playerId?: string } | null | undefined;
 
   if (!pending || pending.playerId !== currentTurn) {
     return {
       valid: false,
-      error: `RIDDLE_RESOLVED at index ${index}: No pending riddle for current player. Only use when phase=riddle.`,
+      error: `RIDDLE_RESOLVED at index ${index}: No pending riddle for current player. Only use when kind=riddle.`,
       errorCode: "wrongPhaseForRoll",
     };
   }
 
-  if (pending.phase !== "riddle") {
+  if (pending.kind !== "riddle") {
     return {
       valid: false,
-      error: `RIDDLE_RESOLVED at index ${index}: Expected phase=riddle, got phase=${pending.phase}. Use PLAYER_ANSWERED for power-check roll.`,
+      error: `RIDDLE_RESOLVED at index ${index}: Expected kind=riddle, got kind=${pending.kind}. Use PLAYER_ANSWERED for power-check roll.`,
       errorCode: "wrongPhaseForRoll",
     };
   }

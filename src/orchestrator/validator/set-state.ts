@@ -14,15 +14,10 @@ const FORBIDDEN_PATH_ERRORS: Record<string, { allowScenarioNull?: boolean; error
     error:
       "Cannot manually set game.winner via SET_STATE. The orchestrator detects and sets winners.",
   },
-  "game.pendingAnimalEncounter": {
+  "game.pending": {
     allowScenarioNull: true,
     error:
-      "Cannot set game.pendingAnimalEncounter. The orchestrator owns encounter state. Use RIDDLE_RESOLVED or PLAYER_ANSWERED with roll value.",
-  },
-  "game.pendingDirectionalRoll": {
-    allowScenarioNull: true,
-    error:
-      "Cannot set game.pendingDirectionalRoll. The orchestrator owns directional roll state. User reports roll → PLAYER_ROLLED.",
+      "Cannot set game.pending. The orchestrator owns pending state (riddle, powerCheck, revenge, directional). Use RIDDLE_RESOLVED or PLAYER_ANSWERED with roll value.",
   },
 };
 

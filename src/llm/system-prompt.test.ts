@@ -97,16 +97,17 @@ describe("formatStateContext", () => {
     expect(result).not.toContain("DECISION (Alice)");
   });
 
-  it("shows POWER CHECK hint when pendingAnimalEncounter powerCheck for current player", () => {
+  it("shows POWER CHECK hint when pending powerCheck for current player", () => {
     const state = {
       game: {
         turn: "p1",
         phase: "PLAYING",
-        pendingAnimalEncounter: {
+        pending: {
+          kind: "powerCheck",
           position: 21,
           power: 2,
           playerId: "p1",
-          phase: "powerCheck",
+          riddleCorrect: false,
         },
       },
       players: {
@@ -134,11 +135,11 @@ describe("formatStateContext", () => {
       game: {
         turn: "p1",
         phase: "PLAYING",
-        pendingAnimalEncounter: {
+        pending: {
+          kind: "powerCheck",
           position: 21,
           power: 2,
           playerId: "p1",
-          phase: "powerCheck",
           riddleCorrect: true,
         },
       },
@@ -160,11 +161,11 @@ describe("formatStateContext", () => {
       game: {
         turn: "p1",
         phase: "PLAYING",
-        pendingAnimalEncounter: {
+        pending: {
+          kind: "powerCheck",
           position: 7,
           power: 3,
           playerId: "p1",
-          phase: "powerCheck",
           riddleCorrect: true,
         },
       },
@@ -191,16 +192,16 @@ describe("formatStateContext", () => {
     expect(result).not.toContain("on the die");
   });
 
-  it("shows REVENGE hint with anti-pattern when pendingAnimalEncounter phase=revenge", () => {
+  it("shows REVENGE hint with anti-pattern when pending kind=revenge", () => {
     const state = {
       game: {
         turn: "p1",
         phase: "PLAYING",
-        pendingAnimalEncounter: {
+        pending: {
+          kind: "revenge",
           position: 21,
           power: 4,
           playerId: "p1",
-          phase: "revenge",
         },
       },
       players: {
@@ -244,7 +245,7 @@ describe("formatStateContext", () => {
       game: {
         turn: "p2",
         phase: "PLAYING",
-        pendingAnimalEncounter: { phase: "powerCheck", power: 7, playerId: "p2" },
+        pending: { kind: "powerCheck", power: 7, playerId: "p2" },
       },
       players: {
         p1: { id: "p1", position: 32, activeChoices: { 32: 99 }, name: "fico" },
@@ -254,16 +255,16 @@ describe("formatStateContext", () => {
 
     const result = formatStateContext(state);
 
-    expect(result).toContain("pendingAnimalEncounter={...}");
+    expect(result).toContain("pending={...}");
     expect(result).toContain("activeChoices={...}");
   });
 
-  it("with forLog: true expands pendingAnimalEncounter and activeChoices", () => {
+  it("with forLog: true expands pending and activeChoices", () => {
     const state = {
       game: {
         turn: "p2",
         phase: "PLAYING",
-        pendingAnimalEncounter: { phase: "powerCheck", power: 7, playerId: "p2" },
+        pending: { kind: "powerCheck", power: 7, playerId: "p2" },
       },
       players: {
         p1: { id: "p1", position: 32, activeChoices: { 32: 99 }, name: "fico" },
@@ -273,10 +274,10 @@ describe("formatStateContext", () => {
 
     const result = formatStateContext(state, { forLog: true });
 
-    expect(result).toContain("phase=powerCheck");
+    expect(result).toContain("kind=powerCheck");
     expect(result).toContain("power=7");
     expect(result).toContain("playerId=p2");
-    expect(result).not.toContain("pendingAnimalEncounter={...}");
+    expect(result).not.toContain("pending={...}");
     expect(result).toContain("32=99");
     expect(result).not.toMatch(/activeChoices=\{\s*\.\.\.\s*\}/);
   });

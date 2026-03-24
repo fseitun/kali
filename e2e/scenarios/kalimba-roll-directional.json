@@ -24,7 +24,7 @@
     },
     {
       "description": "p1 reports directional roll 7; retreats 7 to 48; turn advances to p2",
-      "actions": [{ "action": "PLAYER_ROLLED", "value": 7 }],
+      "actions": [{ "action": "PLAYER_ANSWERED", "answer": "7" }],
       "expect": { "players.p1.position": 48, "game.turn": "p2" }
     }
   ]

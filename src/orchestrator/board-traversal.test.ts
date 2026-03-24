@@ -137,4 +137,91 @@ describe("computeNewPositionFromState", () => {
     // Roll 2 from 2: land on 4. nextOnLanding [14] applies (forward bonus)
     expect(result).toBe(14);
   });
+
+  it("moves backward when direction is backward", () => {
+    const squares = makeSquares(20);
+    const state: GameState = {
+      game: {
+        name: "Test",
+        phase: "PLAYING",
+        turn: "p1",
+        winner: null,
+        playerOrder: ["p1"],
+      },
+      players: {
+        p1: {
+          id: "p1",
+          name: "Alice",
+          position: 10,
+          activeChoices: {},
+        },
+      },
+      board: { squares },
+    } as GameState;
+
+    const result = computeNewPositionFromState(state, "p1", 10, 3, "backward");
+
+    // Roll 3 backward from 10: 10->9->8->7
+    expect(result).toBe(7);
+  });
+
+  it("stays at 0 when backward roll would go below start", () => {
+    const squares = makeSquares(20);
+    const state: GameState = {
+      game: {
+        name: "Test",
+        phase: "PLAYING",
+        turn: "p1",
+        winner: null,
+        playerOrder: ["p1"],
+      },
+      players: {
+        p1: {
+          id: "p1",
+          name: "Alice",
+          position: 2,
+          activeChoices: {},
+        },
+      },
+      board: { squares },
+    } as GameState;
+
+    const result = computeNewPositionFromState(state, "p1", 2, 5, "backward");
+
+    // Roll 5 backward from 2: 2->1->0, then no prev from 0
+    expect(result).toBe(0);
+  });
+
+  it("uses prevOnLanding when moving backward and landing on square with it", () => {
+    const squares = makeSquares(25);
+    squares["10"] = {
+      next: [11],
+      prev: [9],
+      prevOnLanding: [3],
+    };
+
+    const state: GameState = {
+      game: {
+        name: "Test",
+        phase: "PLAYING",
+        turn: "p1",
+        winner: null,
+        playerOrder: ["p1"],
+      },
+      players: {
+        p1: {
+          id: "p1",
+          name: "Alice",
+          position: 12,
+          activeChoices: {},
+        },
+      },
+      board: { squares },
+    } as GameState;
+
+    const result = computeNewPositionFromState(state, "p1", 12, 2, "backward");
+
+    // Roll 2 backward from 12: 12->11->10. Land on 10, prevOnLanding [3] applies
+    expect(result).toBe(3);
+  });
 });

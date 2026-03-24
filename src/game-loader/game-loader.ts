@@ -131,8 +131,7 @@ function buildInitialStateFromParts(config: GameConfigInput): GameState {
     lastRoll: 0,
     pendingRoll: null,
     currentHabitat: metadata.initialHabitat ?? "Start",
-    pendingAnimalEncounter: null,
-    pendingDirectionalRoll: null,
+    pending: null,
   };
 
   const state: GameState = { game, players, board };

@@ -12,6 +12,40 @@ export function isNextRecord(next: NextField | undefined): next is Record<string
   return next !== undefined && next !== null && typeof next === "object" && !Array.isArray(next);
 }
 
+type SquareWithEdges = { next?: NextField; prev?: number[] } | undefined;
+
+/**
+ * Returns sorted unique target indices from a square's `next` or `prev` field.
+ * @param sq - Square-like object with optional `next` and `prev`
+ * @param current - Current position (used for linear default when edges are missing)
+ * @param forward - If true, use `next`; if false, use `prev`
+ * @returns Sorted list of reachable targets in the given direction
+ */
+function getForwardTargetsFromNext(next: NextField | undefined | null, current: number): number[] {
+  if (next === undefined || next === null) {
+    return current < 196 ? [current + 1] : [];
+  }
+  if (Array.isArray(next)) {
+    return [...next];
+  }
+  const keys = Object.keys(next as Record<string, unknown>);
+  const nums = keys.map((k) => parseInt(k, 10)).filter((n) => !Number.isNaN(n));
+  return [...new Set(nums)].sort((a, b) => a - b);
+}
+
+function getBackwardTargetsFromPrev(prev: number[] | undefined | null, current: number): number[] {
+  if (prev === undefined || prev === null) {
+    return current > 0 ? [current - 1] : [];
+  }
+  return Array.isArray(prev) ? [...prev] : [];
+}
+
+export function getTargets(sq: SquareWithEdges, current: number, forward: boolean): number[] {
+  return forward
+    ? getForwardTargetsFromNext(sq?.next, current)
+    : getBackwardTargetsFromPrev(sq?.prev, current);
+}
+
 /**
  * Returns sorted unique target indices from a square's `next` field.
  * Arrays are returned as-is (copy); object form uses numeric keys only.

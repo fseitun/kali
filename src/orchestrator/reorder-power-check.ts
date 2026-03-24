@@ -20,9 +20,9 @@ export function reorderPowerCheckBeforeRoll(
   state: GameState,
 ): PrimitiveAction[] {
   const game = state.game as Record<string, unknown> | undefined;
-  const pending = game?.pendingAnimalEncounter as { phase?: string } | null | undefined;
-  const phase = pending?.phase;
-  if (phase !== "powerCheck" && phase !== "revenge") {
+  const pending = game?.pending as { kind?: string } | null | undefined;
+  const kind = pending?.kind;
+  if (kind !== "powerCheck" && kind !== "revenge") {
     return actions;
   }
   const hasRoll = actions.some((a) => a.action === "PLAYER_ROLLED");

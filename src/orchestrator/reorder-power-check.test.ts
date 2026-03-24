@@ -31,11 +31,12 @@ describe("reorder-power-check", () => {
         winner: null,
         playerOrder: ["p1", "p2"],
         lastRoll: 0,
-        pendingAnimalEncounter: {
+        pending: {
+          kind: "powerCheck",
           position: 10,
           power: 5,
           playerId: "p1",
-          phase: "powerCheck",
+          riddleCorrect: true,
         },
       },
       players: {
@@ -56,10 +57,10 @@ describe("reorder-power-check", () => {
       expect(reordered[1]).toEqual({ action: "PLAYER_ROLLED", value: 2 });
     });
 
-    it("does not reorder when state has no pendingAnimalEncounter", () => {
+    it("does not reorder when state has no pending", () => {
       const stateNoPending = {
         ...stateWithPowerCheck,
-        game: { ...stateWithPowerCheck.game, pendingAnimalEncounter: null },
+        game: { ...stateWithPowerCheck.game, pending: null },
       } as GameState;
       const actions: PrimitiveAction[] = [
         { action: "PLAYER_ROLLED", value: 2 },
@@ -69,14 +70,16 @@ describe("reorder-power-check", () => {
       expect(reordered).toEqual(actions);
     });
 
-    it("does not reorder when pending phase is riddle", () => {
-      const pending = (stateWithPowerCheck.game as Record<string, unknown>)
-        .pendingAnimalEncounter as Record<string, unknown>;
+    it("does not reorder when pending kind is riddle", () => {
+      const pending = (stateWithPowerCheck.game as Record<string, unknown>).pending as Record<
+        string,
+        unknown
+      >;
       const stateRiddle: GameState = {
         ...stateWithPowerCheck,
         game: {
           ...stateWithPowerCheck.game,
-          pendingAnimalEncounter: { ...pending, phase: "riddle" },
+          pending: { ...pending, kind: "riddle" },
         },
       };
       const actions: PrimitiveAction[] = [
@@ -118,13 +121,15 @@ describe("reorder-power-check", () => {
     });
 
     it("works with revenge phase", () => {
-      const pending = (stateWithPowerCheck.game as Record<string, unknown>)
-        .pendingAnimalEncounter as Record<string, unknown>;
+      const pending = (stateWithPowerCheck.game as Record<string, unknown>).pending as Record<
+        string,
+        unknown
+      >;
       const stateRevenge: GameState = {
         ...stateWithPowerCheck,
         game: {
           ...stateWithPowerCheck.game,
-          pendingAnimalEncounter: { ...pending, phase: "revenge" },
+          pending: { ...pending, kind: "revenge" },
         },
       };
       const actions: PrimitiveAction[] = [

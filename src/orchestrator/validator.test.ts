@@ -300,11 +300,11 @@ describe("Validator - New Primitives", () => {
         ...mockState,
         game: {
           ...mockState.game,
-          pendingAnimalEncounter: {
+          pending: {
             position: 5,
             power: 3,
             playerId: "p1",
-            phase: "riddle",
+            kind: "riddle",
           },
         },
       };
@@ -330,7 +330,7 @@ describe("Validator - New Primitives", () => {
         ...mockState,
         game: {
           ...mockState.game,
-          pendingAnimalEncounter: { position: 5, power: 3, playerId: "p1", phase: "riddle" },
+          pending: { position: 5, power: 3, playerId: "p1", kind: "riddle" },
         },
       };
       const actions = [
@@ -356,7 +356,7 @@ describe("Validator - New Primitives", () => {
         ...mockState,
         game: {
           ...mockState.game,
-          pendingAnimalEncounter: { position: 5, power: 3, playerId: "p1", phase: "riddle" },
+          pending: { position: 5, power: 3, playerId: "p1", kind: "riddle" },
         },
       };
       const actions = [
@@ -382,7 +382,7 @@ describe("Validator - New Primitives", () => {
         ...mockState,
         game: {
           ...mockState.game,
-          pendingAnimalEncounter: { position: 5, power: 3, playerId: "p1", phase: "riddle" },
+          pending: { position: 5, power: 3, playerId: "p1", kind: "riddle" },
         },
       };
       const actions = [
@@ -410,11 +410,11 @@ describe("Validator - New Primitives", () => {
         ...mockState,
         game: {
           ...mockState.game,
-          pendingAnimalEncounter: {
+          pending: {
             position: 5,
             power: 3,
             playerId: "p1",
-            phase: "riddle",
+            kind: "riddle",
             correctOption: "Ocean",
             riddleOptions: ["Desert", "Ocean", "Arctic", "Forest"],
           },
@@ -435,11 +435,11 @@ describe("Validator - New Primitives", () => {
         ...mockState,
         game: {
           ...mockState.game,
-          pendingAnimalEncounter: {
+          pending: {
             position: 5,
             power: 3,
             playerId: "p1",
-            phase: "riddle",
+            kind: "riddle",
             correctOption: "Cangrejo",
             riddleOptions: ["Ballena", "Cangrejo", "Paloma", "Murciélago"],
           },
@@ -460,11 +460,11 @@ describe("Validator - New Primitives", () => {
         ...mockState,
         game: {
           ...mockState.game,
-          pendingAnimalEncounter: {
+          pending: {
             position: 5,
             power: 3,
             playerId: "p1",
-            phase: "riddle",
+            kind: "riddle",
             correctOption: "B",
             riddleOptions: ["A", "B", "C", "D"],
           },
@@ -486,11 +486,11 @@ describe("Validator - New Primitives", () => {
         ...mockState,
         game: {
           ...mockState.game,
-          pendingAnimalEncounter: {
+          pending: {
             position: 5,
             power: 3,
             playerId: "p1",
-            phase: "riddle",
+            kind: "riddle",
             correctOption: "A) Miércoles",
             riddleOptions: ["A) Miércoles", "B) Jueves", "C) Lunes", "D) Sábado"],
           },
@@ -514,11 +514,11 @@ describe("Validator - New Primitives", () => {
         game: {
           ...mockState.game,
           turn: "p1",
-          pendingAnimalEncounter: {
+          pending: {
             position: 16,
             power: 4,
             playerId: "p1",
-            phase: "powerCheck",
+            kind: "powerCheck",
             riddleCorrect: true,
           },
         },
@@ -551,11 +551,11 @@ describe("Validator - New Primitives", () => {
         game: {
           ...mockState.game,
           turn: "p1",
-          pendingAnimalEncounter: {
+          pending: {
             position: 16,
             power: 4,
             playerId: "p1",
-            phase: "powerCheck",
+            kind: "powerCheck",
             riddleCorrect: false,
           },
         },
@@ -586,11 +586,11 @@ describe("Validator - New Primitives", () => {
         game: {
           ...mockState.game,
           turn: "p1",
-          pendingAnimalEncounter: {
+          pending: {
             position: 7,
             power: 3,
             playerId: "p1",
-            phase: "powerCheck",
+            kind: "powerCheck",
             riddleCorrect: true,
           },
         },
@@ -629,11 +629,11 @@ describe("Validator - New Primitives", () => {
         game: {
           ...mockState.game,
           turn: "p1",
-          pendingAnimalEncounter: {
+          pending: {
             position: 7,
             power: 3,
             playerId: "p1",
-            phase: "powerCheck",
+            kind: "powerCheck",
             riddleCorrect: true,
           },
         },
@@ -670,11 +670,11 @@ describe("Validator - New Primitives", () => {
         game: {
           ...mockState.game,
           turn: "p1",
-          pendingAnimalEncounter: {
+          pending: {
             position: 7,
             power: 3,
             playerId: "p1",
-            phase: "powerCheck",
+            kind: "powerCheck",
             riddleCorrect: false,
           },
         },
@@ -706,17 +706,17 @@ describe("Validator - New Primitives", () => {
       expect(result.error).toMatch(/2-12|2d6/);
     });
 
-    it("allows numeric answer 7 when pendingAnimalEncounter is powerCheck with 2d6 (riddleCorrect true)", () => {
+    it("allows numeric answer 7 when pending is powerCheck with 2d6 (riddleCorrect true)", () => {
       const stateWithPowerCheck = {
         ...mockState,
         game: {
           ...mockState.game,
           turn: "p1",
-          pendingAnimalEncounter: {
+          pending: {
             position: 16,
             power: 4,
             playerId: "p1",
-            phase: "powerCheck",
+            kind: "powerCheck",
             riddleCorrect: true,
           },
         },
@@ -746,11 +746,11 @@ describe("Validator - New Primitives", () => {
         game: {
           ...mockState.game,
           turn: "p1",
-          pendingAnimalEncounter: {
+          pending: {
             position: 16,
             power: 5,
             playerId: "p1",
-            phase: "revenge",
+            kind: "revenge",
           },
         },
         players: {
@@ -780,11 +780,11 @@ describe("Validator - New Primitives", () => {
         ...mockState,
         game: {
           ...mockState.game,
-          pendingAnimalEncounter: {
+          pending: {
             position: 16,
             power: 5,
             playerId: "p1",
-            phase: "revenge",
+            kind: "revenge",
           },
         },
         players: {
@@ -1170,17 +1170,18 @@ describe("Validator - New Primitives", () => {
       expect(result.valid).toBe(true);
     });
 
-    it("blocks PLAYER_ROLLED when pendingAnimalEncounter powerCheck for current player", () => {
+    it("blocks PLAYER_ROLLED when pending powerCheck for current player", () => {
       const stateWithPending = {
         ...mockState,
         game: {
           ...mockState.game,
           turn: "p1",
-          pendingAnimalEncounter: {
+          pending: {
             position: 21,
             power: 2,
             playerId: "p1",
-            phase: "powerCheck",
+            kind: "powerCheck",
+            riddleCorrect: true,
           },
         },
       };
@@ -1194,21 +1195,22 @@ describe("Validator - New Primitives", () => {
       );
 
       expect(result.valid).toBe(false);
-      expect(result.errorCode).toBe("sayEncounterRollAsAnswer");
+      expect(result.errorCode).toBe("sayRollAsAnswer");
       expect(result.error).toContain("powerCheck");
     });
 
-    it("allows PLAYER_ROLLED when pendingAnimalEncounter is for different player", () => {
+    it("allows PLAYER_ROLLED when pending is for different player", () => {
       const stateWithPending = {
         ...mockState,
         game: {
           ...mockState.game,
           turn: "p1",
-          pendingAnimalEncounter: {
+          pending: {
             position: 21,
             power: 2,
             playerId: "p2",
-            phase: "powerCheck",
+            kind: "powerCheck",
+            riddleCorrect: true,
           },
         },
       };
@@ -1224,17 +1226,17 @@ describe("Validator - New Primitives", () => {
       expect(result.valid).toBe(true);
     });
 
-    it("blocks PLAYER_ROLLED when pendingAnimalEncounter phase revenge for current player", () => {
+    it("blocks PLAYER_ROLLED when pending phase revenge for current player", () => {
       const stateWithPending = {
         ...mockState,
         game: {
           ...mockState.game,
           turn: "p1",
-          pendingAnimalEncounter: {
+          pending: {
             position: 21,
             power: 2,
             playerId: "p1",
-            phase: "revenge",
+            kind: "revenge",
           },
         },
       };
@@ -1248,21 +1250,21 @@ describe("Validator - New Primitives", () => {
       );
 
       expect(result.valid).toBe(false);
-      expect(result.errorCode).toBe("sayEncounterRollAsAnswer");
+      expect(result.errorCode).toBe("sayRollAsAnswer");
       expect(result.error).toContain("revenge");
     });
 
-    it("blocks PLAYER_ROLLED when pendingAnimalEncounter is riddle phase for current player", () => {
+    it("blocks PLAYER_ROLLED when pending is riddle phase for current player", () => {
       const stateWithPending = {
         ...mockState,
         game: {
           ...mockState.game,
           turn: "p1",
-          pendingAnimalEncounter: {
+          pending: {
             position: 21,
             power: 2,
             playerId: "p1",
-            phase: "riddle",
+            kind: "riddle",
           },
         },
       };

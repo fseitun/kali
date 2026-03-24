@@ -1,5 +1,6 @@
 import type { BoardEffectsHandler } from "./board-effects-handler";
 import { computeNewPositionFromState } from "./board-traversal";
+import type { PendingPowerCheck, PendingRevenge, PendingRiddle } from "./pending-types";
 import { getPowerCheckRollSpec } from "./power-check-dice";
 import { isStrictRiddleCorrect } from "./riddle-answer";
 import type { TurnManager } from "./turn-manager";
@@ -32,20 +33,21 @@ export class RiddlePowerCheckHandler {
   handleRiddleResolved(primitive: { action: "RIDDLE_RESOLVED"; correct: boolean }): void {
     const state = this.deps.stateManager.getState();
     const game = state.game as Record<string, unknown> | undefined;
-    const pending = game?.pendingAnimalEncounter as
-      | { position: number; power: number; playerId: string; phase?: string }
-      | null
-      | undefined;
+    const pending = game?.pending as PendingRiddle | null | undefined;
 
-    if (pending?.phase !== "riddle") {
+    if (pending?.kind !== "riddle") {
       return;
     }
 
-    this.deps.stateManager.set("game.pendingAnimalEncounter", {
-      ...pending,
-      phase: "powerCheck",
+    const next: PendingPowerCheck = {
+      kind: "powerCheck",
+      playerId: pending.playerId,
+      position: pending.position,
+      power: pending.power,
       riddleCorrect: primitive.correct,
-    });
+      phase: "powerCheck",
+    };
+    this.deps.stateManager.set("game.pending", next);
     Logger.info(`Riddle resolved: correct=${primitive.correct}, phase→powerCheck`);
   }
 
@@ -58,15 +60,15 @@ export class RiddlePowerCheckHandler {
     );
   }
 
-  private buildPendingWithRiddle(
-    pending: Record<string, unknown>,
+  private buildNextPendingFromAskRiddle(
+    pending: PendingRiddle,
     primitive: {
       text: string;
       options: [string, string, string, string];
       correctOption: string;
       correctOptionSynonyms?: string[];
     },
-  ): Record<string, unknown> {
+  ): PendingRiddle {
     const synonyms =
       Array.isArray(primitive.correctOptionSynonyms) && primitive.correctOptionSynonyms.length > 0
         ? { correctOptionSynonyms: primitive.correctOptionSynonyms }
@@ -89,8 +91,8 @@ export class RiddlePowerCheckHandler {
   }): void {
     const state = this.deps.stateManager.getState();
     const game = state.game as Record<string, unknown> | undefined;
-    const pending = game?.pendingAnimalEncounter as Record<string, unknown> | null | undefined;
-    if (pending?.phase !== "riddle") {
+    const pending = game?.pending as PendingRiddle | null | undefined;
+    if (pending?.kind !== "riddle") {
       return;
     }
     if (!this.isValidAskRiddleInput(primitive)) {
@@ -99,10 +101,8 @@ export class RiddlePowerCheckHandler {
       );
       return;
     }
-    this.deps.stateManager.set(
-      "game.pendingAnimalEncounter",
-      this.buildPendingWithRiddle(pending, primitive),
-    );
+    const next = this.buildNextPendingFromAskRiddle(pending, primitive);
+    this.deps.stateManager.set("game.pending", next);
     Logger.info(
       `Ask riddle stored; correctOption=${primitive.correctOption.slice(0, 30)}${primitive.correctOptionSynonyms?.length ? `, synonyms=${primitive.correctOptionSynonyms.length}` : ""}`,
     );
@@ -115,18 +115,9 @@ export class RiddlePowerCheckHandler {
     const state = this.deps.stateManager.getState();
     const game = state.game as Record<string, unknown> | undefined;
     const currentTurn = game?.turn as string | undefined;
-    const pending = game?.pendingAnimalEncounter as
-      | {
-          phase?: string;
-          playerId?: string;
-          correctOption?: string;
-          correctOptionSynonyms?: string[];
-          riddleOptions?: string[];
-        }
-      | null
-      | undefined;
+    const pending = game?.pending as PendingRiddle | null | undefined;
     if (
-      pending?.phase !== "riddle" ||
+      pending?.kind !== "riddle" ||
       pending.playerId !== currentTurn ||
       !pending.correctOption ||
       !Array.isArray(pending.riddleOptions) ||
@@ -179,7 +170,7 @@ export class RiddlePowerCheckHandler {
 
     this.deps.stateManager.set(`players.${playerId}.position`, newPosition);
     this.applyAnimalEncounterRewards(playerId, squareData);
-    this.deps.stateManager.set("game.pendingAnimalEncounter", null);
+    this.deps.stateManager.set("game.pending", null);
     Logger.info(`Power check WIN: ${playerId} advances to ${newPosition}`);
 
     await this.deps.boardEffectsHandler.checkAndApplyBoardMoves(
@@ -194,12 +185,7 @@ export class RiddlePowerCheckHandler {
     return { handled: true, passed: true };
   }
 
-  private async handlePowerCheckLose(pending: {
-    position: number;
-    power: number;
-    playerId: string;
-    phase?: string;
-  }): Promise<{
+  private async handlePowerCheckLose(pending: PendingPowerCheck): Promise<{
     handled: true;
     passed: false;
     turnAdvanced?: { playerId: string; name: string; position: number };
@@ -208,23 +194,21 @@ export class RiddlePowerCheckHandler {
     this.deps.setLastNarration(failMsg);
     this.deps.statusIndicator.setState("speaking");
     await this.deps.speechService.speak(failMsg);
-    this.deps.stateManager.set("game.pendingAnimalEncounter", {
-      ...pending,
+    const next: PendingRevenge = {
+      kind: "revenge",
+      playerId: pending.playerId,
+      position: pending.position,
+      power: pending.power,
       phase: "revenge",
-    });
+    };
+    this.deps.stateManager.set("game.pending", next);
     Logger.info(`Power check LOSE: phase→revenge, advancing turn to next player`);
     const turnAdvanced = this.deps.turnManager.advanceTurnMechanical();
     return { handled: true, passed: false, turnAdvanced: turnAdvanced ?? undefined };
   }
 
   private getPowerCheckContext(state: GameState): {
-    pending: {
-      position: number;
-      power: number;
-      playerId: string;
-      phase?: string;
-      riddleCorrect?: boolean;
-    };
+    pending: PendingPowerCheck | PendingRevenge;
     playerId: string;
     position: number;
     power: number;
@@ -232,21 +216,12 @@ export class RiddlePowerCheckHandler {
   } | null {
     const game = state.game as Record<string, unknown> | undefined;
     const currentTurn = game?.turn as string | undefined;
-    const pending = game?.pendingAnimalEncounter as
-      | {
-          position: number;
-          power: number;
-          playerId: string;
-          phase?: string;
-          riddleCorrect?: boolean;
-        }
-      | null
-      | undefined;
+    const pending = game?.pending as PendingPowerCheck | PendingRevenge | null | undefined;
     if (
       !pending ||
       !currentTurn ||
       pending.playerId !== currentTurn ||
-      (pending.phase !== "powerCheck" && pending.phase !== "revenge")
+      (pending.kind !== "powerCheck" && pending.kind !== "revenge")
     ) {
       return null;
     }
@@ -255,7 +230,7 @@ export class RiddlePowerCheckHandler {
       playerId: pending.playerId,
       position: pending.position,
       power: pending.power ?? 0,
-      isRevenge: pending.phase === "revenge",
+      isRevenge: pending.kind === "revenge",
     };
   }
 
@@ -288,7 +263,10 @@ export class RiddlePowerCheckHandler {
     const board = state.board as Record<string, unknown> | undefined;
     const squares = (board?.squares as Record<string, Record<string, unknown>>) ?? {};
     const squareData = squares[position.toString()] ?? {};
-    const rollSpec = getPowerCheckRollSpec(pending.phase, pending.riddleCorrect, squareData);
+    const rollSpec =
+      pending.kind === "powerCheck"
+        ? getPowerCheckRollSpec("powerCheck", pending.riddleCorrect, squareData)
+        : getPowerCheckRollSpec("revenge", undefined, squareData);
     const roll = this.parsePowerCheckRoll(answer, rollSpec.min, rollSpec.max);
     if (roll === null) {
       return false;
@@ -301,7 +279,7 @@ export class RiddlePowerCheckHandler {
       return this.handlePowerCheckWin(playerId, position, squareData, currentPos, roll, context);
     }
 
-    if (pending.phase === "powerCheck") {
+    if (pending.kind === "powerCheck") {
       return this.handlePowerCheckLose(pending);
     }
 

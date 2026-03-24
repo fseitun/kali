@@ -1,4 +1,4 @@
-import { computeNewPositionBackward, computeNewPositionFromState } from "../board-traversal";
+import { computeNewPositionFromState } from "../board-traversal";
 import { getDecisionPointApplyState } from "../decision-helpers";
 import { getDecisionPoints } from "../decision-point-inference";
 import { isStrictRiddleCorrect } from "../riddle-answer";
@@ -66,36 +66,6 @@ function handleSetState(
   current[parts[parts.length - 1]] = primitive.value;
 }
 
-function isMockPendingDirectionalRoll(
-  pending: unknown,
-  currentTurn: string,
-  playerPosition: number,
-): pending is { playerId: string; position: number } {
-  return (
-    pending !== null &&
-    typeof pending === "object" &&
-    (pending as { playerId?: string; position?: number }).playerId === currentTurn &&
-    (pending as { playerId?: string; position?: number }).position === playerPosition
-  );
-}
-
-function computeMockPositionAfterRoll(
-  mockState: GameState,
-  currentTurn: string,
-  currentPosition: number,
-  rollValue: number,
-  player: Record<string, unknown>,
-  pendingDir: { playerId: string; position: number } | null | undefined,
-): number {
-  if (!isMockPendingDirectionalRoll(pendingDir, currentTurn, currentPosition)) {
-    return computeNewPositionFromState(mockState, currentTurn, currentPosition, rollValue);
-  }
-  const inverseMode = !!(player?.inverseMode as boolean | undefined);
-  return inverseMode
-    ? computeNewPositionFromState(mockState, currentTurn, currentPosition, rollValue)
-    : computeNewPositionBackward(mockState, currentTurn, currentPosition, rollValue);
-}
-
 function getPlayerRolledContext(
   primitive: PrimitiveAction,
   mockState: GameState,
@@ -135,40 +105,31 @@ function handlePlayerRolled(
   if (!ctx) {
     return;
   }
-  const game = mockState.game as Record<string, unknown>;
-  const pendingDir = game?.pendingDirectionalRoll as
-    | { playerId: string; position: number }
-    | null
-    | undefined;
-
-  if (isMockPendingDirectionalRoll(pendingDir, ctx.currentTurn, ctx.position)) {
-    game.pendingDirectionalRoll = null;
-  }
-  ctx.player.position = computeMockPositionAfterRoll(
+  ctx.player.position = computeNewPositionFromState(
     mockState,
     ctx.currentTurn,
     ctx.position,
     ctx.rollValue,
-    ctx.player,
-    pendingDir,
   );
 }
 
 function applyRiddleAnswerToMock(
   game: Record<string, unknown>,
   pending: {
-    phase?: string;
+    kind?: string;
     playerId?: string;
     correctOption?: string;
     correctOptionSynonyms?: string[];
     riddleOptions?: string[];
+    position?: number;
+    power?: number;
   },
   currentTurn: string,
   answer: string,
   mockState: GameState,
 ): GameState | null {
   if (
-    pending.phase !== "riddle" ||
+    pending.kind !== "riddle" ||
     pending.playerId !== currentTurn ||
     !pending.correctOption ||
     !Array.isArray(pending.riddleOptions) ||
@@ -182,9 +143,9 @@ function applyRiddleAnswerToMock(
     pending.correctOption,
     pending.correctOptionSynonyms,
   );
-  game.pendingAnimalEncounter = {
+  game.pending = {
     ...pending,
-    phase: "powerCheck",
+    kind: "powerCheck",
     riddleCorrect: correct,
   };
   return mockState;
@@ -193,31 +154,46 @@ function applyRiddleAnswerToMock(
 function parsePowerCheckRoll(answer: string): number | null {
   const rollStr = answer.replace(/\D/g, "").trim() || answer.trim();
   const roll = parseInt(rollStr, 10);
-  return !isNaN(roll) && roll >= 1 && roll <= 12 ? roll : null;
+  return !isNaN(roll) && roll >= 1 && roll <= 18 ? roll : null;
 }
 
-function applyPowerCheckAnswerToMock(
+function applyRollAnswerToMock(
   game: Record<string, unknown>,
-  pending: { phase?: string; playerId?: string },
+  pending: {
+    kind?: string;
+    playerId?: string;
+    riddleCorrect?: boolean;
+    position?: number;
+    power?: number;
+    dice?: number;
+  },
   currentTurn: string,
   answer: string,
   mockState: GameState,
 ): GameState | null {
-  const isPowerPhase =
-    (pending.phase === "powerCheck" || pending.phase === "revenge") &&
+  const isRollPhase =
+    (pending.kind === "powerCheck" ||
+      pending.kind === "revenge" ||
+      pending.kind === "directional") &&
     pending.playerId === currentTurn;
-  if (!isPowerPhase) {
+  if (!isRollPhase) {
     return null;
   }
   const roll = parsePowerCheckRoll(answer);
   if (roll === null) {
     return null;
   }
-  game.pendingAnimalEncounter = null;
+  game.pending = null;
   const playersMap = mockState.players as Record<string, Record<string, unknown>>;
   const player = playersMap?.[currentTurn];
-  if (player && typeof player.position === "number") {
-    player.position = player.position + roll;
+  if (player && typeof player.position === "number" && pending.kind === "directional") {
+    player.position = computeNewPositionFromState(
+      mockState,
+      currentTurn,
+      player.position,
+      roll,
+      "backward",
+    );
   }
   return mockState;
 }
@@ -251,13 +227,17 @@ function handlePlayerAnswered(
   }
   const game = mockState.game as Record<string, unknown>;
   const currentTurn = game?.turn as string | undefined;
-  const pending = game?.pendingAnimalEncounter as
+  const pending = game?.pending as
     | {
-        phase?: string;
+        kind?: string;
         playerId?: string;
         correctOption?: string;
         correctOptionSynonyms?: string[];
         riddleOptions?: string[];
+        riddleCorrect?: boolean;
+        position?: number;
+        power?: number;
+        dice?: number;
       }
     | null
     | undefined;
@@ -273,9 +253,9 @@ function handlePlayerAnswered(
     return riddleResult;
   }
 
-  const powerResult = applyPowerCheckAnswerToMock(game, pending, currentTurn, answer, mockState);
-  if (powerResult) {
-    return powerResult;
+  const rollResult = applyRollAnswerToMock(game, pending, currentTurn, answer, mockState);
+  if (rollResult) {
+    return rollResult;
   }
 
   applyDecisionPointAnswerToMock(mockState, answer);
@@ -290,8 +270,8 @@ function handleAskRiddle(
     return;
   }
   const game = mockState.game as Record<string, unknown>;
-  const pending = game?.pendingAnimalEncounter as Record<string, unknown> | null | undefined;
-  if (pending?.phase !== "riddle") {
+  const pending = game?.pending as Record<string, unknown> | null | undefined;
+  if (pending?.kind !== "riddle") {
     return;
   }
   const p = primitive as {
@@ -300,7 +280,7 @@ function handleAskRiddle(
     correctOption: string;
     correctOptionSynonyms?: string[];
   };
-  game.pendingAnimalEncounter = {
+  game.pending = {
     ...pending,
     riddlePrompt: p.text,
     riddleOptions: p.options,
@@ -308,7 +288,7 @@ function handleAskRiddle(
     ...(Array.isArray(p.correctOptionSynonyms) && p.correctOptionSynonyms.length > 0
       ? { correctOptionSynonyms: p.correctOptionSynonyms }
       : {}),
-  } as Record<string, unknown>;
+  };
 }
 
 function handleRiddleResolved(
@@ -320,16 +300,16 @@ function handleRiddleResolved(
     return;
   }
   const game = mockState.game as Record<string, unknown>;
-  const pending = game?.pendingAnimalEncounter as
-    | { position: number; power: number; playerId: string; phase?: string }
+  const pending = game?.pending as
+    | { position: number; power: number; playerId: string; kind?: string }
     | null
     | undefined;
-  if (pending?.phase !== "riddle") {
+  if (pending?.kind !== "riddle") {
     return;
   }
-  game.pendingAnimalEncounter = {
+  game.pending = {
     ...pending,
-    phase: "powerCheck",
+    kind: "powerCheck",
     riddleCorrect: primitive.correct,
   };
 }

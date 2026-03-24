@@ -1,16 +1,17 @@
 import { getDecisionPoints } from "../decision-point-inference";
-import { getPowerCheckRollSpec, getSquareDataAtPosition } from "../power-check-dice";
+import type { Pending } from "../pending-types";
+import { getPending, getPendingRollSpec, isPendingRollKind } from "../pending-types";
 import type { GameState, PrimitiveAction } from "../types";
 import { validateField } from "./common";
 import type { ValidationResult } from "./types";
 
 function validateRiddlePhaseAnswer(
-  pending: { phase?: string; playerId?: string; correctOption?: string } | null | undefined,
+  pending: Pending | null | undefined,
   currentTurn: string,
   answer: string,
   index: number,
 ): ValidationResult | null {
-  if (pending?.phase !== "riddle" || pending.playerId !== currentTurn || !pending.correctOption) {
+  if (pending?.kind !== "riddle" || pending.playerId !== currentTurn || !pending.correctOption) {
     return null;
   }
   if (!answer) {
@@ -23,32 +24,30 @@ function validateRiddlePhaseAnswer(
   return { valid: true };
 }
 
-function getPowerCheckRollLimits(
-  pending: { phase?: string; riddleCorrect?: boolean; position?: number },
-  state: GameState,
-): {
-  min: number;
-  max: number;
-  label: string;
-} {
-  const pos = pending.position;
-  const squareData = typeof pos === "number" ? getSquareDataAtPosition(state, pos) : undefined;
-  return getPowerCheckRollSpec(pending.phase, pending.riddleCorrect, squareData);
-}
-
-function parsePowerCheckRoll(answer: string): number | null {
+function parseRoll(answer: string): number | null {
   const rollStr = answer.trim().replace(/\D/g, "") || answer.trim();
   const roll = parseInt(rollStr, 10);
   return Number.isNaN(roll) ? null : roll;
 }
 
-function validatePowerCheckRoll(
-  roll: number,
-  pending: { phase?: string; riddleCorrect?: boolean; position?: number },
+function validatePendingRollAnswer(
+  pending: Pending | null | undefined,
+  currentTurn: string,
+  answer: string,
   state: GameState,
   index: number,
-): ValidationResult {
-  const { min, max, label } = getPowerCheckRollLimits(pending, state);
+): ValidationResult | null {
+  if (!pending || !isPendingRollKind(pending) || pending.playerId !== currentTurn) {
+    return null;
+  }
+  const roll = parseRoll(answer);
+  if (roll === null) {
+    return { valid: true };
+  }
+  const { min, max, label } = getPendingRollSpec(
+    pending as Parameters<typeof getPendingRollSpec>[0],
+    state,
+  );
   if (roll >= min && roll <= max) {
     return { valid: true };
   }
@@ -57,29 +56,6 @@ function validatePowerCheckRoll(
     error: `PLAYER_ANSWERED at index ${index}: Roll must be ${min}-${max} (${label}), got ${roll}.`,
     errorCode: "invalidDiceRoll",
   };
-}
-
-function validatePowerCheckAnswer(
-  pending:
-    | { phase?: string; playerId?: string; riddleCorrect?: boolean; position?: number }
-    | null
-    | undefined,
-  currentTurn: string,
-  answer: string,
-  state: GameState,
-  index: number,
-): ValidationResult | null {
-  const isPowerPhase =
-    (pending?.phase === "powerCheck" || pending?.phase === "revenge") &&
-    pending?.playerId === currentTurn;
-  if (!isPowerPhase || !pending) {
-    return null;
-  }
-  const roll = parsePowerCheckRoll(answer);
-  if (roll === null) {
-    return { valid: true };
-  }
-  return validatePowerCheckRoll(roll, pending, state, index);
 }
 
 function validatePathChoiceAB(
@@ -116,7 +92,7 @@ function getValidationContext(
   answer: string;
   currentTurn: string;
   currentPlayer: Record<string, unknown>;
-  pending: unknown;
+  pending: Pending | null | undefined;
 } | null {
   const answer = ((action as { answer?: string }).answer ?? "").trim();
   const game = state.game as Record<string, unknown> | undefined;
@@ -127,7 +103,12 @@ function getValidationContext(
   if (!currentTurn || !currentPlayer) {
     return null;
   }
-  return { answer, currentTurn, currentPlayer, pending: game?.pendingAnimalEncounter };
+  return {
+    answer,
+    currentTurn,
+    currentPlayer,
+    pending: getPending(game),
+  };
 }
 
 export function validatePlayerAnswered(
@@ -161,30 +142,14 @@ export function validatePlayerAnswered(
   }
 
   const { answer, currentTurn, currentPlayer, pending } = ctx;
-  const riddleResult = validateRiddlePhaseAnswer(
-    pending as { phase?: string; playerId?: string; correctOption?: string },
-    currentTurn,
-    answer,
-    index,
-  );
+  const riddleResult = validateRiddlePhaseAnswer(pending, currentTurn, answer, index);
   if (riddleResult !== null) {
     return riddleResult;
   }
 
-  const powerResult = validatePowerCheckAnswer(
-    pending as {
-      phase?: string;
-      playerId?: string;
-      riddleCorrect?: boolean;
-      position?: number;
-    },
-    currentTurn,
-    answer,
-    state,
-    index,
-  );
-  if (powerResult !== null) {
-    return powerResult;
+  const rollResult = validatePendingRollAnswer(pending, currentTurn, answer, state, index);
+  if (rollResult !== null) {
+    return rollResult;
   }
 
   const position = currentPlayer.position as number | undefined;

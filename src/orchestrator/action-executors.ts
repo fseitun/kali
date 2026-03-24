@@ -1,5 +1,5 @@
 import type { BoardEffectsHandler } from "./board-effects-handler";
-import { computeNewPositionBackward, computeNewPositionFromState } from "./board-traversal";
+import { computeNewPositionFromState } from "./board-traversal";
 import { getDecisionPointApplyState } from "./decision-helpers";
 import { getPowerCheckDiceConfig, getSquareDataAtPosition } from "./power-check-dice";
 import type { RiddlePowerCheckHandler } from "./riddle-power-check";
@@ -30,19 +30,16 @@ export async function executeNarrate(
 ): Promise<void> {
   const state = ctx.stateManager.getState();
   const game = state.game as Record<string, unknown> | undefined;
-  const pending = game?.pendingAnimalEncounter as
-    | { phase?: string; riddleHint?: string }
-    | null
-    | undefined;
+  const pending = game?.pending as { kind?: string; riddlePrompt?: string } | null | undefined;
   if (
     ctx.boardEffectsHandler.isProcessingEffect() &&
-    pending?.phase === "riddle" &&
+    pending?.kind === "riddle" &&
     primitive.text
   ) {
-    ctx.stateManager.set("game.pendingAnimalEncounter", {
+    ctx.stateManager.set("game.pending", {
       ...pending,
       riddlePrompt: primitive.text,
-    } as Record<string, unknown>);
+    });
   }
   if (primitive.text) {
     ctx.setLastNarration(primitive.text);
@@ -73,57 +70,6 @@ export async function executeSetState(
   ctx.checkAndApplyWinCondition(primitive.path);
 }
 
-function isPendingDirectionalRollFor(
-  pendingDir: unknown,
-  currentTurn: string,
-  currentPosition: number,
-): pendingDir is { playerId: string; position: number } {
-  return (
-    pendingDir !== null &&
-    typeof pendingDir === "object" &&
-    (pendingDir as { playerId?: string; position?: number }).playerId === currentTurn &&
-    (pendingDir as { playerId?: string; position?: number }).position === currentPosition
-  );
-}
-
-function logPlayerRolledOutcome(
-  isDirectional: boolean,
-  state: Record<string, unknown>,
-  currentTurn: string,
-  path: string,
-  currentPosition: number,
-  newPosition: number,
-  rollValue: number,
-): void {
-  if (!isDirectional) {
-    Logger.write(`Player rolled ${rollValue}: ${path} ${currentPosition} → ${newPosition}`);
-    return;
-  }
-  const player = (state.players as Record<string, Record<string, unknown>>)?.[currentTurn];
-  const inverseMode = !!(player?.inverseMode as boolean | undefined);
-  Logger.write(
-    `Directional roll (${inverseMode ? "inverseMode" : "retreat"}): ${path} ${currentPosition} → ${newPosition}`,
-  );
-}
-
-function computePositionFromRoll(
-  state: GameState,
-  currentTurn: string,
-  currentPosition: number,
-  rollValue: number,
-  pendingDir: { playerId: string; position: number } | null | undefined,
-): number {
-  if (!isPendingDirectionalRollFor(pendingDir, currentTurn, currentPosition)) {
-    return computeNewPositionFromState(state, currentTurn, currentPosition, rollValue);
-  }
-  const player = (state.players as Record<string, Record<string, unknown>>)?.[currentTurn];
-  const inverseMode = !!(player?.inverseMode as boolean | undefined);
-  if (inverseMode) {
-    return computeNewPositionFromState(state, currentTurn, currentPosition, rollValue);
-  }
-  return computeNewPositionBackward(state, currentTurn, currentPosition, rollValue);
-}
-
 export async function executePlayerRolled(
   ctx: ActionExecutorContext,
   primitive: Extract<PrimitiveAction, { action: "PLAYER_ROLLED" }>,
@@ -144,33 +90,14 @@ export async function executePlayerRolled(
     throw new Error(`Cannot process PLAYER_ROLLED: ${path} is not a number`);
   }
 
-  const pendingDir = game?.pendingDirectionalRoll as
-    | { playerId: string; position: number }
-    | null
-    | undefined;
-  const isDirectional = isPendingDirectionalRollFor(pendingDir, currentTurn, currentPosition);
-
-  if (isDirectional) {
-    ctx.stateManager.set("game.pendingDirectionalRoll", null);
-  }
-
-  const newPosition = computePositionFromRoll(
+  const newPosition = computeNewPositionFromState(
     state as GameState,
     currentTurn,
     currentPosition,
     primitive.value,
-    pendingDir,
   );
 
-  logPlayerRolledOutcome(
-    isDirectional,
-    state,
-    currentTurn,
-    path,
-    currentPosition,
-    newPosition,
-    primitive.value,
-  );
+  Logger.write(`Player rolled ${primitive.value}: ${path} ${currentPosition} → ${newPosition}`);
 
   ctx.stateManager.set(path, newPosition);
   context.positionPathsSetByRoll?.add(path);
@@ -190,15 +117,100 @@ function riddleOutcomeMessage(
   return dice.ifRiddleWrong === 2 ? t("game.riddleIncorrect2d6") : t("game.riddleIncorrect1d6");
 }
 
+function parseNumericRoll(answer: string): number | null {
+  const rollStr = answer.trim().replace(/\D/g, "") || answer.trim();
+  const roll = parseInt(rollStr, 10);
+  return Number.isNaN(roll) ? null : roll;
+}
+
+function getDirectionalRollContext(state: Record<string, unknown>): {
+  currentTurn: string;
+  pending: { dice: 1 | 2 | 3 };
+  path: string;
+  currentPosition: number;
+} | null {
+  const game = state.game as Record<string, unknown> | undefined;
+  const pending = game?.pending as
+    | { kind: string; position: number; playerId: string; dice: 1 | 2 | 3 }
+    | null
+    | undefined;
+  const currentTurn = game?.turn as string | undefined;
+  if (pending?.kind !== "directional" || !currentTurn || pending.playerId !== currentTurn) {
+    return null;
+  }
+  const path = `players.${currentTurn}.position`;
+  const currentPosition = (state.players as Record<string, Record<string, unknown>>)?.[currentTurn]
+    ?.position as number | undefined;
+  if (typeof currentPosition !== "number") {
+    return null;
+  }
+  return { currentTurn, pending, path, currentPosition };
+}
+
+async function applyDirectionalRoll(
+  ctx: ActionExecutorContext,
+  path: string,
+  currentTurn: string,
+  currentPosition: number,
+  roll: number,
+  context: ExecutionContext,
+): Promise<void> {
+  const state = ctx.stateManager.getState();
+  const newPosition = computeNewPositionFromState(
+    state,
+    currentTurn,
+    currentPosition,
+    roll,
+    "backward",
+  );
+  Logger.write(`Directional roll ${roll}: ${path} ${currentPosition} → ${newPosition} (backward)`);
+  ctx.stateManager.set(path, newPosition);
+  ctx.stateManager.set("game.pending", null);
+  ctx.stateManager.set("game.lastRoll", roll);
+  context.positionPathsSetByRoll?.add(path);
+  await ctx.boardEffectsHandler.checkAndApplyBoardMoves(path, context);
+  await ctx.boardEffectsHandler.checkAndApplySquareEffects(path, context);
+  ctx.checkAndApplyWinCondition(path);
+}
+
+async function tryHandleDirectionalRollAnswer(
+  ctx: ActionExecutorContext,
+  answer: string,
+  context: ExecutionContext,
+): Promise<boolean> {
+  const state = ctx.stateManager.getState();
+  const dirCtx = getDirectionalRollContext(state as Record<string, unknown>);
+  if (!dirCtx) {
+    return false;
+  }
+  const roll = parseNumericRoll(answer);
+  if (roll === null) {
+    return false;
+  }
+  const { min, max } = { min: dirCtx.pending.dice, max: dirCtx.pending.dice * 6 };
+  if (roll < min || roll > max) {
+    return false;
+  }
+  await applyDirectionalRoll(
+    ctx,
+    dirCtx.path,
+    dirCtx.currentTurn,
+    dirCtx.currentPosition,
+    roll,
+    context,
+  );
+  return true;
+}
+
 async function speakAfterRiddleResolved(
   ctx: ActionExecutorContext,
   riddleResult: { correct: boolean },
 ): Promise<void> {
   const st = ctx.stateManager.getState() as GameState;
   const game = st.game as Record<string, unknown> | undefined;
-  const pendingEncounter = game?.pendingAnimalEncounter as { position?: number } | undefined;
+  const pendingEncounter = game?.pending as { kind?: string; position?: number } | undefined;
   const squareData =
-    typeof pendingEncounter?.position === "number"
+    pendingEncounter && typeof pendingEncounter.position === "number"
       ? getSquareDataAtPosition(st, pendingEncounter.position)
       : undefined;
   const msg = riddleOutcomeMessage(riddleResult.correct, getPowerCheckDiceConfig(squareData));
@@ -234,6 +246,15 @@ export async function executePlayerAnswered(
       context.turnAdvancedAfterPowerCheckFail = powerCheckResult.turnAdvanced;
     }
     context.skipTrailingNarrateForPowerCheck = true;
+    return;
+  }
+
+  const directionalRollHandled = await tryHandleDirectionalRollAnswer(
+    ctx,
+    primitive.answer,
+    context,
+  );
+  if (directionalRollHandled) {
     return;
   }
 

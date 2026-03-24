@@ -48,7 +48,7 @@ import { Profiler } from "@/utils/profiler";
  */
 /** Optional orchestrator options (e.g. E2E scenario mode). */
 export interface OrchestratorOptions {
-  /** When true, validator allows SET_STATE game.pendingAnimalEncounter to null for scripted E2E scenarios. */
+  /** When true, validator allows SET_STATE game.pending to null for scripted E2E scenarios. */
   allowScenarioOnlyStatePaths?: boolean;
   /** When true, SET_STATE on players.*.position bypasses the fork-choice gate (debug teleport; build-time gated via env). */
   allowBypassPositionDecisionGate?: boolean;
@@ -56,11 +56,8 @@ export interface OrchestratorOptions {
 
 function isPendingAnimalRiddleForCurrentTurn(game: Record<string, unknown> | undefined): boolean {
   const currentTurn = game?.turn as string | undefined;
-  const pending = game?.pendingAnimalEncounter as
-    | { phase?: string; playerId?: string }
-    | null
-    | undefined;
-  return pending?.phase === "riddle" && Boolean(currentTurn) && pending.playerId === currentTurn;
+  const pending = game?.pending as { kind?: string; playerId?: string } | null | undefined;
+  return pending?.kind === "riddle" && Boolean(currentTurn) && pending.playerId === currentTurn;
 }
 
 function normalizedRiddleOptionFromTranscript(
@@ -490,12 +487,12 @@ export class Orchestrator {
   ): PrimitiveAction[] {
     const state = this.stateManager.getState();
     const game = state.game as Record<string, unknown> | undefined;
-    const pending = game?.pendingAnimalEncounter as
-      | { phase?: string; riddleOptions?: string[]; correctOption?: string }
+    const pending = game?.pending as
+      | { kind?: string; riddleOptions?: string[]; correctOption?: string }
       | null
       | undefined;
     if (
-      pending?.phase !== "riddle" ||
+      pending?.kind !== "riddle" ||
       !Array.isArray(pending.riddleOptions) ||
       pending.riddleOptions.length !== 4 ||
       !pending.correctOption
@@ -734,8 +731,10 @@ export class Orchestrator {
 
   private handlePlayerRolledPostExecute(): boolean {
     const game = this.stateManager.getState().game as Record<string, unknown> | undefined;
-    const pending = game?.pendingAnimalEncounter as { phase?: string } | null | undefined;
-    return Boolean(pending && ["riddle", "powerCheck", "revenge"].includes(pending.phase ?? ""));
+    const pending = game?.pending as { kind?: string } | null | undefined;
+    return Boolean(
+      pending && ["riddle", "powerCheck", "revenge", "directional"].includes(pending.kind ?? ""),
+    );
   }
 
   /**
@@ -787,11 +786,11 @@ export class Orchestrator {
   private isRiddlePhaseWithNoRiddleStored(): boolean {
     const state = this.stateManager.getState();
     const game = state.game as Record<string, unknown> | undefined;
-    const pending = game?.pendingAnimalEncounter as
-      | { phase?: string; riddleOptions?: unknown[]; correctOption?: string }
+    const pending = game?.pending as
+      | { kind?: string; riddleOptions?: unknown[]; correctOption?: string }
       | null
       | undefined;
-    if (pending?.phase !== "riddle") {
+    if (pending?.kind !== "riddle") {
       return false;
     }
     const options = pending.riddleOptions;

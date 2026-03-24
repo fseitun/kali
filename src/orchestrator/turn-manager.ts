@@ -1,4 +1,5 @@
 import { getDecisionPoints } from "./decision-point-inference";
+import { hasPendingForCurrentTurn } from "./pending-types";
 import type { DecisionPoint } from "./types";
 import { GamePhase } from "./types";
 import type { StateManager } from "@/state-manager";
@@ -70,35 +71,12 @@ export class TurnManager {
   }
 
   /**
-   * Checks if there is a pending animal encounter that blocks turn advancement.
-   * @returns true if game.pendingAnimalEncounter is set for the current player
+   * Checks if there is pending state (riddle, powerCheck, revenge, directional) that blocks turn advancement.
+   * @returns true if game.pending is set for the current player
    */
-  hasPendingAnimalEncounter(): boolean {
+  hasPendingForCurrentTurn(): boolean {
     const state = this.stateManager.getState();
-    const game = state.game as Record<string, unknown> | undefined;
-    const currentTurn = game?.turn as string | undefined;
-    const pending = game?.pendingAnimalEncounter as { playerId: string } | null | undefined;
-
-    if (!currentTurn || !pending || typeof pending !== "object") {
-      return false;
-    }
-    return pending.playerId === currentTurn;
-  }
-
-  /**
-   * Checks if there is a pending directional roll that blocks turn advancement.
-   * @returns true if game.pendingDirectionalRoll is set for the current player
-   */
-  hasPendingDirectionalRoll(): boolean {
-    const state = this.stateManager.getState();
-    const game = state.game as Record<string, unknown> | undefined;
-    const currentTurn = game?.turn as string | undefined;
-    const pending = game?.pendingDirectionalRoll as { playerId: string } | null | undefined;
-
-    if (!currentTurn || !pending || typeof pending !== "object") {
-      return false;
-    }
-    return pending.playerId === currentTurn;
+    return hasPendingForCurrentTurn(state);
   }
 
   /**
@@ -195,12 +173,10 @@ export class TurnManager {
       Logger.info("Turn advancement blocked: current player has pending decisions");
       return null;
     }
-    if (this.hasPendingAnimalEncounter()) {
-      Logger.info("Turn advancement blocked: pending animal encounter");
-      return null;
-    }
-    if (this.hasPendingDirectionalRoll()) {
-      Logger.info("Turn advancement blocked: pending directional roll");
+    if (this.hasPendingForCurrentTurn()) {
+      Logger.info(
+        "Turn advancement blocked: pending state (riddle/powerCheck/revenge/directional)",
+      );
       return null;
     }
     return currentTurn;

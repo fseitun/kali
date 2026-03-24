@@ -183,10 +183,11 @@ describe("TurnManager", () => {
     });
 
     it("should block when current player has pending directional roll", async () => {
-      stateManager.set("game.pendingDirectionalRoll", {
+      stateManager.set("game.pending", {
+        kind: "directional",
         playerId: "p1",
         position: 55,
-        effect: "roll2d6Directional",
+        dice: 2,
       });
 
       const result = await turnManager.advanceTurn(false);
