@@ -11,7 +11,7 @@
   },
   "steps": [
     {
-      "description": "p1 at 52 rolls 3, lands on Jivaro Indians (roll2d6Directional); turn does not advance",
+      "description": "p1 at 52 rolls 3, lands on Jivaro Indians (retreat2d6); turn does not advance",
       "actions": [
         { "action": "SET_STATE", "path": "players.p1.position", "value": 52 },
         { "action": "PLAYER_ROLLED", "value": 3 },

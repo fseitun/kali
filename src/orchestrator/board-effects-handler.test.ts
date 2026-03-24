@@ -492,7 +492,7 @@ describe("BoardEffectsHandler", () => {
       stateManager.set("board.squares", {
         "55": {
           name: "Jivaro Indians",
-          effect: "roll2d6Directional",
+          effect: "retreat2d6",
         },
       });
       stateManager.set("players.p1.position", 55);

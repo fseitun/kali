@@ -500,7 +500,7 @@ export class BoardEffectsHandler {
       return (
         `[SYSTEM: Current player landed on square ${position} (${squareName}). ` +
         `Follow the ⚠️ DIRECTIONAL ROLL line in state. ` +
-        `Narrate briefly, then ask the player to roll ${dice} d6 and report the result. ` +
+        `Narrate briefly, then ask the player to roll ${dice} d6 and report the sum; they move backward that many spaces along the path. ` +
         `When they report their roll, return PLAYER_ANSWERED with the number (${min}–${max}). ` +
         `Do not change game state. Square data for flavour: ${squareInfo}]`
       );

@@ -38,14 +38,15 @@ const SPECIAL_EFFECT_MAP: Record<string, SpecialSquareKind> = {
   win: "win",
 };
 
-const ROLL_DIRECTIONAL_EFFECTS = ["roll1d6Directional", "roll2d6Directional", "roll3d6Directional"];
+/** Config `effect` values: roll Nd6, sum, move backward along `prev`. */
+const RETREAT_DICE_EFFECTS = ["retreat1d6", "retreat2d6", "retreat3d6"];
 
 /**
- * Parses dice count from rollDirectional effect string.
- * @returns 1 | 2 | 3, or undefined if not a valid rollDirectional effect
+ * Parses dice count from retreat-dice effect string (`retreat1d6` … `retreat3d6`).
+ * @returns 1 | 2 | 3, or undefined if not a valid effect
  */
 export function getDirectionalRollDice(effect: string | undefined): 1 | 2 | 3 | undefined {
-  if (!effect || !ROLL_DIRECTIONAL_EFFECTS.includes(effect)) {
+  if (!effect || !RETREAT_DICE_EFFECTS.includes(effect)) {
     return undefined;
   }
   const digits = effect.replace(/\D/g, "");
@@ -66,7 +67,7 @@ function kindFromEffect(effect: string | undefined): SpecialSquareKind | null {
   if (SPECIAL_EFFECT_MAP[effect]) {
     return SPECIAL_EFFECT_MAP[effect];
   }
-  if (ROLL_DIRECTIONAL_EFFECTS.includes(effect)) {
+  if (RETREAT_DICE_EFFECTS.includes(effect)) {
     return "rollDirectional";
   }
   return null;
