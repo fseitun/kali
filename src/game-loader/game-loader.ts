@@ -1,4 +1,4 @@
-import type { GameConfigInput, GameModule } from "./types";
+import type { GameConfigInput, GameModule, HabitatSegment } from "./types";
 import { getWinPosition } from "@/orchestrator/board-helpers";
 import type { BoardConfig, GameState, Player, SquareData } from "@/orchestrator/types";
 import { GamePhase } from "@/orchestrator/types";
@@ -80,6 +80,113 @@ function deriveBoardFromSquares(squares: Record<string, SquareData>): {
 }
 
 /**
+ * Expands `config.habitat` into position → habitat name. Every index 0..winPosition must appear exactly once.
+ */
+export function expandHabitatConfig(
+  habitat: Record<string, HabitatSegment[]>,
+  winPosition: number,
+): Record<number, string> {
+  const assignment: Record<number, string> = {};
+
+  function assignIndex(pos: number, name: string): void {
+    if (!Number.isInteger(pos)) {
+      throw new Error(
+        `Invalid game config: habitat "${name}" has non-integer index ${String(pos)}`,
+      );
+    }
+    if (pos < 0 || pos > winPosition) {
+      throw new Error(
+        `Invalid game config: habitat "${name}" includes out-of-range index ${pos} (board 0..${String(winPosition)})`,
+      );
+    }
+    const existing = assignment[pos];
+    if (existing !== undefined) {
+      throw new Error(
+        `Invalid game config: square ${String(pos)} assigned to both "${existing}" and "${name}"`,
+      );
+    }
+    assignment[pos] = name;
+  }
+
+  function expandSegment(seg: unknown, name: string): void {
+    if (typeof seg === "number") {
+      assignIndex(seg, name);
+      return;
+    }
+    if (Array.isArray(seg)) {
+      if (seg.length !== 2) {
+        throw new Error(
+          `Invalid game config: habitat "${name}" range must be [lo, hi] with two numbers, got ${JSON.stringify(seg)}`,
+        );
+      }
+      const [lo, hi] = seg;
+      if (typeof lo !== "number" || typeof hi !== "number") {
+        throw new Error(
+          `Invalid game config: habitat "${name}" has invalid range ${JSON.stringify(seg)}`,
+        );
+      }
+      if (!Number.isInteger(lo) || !Number.isInteger(hi)) {
+        throw new Error(
+          `Invalid game config: habitat "${name}" range endpoints must be integers ${JSON.stringify(seg)}`,
+        );
+      }
+      if (lo > hi) {
+        throw new Error(
+          `Invalid game config: habitat "${name}" has reversed range [${String(lo)}, ${String(hi)}]`,
+        );
+      }
+      for (let p = lo; p <= hi; p++) {
+        assignIndex(p, name);
+      }
+      return;
+    }
+    throw new Error(
+      `Invalid game config: habitat "${name}" segment must be a number or [lo,hi] array, got ${JSON.stringify(seg)}`,
+    );
+  }
+
+  for (const [name, segments] of Object.entries(habitat)) {
+    if (!Array.isArray(segments)) {
+      throw new Error(`Invalid game config: habitat "${name}" must be an array of segments`);
+    }
+    for (const seg of segments) {
+      expandSegment(seg, name);
+    }
+  }
+
+  const missing: number[] = [];
+  for (let i = 0; i <= winPosition; i++) {
+    if (assignment[i] === undefined) {
+      missing.push(i);
+    }
+  }
+  if (missing.length > 0) {
+    const sample = missing.slice(0, 20).join(", ");
+    const more = missing.length > 20 ? "…" : "";
+    throw new Error(`Invalid game config: habitat map missing squares: ${sample}${more}`);
+  }
+
+  return assignment;
+}
+
+function applyHabitatToSquares(
+  rawSquares: Record<string, SquareData>,
+  winPosition: number,
+  byPosition: Record<number, string>,
+): Record<string, SquareData> {
+  const squares: Record<string, SquareData> = {};
+  for (let i = 0; i <= winPosition; i++) {
+    const key = String(i);
+    const sq = rawSquares[key];
+    if (!sq) {
+      throw new Error(`Cannot apply habitat: missing square ${key}`);
+    }
+    squares[key] = { ...sq, habitat: byPosition[i] };
+  }
+  return squares;
+}
+
+/**
  * Resolves initialState from config squares and metadata.
  * Exported for integration scenario runner which loads config from file.
  */
@@ -91,13 +198,24 @@ export function resolveInitialState(config: GameConfigInput): GameState {
  * Builds initialState from squares + metadata.
  */
 function buildInitialStateFromParts(config: GameConfigInput): GameState {
-  const { metadata, squares: rawSquares, stateDisplay } = config;
+  const { metadata, squares: rawSquares, stateDisplay, habitat: habitatConfig } = config;
   if (!rawSquares) {
     throw new Error("Cannot build initialState: config has no squares");
   }
 
-  const boardDerived = deriveBoardFromSquares(rawSquares);
-  validateBoardTopology(rawSquares, getWinPosition(rawSquares));
+  const winPosition = getWinPosition(rawSquares);
+  validateBoardTopology(rawSquares, winPosition);
+
+  const squaresForBoard =
+    habitatConfig != null && Object.keys(habitatConfig).length > 0
+      ? applyHabitatToSquares(
+          rawSquares,
+          winPosition,
+          expandHabitatConfig(habitatConfig, winPosition),
+        )
+      : rawSquares;
+
+  const boardDerived = deriveBoardFromSquares(squaresForBoard);
   const board: BoardConfig = { ...boardDerived };
 
   const playerOrder = Array.from({ length: metadata.minPlayers }, (_, i) => `p${i + 1}`);

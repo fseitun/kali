@@ -35,6 +35,12 @@ export interface StateDisplayMetadata {
 }
 
 /**
+ * One square index, or an inclusive `[lo, hi]` range (exactly two integers).
+ * Example JSON: `"amazon": [[113, 124], 130]` → squares 113–124 and 130.
+ */
+export type HabitatSegment = number | [number, number];
+
+/**
  * Raw config input. Squares-only format; board, game, and players are derived at load.
  */
 export interface GameConfigInput {
@@ -42,7 +48,12 @@ export interface GameConfigInput {
   soundEffects?: Record<string, string>;
   customActions?: string[];
   stateDisplay?: StateDisplayMetadata;
-  /** Squares 0..boardLength with explicit next/prev. Board, game, players derived from this. */
+  /**
+   * When non-empty, every square `0..win` must appear exactly once across all habitats.
+   * Merged onto `board.squares[n].habitat` at load (overrides any `habitat` on authored squares).
+   */
+  habitat?: Record<string, HabitatSegment[]>;
+  /** Squares 0..boardLength with explicit next/prev. Board, game, and players derived from this. */
   squares?: Record<string, SquareData>;
 }
 

@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { GameLoader } from "./game-loader";
+import { GameLoader, expandHabitatConfig, resolveInitialState } from "./game-loader";
 import type { GameModule } from "./types";
 import { GamePhase } from "@/orchestrator/types";
 
@@ -284,5 +284,43 @@ describe("GameLoader", () => {
 
       expect(mockSpeechService.loadSound).not.toHaveBeenCalled();
     });
+  });
+});
+
+describe("expandHabitatConfig", () => {
+  it("expands inclusive ranges and single indices", () => {
+    const m = expandHabitatConfig({ alpha: [[0, 1]], beta: [2] }, 2);
+    expect(m[0]).toBe("alpha");
+    expect(m[1]).toBe("alpha");
+    expect(m[2]).toBe("beta");
+  });
+
+  it("throws when two habitats claim the same square", () => {
+    expect(() => expandHabitatConfig({ a: [[0, 1]], b: [1] }, 2)).toThrow(/assigned to both/);
+  });
+
+  it("throws when squares are missing from the map", () => {
+    expect(() => expandHabitatConfig({ only: [[0, 0]] }, 2)).toThrow(/missing squares/);
+  });
+});
+
+describe("resolveInitialState with config.habitat", () => {
+  it("merges expanded habitat onto each square", () => {
+    const state = resolveInitialState({
+      metadata: {
+        id: "t",
+        name: "T",
+        minPlayers: 1,
+        maxPlayers: 2,
+        objective: "win at 1",
+      },
+      habitat: { h0: [[0, 0]], h1: [[1, 1]] },
+      squares: {
+        "0": { next: [1], prev: [] },
+        "1": { effect: "win", next: [], prev: [0] },
+      },
+    });
+    expect(state.board?.squares?.["0"]?.habitat).toBe("h0");
+    expect(state.board?.squares?.["1"]?.habitat).toBe("h1");
   });
 });
