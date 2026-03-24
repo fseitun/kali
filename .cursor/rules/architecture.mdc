@@ -9,6 +9,8 @@ alwaysApply: true
 
 Kali is a voice-first PWA game moderator for kids to play board games independently. Voice is the central input—no alternative in production. Text input exists only for the debug UI and automated tests. Currently supports Kalimba with a modular architecture.
 
+Durable cross-cutting decisions: see [`docs/adr/README.md`](../../docs/adr/README.md) (short ADRs); agent-oriented “why” context remains in [`architecture-decisions.mdc`](architecture-decisions.mdc).
+
 ## Core Architecture: The CPU and the Game Designer
 
 The system is built on a strict separation of duties:

@@ -1,0 +1,26 @@
+---
+description: High-risk paths, e2e loop, regression fix discipline, optional readonly review
+globs:
+  - src/orchestrator/**/*.ts
+  - src/game-loader/game-loader.ts
+  - e2e/**/*
+---
+
+# Regression guardrails
+
+## After edits here
+
+- Run `npm run full-check` before considering the task done (see agent full-check rule).
+- For **flow or board behavior** changes, also run `npm run test:e2e` once as a fast focused loop (optional but encouraged before relying only on the full suite).
+
+## Regression fix discipline
+
+When reproducing a bug: add a **failing test or scenario step** (or assertion) first when practical, then fix—see [`testing-commands.mdc`](testing-commands.mdc) and [`docs/adr/0002-e2e-scenarios-regression-locks.md`](../../docs/adr/0002-e2e-scenarios-regression-locks.md).
+
+## Large orchestrator refactors
+
+Run a **readonly second pass** (human or sub-agent): violates [state axioms](state-axioms.mdc)? Missing tests? Scenario coverage for changed flows?
+
+## Durable decisions
+
+Cross-cutting “why” that should survive refactors: add a short ADR under [`docs/adr/`](../../docs/adr/README.md); keep [architecture-decisions.mdc](architecture-decisions.mdc) for agent context without duplicating long prose.
