@@ -11,11 +11,6 @@
   <body>
     <div id="app">
       <div class="debug-ui">
-        <h1>
-          Kali <span class="debug-badge">DEBUG</span>
-          <span id="llm-indicator" class="debug-badge llm-badge"></span>
-          <span id="version-current" class="build-id" title="Build"></span>
-        </h1>
         <p id="status"></p>
         <p id="version-notice" class="version-notice" hidden aria-live="polite">
           <span id="version-notice-message"></span>
@@ -37,6 +32,7 @@
           <button type="submit" id="submit-transcript-button" disabled>Send</button>
         </form>
 
+        <div id="debug-player-board" class="debug-player-board" hidden aria-live="polite"></div>
         <div id="console"></div>
       </div>
     </div>

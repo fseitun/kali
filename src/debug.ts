@@ -17,29 +17,14 @@ import { Logger } from "@/utils/logger";
 
 setLocale(getLocale());
 
-function getLLMDisplayLabel(): string {
-  switch (CONFIG.LLM_PROVIDER) {
-    case "gemini":
-      return `Gemini (${CONFIG.GEMINI.MODEL.replace(/^models\//, "")})`;
-    case "groq":
-      return `Groq (${CONFIG.GROQ.MODEL})`;
-    case "openrouter":
-      return `OpenRouter (${CONFIG.OPENROUTER.MODEL})`;
-    case "deepinfra":
-      return `DeepInfra (${CONFIG.DEEPINFRA.MODEL})`;
-    case "ollama":
-      return `Ollama (${CONFIG.OLLAMA.MODEL})`;
-    case "mock":
-      return "Mock";
-    default:
-      return String(CONFIG.LLM_PROVIDER);
-  }
-}
+const DEBUG_BOARD_POLL_MS = 400;
 
 class KaliDebugApp {
   private core: KaliAppCore;
   private uiService: DebugUIService;
   private speechService: NoOpSpeechService;
+  /** Browser timer handle (`window.setInterval`); avoid `ReturnType<typeof setInterval>` (clashes with Node `Timeout`). */
+  private boardRefreshId: number | null = null;
   private static instance: KaliDebugApp | null = null;
 
   constructor() {
@@ -72,11 +57,6 @@ class KaliDebugApp {
 
     statusElement.textContent = t("ui.clickToStart");
 
-    const llmIndicator = document.getElementById("llm-indicator");
-    if (llmIndicator) {
-      llmIndicator.textContent = getLLMDisplayLabel();
-    }
-
     const versionNoticeMessage = document.getElementById("version-notice-message");
     const versionRefresh = document.getElementById("version-refresh");
     if (versionNoticeMessage) {
@@ -86,13 +66,6 @@ class KaliDebugApp {
       versionRefresh.textContent = t("ui.versionRefreshButton");
     }
 
-    const versionCurrent = document.getElementById("version-current");
-    if (versionCurrent) {
-      const buildLabel = t("ui.buildLabel");
-      versionCurrent.textContent = `${t("ui.upToDate")} · ${buildLabel}${CONFIG.BUILD_ID}`;
-      versionCurrent.title = `${buildLabel}${CONFIG.BUILD_ID}`;
-    }
-
     // eslint-disable-next-line no-console -- build id for DevTools when verifying deployed version
     console.log("Kali build:", CONFIG.BUILD_ID);
     setupVersionRefreshPrompt();
@@ -100,6 +73,44 @@ class KaliDebugApp {
     this.setupLogOptions();
     this.setupStartButton(startButton);
     this.setupTranscriptInput();
+  }
+
+  private renderDebugPlayerBoard(): void {
+    const el = document.getElementById("debug-player-board");
+    if (!el) {
+      return;
+    }
+    const snap = this.core.getDebugPlayerBoardSnapshot();
+    if (!snap) {
+      el.hidden = true;
+      el.replaceChildren();
+      return;
+    }
+    el.hidden = false;
+    el.replaceChildren();
+    for (const row of snap.rows) {
+      const rowEl = document.createElement("div");
+      rowEl.className = "debug-player-row";
+      if (row.id === snap.turn) {
+        rowEl.classList.add("debug-player-row--current");
+      }
+      rowEl.textContent = `${row.name}: ${row.position}`;
+      el.appendChild(rowEl);
+    }
+  }
+
+  private startBoardRefresh(): void {
+    this.stopBoardRefresh();
+    this.boardRefreshId = window.setInterval(() => {
+      this.renderDebugPlayerBoard();
+    }, DEBUG_BOARD_POLL_MS);
+  }
+
+  private stopBoardRefresh(): void {
+    if (this.boardRefreshId !== null) {
+      window.clearInterval(this.boardRefreshId);
+      this.boardRefreshId = null;
+    }
   }
 
   private setupLogOptions(): void {
@@ -142,6 +153,10 @@ class KaliDebugApp {
       this.uiService.setButtonState(t("ui.status.initializing"), true);
 
       await this.core.initialize();
+
+      this.uiService.updateStatus("");
+      this.renderDebugPlayerBoard();
+      this.startBoardRefresh();
 
       const submitButton = document.getElementById("submit-transcript-button") as HTMLButtonElement;
       if (submitButton) {
@@ -196,8 +211,10 @@ class KaliDebugApp {
   }
 
   private async dispose(): Promise<void> {
+    this.stopBoardRefresh();
     this.uiService.dispose?.();
     await this.core.dispose();
+    this.renderDebugPlayerBoard();
   }
 
   public static getInstance(): KaliDebugApp | null {

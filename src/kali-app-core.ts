@@ -525,6 +525,29 @@ ${summary ? `**Summary (for NARRATE explanations):** ${summary}\n` : ""}${exampl
   }
 
   /**
+   * Debug UI: current turn and each player's board position (read-only).
+   */
+  getDebugPlayerBoardSnapshot(): {
+    turn: string | null | undefined;
+    rows: { id: string; name: string; position: number }[];
+  } | null {
+    if (!this.initialized || !this.stateManager) {
+      return null;
+    }
+    const state = this.stateManager.getState();
+    const turn = state.game?.turn;
+    const players = state.players ?? {};
+    const ids = Object.keys(players).sort((a, b) =>
+      a.localeCompare(b, undefined, { numeric: true }),
+    );
+    const rows = ids.map((id) => {
+      const p = players[id];
+      return { id, name: p.name, position: p.position };
+    });
+    return { turn, rows };
+  }
+
+  /**
    * Debug: Submit text directly (skips wake word + STT), LLM interprets.
    * Same path as voice: text → LLM → primitives → orchestrator → TTS.
    * @param text - Free-form command (e.g. "I rolled 5", "say hello")
