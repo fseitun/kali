@@ -29,6 +29,8 @@ export const esAR = {
     winner: "¡{name} ganó! ¡Felicitaciones!",
     position: "Estás en el casillero {position}.",
     powerCheckPass: "Pasaste.",
+    afterEncounterRollPrompt:
+      "{name}, seguís en el casillero {position}. Tirá el dado y decime qué sacaste.",
     powerCheckFail: "No alcanzó.",
     riddleCorrect2d6: "¡Correcto! Tirá 2 dados para la prueba de poder.",
     riddleCorrect3d6: "¡Correcto! Tirá 3 dados para la prueba de poder.",

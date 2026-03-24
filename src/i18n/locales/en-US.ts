@@ -29,6 +29,8 @@ export const enUS = {
     winner: "{name} won! Congratulations!",
     position: "You're at position {position}.",
     powerCheckPass: "You passed.",
+    afterEncounterRollPrompt:
+      "{name}, you're still on square {position}. Roll the dice and tell me what you got.",
     powerCheckFail: "No luck.",
     riddleCorrect2d6: "Correct! Roll 2 dice for the power check.",
     riddleCorrect3d6: "Correct! Roll 3 dice for the power check.",

@@ -339,6 +339,8 @@ describe("Orchestrator Integration Tests", () => {
     });
 
     it("does not advance turn on power check win (shouldAdvanceTurn false)", async () => {
+      mockLLM = createScriptedLLM([]);
+      setLocale("en-US");
       const initialState: GameState = {
         game: {
           name: "Test Game",
@@ -383,6 +385,13 @@ describe("Orchestrator Integration Tests", () => {
 
       const pending = stateManager.get("game.pending");
       expect(pending).toBeNull();
+
+      expect(mockSpeech.speak).toHaveBeenNthCalledWith(1, "You passed.");
+      expect(mockSpeech.speak).toHaveBeenNthCalledWith(
+        2,
+        "Alice, you're still on square 11. Roll the dice and tell me what you got.",
+      );
+      setLocale("es-AR");
     });
 
     it("does not nest LLM for fork enforcement when initial power-check loss advances turn to a player at fork", async () => {

@@ -3,8 +3,9 @@ import { computeNewPositionFromState } from "./board-traversal";
 import type { PendingPowerCheck, PendingRevenge, PendingRiddle } from "./pending-types";
 import { getPowerCheckRollSpec } from "./power-check-dice";
 import { isStrictRiddleCorrect } from "./riddle-answer";
+import { squareTriggersLandingPipeline } from "./square-types";
 import type { TurnManager } from "./turn-manager";
-import type { ExecutionContext, GameState } from "./types";
+import { GamePhase, type ExecutionContext, type GameState } from "./types";
 import type { IStatusIndicator } from "@/components/status-indicator";
 import { t } from "@/i18n/translations";
 import type { LLMClient } from "@/llm/LLMClient";
@@ -178,7 +179,49 @@ export class RiddlePowerCheckHandler {
     await this.deps.boardEffectsHandler.checkAndApplyBoardMoves(positionPath, context);
     await this.deps.boardEffectsHandler.checkAndApplySquareEffects(positionPath, context);
     this.deps.checkAndApplyWinCondition(positionPath);
+
+    if (this.shouldSpeakAfterEncounterMovementNudge(playerId)) {
+      const name = this.displayNameForPlayer(
+        this.deps.stateManager.getState() as GameState,
+        playerId,
+      );
+      const landed = this.deps.stateManager.get(playerStatePath(playerId, "position")) as number;
+      const nudge = t("game.afterEncounterRollPrompt", { name, position: landed });
+      this.deps.setLastNarration(nudge);
+      this.deps.statusIndicator.setState("speaking");
+      await this.deps.speechService.speak(nudge);
+    }
+
     return { handled: true, passed: true };
+  }
+
+  private displayNameForPlayer(state: GameState, playerId: string): string {
+    const p = (state.players as Record<string, Record<string, unknown>>)?.[playerId];
+    const name = p?.name;
+    return typeof name === "string" && name.length > 0 ? name : playerId;
+  }
+
+  /**
+   * After a power-check or revenge win, the same player keeps the turn but the app does not
+   * auto-announce movement dice. Prompt when the encounter chain is done and the square does
+   * not still require a mechanic (trap, animal, etc.).
+   */
+  private shouldSpeakAfterEncounterMovementNudge(playerId: string): boolean {
+    const state = this.deps.stateManager.getState() as GameState;
+    const game = state.game as Record<string, unknown> | undefined;
+    if (!game || game.pending != null || game.phase !== GamePhase.PLAYING || game.winner != null) {
+      return false;
+    }
+    const position = (state.players as Record<string, Record<string, unknown>>)?.[playerId]
+      ?.position;
+    if (typeof position !== "number") {
+      return false;
+    }
+    const squares = (state.board as Record<string, unknown>)?.squares as
+      | Record<string, Record<string, unknown>>
+      | undefined;
+    const squareData = squares?.[String(position)];
+    return !squareTriggersLandingPipeline(squareData);
   }
 
   private async handlePowerCheckLose(pending: PendingPowerCheck): Promise<{

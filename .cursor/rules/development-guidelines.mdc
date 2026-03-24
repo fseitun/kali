@@ -48,6 +48,16 @@ For each **successful** gameplay user utterance (after orchestrator handling and
 
 **Implementation:** [`MeteredSpeechService`](src/voice/metered-speech-service.ts) counts `speak` calls per turn; [`applySilentSuccessFallback`](src/voice/gameplay-voice-policy.ts) runs in [`KaliAppCore`](src/kali-app-core.ts) when the turn was successful but still silent. Hints from the orchestrator (`VoiceOutcomeHints`, e.g. fork resolved without `NARRATE`) select deterministic i18n lines. Sound effects alone do not satisfy the invariant.
 
+### Next-action clarity (recurring bug class)
+
+The invariant above does **not** replace **explicit next-step instructions**. After any result (pass/fail, encounter resolved, fork chosen, turn continues on the same player), players—especially kids—must hear **what to do next** (e.g. roll and say the number, pick left/right, answer the riddle). If the UI would show “your turn, roll,” the voice must say an equivalent.
+
+- Prefer **deterministic i18n** in orchestrator or `KaliAppCore` when LLM `NARRATE` is optional or slow; do not rely on the model to remember to prompt.
+- Watch **edges where `shouldAdvanceTurn` is false** but play continues: `checkAndAdvanceTurn` may not run, so there is no automatic `turnAnnouncement` unless you add speech in the orchestrator path (see e.g. `afterEncounterRollPrompt`, `forkChoiceResolvedRoll`).
+- When adding mechanics, add or extend tests that assert **TTS strings or call order** for the happy path.
+
+**ADR:** [`docs/adr/0003-always-prompt-next-player-action.md`](../../docs/adr/0003-always-prompt-next-player-action.md)
+
 ## Testing Requirements
 
 When to run checks and fix: see the **Full-check after agentic changes** rule.

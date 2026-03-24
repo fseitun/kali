@@ -29,3 +29,4 @@ For large orchestrator refactors, run a **readonly second pass** (human or sub-a
 | ---------------------------------------------------------------------------------------------- | ------------------------------------------------------------- |
 | [0001-orchestrator-authority.md](0001-orchestrator-authority.md)                               | Orchestrator is sole mutator; enforcement via rules and tests |
 | [0002-integration-scenario-regression-locks.md](0002-integration-scenario-regression-locks.md) | JSON scenario tests as fast regression locks                  |
+| [0003-always-prompt-next-player-action.md](0003-always-prompt-next-player-action.md)           | Voice UX: always say what the player should do next           |
