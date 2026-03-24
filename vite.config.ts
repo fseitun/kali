@@ -149,7 +149,7 @@ export default defineConfig({
   },
   test: {
     globals: true,
-    include: ["src/**/*.test.ts", "e2e/**/*.test.ts"],
+    include: ["src/**/*.test.ts", "integration/**/*.test.ts"],
     coverage: {
       provider: "v8",
       reporter: ["text", "text-summary"],

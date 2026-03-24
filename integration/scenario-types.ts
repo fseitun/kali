@@ -1,7 +1,7 @@
 import type { PrimitiveAction } from "../src/orchestrator/types";
 
 /**
- * Single step in an e2e scenario.
+ * Single step in an integration scenario.
  * Actions are executed via orchestrator.testExecuteActions().
  * Expectations assert state via dot-notation paths.
  */
@@ -34,7 +34,7 @@ export interface ScenarioStep {
 }
 
 /**
- * E2E scenario definition.
+ * Integration scenario definition.
  * Scenarios run the real orchestrator with mock services (no LLM, no TTS).
  */
 export interface Scenario {

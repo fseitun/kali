@@ -47,9 +47,9 @@ import { Profiler } from "@/utils/profiler";
  * - Player setup
  * - Board mechanics
  */
-/** Optional orchestrator options (e.g. E2E scenario mode). */
+/** Optional orchestrator options (e.g. integration scenario mode). */
 export interface OrchestratorOptions {
-  /** When true, validator allows SET_STATE game.pending to null for scripted E2E scenarios. */
+  /** When true, validator allows SET_STATE game.pending to null for scripted integration scenarios. */
   allowScenarioOnlyStatePaths?: boolean;
   /** When true, SET_STATE on players.*.position bypasses the fork-choice gate (debug teleport; build-time gated via env). */
   allowBypassPositionDecisionGate?: boolean;

@@ -1,6 +1,6 @@
 ---
 description: Development commands and testing workflows
-globs: "**/*.test.ts", "e2e/**"
+globs: "**/*.test.ts", "integration/**"
 ---
 
 # Testing Commands
@@ -16,16 +16,18 @@ npm run preview       # Preview production build
 ## Quality Commands
 
 ```bash
-npm run test          # Run all Vitest tests (unit + integration + e2e)
-npm run test:e2e      # Run e2e scenarios only (fast regression check)
-npm run lint          # Run ESLint
-npm run lint:fix      # Auto-fix ESLint issues
-npm run type-check    # Check TypeScript types
+npm run test              # Run all Vitest tests (test:src + JSON integration scenarios)
+npm run test:src          # Run tests under src/ only (unit + colocated *.integration.test.ts)
+npm run test:integration  # Run JSON orchestrator integration scenarios only (integration/)
+npm run lint              # Run ESLint
+npm run lint:fix          # Auto-fix ESLint issues
+npm run type-check        # Check TypeScript types
 ```
 
 ## Pre-Commit Checklist
 
 Before committing code:
+
 1. Run `npm run test` - All tests must pass
 2. Run `npm run lint` - Zero linter errors
 3. Run `npm run type-check` - Zero type errors
@@ -33,41 +35,47 @@ Before committing code:
 ## Available Interfaces
 
 ### Production Interface
+
 - URL: `http://localhost:5173/`
 - UI: Minimal pulsating orb
 - Use: Normal gameplay
 
 ### Debug Interface
+
 - URL: `http://localhost:5173/debug`
 - UI: Full console with logs
 - Use: Development and debugging
 
 ## Testing Patterns
 
-### Unit Tests
-- Located next to source files: `*.test.ts`
+### Unit and colocated integration tests (`test:src`)
+
+- Located next to source files: `*.test.ts`, `*.integration.test.ts`
 - Framework: Vitest
 - Coverage: Run `npm run test:coverage` (if configured)
 
-### Integration Tests
+### Orchestrator integration (in code)
+
 - Test orchestrator authority patterns
 - Verify state mutation boundaries
 - Ensure component coordination
 
-### E2E Scenario Tests (TDD Guide)
+### JSON integration scenarios (TDD guide)
 
 **Purpose:** Fast, deterministic regression tests. No browser, no LLM, no TTS.
 The real orchestrator runs with mock services; state assertions catch regressions.
 
-**Location:** `e2e/scenarios/*.json` + `e2e/scenarios.test.ts`
+**Location:** `integration/scenarios/*.json` + `integration/scenarios.test.ts`
 
 **How to add a scenario (TDD flow):**
-1. Create `e2e/scenarios/your-scenario.json`
+
+1. Create `integration/scenarios/your-scenario.json`
 2. Define: `game`, `players`, optional `initialState`, optional `llmScript`, `steps` array
 3. Each step: `actions` (primitive array) OR `roll` (shorthand), optional `expect` (path → value)
-4. Run: `npm run test:e2e` (or `npm run test`)
+4. Run: `npm run test:integration` or `npm run test`
 
 **Scenario format:**
+
 ```json
 {
   "game": "kalimba",
@@ -88,19 +96,24 @@ For Kalimba and similar games, `DecisionPointEnforcer` and `BoardEffectsHandler`
 {
   "game": "kalimba",
   "llmScript": [
-    [{ "action": "SET_STATE", "path": "players.p1.points", "value": 3 }, { "action": "NARRATE", "text": "Encounter!" }]
+    [
+      { "action": "SET_STATE", "path": "players.p1.points", "value": 3 },
+      { "action": "NARRATE", "text": "Encounter!" }
+    ]
   ],
   "steps": [{ "roll": 2 }]
 }
 ```
 
 **Rules:**
+
 - `roll` expands to `PLAYER_ROLLED` + `NARRATE` for current player
 - Use `expect` sparingly; omit for steps where you only need execution
 - `llmScript` required when steps land on squares with effects or trigger decision points
 - Long multi-turn scenarios (30+ steps) validate the full engine without per-step asserts
 
 ### Manual Testing
+
 1. Start app with `npm run dev`
 2. Grant microphone permissions
 3. Wait for Vosk model download (first time only)

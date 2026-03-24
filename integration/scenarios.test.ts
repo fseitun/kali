@@ -9,15 +9,15 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const SCENARIOS_DIR = path.join(__dirname, "scenarios");
 
 /**
- * E2E Scenario Tests
+ * Orchestrator integration scenario tests
  *
  * These tests run full game flows against the real orchestrator with mock services.
  * No browser, no LLM, no TTS. Pure state-machine verification.
  *
- * TDD: Add a new JSON file under e2e/scenarios/ to add regression coverage.
- * Run: npm run test:e2e
+ * TDD: Add a new JSON file under integration/scenarios/ to add regression coverage.
+ * Run: npm run test:integration
  */
-describe("E2E Scenarios", () => {
+describe("Integration scenarios", () => {
   const scenarioFiles = fs.readdirSync(SCENARIOS_DIR).filter((f) => f.endsWith(".json"));
 
   for (const file of scenarioFiles) {

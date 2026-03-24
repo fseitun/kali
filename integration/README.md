@@ -1,10 +1,14 @@
-# E2E Scenario Tests
+# Orchestrator integration scenario tests
 
-End-to-end scenarios run the **real orchestrator** with a scripted mock LLM and mock speech. No browser, no real LLM, no TTS. Pure state-machine verification.
+These scenarios run the **real orchestrator** with a scripted mock LLM and mock speech. No browser, no real LLM, no TTS. Pure state-machine verification.
 
-- **Scenarios:** `e2e/scenarios/*.json`
-- **Runner:** `e2e/scenario-runner.ts`
-- **Test entry:** `e2e/scenarios.test.ts` (e.g. `npm run test` or `npm run test:e2e`)
+- **`npm run test:integration`** — JSON scenario suite only (`vitest run integration/`).
+- **`npm run test:src`** — all Vitest tests under `src/` (unit tests and colocated `*.integration.test.ts`).
+- **`npm run test`** — full Vitest run (`src` + `integration` per `vite.config.ts`).
+
+- **Scenarios:** `integration/scenarios/*.json`
+- **Runner:** `integration/scenario-runner.ts`
+- **Test entry:** `integration/scenarios.test.ts`
 
 ## Scenario format
 
@@ -52,9 +56,9 @@ If any step has `llmResponses`, the runner builds the mock script from steps in 
 
 ## Agent directive
 
-When adding or editing E2E scenarios (or when using these files to guide agents):
+When adding or editing integration scenarios (or when using these files to guide agents):
 
-**Source of truth.** E2E JSON scenarios are the single source of truth for orchestrator state transitions. They document how state changes in response to actions. When in doubt, E2E JSON scenarios override other descriptions of orchestrator behavior. For global state authority rules, see [.cursor/rules/state-axioms.mdc](../.cursor/rules/state-axioms.mdc).
+**Source of truth.** JSON integration scenarios are the single source of truth for orchestrator state transitions. They document how state changes in response to actions. When in doubt, these scenarios override other descriptions of orchestrator behavior. For global state authority rules, see [.cursor/rules/state-axioms.mdc](../.cursor/rules/state-axioms.mdc).
 
 **Guided LLM pattern.** The orchestrator owns all authoritative state (position, hearts, skipTurns, items, instruments, phase, turn, winner). The LLM is only asked to narrate after the orchestrator has applied effects, or to capture explicit user decisions. Do not encode or script the LLM as the authority for game-rule state.
 

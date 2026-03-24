@@ -19,5 +19,5 @@ What becomes easier or harder; what must stay true going forward.
 ## Links
 
 - Rules: (e.g. `.cursor/rules/...`)
-- Tests: (e.g. `src/.../*.test.ts`, `e2e/scenarios/...`)
+- Tests: (e.g. `src/.../*.test.ts`, `integration/scenarios/...`)
 - Code: (key modules)

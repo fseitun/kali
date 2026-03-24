@@ -21,11 +21,11 @@ Short, durable notes about **why** Kali behaves a certain way at the system leve
 
 ## Optional agent / review pass
 
-For large orchestrator refactors, run a **readonly second pass** (human or sub-agent) asking only: does this violate [state axioms](../../.cursor/rules/state-axioms.mdc)? Are tests and `e2e/scenarios/` updated where behavior changed?
+For large orchestrator refactors, run a **readonly second pass** (human or sub-agent) asking only: does this violate [state axioms](../../.cursor/rules/state-axioms.mdc)? Are tests and `integration/scenarios/` updated where behavior changed?
 
 ## Index
 
-| ADR                                                                              | Summary                                                       |
-| -------------------------------------------------------------------------------- | ------------------------------------------------------------- |
-| [0001-orchestrator-authority.md](0001-orchestrator-authority.md)                 | Orchestrator is sole mutator; enforcement via rules and tests |
-| [0002-e2e-scenarios-regression-locks.md](0002-e2e-scenarios-regression-locks.md) | JSON scenario tests as fast regression locks                  |
+| ADR                                                                                            | Summary                                                       |
+| ---------------------------------------------------------------------------------------------- | ------------------------------------------------------------- |
+| [0001-orchestrator-authority.md](0001-orchestrator-authority.md)                               | Orchestrator is sole mutator; enforcement via rules and tests |
+| [0002-integration-scenario-regression-locks.md](0002-integration-scenario-regression-locks.md) | JSON scenario tests as fast regression locks                  |

@@ -8,14 +8,7 @@ export default tseslint.config(
   ...tseslint.configs.recommended,
   prettierConfig,
   {
-    ignores: [
-      "dist/**",
-      "e2e/**",
-      "node_modules/**",
-      "public/**",
-      "scripts/**",
-      "eslint.config.js",
-    ],
+    ignores: ["dist/**", "node_modules/**", "public/**", "scripts/**", "eslint.config.js"],
   },
   {
     files: ["src/audio-worklet/*.js"],

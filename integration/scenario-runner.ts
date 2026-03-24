@@ -33,22 +33,28 @@ function loadGameConfig(gameId: string): GameConfigInput {
  */
 function buildInitialState(game: GameConfigInput, scenario: Scenario): GameState {
   const base = resolveInitialState(game) as Record<string, unknown>;
-  const overrides = (scenario.initialState ?? {}) as Record<string, unknown>;
+  const overrides = scenario.initialState ?? {};
 
   const merged: Record<string, unknown> = { ...base };
 
-  const hasGameOverride = overrides.game && typeof overrides.game === "object";
-  if (hasGameOverride) {
-    merged.game = { ...(base.game as object), ...overrides.game };
+  const gameOverride = overrides.game;
+  if (gameOverride && typeof gameOverride === "object" && !Array.isArray(gameOverride)) {
+    merged.game = { ...(base.game as Record<string, unknown>), ...gameOverride };
   }
 
   const hasPlayersOverride = overrides.players !== undefined;
-  if (hasPlayersOverride) merged.players = overrides.players;
+  if (hasPlayersOverride) {
+    merged.players = overrides.players;
+  }
 
   const hasBoardOverride = overrides.board !== undefined;
-  if (hasBoardOverride) merged.board = overrides.board;
+  if (hasBoardOverride) {
+    merged.board = overrides.board;
+  }
 
-  if (game.stateDisplay) merged.stateDisplay = game.stateDisplay;
+  if (game.stateDisplay) {
+    merged.stateDisplay = game.stateDisplay;
+  }
 
   return merged as GameState;
 }
@@ -83,14 +89,61 @@ function assertExpectations(
     const actual = stateManager.get(path);
     if (JSON.stringify(actual) !== JSON.stringify(expected)) {
       throw new Error(
-        `E2E assertion failed at step ${stepIndex}, path "${path}": expected ${JSON.stringify(expected)}, got ${JSON.stringify(actual)}`,
+        `Integration scenario assertion failed at step ${stepIndex}, path "${path}": expected ${JSON.stringify(expected)}, got ${JSON.stringify(actual)}`,
       );
     }
   }
 }
 
 /**
- * Runs an e2e scenario against the real orchestrator.
+ * Executes one scenario step: primitives, optional first llmResponses batch, turn advance, assertions.
+ *
+ * @param orchestrator - Orchestrator under test
+ * @param stateManager - State for error snapshots and expect assertions
+ * @param step - Step definition
+ * @param stepIndex - Zero-based index for error messages
+ */
+async function runScenarioStep(
+  orchestrator: Orchestrator,
+  stateManager: StateManager,
+  step: ScenarioStep,
+  stepIndex: number,
+): Promise<void> {
+  const actions = expandStep(step);
+
+  let result = await orchestrator.testExecuteActions(actions);
+  if (!result.success) {
+    const state = stateManager.getState() as Record<string, unknown>;
+    throw new Error(
+      `Integration scenario step ${stepIndex} failed: testExecuteActions returned success=false. State: ${JSON.stringify(state, null, 0).slice(0, 500)}`,
+    );
+  }
+
+  // When step has llmResponses, execute the first batch (e.g. square-effect outcome) before advancing turn,
+  // so SET_STATE on the current player (e.g. players.p2.hearts) is valid.
+  if (step.llmResponses?.[0]?.length) {
+    const effectResult = await orchestrator.testExecuteActions(step.llmResponses[0]);
+    if (!effectResult.success) {
+      throw new Error(
+        `Integration scenario step ${stepIndex} failed: testExecuteActions (llmResponses) returned success=false`,
+      );
+    }
+    if (effectResult.shouldAdvanceTurn) {
+      result = effectResult;
+    }
+  }
+
+  if (result.shouldAdvanceTurn) {
+    await orchestrator.advanceTurn();
+  }
+
+  if (step.expect && Object.keys(step.expect).length > 0) {
+    assertExpectations(stateManager, step.expect, stepIndex);
+  }
+}
+
+/**
+ * Runs an integration scenario against the real orchestrator.
  * No browser, no LLM, no TTS. Pure state-machine verification.
  *
  * @param scenario - Scenario definition
@@ -135,35 +188,6 @@ export async function runScenario(scenario: Scenario): Promise<void> {
   orchestrator.transitionPhase(GamePhase.PLAYING);
 
   for (let i = 0; i < scenario.steps.length; i++) {
-    const step = scenario.steps[i];
-    const actions = expandStep(step);
-
-    let result = await orchestrator.testExecuteActions(actions);
-    if (!result.success) {
-      const state = stateManager.getState() as Record<string, unknown>;
-      throw new Error(
-        `E2E step ${i} failed: testExecuteActions returned success=false. State: ${JSON.stringify(state, null, 0).slice(0, 500)}`,
-      );
-    }
-
-    // When step has llmResponses, execute the first batch (e.g. square-effect outcome) before advancing turn,
-    // so SET_STATE on the current player (e.g. players.p2.hearts) is valid.
-    if (step.llmResponses?.[0]?.length) {
-      const effectResult = await orchestrator.testExecuteActions(step.llmResponses[0]);
-      if (!effectResult.success) {
-        throw new Error(
-          `E2E step ${i} failed: testExecuteActions (llmResponses) returned success=false`,
-        );
-      }
-      if (effectResult.shouldAdvanceTurn) result = effectResult;
-    }
-
-    if (result.shouldAdvanceTurn) {
-      await orchestrator.advanceTurn();
-    }
-
-    if (step.expect && Object.keys(step.expect).length > 0) {
-      assertExpectations(stateManager, step.expect, i);
-    }
+    await runScenarioStep(orchestrator, stateManager, scenario.steps[i], i);
   }
 }

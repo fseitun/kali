@@ -7,7 +7,7 @@ export type MockScenario = "happy-path" | "scripted";
 /**
  * Mock LLM client for development (no API key) and tests.
  * - happy-path: Returns valid actions for local demo
- * - scripted: Uses scriptedResponses array in sequence (integration/E2E tests)
+ * - scripted: Uses scriptedResponses array in sequence (integration tests)
  */
 export class MockLLMClient implements LLMClient {
   private callCount = 0;

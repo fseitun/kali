@@ -1,9 +1,9 @@
 ---
-description: High-risk paths, e2e loop, regression fix discipline, optional readonly review
+description: High-risk paths, integration scenario loop, regression fix discipline, optional readonly review
 globs:
   - src/orchestrator/**/*.ts
   - src/game-loader/game-loader.ts
-  - e2e/**/*
+  - integration/**/*
 ---
 
 # Regression guardrails
@@ -11,11 +11,11 @@ globs:
 ## After edits here
 
 - Run `npm run full-check` before considering the task done (see agent full-check rule).
-- For **flow or board behavior** changes, also run `npm run test:e2e` once as a fast focused loop (optional but encouraged before relying only on the full suite).
+- For **flow or board behavior** changes, also run `npm run test:integration` once as a fast focused loop (optional but encouraged before relying only on the full suite).
 
 ## Regression fix discipline
 
-When reproducing a bug: add a **failing test or scenario step** (or assertion) first when practical, then fix—see [`testing-commands.mdc`](testing-commands.mdc) and [`docs/adr/0002-e2e-scenarios-regression-locks.md`](../../docs/adr/0002-e2e-scenarios-regression-locks.md).
+When reproducing a bug: add a **failing test or scenario step** (or assertion) first when practical, then fix—see [`testing-commands.mdc`](testing-commands.mdc) and [`docs/adr/0002-integration-scenario-regression-locks.md`](../../docs/adr/0002-integration-scenario-regression-locks.md).
 
 ## Large orchestrator refactors
 

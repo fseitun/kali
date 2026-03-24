@@ -81,7 +81,7 @@ function deriveBoardFromSquares(squares: Record<string, SquareData>): {
 
 /**
  * Resolves initialState from config squares and metadata.
- * Exported for e2e scenario runner which loads config from file.
+ * Exported for integration scenario runner which loads config from file.
  */
 export function resolveInitialState(config: GameConfigInput): GameState {
   return buildInitialStateFromParts(config);
