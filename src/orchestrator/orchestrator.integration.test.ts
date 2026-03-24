@@ -829,6 +829,76 @@ describe("Orchestrator Integration Tests", () => {
       expect(inverseMode).toBe(true);
       expect(mockLLM.getCallCount()).toBe(2);
     });
+
+    it("second roll onto ocean portal 82 keeps inverseMode and uses repeat narration LLM round", async () => {
+      const portalSquares = {
+        "44": { next: [45], prev: [43] },
+        "45": { next: [46], prev: [44], name: "Forest-Ocean Portal", nextOnLanding: [82] },
+        "46": { next: [47], prev: [45] },
+        "47": { next: [48], prev: [46] },
+        "79": { next: [80], prev: [78] },
+        "80": { next: [81], prev: [79] },
+        "81": { next: [82], prev: [80] },
+        "82": {
+          next: [83],
+          prev: [81],
+          name: "Ocean-Forest Portal",
+          nextOnLanding: [45],
+          inverseMode: "activate",
+        },
+        "83": { next: [84], prev: [82] },
+        "84": { next: [85], prev: [83] },
+      };
+
+      const responses: PrimitiveAction[][] = [
+        [
+          { action: "PLAYER_ROLLED", value: 1 },
+          { action: "NARRATE", text: "Moving to portal" },
+        ],
+        [{ action: "NARRATE", text: "First portal square narration" }],
+        [
+          { action: "PLAYER_ROLLED", value: 1 },
+          { action: "NARRATE", text: "Rolling again" },
+        ],
+        [{ action: "NARRATE", text: "Brief repeat line" }],
+      ];
+
+      mockLLM = createScriptedLLM(responses);
+
+      const initialState: GameState = {
+        game: {
+          name: "Kalimba Portal Test",
+          phase: GamePhase.PLAYING,
+          turn: "p1",
+          playerOrder: ["p1"],
+          winner: null,
+          lastRoll: 0,
+        },
+        players: {
+          p1: {
+            id: "p1",
+            name: "Alice",
+            position: 81,
+            inverseMode: false,
+            activeChoices: {},
+          },
+        },
+        board: { squares: portalSquares },
+      };
+
+      setupGame(initialState);
+
+      await orchestrator.handleTranscript("I rolled 1");
+      expect(stateManager.get("players.p1.position")).toBe(82);
+      expect(stateManager.get("players.p1.inverseMode")).toBe(true);
+
+      stateManager.set("players.p1.position", 81);
+      await orchestrator.handleTranscript("I rolled 1 again");
+
+      expect(stateManager.get("players.p1.position")).toBe(82);
+      expect(stateManager.get("players.p1.inverseMode")).toBe(true);
+      expect(mockLLM.getCallCount()).toBe(4);
+    });
   });
 
   describe("Turn Management", () => {

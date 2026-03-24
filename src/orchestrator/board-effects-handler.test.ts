@@ -127,6 +127,18 @@ describe("BoardEffectsHandler", () => {
       expect(stateManager.get("players.p1.position")).toBe(82);
     });
 
+    it("should not skip backward teleport when player has inverseMode string deactivate", async () => {
+      stateManager.set("board.squares", {
+        "82": { destination: 45 },
+      });
+      stateManager.set("players.p1.position", 82);
+      stateManager.set("players.p1.inverseMode", "deactivate");
+
+      await boardEffectsHandler.checkAndApplyBoardMoves("players.p1.position");
+
+      expect(stateManager.get("players.p1.position")).toBe(45);
+    });
+
     it("should apply portal teleport when square has nextOnLanding (e.g. Forest-Ocean portal 45→82)", async () => {
       stateManager.set("board.squares", {
         "45": { next: [46], prev: [44], name: "Forest-Ocean Portal", nextOnLanding: [82] },
@@ -513,6 +525,66 @@ describe("BoardEffectsHandler", () => {
       );
       expect(mockProcessTranscript).toHaveBeenCalledWith(
         expect.stringContaining("Jivaro Indians"),
+        expect.anything(),
+      );
+    });
+
+    it("applies inverseMode activate from portal square deterministically", async () => {
+      stateManager.set("board.squares", {
+        "82": {
+          next: [83],
+          prev: [81],
+          name: "Ocean-Forest Portal",
+          nextOnLanding: [45],
+          inverseMode: "activate",
+        },
+      });
+      stateManager.set("players.p1.position", 82);
+      stateManager.set("players.p1.inverseMode", false);
+
+      await boardEffectsHandler.checkAndApplySquareEffects("players.p1.position", baseContext);
+
+      expect(stateManager.get("players.p1.inverseMode")).toBe(true);
+      expect(mockProcessTranscript).toHaveBeenCalledWith(
+        expect.stringContaining("inverse mode on"),
+        expect.anything(),
+      );
+    });
+
+    it("repeat visit to inverse-activate portal uses short transcript and keeps inverseMode", async () => {
+      stateManager.set("board.squares", {
+        "82": {
+          next: [83],
+          prev: [81],
+          name: "Ocean-Forest Portal",
+          nextOnLanding: [45],
+          inverseMode: "activate",
+        },
+      });
+      stateManager.set("players.p1.position", 82);
+      stateManager.set("players.p1.inverseMode", true);
+
+      await boardEffectsHandler.checkAndApplySquareEffects("players.p1.position", baseContext);
+
+      expect(stateManager.get("players.p1.inverseMode")).toBe(true);
+      expect(mockProcessTranscript).toHaveBeenCalledTimes(1);
+      const transcript = mockProcessTranscript.mock.calls[0]?.[0] ?? "";
+      expect(transcript).toContain("landed again");
+      expect(transcript).not.toContain("Square data for flavour");
+    });
+
+    it("applies inverseMode deactivate from square deterministically", async () => {
+      stateManager.set("board.squares", {
+        "50": { destination: 60, name: "Inverse off", inverseMode: "deactivate" },
+      });
+      stateManager.set("players.p1.position", 50);
+      stateManager.set("players.p1.inverseMode", true);
+
+      await boardEffectsHandler.checkAndApplySquareEffects("players.p1.position", baseContext);
+
+      expect(stateManager.get("players.p1.inverseMode")).toBe(false);
+      expect(mockProcessTranscript).toHaveBeenCalledWith(
+        expect.stringContaining("inverse mode off"),
         expect.anything(),
       );
     });

@@ -1,4 +1,4 @@
-import { getNextTargets, getTargets } from "./board-next";
+import { getTargets } from "./board-next";
 import type { GameState } from "./types";
 
 type SquareShape = {
@@ -24,8 +24,7 @@ function getForwardLandingHop(
   inverseMode: boolean,
 ): number[] | undefined {
   if (inverseMode && landedSq?.prevOnLanding?.length) {
-    const nextTargets = getNextTargets(landedSq);
-    return nextTargets?.length ? [nextTargets[0]] : undefined;
+    return landedSq?.nextOnLanding;
   }
   return landedSq?.nextOnLanding ?? landedSq?.prevOnLanding;
 }
@@ -52,6 +51,18 @@ function applyLandingHop(
 }
 
 /**
+ * Whether the player’s inverse-mode rules apply (penalty slides ignored, backward teleports skipped).
+ * Only `true` or the string `"activate"` count as on so values like `"deactivate"` are never truthy by accident.
+ *
+ * @param player - Player object from game state, or undefined
+ * @returns true when inverse mode is active
+ */
+export function isPlayerInverseModeActive(player: Record<string, unknown> | undefined): boolean {
+  const v = player?.inverseMode;
+  return v === true || v === "activate";
+}
+
+/**
  * Slice of state needed to simulate movement. `inverseMode` is a **player flag** that changes how
  * forward landing hops resolve (see `getForwardLandingHop`); it is not the same as movement
  * {@link RollMovementDirection} — normal dice always pass `direction: "forward"` regardless of inverseMode.
@@ -67,7 +78,7 @@ function readRollContext(state: GameState, playerId: string): RollSimulationSlic
   const board = state.board as Record<string, unknown> | undefined;
   const squares = board?.squares as Record<string, SquareShape> | undefined;
   const player = (state.players as Record<string, Record<string, unknown>>)?.[playerId];
-  const inverseMode = !!(player?.inverseMode as boolean | undefined);
+  const inverseMode = isPlayerInverseModeActive(player);
   const activeChoices = (player?.activeChoices as Record<string, number>) ?? {};
   return { squares, inverseMode, activeChoices };
 }

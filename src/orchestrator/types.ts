@@ -49,6 +49,7 @@ export interface SquareData {
   item?: string;
   instrument?: string;
   heart?: boolean;
+  /** Orchestrator sets player flag: `"activate"` → on, `"deactivate"` → off (boolean in state). */
   inverseMode?: string;
   /**
    * Forward edges: either a single path `number[]` or a fork map (target index string → phrases for that branch).

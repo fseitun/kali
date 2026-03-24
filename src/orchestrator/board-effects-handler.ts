@@ -1,4 +1,5 @@
 import { findSquareByEffect, getWinPosition } from "./board-helpers";
+import { isPlayerInverseModeActive } from "./board-traversal";
 import {
   getDirectionalRollDice,
   getSquareKind,
@@ -19,7 +20,7 @@ import { Logger } from "@/utils/logger";
  * Responsibilities:
  * - Auto-apply teleports from squares (portals, returnTo187); skip backward when inverseMode
  * - Magic door bounce (overshooting 186)
- * - Apply deterministic square effects from config (hearts, skipTurn, item, instrument)
+ * - Apply deterministic square effects from config (hearts, skipTurn, item, instrument, inverseMode)
  * - Trigger LLM for narration only (no game-rule state from LLM)
  */
 export class BoardEffectsHandler {
@@ -155,7 +156,7 @@ export class BoardEffectsHandler {
     const player = playerId
       ? (state.players as Record<string, Record<string, unknown>>)?.[playerId]
       : undefined;
-    return !!player?.inverseMode;
+    return isPlayerInverseModeActive(player);
   }
 
   /**
@@ -282,16 +283,71 @@ export class BoardEffectsHandler {
   }
 
   /**
-   * Applies deterministic square effects from config (heart, skipTurn, item, instrument).
+   * Sets `players.*.inverseMode` from square config (`activate` / `deactivate`).
+   *
+   * @param playerId - Current player id
+   * @param squareData - Square config
+   * @returns Short label for narration prompt, or null if no inverseMode field
+   */
+  private applyInverseModeFromSquare(
+    playerId: string,
+    squareData: Record<string, unknown>,
+  ): string | null {
+    const mode = squareData.inverseMode;
+    if (mode === "activate") {
+      this.stateManager.set(playerStatePath(playerId, "inverseMode"), true);
+      return "inverse mode on";
+    }
+    if (mode === "deactivate") {
+      this.stateManager.set(playerStatePath(playerId, "inverseMode"), false);
+      return "inverse mode off";
+    }
+    return null;
+  }
+
+  /**
+   * Portal square that turns inverse mode on, visited again while already in inverse mode — kid-friendly short path.
+   */
+  private isRepeatInverseActivatePortal(
+    squareData: Record<string, unknown>,
+    kind: ReturnType<typeof getSquareKind>,
+    playerId: string,
+  ): boolean {
+    if (squareData.inverseMode !== "activate" || kind !== "portal") {
+      return false;
+    }
+    const player = this.stateManager.get(playerStatePath(playerId)) as
+      | Record<string, unknown>
+      | undefined;
+    return isPlayerInverseModeActive(player);
+  }
+
+  /**
+   * @param position - Square index
+   * @param squareName - Display name
+   * @returns SYSTEM transcript for LLM: one brief line, no state changes
+   */
+  private buildRepeatInversePortalTranscript(position: number, squareName: string): string {
+    return (
+      `[SYSTEM: Current player landed again on square ${position} (${squareName}), a portal they already used. ` +
+      `Inverse mode stays on (friendly penalties). Narrate ONE very short reassuring line. ` +
+      `Do not change game state. Do not re-explain the portal.]`
+    );
+  }
+
+  /**
+   * Applies deterministic square effects from config (heart, skipTurn, item, instrument, inverseMode).
    * Mutates state for the current player only. Used before asking LLM to narrate.
    *
    * @param path - State path that was mutated (e.g. players.p1.position)
    * @param squareData - Square config from board.squares[position]
+   * @param options - When `skipInverseMode`, do not apply square `inverseMode` (repeat portal visit)
    * @returns Summary of applied effects for narration prompt
    */
   private applyDeterministicSquareEffects(
     path: string,
     squareData: Record<string, unknown>,
+    options?: { skipInverseMode?: boolean },
   ): string[] {
     const match = path.match(/^players\.([^.]+)\.position$/);
     const playerId = match?.[1];
@@ -329,7 +385,24 @@ export class BoardEffectsHandler {
       applied.push(itemResult);
     }
 
+    this.appendInverseModeToApplied(applied, playerId, squareData, options?.skipInverseMode);
+
     return applied;
+  }
+
+  private appendInverseModeToApplied(
+    applied: string[],
+    playerId: string,
+    squareData: Record<string, unknown>,
+    skipInverseMode?: boolean,
+  ): void {
+    if (skipInverseMode) {
+      return;
+    }
+    const inverseResult = this.applyInverseModeFromSquare(playerId, squareData);
+    if (inverseResult) {
+      applied.push(inverseResult);
+    }
   }
 
   /**
@@ -534,18 +607,23 @@ export class BoardEffectsHandler {
       this.setPendingDirectionalRoll(playerId, position, squareData.effect as string | undefined);
     }
 
-    const applied = this.applyDeterministicSquareEffects(path, squareData);
+    const repeatInversePortal = this.isRepeatInverseActivatePortal(squareData, kind, playerId);
+    const applied = this.applyDeterministicSquareEffects(path, squareData, {
+      skipInverseMode: repeatInversePortal,
+    });
     const squareInfo = JSON.stringify(squareData);
-    const transcript = this.buildSquareEffectTranscript(
-      kind,
-      position,
-      squareName,
-      power,
-      applied,
-      squareInfo,
-      context.arrivedViaTeleportFrom,
-      squareData,
-    );
+    const transcript = repeatInversePortal
+      ? this.buildRepeatInversePortalTranscript(position, squareName)
+      : this.buildSquareEffectTranscript(
+          kind,
+          position,
+          squareName,
+          power,
+          applied,
+          squareInfo,
+          context.arrivedViaTeleportFrom,
+          squareData,
+        );
 
     this.syncAnimalEncounterState(kind, playerId, position, power, false);
 
