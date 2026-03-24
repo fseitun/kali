@@ -44,7 +44,6 @@ export const enUS = {
     startKali: "Start Kali",
     iosInstallHint:
       "Install this web app on your iPhone: tap the Share icon below and select 'Add to Home Screen'.",
-    clickToStart: 'Click "Start Kali" to begin voice interaction',
     initializationFailed: "Initialization failed",
     listeningForCommand: "Listening for command...",
     wakeWordInstruction: 'Say "{wakeWord}" before speaking',

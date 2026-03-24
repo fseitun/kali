@@ -55,7 +55,7 @@ class KaliDebugApp {
       debugAllowPositionTeleport: CONFIG.DEBUG_POSITION_TELEPORT,
     });
 
-    statusElement.textContent = t("ui.clickToStart");
+    statusElement.textContent = "";
 
     const versionNoticeMessage = document.getElementById("version-notice-message");
     const versionRefresh = document.getElementById("version-refresh");

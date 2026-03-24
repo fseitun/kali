@@ -506,7 +506,7 @@ ${summary ? `**Summary (for NARRATE explanations):** ${summary}\n` : ""}${exampl
     this.initialized = false;
     this.uiService.setButtonState(t("ui.startKali"), false);
     this.uiService.showButton();
-    this.uiService.updateStatus(t("ui.clickToStart"));
+    this.uiService.updateStatus("");
     const indicator = this.uiService.getStatusIndicator();
     indicator.setState("idle");
     this.uiService.clearConsole();
