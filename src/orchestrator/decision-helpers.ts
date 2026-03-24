@@ -1,5 +1,6 @@
 import { matchAnswerToChoiceKeywords } from "./board-next";
 import { getDecisionPoints } from "./decision-point-inference";
+import { getMovementDirectionForState } from "./fork-roll-policy";
 import type { DecisionPoint, GameState } from "./types";
 import { playerStatePath } from "@/state-paths";
 
@@ -25,7 +26,10 @@ function getDecisionPointContext(state: GameState): {
   if (typeof position !== "number") {
     return null;
   }
-  const decisionPoint = decisionPoints.find((dp) => dp.position === position);
+  const movementDir = getMovementDirectionForState(state, currentTurn);
+  const decisionPoint = decisionPoints.find(
+    (dp) => dp.position === position && (dp.direction ?? "forward") === movementDir,
+  );
   if (!decisionPoint) {
     return null;
   }

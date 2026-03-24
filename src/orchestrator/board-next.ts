@@ -79,12 +79,24 @@ export function getPrevTargets(sq: { prev?: number[] } | undefined, current: num
   return [...prev];
 }
 
+/** True when the resolved edge list has more than one branch (fork). */
+export function isMultiBranchTargets(targets: number[]): boolean {
+  return targets.length > 1;
+}
+
+/**
+ * True when moving backward from `current` on this square has more than one `prev` target.
+ */
+export function isPrevFork(sq: { prev?: number[] } | undefined, current: number): boolean {
+  return isMultiBranchTargets(getPrevTargets(sq, current));
+}
+
 /**
  * True when the square has more than one forward target (fork).
  * @param sq - Square-like object with optional `next`
  */
 export function isNextFork(sq: { next?: NextField } | undefined): boolean {
-  return getNextTargets(sq).length > 1;
+  return isMultiBranchTargets(getNextTargets(sq));
 }
 
 /**

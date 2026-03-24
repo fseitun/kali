@@ -2,8 +2,11 @@ import { describe, expect, it } from "vitest";
 import {
   getForkKeywordsWithImplicitTargets,
   getNextTargets,
+  getPrevTargets,
+  isMultiBranchTargets,
   isNextFork,
   isNextRecord,
+  isPrevFork,
   matchAnswerToChoiceKeywords,
 } from "./board-next";
 
@@ -28,6 +31,15 @@ describe("board-next", () => {
     });
   });
 
+  describe("isMultiBranchTargets", () => {
+    it("mirrors fork detection for forward and prev edges", () => {
+      expect(isMultiBranchTargets(getNextTargets({ next: [1, 15] }))).toBe(true);
+      expect(isMultiBranchTargets(getNextTargets({ next: [2] }))).toBe(false);
+      expect(isMultiBranchTargets(getPrevTargets({ prev: [3, 4] }, 5))).toBe(true);
+      expect(isMultiBranchTargets(getPrevTargets({ prev: [4] }, 5))).toBe(false);
+    });
+  });
+
   describe("isNextFork", () => {
     it("is false for single target", () => {
       expect(isNextFork({ next: [2] })).toBe(false);
@@ -37,6 +49,17 @@ describe("board-next", () => {
     it("is true for two targets", () => {
       expect(isNextFork({ next: [1, 15] })).toBe(true);
       expect(isNextFork({ next: { "1": [], "15": [] } })).toBe(true);
+    });
+  });
+
+  describe("isPrevFork", () => {
+    it("is true when prev lists multiple targets at this position", () => {
+      expect(isPrevFork({ prev: [3, 4] }, 5)).toBe(true);
+    });
+
+    it("is false for implicit single backward edge", () => {
+      expect(isPrevFork({}, 3)).toBe(false);
+      expect(isPrevFork({ prev: [2] }, 3)).toBe(false);
     });
   });
 

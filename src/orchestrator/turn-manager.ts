@@ -1,23 +1,10 @@
-import { getDecisionPoints } from "./decision-point-inference";
+import { getPendingForkPromptIfAny, hasMovementForkBlockingPlay } from "./fork-roll-policy";
 import { hasPendingForCurrentTurn } from "./pending-types";
-import type { DecisionPoint } from "./types";
+import type { GameState } from "./types";
 import { GamePhase } from "./types";
 import type { StateManager } from "@/state-manager";
 import { GAME_PATH, playerStatePath, STATE_PLAYERS_PREFIX } from "@/state-paths";
 import { Logger } from "@/utils/logger";
-
-function getPendingDecisionPromptAt(
-  decisionPoints: DecisionPoint[],
-  position: number,
-  activeChoices: Record<string, number> | undefined,
-): string | null {
-  const decisionPoint = decisionPoints.find((dp) => dp.position === position);
-  if (!decisionPoint) {
-    return null;
-  }
-  const hasChoice = activeChoices?.[String(position)] !== undefined;
-  return hasChoice ? null : decisionPoint.prompt;
-}
 
 /**
  * Manages turn-based gameplay mechanics.
@@ -39,32 +26,9 @@ export class TurnManager {
    * @returns The decision prompt string, or null if no pending decision
    */
   getPendingDecisionPrompt(): string | null {
-    const state = this.stateManager.getState();
-    const game = state.game as Record<string, unknown> | undefined;
-    const currentTurn = game?.turn as string | undefined;
-    if (!currentTurn) {
-      return null;
-    }
-
-    const decisionPoints = getDecisionPoints(state);
-    if (decisionPoints.length === 0) {
-      return null;
-    }
-
+    const state = this.stateManager.getState() as GameState;
     try {
-      const players = state.players as Record<string, Record<string, unknown>> | undefined;
-      const currentPlayer = players?.[currentTurn];
-      if (!currentPlayer) {
-        return null;
-      }
-
-      const position = currentPlayer.position as number | undefined;
-      if (typeof position !== "number") {
-        return null;
-      }
-
-      const activeChoices = currentPlayer.activeChoices as Record<string, number> | undefined;
-      return getPendingDecisionPromptAt(decisionPoints, position, activeChoices);
+      return getPendingForkPromptIfAny(state);
     } catch (error) {
       Logger.error("Error getting pending decision prompt:", error);
       return null;
@@ -85,42 +49,9 @@ export class TurnManager {
    * @returns true if there are unresolved decisions, false otherwise
    */
   hasPendingDecisions(): boolean {
-    const state = this.stateManager.getState();
-    const game = state.game as Record<string, unknown> | undefined;
-    const currentTurn = game?.turn as string | undefined;
-
-    if (!currentTurn) {
-      return false;
-    }
-
-    const decisionPoints = getDecisionPoints(state);
-
-    if (decisionPoints.length === 0) {
-      return false;
-    }
-
+    const state = this.stateManager.getState() as GameState;
     try {
-      const players = state.players as Record<string, Record<string, unknown>> | undefined;
-      const currentPlayer = players?.[currentTurn];
-
-      if (!currentPlayer) {
-        return false;
-      }
-
-      const position = currentPlayer.position as number | undefined;
-
-      if (typeof position !== "number") {
-        return false;
-      }
-
-      const decisionPoint = decisionPoints.find((dp) => dp.position === position);
-      if (!decisionPoint) {
-        return false;
-      }
-
-      const choices = currentPlayer.activeChoices as Record<string, number> | undefined;
-      const hasChoice = choices?.[String(position)] !== undefined;
-      return !hasChoice;
+      return hasMovementForkBlockingPlay(state);
     } catch (error) {
       Logger.error("Error checking pending decisions:", error);
       return false;

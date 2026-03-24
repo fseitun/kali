@@ -74,6 +74,8 @@ export interface DecisionPoint {
   positionOptions?: Record<string, number>;
   /** Per-target phrases for fork resolution (includes implicit target number strings). */
   choiceKeywords?: Record<string, string[]>;
+  /** When omitted, treated as forward (normal dice). Backward uses `prev` forks. */
+  direction?: "forward" | "backward";
 }
 
 /**

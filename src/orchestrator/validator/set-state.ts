@@ -113,7 +113,9 @@ function validateForkChoiceBeforePositionSet(
     return { valid: true };
   }
 
-  const decisionPoint = decisionPoints.find((dp) => dp.position === currentPosition);
+  const decisionPoint = decisionPoints.find(
+    (dp) => dp.position === currentPosition && (dp.direction ?? "forward") === "forward",
+  );
 
   if (!decisionPoint) {
     return { valid: true };

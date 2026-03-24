@@ -1,6 +1,5 @@
 import { computeNewPositionFromState } from "../board-traversal";
 import { getDecisionPointApplyState } from "../decision-helpers";
-import { getDecisionPoints } from "../decision-point-inference";
 import { isStrictRiddleCorrect } from "../riddle-answer";
 import type { GameState, PrimitiveAction } from "../types";
 
@@ -9,37 +8,6 @@ type MockStateHandler = (
   mockState: GameState,
   originalState: GameState,
 ) => GameState | void;
-
-/**
- * True when the current player is at a decision point and has not yet made a choice.
- */
-export function hasPendingDecisionsInState(state: GameState): boolean {
-  const game = state.game as Record<string, unknown> | undefined;
-  const currentTurn = game?.turn as string | undefined;
-  if (!currentTurn) {
-    return false;
-  }
-  const decisionPoints = getDecisionPoints(state);
-  if (!decisionPoints.length) {
-    return false;
-  }
-  const players = state.players as Record<string, Record<string, unknown>> | undefined;
-  const currentPlayer = players?.[currentTurn];
-  if (!currentPlayer) {
-    return false;
-  }
-  const position = currentPlayer.position as number | undefined;
-  if (typeof position !== "number") {
-    return false;
-  }
-  const dp = decisionPoints.find((d) => d.position === position);
-  if (!dp) {
-    return false;
-  }
-  const choices = currentPlayer.activeChoices as Record<string, number> | undefined;
-  const hasChoice = choices?.[String(position)] !== undefined;
-  return !hasChoice;
-}
 
 function handleSetState(
   primitive: PrimitiveAction,

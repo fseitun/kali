@@ -1,6 +1,6 @@
+import { forkChoiceBlockingValidation } from "../fork-roll-policy";
 import type { GameState, PrimitiveAction } from "../types";
 import { validateField } from "./common";
-import { hasPendingDecisionsInState } from "./mock-state";
 import type { ValidationResult, ValidatorContext } from "./types";
 
 type Pending = { kind?: string; playerId?: string } | null | undefined;
@@ -57,13 +57,6 @@ function validatePlayerRolledPhaseRestrictions(
       valid: false,
       errorCode: "resolveSquareEffectFirst",
       error: `PLAYER_ROLLED at index ${index}: Cannot roll dice during square effect processing. The square effect must be resolved first (fight/flee decision, etc.).`,
-    };
-  }
-  if (hasPendingDecisionsInState(state)) {
-    return {
-      valid: false,
-      errorCode: "chooseForkFirst",
-      error: `PLAYER_ROLLED at index ${index}: Cannot roll until direction is chosen at fork. Choose path/branch first.`,
     };
   }
   return checkPendingBlocksRoll(pending, currentTurn, index);
@@ -125,5 +118,6 @@ export function validatePlayerRolled(
     return rangeErr;
   }
 
-  return { valid: true };
+  const rollValue = "value" in action && typeof action.value === "number" ? action.value : 0;
+  return forkChoiceBlockingValidation(state, index, rollValue, "forward") ?? { valid: true };
 }

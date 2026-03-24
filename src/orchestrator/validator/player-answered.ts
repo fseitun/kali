@@ -1,4 +1,5 @@
 import { getDecisionPoints } from "../decision-point-inference";
+import { forkChoiceBlockingValidation } from "../fork-roll-policy";
 import type { Pending } from "../pending-types";
 import { getPending, getPendingRollSpec, isPendingRollKind } from "../pending-types";
 import type { GameState, PrimitiveAction } from "../types";
@@ -48,14 +49,20 @@ function validatePendingRollAnswer(
     pending as Parameters<typeof getPendingRollSpec>[0],
     state,
   );
-  if (roll >= min && roll <= max) {
-    return { valid: true };
+  if (roll < min || roll > max) {
+    return {
+      valid: false,
+      error: `PLAYER_ANSWERED at index ${index}: Roll must be ${min}-${max} (${label}), got ${roll}.`,
+      errorCode: "invalidDiceRoll",
+    };
   }
-  return {
-    valid: false,
-    error: `PLAYER_ANSWERED at index ${index}: Roll must be ${min}-${max} (${label}), got ${roll}.`,
-    errorCode: "invalidDiceRoll",
-  };
+  if (pending.kind === "directional") {
+    const forkErr = forkChoiceBlockingValidation(state, index, roll, "backward");
+    if (forkErr) {
+      return forkErr;
+    }
+  }
+  return { valid: true };
 }
 
 function validatePathChoiceAB(
@@ -69,7 +76,9 @@ function validatePathChoiceAB(
   if (firstChar !== "A" && firstChar !== "B") {
     return null;
   }
-  const pathChoiceDp = decisionPoints.find((dp) => dp.position === 0);
+  const pathChoiceDp = decisionPoints.find(
+    (dp) => dp.position === 0 && (dp.direction ?? "forward") === "forward",
+  );
   if (!pathChoiceDp) {
     return { valid: true };
   }

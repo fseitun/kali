@@ -1,5 +1,5 @@
 import type { StateDisplayConfig, StateDisplayMetadata } from "@/game-loader/types";
-import { getDecisionPoints } from "@/orchestrator/decision-point-inference";
+import { getEnforceableForkContext } from "@/orchestrator/fork-roll-policy";
 import {
   getPowerCheckDiceConfig,
   getPowerCheckRollSpec,
@@ -143,47 +143,27 @@ function buildDecisionPointHint(decisionPoint: {
   return ` When intent is clear, return PLAYER_ANSWERED with the target position number; if unclear, NARRATE to ask again.`;
 }
 
-function getCurrentPlayerAtPosition(
-  state: Record<string, unknown>,
-): { currentPlayer: Record<string, unknown>; position: number; currentTurn: string } | null {
-  const players = state.players as Record<string, Record<string, unknown>> | undefined;
-  const game = state.game as Record<string, unknown> | undefined;
-  const currentTurn = game?.turn as string | undefined;
-  const currentPlayer = currentTurn ? players?.[currentTurn] : undefined;
-  if (!currentTurn || !currentPlayer) {
-    return null;
-  }
-  const position = currentPlayer.position as number | undefined;
-  if (typeof position !== "number") {
-    return null;
-  }
-  return { currentPlayer, position, currentTurn };
-}
-
 function getPlayerAndPositionAtFork(state: Record<string, unknown>): {
   currentPlayer: Record<string, unknown>;
   position: number;
   currentTurn: string;
   decisionPoint: { prompt: string; choiceKeywords?: Record<string, string[]> };
 } | null {
-  const decisionPoints = getDecisionPoints(state as GameState);
-  if (decisionPoints.length === 0) {
+  const ctx = getEnforceableForkContext(state as GameState);
+  if (!ctx) {
     return null;
   }
-  const playerInfo = getCurrentPlayerAtPosition(state);
-  if (!playerInfo) {
+  const players = state.players as Record<string, Record<string, unknown>> | undefined;
+  const currentPlayer = players?.[ctx.playerId];
+  if (!currentPlayer) {
     return null;
   }
-  const { currentPlayer, position, currentTurn } = playerInfo;
-  const decisionPoint = decisionPoints.find((dp) => dp.position === position);
-  if (!decisionPoint) {
-    return null;
-  }
-  const choices = currentPlayer.activeChoices as Record<string, number> | undefined;
-  if (choices?.[String(position)] !== undefined) {
-    return null;
-  }
-  return { currentPlayer, position, currentTurn, decisionPoint };
+  return {
+    currentPlayer,
+    position: ctx.position,
+    currentTurn: ctx.playerId,
+    decisionPoint: ctx.decisionPoint,
+  };
 }
 
 function getCurrentPlayerAtFork(state: Record<string, unknown>): {
