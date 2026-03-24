@@ -17,6 +17,7 @@ import {
 import type { ISpeechService } from "./services/speech-service";
 import type { IUIService } from "./services/ui-service";
 import { StateManager } from "./state-manager";
+import { playerStatePath } from "./state-paths";
 import { checkBrowserSupport } from "./utils/browser-support";
 import { validateConfig } from "./utils/config-validator";
 import { Logger } from "./utils/logger";
@@ -592,7 +593,7 @@ ${summary ? `**Summary (for NARRATE explanations):** ${summary}\n` : ""}${exampl
       Logger.warn(`submitDebugPositionTeleport: ${resolved.msg}`);
       return { success: false, shouldAdvanceTurn: false };
     }
-    const path = `players.${resolved.turn}.position`;
+    const path = playerStatePath(resolved.turn, "position");
     return this.testExecuteActions([{ action: "SET_STATE", path, value: square }]);
   }
 

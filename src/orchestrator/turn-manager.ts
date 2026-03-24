@@ -3,6 +3,7 @@ import { hasPendingForCurrentTurn } from "./pending-types";
 import type { DecisionPoint } from "./types";
 import { GamePhase } from "./types";
 import type { StateManager } from "@/state-manager";
+import { GAME_PATH, playerStatePath, STATE_PLAYERS_PREFIX } from "@/state-paths";
 import { Logger } from "@/utils/logger";
 
 function getPendingDecisionPromptAt(
@@ -194,9 +195,9 @@ export class TurnManager {
     position: number;
     skippedPlayers: Array<{ playerId: string; name: string }>;
   }> {
-    this.stateManager.set(`players.${nextPlayerId}.skipTurns`, skipTurns - 1);
+    this.stateManager.set(playerStatePath(nextPlayerId, "skipTurns"), skipTurns - 1);
     Logger.info(`⏭️ Skipping ${nextPlayerName} (had ${skipTurns} skip(s), now ${skipTurns - 1})`);
-    this.stateManager.set("game.turn", nextPlayerId);
+    this.stateManager.set(GAME_PATH.turn, nextPlayerId);
     const currentSkipped = { playerId: nextPlayerId, name: nextPlayerName };
     const afterSkipped = await this.advanceTurn(isProcessingSquareEffect);
     if (afterSkipped) {
@@ -271,7 +272,7 @@ export class TurnManager {
       }
 
       Logger.info(`Auto-advancing turn: ${currentTurn} → ${nextPlayerId}`);
-      this.stateManager.set("game.turn", nextPlayerId);
+      this.stateManager.set(GAME_PATH.turn, nextPlayerId);
 
       const nextPlayerPosition = (nextPlayer?.position as number) || 0;
 
@@ -297,7 +298,7 @@ export class TurnManager {
     let nextPlayerName = (nextPlayer?.name as string) || nextPlayerId;
     const skipTurns = (nextPlayer?.skipTurns as number) ?? 0;
     if (skipTurns > 0) {
-      this.stateManager.set(`players.${nextPlayerId}.skipTurns`, skipTurns - 1);
+      this.stateManager.set(playerStatePath(nextPlayerId, "skipTurns"), skipTurns - 1);
       Logger.info(`⏭️ Skipping ${nextPlayerName} (power check lose advance)`);
       const skipIndex = (nextIndex + 1) % playerOrder.length;
       nextPlayerId = playerOrder[skipIndex];
@@ -336,7 +337,7 @@ export class TurnManager {
       nextIndex,
     );
 
-    this.stateManager.set("game.turn", nextPlayerId);
+    this.stateManager.set(GAME_PATH.turn, nextPlayerId);
     const position = (nextPlayer?.position as number) ?? 0;
     return { playerId: nextPlayerId, name: nextPlayerName, position };
   }
@@ -348,7 +349,7 @@ export class TurnManager {
    * @throws Error if mutation targets wrong player
    */
   async assertPlayerTurnOwnership(path: string): Promise<void> {
-    if (!path.startsWith("players.")) {
+    if (!path.startsWith(STATE_PLAYERS_PREFIX)) {
       return;
     }
 

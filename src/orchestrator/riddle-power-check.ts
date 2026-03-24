@@ -10,6 +10,7 @@ import { t } from "@/i18n/translations";
 import type { LLMClient } from "@/llm/LLMClient";
 import type { ISpeechService } from "@/services/speech-service";
 import type { StateManager } from "@/state-manager";
+import { GAME_PATH, playerStatePath } from "@/state-paths";
 import { Logger } from "@/utils/logger";
 
 export interface RiddlePowerCheckDeps {
@@ -47,7 +48,7 @@ export class RiddlePowerCheckHandler {
       riddleCorrect: primitive.correct,
       phase: "powerCheck",
     };
-    this.deps.stateManager.set("game.pending", next);
+    this.deps.stateManager.set(GAME_PATH.pending, next);
     Logger.info(`Riddle resolved: correct=${primitive.correct}, phase→powerCheck`);
   }
 
@@ -102,7 +103,7 @@ export class RiddlePowerCheckHandler {
       return;
     }
     const next = this.buildNextPendingFromAskRiddle(pending, primitive);
-    this.deps.stateManager.set("game.pending", next);
+    this.deps.stateManager.set(GAME_PATH.pending, next);
     Logger.info(
       `Ask riddle stored; correctOption=${primitive.correctOption.slice(0, 30)}${primitive.correctOptionSynonyms?.length ? `, synonyms=${primitive.correctOptionSynonyms.length}` : ""}`,
     );
@@ -168,20 +169,15 @@ export class RiddlePowerCheckHandler {
         ? winJumpTo
         : computeNewPositionFromState(state as GameState, playerId, currentPos, roll);
 
-    this.deps.stateManager.set(`players.${playerId}.position`, newPosition);
+    this.deps.stateManager.set(playerStatePath(playerId, "position"), newPosition);
     this.applyAnimalEncounterRewards(playerId, squareData);
-    this.deps.stateManager.set("game.pending", null);
+    this.deps.stateManager.set(GAME_PATH.pending, null);
     Logger.info(`Power check WIN: ${playerId} advances to ${newPosition}`);
 
-    await this.deps.boardEffectsHandler.checkAndApplyBoardMoves(
-      `players.${playerId}.position`,
-      context,
-    );
-    await this.deps.boardEffectsHandler.checkAndApplySquareEffects(
-      `players.${playerId}.position`,
-      context,
-    );
-    this.deps.checkAndApplyWinCondition(`players.${playerId}.position`);
+    const positionPath = playerStatePath(playerId, "position");
+    await this.deps.boardEffectsHandler.checkAndApplyBoardMoves(positionPath, context);
+    await this.deps.boardEffectsHandler.checkAndApplySquareEffects(positionPath, context);
+    this.deps.checkAndApplyWinCondition(positionPath);
     return { handled: true, passed: true };
   }
 
@@ -201,7 +197,7 @@ export class RiddlePowerCheckHandler {
       power: pending.power,
       phase: "revenge",
     };
-    this.deps.stateManager.set("game.pending", next);
+    this.deps.stateManager.set(GAME_PATH.pending, next);
     Logger.info(`Power check LOSE: phase→revenge, advancing turn to next player`);
     const turnAdvanced = this.deps.turnManager.advanceTurnMechanical();
     return { handled: true, passed: false, turnAdvanced: turnAdvanced ?? undefined };
@@ -275,7 +271,9 @@ export class RiddlePowerCheckHandler {
     const win = isRevenge ? roll >= power : roll > power;
 
     if (win) {
-      const currentPos = this.deps.stateManager.get(`players.${playerId}.position`) as number;
+      const currentPos = this.deps.stateManager.get(
+        playerStatePath(playerId, "position"),
+      ) as number;
       return this.handlePowerCheckWin(playerId, position, squareData, currentPos, roll, context);
     }
 
@@ -288,16 +286,17 @@ export class RiddlePowerCheckHandler {
 
   applyAnimalEncounterRewards(playerId: string, squareData: Record<string, unknown>): void {
     if (squareData.heart === true) {
-      const current = (this.deps.stateManager.get(`players.${playerId}.hearts`) as number) ?? 0;
-      this.deps.stateManager.set(`players.${playerId}.hearts`, current + 1);
+      const current =
+        (this.deps.stateManager.get(playerStatePath(playerId, "hearts")) as number) ?? 0;
+      this.deps.stateManager.set(playerStatePath(playerId, "hearts"), current + 1);
     }
 
     const instrument = squareData.instrument as string | undefined;
     if (typeof instrument === "string" && instrument.length > 0) {
       const current =
-        (this.deps.stateManager.get(`players.${playerId}.instruments`) as unknown[]) ?? [];
+        (this.deps.stateManager.get(playerStatePath(playerId, "instruments")) as unknown[]) ?? [];
       const next = Array.isArray(current) ? [...current, instrument] : [instrument];
-      this.deps.stateManager.set(`players.${playerId}.instruments`, next);
+      this.deps.stateManager.set(playerStatePath(playerId, "instruments"), next);
     }
   }
 }

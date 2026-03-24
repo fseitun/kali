@@ -9,6 +9,7 @@ import type { IStatusIndicator } from "@/components/status-indicator";
 import { t } from "@/i18n/translations";
 import type { ISpeechService } from "@/services/speech-service";
 import type { StateManager } from "@/state-manager";
+import { GAME_PATH, playerStatePath } from "@/state-paths";
 import { Logger } from "@/utils/logger";
 
 export interface ActionExecutorContext {
@@ -36,7 +37,7 @@ export async function executeNarrate(
     pending?.kind === "riddle" &&
     primitive.text
   ) {
-    ctx.stateManager.set("game.pending", {
+    ctx.stateManager.set(GAME_PATH.pending, {
       ...pending,
       riddlePrompt: primitive.text,
     });
@@ -83,7 +84,7 @@ export async function executePlayerRolled(
     throw new Error("Cannot process PLAYER_ROLLED: No current turn set");
   }
 
-  const path = `players.${currentTurn}.position`;
+  const path = playerStatePath(currentTurn, "position");
   const currentPosition = ctx.stateManager.get(path) as number;
 
   if (typeof currentPosition !== "number") {
@@ -101,7 +102,7 @@ export async function executePlayerRolled(
 
   ctx.stateManager.set(path, newPosition);
   context.positionPathsSetByRoll?.add(path);
-  ctx.stateManager.set("game.lastRoll", primitive.value);
+  ctx.stateManager.set(GAME_PATH.lastRoll, primitive.value);
   await ctx.boardEffectsHandler.checkAndApplyBoardMoves(path, context);
   await ctx.boardEffectsHandler.checkAndApplySquareEffects(path, context);
   ctx.checkAndApplyWinCondition(path);
@@ -138,7 +139,7 @@ function getDirectionalRollContext(state: Record<string, unknown>): {
   if (pending?.kind !== "directional" || !currentTurn || pending.playerId !== currentTurn) {
     return null;
   }
-  const path = `players.${currentTurn}.position`;
+  const path = playerStatePath(currentTurn, "position");
   const currentPosition = (state.players as Record<string, Record<string, unknown>>)?.[currentTurn]
     ?.position as number | undefined;
   if (typeof currentPosition !== "number") {
@@ -165,8 +166,8 @@ async function applyDirectionalRoll(
   );
   Logger.write(`Directional roll ${roll}: ${path} ${currentPosition} → ${newPosition} (backward)`);
   ctx.stateManager.set(path, newPosition);
-  ctx.stateManager.set("game.pending", null);
-  ctx.stateManager.set("game.lastRoll", roll);
+  ctx.stateManager.set(GAME_PATH.pending, null);
+  ctx.stateManager.set(GAME_PATH.lastRoll, roll);
   context.positionPathsSetByRoll?.add(path);
   await ctx.boardEffectsHandler.checkAndApplyBoardMoves(path, context);
   await ctx.boardEffectsHandler.checkAndApplySquareEffects(path, context);
@@ -225,7 +226,7 @@ export async function executePlayerAnswered(
   context: ExecutionContext,
 ): Promise<void> {
   Logger.info(`Player answered: "${primitive.answer}"`);
-  ctx.stateManager.set("game.lastAnswer", primitive.answer);
+  ctx.stateManager.set(GAME_PATH.lastAnswer, primitive.answer);
 
   const riddleResult = await ctx.riddlePowerCheckHandler.tryHandleRiddleAnswer(
     primitive.answer,
@@ -293,7 +294,7 @@ function restorePlayerNames(ctx: ActionExecutorContext, playerNames: Map<string,
   for (const playerId of playerOrder) {
     const savedName = playerNames.get(playerId);
     if (savedName) {
-      ctx.stateManager.set(`players.${playerId}.name`, savedName);
+      ctx.stateManager.set(playerStatePath(playerId, "name"), savedName);
       Logger.info(`Restored player ${playerId}: "${savedName}"`);
     }
   }

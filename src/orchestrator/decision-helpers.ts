@@ -1,6 +1,7 @@
 import { matchAnswerToChoiceKeywords } from "./board-next";
 import { getDecisionPoints } from "./decision-point-inference";
 import type { DecisionPoint, GameState } from "./types";
+import { playerStatePath } from "@/state-paths";
 
 function getDecisionPointContext(state: GameState): {
   currentTurn: string;
@@ -32,7 +33,7 @@ function getDecisionPointContext(state: GameState): {
   if (choices?.[String(position)] !== undefined) {
     return null;
   }
-  const path = `players.${currentTurn}.activeChoices.${position}`;
+  const path = playerStatePath(currentTurn, "activeChoices", position);
   return { currentTurn, currentPlayer, position, decisionPoint, path };
 }
 

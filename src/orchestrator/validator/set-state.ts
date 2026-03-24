@@ -4,17 +4,18 @@ import type { GameState, PrimitiveAction } from "../types";
 import { validateField } from "./common";
 import { validateSquareEffectPathRestriction } from "./square-effect";
 import type { ValidationResult, ValidatorContext } from "./types";
+import { GAME_PATH, STATE_PLAYERS_PREFIX } from "@/state-paths";
 
 const FORBIDDEN_PATH_ERRORS: Record<string, { allowScenarioNull?: boolean; error: string }> = {
-  "game.phase": {
+  [GAME_PATH.phase]: {
     error:
       "Cannot manually change game.phase via SET_STATE. The orchestrator manages phase transitions.",
   },
-  "game.winner": {
+  [GAME_PATH.winner]: {
     error:
       "Cannot manually set game.winner via SET_STATE. The orchestrator detects and sets winners.",
   },
-  "game.pending": {
+  [GAME_PATH.pending]: {
     allowScenarioNull: true,
     error:
       "Cannot set game.pending. The orchestrator owns pending state (riddle, powerCheck, revenge, directional). Use RIDDLE_RESOLVED or PLAYER_ANSWERED with roll value.",
@@ -28,7 +29,7 @@ function validateForbiddenSetStatePath(
   context: ValidatorContext,
   action: { value?: unknown },
 ): ValidationResult | null {
-  if (path === "game.turn") {
+  if (path === GAME_PATH.turn) {
     if (state.game?.phase === "SETUP") {
       return null;
     }
@@ -59,11 +60,7 @@ function validateTurnOwnership(
   actionType: string,
   index: number,
 ): ValidationResult {
-  if (!path.startsWith("players.")) {
-    return { valid: true };
-  }
-
-  if (path === "game.turn") {
+  if (!path.startsWith(STATE_PLAYERS_PREFIX)) {
     return { valid: true };
   }
 
@@ -143,7 +140,7 @@ function validateDecisionBeforeMove(
   index: number,
   context: ValidatorContext,
 ): ValidationResult {
-  if (!path.endsWith(".position") || !path.startsWith("players.")) {
+  if (!path.endsWith(".position") || !path.startsWith(STATE_PLAYERS_PREFIX)) {
     return { valid: true };
   }
 

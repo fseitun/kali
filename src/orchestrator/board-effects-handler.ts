@@ -10,6 +10,7 @@ import {
 import type { ExecutionContext } from "./types";
 import { t } from "@/i18n/translations";
 import type { StateManager } from "@/state-manager";
+import { GAME_PATH, playerStatePath, STATE_PLAYERS_PREFIX } from "@/state-paths";
 import { Logger } from "@/utils/logger";
 
 /**
@@ -49,7 +50,7 @@ export class BoardEffectsHandler {
    * @param context - Optional execution context; when a teleport is applied, sets arrivedViaTeleportFrom
    */
   async checkAndApplyBoardMoves(path: string, context?: ExecutionContext): Promise<void> {
-    if (!path.endsWith(".position") || !path.startsWith("players.")) {
+    if (!path.endsWith(".position") || !path.startsWith(STATE_PLAYERS_PREFIX)) {
       return;
     }
 
@@ -199,8 +200,8 @@ export class BoardEffectsHandler {
     if (squareData.heart !== true) {
       return null;
     }
-    const current = (this.stateManager.get(`players.${playerId}.hearts`) as number) ?? 0;
-    this.stateManager.set(`players.${playerId}.hearts`, current + 1);
+    const current = (this.stateManager.get(playerStatePath(playerId, "hearts")) as number) ?? 0;
+    this.stateManager.set(playerStatePath(playerId, "hearts"), current + 1);
     return "+1 heart";
   }
 
@@ -212,9 +213,10 @@ export class BoardEffectsHandler {
     if (typeof instrument !== "string" || instrument.length === 0) {
       return null;
     }
-    const current = (this.stateManager.get(`players.${playerId}.instruments`) as unknown[]) ?? [];
+    const current =
+      (this.stateManager.get(playerStatePath(playerId, "instruments")) as unknown[]) ?? [];
     const next = Array.isArray(current) ? [...current, instrument] : [instrument];
-    this.stateManager.set(`players.${playerId}.instruments`, next);
+    this.stateManager.set(playerStatePath(playerId, "instruments"), next);
     return `instrument: ${instrument}`;
   }
 
@@ -223,9 +225,9 @@ export class BoardEffectsHandler {
     if (typeof item !== "string" || item.length === 0) {
       return null;
     }
-    const current = (this.stateManager.get(`players.${playerId}.items`) as unknown[]) ?? [];
+    const current = (this.stateManager.get(playerStatePath(playerId, "items")) as unknown[]) ?? [];
     const next = Array.isArray(current) ? [...current, item] : [item];
-    this.stateManager.set(`players.${playerId}.items`, next);
+    this.stateManager.set(playerStatePath(playerId, "items"), next);
     return `item: ${item}`;
   }
 
@@ -236,8 +238,8 @@ export class BoardEffectsHandler {
     if (squareData.effect !== "skipTurn") {
       return null;
     }
-    const current = (this.stateManager.get(`players.${playerId}.skipTurns`) as number) ?? 0;
-    this.stateManager.set(`players.${playerId}.skipTurns`, current + 1);
+    const current = (this.stateManager.get(playerStatePath(playerId, "skipTurns")) as number) ?? 0;
+    this.stateManager.set(playerStatePath(playerId, "skipTurns"), current + 1);
     return "skip next turn";
   }
 
@@ -252,30 +254,30 @@ export class BoardEffectsHandler {
   }
 
   private applyCheckTorchEffect(playerId: string): string {
-    const items = (this.stateManager.get(`players.${playerId}.items`) as unknown[]) ?? [];
+    const items = (this.stateManager.get(playerStatePath(playerId, "items")) as unknown[]) ?? [];
     const idx = Array.isArray(items) ? items.indexOf("torch") : -1;
     if (idx >= 0) {
       const next = [...items];
       next.splice(idx, 1);
-      this.stateManager.set(`players.${playerId}.items`, next);
+      this.stateManager.set(playerStatePath(playerId, "items"), next);
       return "torch used (no skip)";
     }
-    const current = (this.stateManager.get(`players.${playerId}.skipTurns`) as number) ?? 0;
-    this.stateManager.set(`players.${playerId}.skipTurns`, current + 1);
+    const current = (this.stateManager.get(playerStatePath(playerId, "skipTurns")) as number) ?? 0;
+    this.stateManager.set(playerStatePath(playerId, "skipTurns"), current + 1);
     return "skip next turn (no torch)";
   }
 
   private applyCheckAntiWaspEffect(playerId: string): string {
-    const items = (this.stateManager.get(`players.${playerId}.items`) as unknown[]) ?? [];
+    const items = (this.stateManager.get(playerStatePath(playerId, "items")) as unknown[]) ?? [];
     const idx = Array.isArray(items) ? items.indexOf("anti-wasp") : -1;
     if (idx >= 0) {
       const next = [...items];
       next.splice(idx, 1);
-      this.stateManager.set(`players.${playerId}.items`, next);
+      this.stateManager.set(playerStatePath(playerId, "items"), next);
       return "anti-wasp used (no skip)";
     }
-    const current = (this.stateManager.get(`players.${playerId}.skipTurns`) as number) ?? 0;
-    this.stateManager.set(`players.${playerId}.skipTurns`, current + 1);
+    const current = (this.stateManager.get(playerStatePath(playerId, "skipTurns")) as number) ?? 0;
+    this.stateManager.set(playerStatePath(playerId, "skipTurns"), current + 1);
     return "skip next turn (no anti-wasp)";
   }
 
@@ -338,7 +340,7 @@ export class BoardEffectsHandler {
    * @param context - Execution context
    */
   private isValidPositionPath(path: string): boolean {
-    return path.endsWith(".position") && path.startsWith("players.");
+    return path.endsWith(".position") && path.startsWith(STATE_PLAYERS_PREFIX);
   }
 
   private getSquareDataForPosition(position: number): {
@@ -397,7 +399,7 @@ export class BoardEffectsHandler {
     isSetup: boolean,
   ): void {
     if (isSetup && isAnimalEncounterKind(kind) && playerId) {
-      this.stateManager.set("game.pending", {
+      this.stateManager.set(GAME_PATH.pending, {
         kind: "riddle",
         position,
         power,
@@ -405,7 +407,7 @@ export class BoardEffectsHandler {
         phase: "riddle",
       });
     } else if (!isSetup && !isAnimalEncounterKind(kind) && !isRollDirectionalKind(kind)) {
-      this.stateManager.set("game.pending", null);
+      this.stateManager.set(GAME_PATH.pending, null);
     }
   }
 
@@ -416,7 +418,7 @@ export class BoardEffectsHandler {
   ): void {
     const dice = getDirectionalRollDice(effect);
     if (dice && playerId) {
-      this.stateManager.set("game.pending", {
+      this.stateManager.set(GAME_PATH.pending, {
         kind: "directional",
         position,
         playerId,

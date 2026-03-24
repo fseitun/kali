@@ -33,6 +33,7 @@ import type { LLMClient } from "@/llm/LLMClient";
 import { formatStateContext } from "@/llm/state-context";
 import type { ISpeechService } from "@/services/speech-service";
 import type { StateManager } from "@/state-manager";
+import { GAME_PATH, STATE_PLAYERS_PREFIX } from "@/state-paths";
 import { Logger } from "@/utils/logger";
 import { Profiler } from "@/utils/profiler";
 
@@ -282,11 +283,11 @@ export class Orchestrator {
     });
 
     this.stateManager.set("players", players);
-    this.stateManager.set("game.playerOrder", playerOrder);
+    this.stateManager.set(GAME_PATH.playerOrder, playerOrder);
 
     // Set first player's turn
     if (playerOrder.length > 0) {
-      this.stateManager.set("game.turn", playerOrder[0]);
+      this.stateManager.set(GAME_PATH.turn, playerOrder[0]);
     }
 
     Logger.info("Players created:", players);
@@ -299,8 +300,8 @@ export class Orchestrator {
    * @param phase - The phase to transition to
    */
   transitionPhase(phase: GamePhase): void {
-    Logger.info(`Phase transition: ${this.stateManager.get("game.phase")} → ${phase}`);
-    this.stateManager.set("game.phase", phase);
+    Logger.info(`Phase transition: ${this.stateManager.get(GAME_PATH.phase)} → ${phase}`);
+    this.stateManager.set(GAME_PATH.phase, phase);
   }
 
   /**
@@ -804,7 +805,7 @@ export class Orchestrator {
    * Sets game.winner and transitions to FINISHED if so.
    */
   checkAndApplyWinCondition(positionPath: string): void {
-    if (!positionPath.startsWith("players.") || !positionPath.endsWith(".position")) {
+    if (!positionPath.startsWith(STATE_PLAYERS_PREFIX) || !positionPath.endsWith(".position")) {
       return;
     }
     const position = this.stateManager.get(positionPath) as number;
@@ -826,8 +827,8 @@ export class Orchestrator {
         Logger.info(
           `🏆 Win detected: ${playerId} reached position ${position} (win: ${winPosition})`,
         );
-        this.stateManager.set("game.winner", playerId);
-        this.stateManager.set("game.phase", GamePhase.FINISHED);
+        this.stateManager.set(GAME_PATH.winner, playerId);
+        this.stateManager.set(GAME_PATH.phase, GamePhase.FINISHED);
       }
     }
   }
