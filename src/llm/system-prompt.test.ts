@@ -5,7 +5,7 @@ import * as localeManager from "@/i18n/locale-manager";
 describe("SYSTEM_PROMPT", () => {
   it("slim base prompt has a reasonable size bound (well under historical ~2.5k+ bloated prompts)", () => {
     expect(SYSTEM_PROMPT.length).toBeGreaterThanOrEqual(1100);
-    expect(SYSTEM_PROMPT.length).toBeLessThanOrEqual(4000);
+    expect(SYSTEM_PROMPT.length).toBeLessThanOrEqual(4200);
   });
 
   it("includes guidance rule: when user asks what to do, NARRATE only and do not emit primitives", () => {
@@ -25,6 +25,12 @@ describe("SYSTEM_PROMPT", () => {
   it("warns against NDJSON (two root objects) vs a single JSON array", () => {
     expect(SYSTEM_PROMPT).toMatch(/Wrong.*two root objects|single array/i);
     expect(SYSTEM_PROMPT).toContain("ASK_RIDDLE");
+  });
+
+  it("documents tagged user-turn layout: game_state and user_command", () => {
+    expect(SYSTEM_PROMPT).toContain("<game_state>");
+    expect(SYSTEM_PROMPT).toContain("<user_command>");
+    expect(SYSTEM_PROMPT).toMatch(/Ground decisions in <game_state>/);
   });
 });
 

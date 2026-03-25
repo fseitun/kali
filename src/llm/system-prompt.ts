@@ -68,7 +68,11 @@ function getBasePrimitivesDocs(): string {
 **Right (single array):** \`[{"action":"NARRATE","text":"a"},{"action":"PLAYER_ROLLED","value":3}]\`
 For ASK_RIDDLE + NARRATE together, prefer one minified array on a single line.
 
+Each request: <game_state> … facts and warnings … </game_state>, then <user_command> … what the player just said … </user_command>. When continuing a thread, the host may insert your prior TTS between those blocks. Ground decisions in <game_state>; treat <user_command> as the latest utterance only.
+
 State block may include ⚠️ RIDDLE / POWER CHECK / DECISION / REVENGE — follow that instruction.
+
+NARRATE for voice: clear numbers (rolls, positions); use player names from state if the transcript misheard them.
 
 ## 6 Primitives
 1. NARRATE — TTS. ${lang}. Usually short; use player names. During ⚠️ RIDDLE, NARRATE may be longer to deliver the full encounter script (see state). { "action": "NARRATE", "text": "...", "soundEffect": "optional" }

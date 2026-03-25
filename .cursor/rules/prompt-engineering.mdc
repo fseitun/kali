@@ -9,7 +9,7 @@ globs:
 
 # LLM prompting
 
-For **wording, structure, examples, tone, and long-context layout** of anything the model sees, read the project skill **[`.cursor/skills/prompt-engineering/SKILL.md`](../skills/prompt-engineering/SKILL.md)** (folder `prompt-engineering/`).
+For **wording, structure, examples, tone, and long-context layout** of anything the model sees, read the project skill **[`.cursor/skills/prompt-engineering/SKILL.md`](../skills/prompt-engineering/SKILL.md)** (folder `prompt-engineering/`): it maps @Prompt OpenAI / @Prompt Anthropic guidance onto Kali, lists **where runtime prompt text lives** in the repo, and links the canonical vendor docs below.
 
 **Official guides** (index in Cursor as `Prompt OpenAI` and `Prompt Anthropic` if you want `@` mentions):
 

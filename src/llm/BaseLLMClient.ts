@@ -123,6 +123,10 @@ export abstract class BaseLLMClient implements LLMClient {
     }
   }
 
+  /**
+   * Builds the user message for the interpreter. Order matches long-context guidance
+   * (large factual block first, latest utterance last): game_state, optional last_utterance, user_command.
+   */
   private async attemptLLMCall(
     transcript: string,
     state: GameState,
