@@ -1,18 +1,6 @@
----
-name: fix
-description: >-
-  Turns a user-provided log plus expected behavior into clarifying questions and
-  a structured fix plan before implementation. Use in Kali when the user pastes
-  logs, attaches a file (@path), or gives a path to an exported JSON log; when
-  they pair logs with explicitly labeled expected vs actual output (including
-  voice/TTS lines); when debugging CI or local failures; or when they run /fix
-  or ask to analyze a log against expected behavior.
-disable-model-invocation: true
----
-
 # Log vs expected output — clarify, then plan
 
-**Invocation:** In Agent chat, type **`/fix`** to load this skill. Cursor requires the file to be named **`SKILL.md`** inside the skill folder; the slash name comes from the **folder** (`fix/`), not from renaming `SKILL.md`.
+**Invocation:** User ran the **`/fix`** command (this file). Follow the workflow below.
 
 When the user supplies **(1) a log** and **(2) expected output/behavior**, do **not** jump straight to code changes. First close gaps in context, then produce a **fix plan** they can approve or refine.
 
@@ -72,7 +60,7 @@ Use this checklist as a menu — pick what applies:
 Use these to route hypotheses and verification; do not override workspace rules.
 
 - **Kali JSON export logs**: Exports are typically a **JSON array** of objects with fields such as `level`, `category`, `message`, optional `context` (e.g. LLM `fullPrompt` / `fullResponse`, state snapshots). For voice/LLM issues, search entries by `category` (e.g. `llm`, `brain`) and orchestrator-related lines, and any logs of **TTS**, **speak**, or **NARRATE**. Use `iso` timestamps to narrow the repro window.
-- **Subsystems**: orchestrator (primitives, validation), `KaliAppCore` (coordination, turn announcement, voice policy), voice/STT/Vosk pipeline, LLM client + prompts, game content/loaders, Vitest/integration tests.
+- **Subsystems**: orchestrator (primitives, validation), `KaliAppCore` (coordination, turn announcement, voice policy), voice/STT/Vosk pipeline, LLM client + prompts, game content/loaders, Vitest/integration tests. If the gap looks like **prompt quality, structure, or systematic misinterpretation** (not validation bugs), read the project skill **`prompt-engineering`** (`.cursor/skills/prompt-engineering/SKILL.md`).
 - **State**: Orchestrator owns mutations and phase/turn logic; app and UI must not bypass it (see `.cursor/rules/state-axioms.mdc`). If the “expected” outcome implies direct `stateManager.set` from UI, the plan should correct the architecture instead.
 - **Voice / TTS**: Silent success, missing “what to do next,” or invariant failures often touch `MeteredSpeechService`, `gameplay-voice-policy`, orchestrator `VoiceOutcomeHints`, and i18n strings; see `docs/adr/0003-always-prompt-next-player-action.md` when the gap is “player heard X but not Y.”
 - **After any code fix in this repo**: Verification must include **`npm run full-check`** unless the user explicitly scoped a narrower check and the workspace rules allow it.
