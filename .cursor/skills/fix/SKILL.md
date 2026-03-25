@@ -15,6 +15,10 @@ disable-model-invocation: true
 
 When the user supplies **(1) a log** and **(2) expected output/behavior**, do **not** jump straight to code changes. First close gaps in context, then produce a **fix plan** they can approve or refine.
 
+## Language
+
+Write **everything** produced in this workflow in **English**: the gap summary (Step 1), clarifying questions (Step 2), and the full fix plan (Step 3). Quote log lines or user text in their original language when needed; explain and plan in English.
+
 ## Inputs to treat as authoritative
 
 - **Log**: Any pasted text — build output, test failures, stack traces, runtime logs, network traces, LLM/tool transcripts, browser console, etc.
@@ -63,7 +67,7 @@ Use these to route hypotheses and verification; do not override workspace rules.
 
 ## Step 3 — Fix plan (after questions or stated assumptions)
 
-Produce a plan the user can execute or hand to an implementer. Use this structure:
+Produce a plan the user can execute or hand to an implementer. **The plan body must be in English** (per [Language](#language) above). Use this structure:
 
 ```markdown
 ## Understanding
