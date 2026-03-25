@@ -21,9 +21,13 @@ type SquareWithEdges = { next?: NextField; prev?: number[] } | undefined;
  * @param forward - If true, use `next`; if false, use `prev`
  * @returns Sorted list of reachable targets in the given direction
  */
-function getForwardTargetsFromNext(next: NextField | undefined | null, current: number): number[] {
+function getForwardTargetsFromNext(
+  next: NextField | undefined | null,
+  current: number,
+  winPosition: number,
+): number[] {
   if (next === undefined || next === null) {
-    return current < 196 ? [current + 1] : [];
+    return current < winPosition ? [current + 1] : [];
   }
   if (Array.isArray(next)) {
     return [...next];
@@ -37,12 +41,23 @@ function getBackwardTargetsFromPrev(prev: number[] | undefined | null, current: 
   if (prev === undefined || prev === null) {
     return current > 0 ? [current - 1] : [];
   }
+  if (Array.isArray(prev) && prev.length === 0) {
+    return [];
+  }
   return Array.isArray(prev) ? [...prev] : [];
 }
 
-export function getTargets(sq: SquareWithEdges, current: number, forward: boolean): number[] {
+/**
+ * @param winPosition - Index of the win square (from `effect: "win"`); used when `next` is omitted.
+ */
+export function getTargets(
+  sq: SquareWithEdges,
+  current: number,
+  forward: boolean,
+  winPosition: number,
+): number[] {
   return forward
-    ? getForwardTargetsFromNext(sq?.next, current)
+    ? getForwardTargetsFromNext(sq?.next, current, winPosition)
     : getBackwardTargetsFromPrev(sq?.prev, current);
 }
 
@@ -73,8 +88,11 @@ export function getNextTargets(sq: { next?: NextField } | undefined): number[] {
  */
 export function getPrevTargets(sq: { prev?: number[] } | undefined, current: number): number[] {
   const prev = sq?.prev;
-  if (!Array.isArray(prev) || prev.length === 0) {
+  if (prev === undefined || prev === null) {
     return current > 0 ? [current - 1] : [];
+  }
+  if (Array.isArray(prev) && prev.length === 0) {
+    return [];
   }
   return [...prev];
 }

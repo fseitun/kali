@@ -1,0 +1,16 @@
+---
+description: No deprecated APIs, legacy alternates, or backward-compat shims unless explicitly approved
+alwaysApply: true
+---
+
+# No legacy or deprecation paths
+
+**Default for this project:** do not introduce:
+
+- `@deprecated` APIs kept “for compatibility”
+- Dual code paths (old format + new format) in loaders, parsers, or configs
+- “Legacy” branches, feature flags for superseded behavior, or silent fallbacks to old shapes
+
+**Instead:** pick one supported shape, update all usages and tests, and record non-obvious choices in an ADR or the relevant `.cursor/rules/*.mdc`. Breaking old JSON or call sites is acceptable when the maintainer controls all consumers.
+
+**Exception:** a short-lived bridge is allowed **only** when the project owner explicitly asks for it in that task. Otherwise treat backward compatibility as out of scope.

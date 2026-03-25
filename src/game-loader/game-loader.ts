@@ -1,4 +1,4 @@
-import type { GameConfigInput, GameModule, HabitatSegment } from "./types";
+import type { GameConfigInput, GameModule, HabitatDefinition, HabitatSegment } from "./types";
 import { getWinPosition } from "@/orchestrator/board-helpers";
 import type { BoardConfig, GameState, Player, SquareData } from "@/orchestrator/types";
 import { GamePhase } from "@/orchestrator/types";
@@ -6,48 +6,56 @@ import type { ISpeechService } from "@/services/speech-service";
 import { Logger } from "@/utils/logger";
 
 function validateSquareAtStart(sq: SquareData): void {
-  const hasNext =
-    sq.next !== undefined &&
-    sq.next !== null &&
-    (Array.isArray(sq.next) ? sq.next.length > 0 : Object.keys(sq.next as object).length > 0);
-  if (!hasNext) {
-    throw new Error(`Invalid game config: square 0 must have next`);
+  const n = sq.next;
+  if (n === undefined || n === null) {
+    throw new Error(`Invalid game config: square 0 must have explicit next (fork or linear)`);
   }
-  if (sq.prev && (sq.prev as unknown[]).length > 0) {
-    throw new Error(`Invalid game config: square 0 must have empty prev`);
+  if (Array.isArray(n)) {
+    if (n.length === 0) {
+      throw new Error(`Invalid game config: square 0 must have non-empty next or use fork object`);
+    }
+  } else if (typeof n === "object" && Object.keys(n as object).length === 0) {
+    throw new Error(`Invalid game config: square 0 fork next must have at least one branch`);
+  }
+  if (sq.prev && Array.isArray(sq.prev) && sq.prev.length > 0) {
+    throw new Error(`Invalid game config: square 0 must have empty or absent prev`);
   }
 }
 
 function validateSquareAtEnd(sq: SquareData, boardLength: number): void {
-  const hasNext =
-    sq.next !== undefined &&
-    sq.next !== null &&
-    (Array.isArray(sq.next) ? sq.next.length > 0 : Object.keys(sq.next as object).length > 0);
-  const hasPrev = Array.isArray(sq.prev) && sq.prev.length > 0;
-  if (hasNext) {
-    throw new Error(`Invalid game config: square ${boardLength} must have empty next`);
+  const n = sq.next;
+  if (n === undefined || n === null) {
+    throw new Error(
+      `Invalid game config: square ${boardLength} (win) must have explicit next: [] — omitting next would imply a forward step past the board`,
+    );
   }
-  if (!hasPrev) {
-    throw new Error(`Invalid game config: square ${boardLength} must have prev`);
+  if (!Array.isArray(n) || n.length !== 0) {
+    throw new Error(`Invalid game config: square ${boardLength} must have empty next array`);
   }
 }
 
-function validateSquareMiddle(key: string, sq: SquareData): void {
-  const hasNext =
-    sq.next !== undefined &&
-    sq.next !== null &&
-    (Array.isArray(sq.next) ? sq.next.length > 0 : Object.keys(sq.next as object).length > 0);
-  const hasPrev = Array.isArray(sq.prev) && sq.prev.length > 0;
-  if (!hasNext) {
-    throw new Error(`Invalid game config: square ${key} must have next`);
-  }
-  if (!hasPrev) {
-    throw new Error(`Invalid game config: square ${key} must have prev`);
-  }
+function validateSquareMiddle(_key: string, _sq: SquareData): void {
+  // Middle squares may omit next and/or prev; board-next applies i±1 fallbacks at runtime.
 }
 
 /**
- * Validates that board topology is complete. Throws if any square 0..boardLength is missing or lacks next/prev.
+ * Fills missing indices `0..winPosition` with `{}` so JSON can omit purely linear squares.
+ */
+function mergeMissingSquareKeys(
+  squares: Record<string, SquareData>,
+  winPosition: number,
+): Record<string, SquareData> {
+  const merged: Record<string, SquareData> = { ...squares };
+  for (let i = 0; i <= winPosition; i++) {
+    const key = String(i);
+    merged[key] ??= {};
+  }
+  return merged;
+}
+
+/**
+ * Validates every square 0..boardLength exists (after merge); enforces explicit next on 0 and empty next on win.
+ * Other cells may omit next/prev when the default linear graph applies.
  */
 function validateBoardTopology(
   squares: Record<string, SquareData>,
@@ -80,10 +88,56 @@ function deriveBoardFromSquares(squares: Record<string, SquareData>): {
 }
 
 /**
+ * Turns one habitat entry into segments. Values are **flat** `number | number[]` only (see ADR 0004).
+ *
+ * - `[lo, hi]` → one inclusive range.
+ * - Several ranges: `[lo1, hi1, lo2, hi2, …]` (even length ≥ 4).
+ * - Non-contiguous “islands”: use degenerate pairs, e.g. `[0, 0, 5, 5]`.
+ */
+function habitatDefinitionToSegments(name: string, raw: HabitatDefinition): HabitatSegment[] {
+  if (typeof raw === "number") {
+    return [raw];
+  }
+  if (!Array.isArray(raw)) {
+    throw new Error(`Invalid game config: habitat "${name}" must be a number or a flat number[]`);
+  }
+  if (raw.length === 0) {
+    throw new Error(`Invalid game config: habitat "${name}" cannot be empty`);
+  }
+  if (raw.some((x) => Array.isArray(x))) {
+    throw new Error(
+      `Invalid game config: habitat "${name}" must not use nested arrays; use flat [lo, hi] or a number (see docs/adr/0004-game-config-habitat-flat.md)`,
+    );
+  }
+  if (!raw.every((x) => typeof x === "number" && Number.isInteger(x))) {
+    throw new Error(
+      `Invalid game config: habitat "${name}" must be integers only, got ${JSON.stringify(raw)}`,
+    );
+  }
+  const nums = raw as number[];
+  if (nums.length === 1) {
+    return [nums[0]];
+  }
+  if (nums.length === 2) {
+    return [[nums[0], nums[1]]];
+  }
+  if (nums.length % 2 !== 0) {
+    throw new Error(
+      `Invalid game config: habitat "${name}" flat pair list must have even length (pairs lo,hi), got length ${String(nums.length)}`,
+    );
+  }
+  const out: HabitatSegment[] = [];
+  for (let i = 0; i < nums.length; i += 2) {
+    out.push([nums[i], nums[i + 1]]);
+  }
+  return out;
+}
+
+/**
  * Expands `config.habitat` into position → habitat name. Every index 0..winPosition must appear exactly once.
  */
 export function expandHabitatConfig(
-  habitat: Record<string, HabitatSegment[]>,
+  habitat: Record<string, HabitatDefinition>,
   winPosition: number,
 ): Record<number, string> {
   const assignment: Record<number, string> = {};
@@ -145,10 +199,8 @@ export function expandHabitatConfig(
     );
   }
 
-  for (const [name, segments] of Object.entries(habitat)) {
-    if (!Array.isArray(segments)) {
-      throw new Error(`Invalid game config: habitat "${name}" must be an array of segments`);
-    }
+  for (const [name, raw] of Object.entries(habitat)) {
+    const segments = habitatDefinitionToSegments(name, raw);
     for (const seg of segments) {
       expandSegment(seg, name);
     }
@@ -204,16 +256,17 @@ function buildInitialStateFromParts(config: GameConfigInput): GameState {
   }
 
   const winPosition = getWinPosition(rawSquares);
-  validateBoardTopology(rawSquares, winPosition);
+  const squaresComplete = mergeMissingSquareKeys(rawSquares, winPosition);
+  validateBoardTopology(squaresComplete, winPosition);
 
   const squaresForBoard =
     habitatConfig != null && Object.keys(habitatConfig).length > 0
       ? applyHabitatToSquares(
-          rawSquares,
+          squaresComplete,
           winPosition,
           expandHabitatConfig(habitatConfig, winPosition),
         )
-      : rawSquares;
+      : squaresComplete;
 
   const boardDerived = deriveBoardFromSquares(squaresForBoard);
   const board: BoardConfig = { ...boardDerived };

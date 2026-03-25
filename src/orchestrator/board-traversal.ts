@@ -1,3 +1,4 @@
+import { getWinPosition } from "./board-helpers";
 import { getTargets } from "./board-next";
 import type { GameState } from "./types";
 
@@ -69,6 +70,7 @@ export function isPlayerInverseModeActive(player: Record<string, unknown> | unde
  */
 type RollSimulationSlice = {
   squares: Record<string, SquareShape> | undefined;
+  winPosition: number;
   /** Player inverse-mode flag for landing-hop rules on forward steps, not roll direction. */
   inverseMode: boolean;
   activeChoices: Record<string, number>;
@@ -77,10 +79,11 @@ type RollSimulationSlice = {
 function readRollContext(state: GameState, playerId: string): RollSimulationSlice {
   const board = state.board as Record<string, unknown> | undefined;
   const squares = board?.squares as Record<string, SquareShape> | undefined;
+  const winPosition = getWinPosition(squares as Record<string, { effect?: string }> | undefined);
   const player = (state.players as Record<string, Record<string, unknown>>)?.[playerId];
   const inverseMode = isPlayerInverseModeActive(player);
   const activeChoices = (player?.activeChoices as Record<string, number>) ?? {};
-  return { squares, inverseMode, activeChoices };
+  return { squares, winPosition, inverseMode, activeChoices };
 }
 
 /**
@@ -95,13 +98,13 @@ export function simulateRollFromState(
   direction: RollMovementDirection,
   activeChoices: Record<string, number>,
 ): number {
-  const { squares, inverseMode } = readRollContext(state, playerId);
+  const { squares, inverseMode, winPosition } = readRollContext(state, playerId);
   const forward = direction === "forward";
   let current = start;
 
   for (let i = 0; i < roll; i++) {
     const sq = squares?.[String(current)];
-    const targets = getTargets(sq, current, forward);
+    const targets = getTargets(sq, current, forward, winPosition);
     current = advanceOneStep(current, targets, activeChoices);
 
     if (i === roll - 1) {
@@ -139,7 +142,7 @@ export function distinctEndPositionsAfterRoll(
   roll: number,
   direction: RollMovementDirection,
 ): Set<number> {
-  const { squares, inverseMode, activeChoices } = readRollContext(state, playerId);
+  const { squares, inverseMode, activeChoices, winPosition } = readRollContext(state, playerId);
   const forward = direction === "forward";
   const results = new Set<number>();
 
@@ -149,7 +152,7 @@ export function distinctEndPositionsAfterRoll(
       return;
     }
     const sq = squares?.[String(current)];
-    const targets = getTargets(sq, current, forward);
+    const targets = getTargets(sq, current, forward, winPosition);
     const saved = choices[current];
     const hasResolvedBranch = saved !== undefined && targets.includes(saved);
     const mustBranch = targets.length > 1 && !hasResolvedBranch;

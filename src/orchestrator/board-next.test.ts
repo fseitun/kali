@@ -3,6 +3,7 @@ import {
   getForkKeywordsWithImplicitTargets,
   getNextTargets,
   getPrevTargets,
+  getTargets,
   isMultiBranchTargets,
   isNextFork,
   isNextRecord,
@@ -28,6 +29,31 @@ describe("board-next", () => {
           next: { "15": ["derecha"], "1": ["izquierda"] },
         }),
       ).toEqual([1, 15]);
+    });
+  });
+
+  describe("getTargets", () => {
+    const win = 5;
+
+    it("uses winPosition when next is missing", () => {
+      expect(getTargets({}, 2, true, win)).toEqual([3]);
+      expect(getTargets({}, 4, true, win)).toEqual([5]);
+      expect(getTargets({}, 5, true, win)).toEqual([]);
+    });
+
+    it("uses explicit empty next at win index", () => {
+      expect(getTargets({ next: [] }, 5, true, win)).toEqual([]);
+    });
+
+    it("backward uses missing prev as i-1; explicit empty prev is no move", () => {
+      expect(getTargets({}, 3, false, win)).toEqual([2]);
+      expect(getTargets({ prev: [] }, 3, false, win)).toEqual([]);
+    });
+  });
+
+  describe("getPrevTargets explicit empty prev", () => {
+    it("returns empty array when prev is []", () => {
+      expect(getPrevTargets({ prev: [] }, 5)).toEqual([]);
     });
   });
 

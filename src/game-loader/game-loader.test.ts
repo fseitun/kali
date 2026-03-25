@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { GameLoader, expandHabitatConfig, resolveInitialState } from "./game-loader";
-import type { GameModule } from "./types";
+import type { GameModule, HabitatDefinition } from "./types";
 import { GamePhase } from "@/orchestrator/types";
 
 // Mock SpeechService
@@ -289,18 +289,93 @@ describe("GameLoader", () => {
 
 describe("expandHabitatConfig", () => {
   it("expands inclusive ranges and single indices", () => {
-    const m = expandHabitatConfig({ alpha: [[0, 1]], beta: [2] }, 2);
+    const m = expandHabitatConfig({ alpha: [0, 1], beta: 2 }, 2);
     expect(m[0]).toBe("alpha");
     expect(m[1]).toBe("alpha");
     expect(m[2]).toBe("beta");
   });
 
+  it("accepts several ranges as flat lo,hi pairs", () => {
+    const m = expandHabitatConfig({ mix: [0, 1, 2, 4] }, 4);
+    expect(m[0]).toBe("mix");
+    expect(m[1]).toBe("mix");
+    expect(m[2]).toBe("mix");
+    expect(m[3]).toBe("mix");
+    expect(m[4]).toBe("mix");
+  });
+
   it("throws when two habitats claim the same square", () => {
-    expect(() => expandHabitatConfig({ a: [[0, 1]], b: [1] }, 2)).toThrow(/assigned to both/);
+    expect(() => expandHabitatConfig({ a: [0, 1], b: 1 }, 2)).toThrow(/assigned to both/);
   });
 
   it("throws when squares are missing from the map", () => {
-    expect(() => expandHabitatConfig({ only: [[0, 0]] }, 2)).toThrow(/missing squares/);
+    expect(() => expandHabitatConfig({ only: [0, 0] }, 2)).toThrow(/missing squares/);
+  });
+
+  it("rejects nested arrays (no segment-list wrapper)", () => {
+    const nested = { bad: [[0, 1]] } as unknown as Record<string, HabitatDefinition>;
+    expect(() => expandHabitatConfig(nested, 2)).toThrow(/must not use nested arrays/);
+  });
+
+  it("throws on odd-length flat numeric list (length > 1)", () => {
+    expect(() => expandHabitatConfig({ bad: [0, 1, 2] }, 4)).toThrow(/even length/);
+  });
+});
+
+describe("resolveInitialState sparse next/prev", () => {
+  it("fills omitted square keys with {} for linear-only indices", () => {
+    const state = resolveInitialState({
+      metadata: {
+        id: "t",
+        name: "T",
+        minPlayers: 1,
+        maxPlayers: 2,
+        objective: "o",
+      },
+      squares: {
+        "0": { next: [1], prev: [] },
+        "3": { next: [], prev: [2], effect: "win" },
+      },
+    });
+    expect(state.board?.squares?.["1"]).toEqual({});
+    expect(state.board?.squares?.["2"]).toEqual({});
+    expect(state.board?.squares?.["3"]?.effect).toBe("win");
+  });
+
+  it("allows middle squares with no next/prev when 0 and win are explicit", () => {
+    const state = resolveInitialState({
+      metadata: {
+        id: "t",
+        name: "T",
+        minPlayers: 1,
+        maxPlayers: 2,
+        objective: "o",
+      },
+      squares: {
+        "0": { next: [1], prev: [] },
+        "1": {},
+        "2": { next: [], prev: [1], effect: "win" },
+      },
+    });
+    expect(state.board?.squares?.["1"]).toEqual({});
+  });
+
+  it("rejects win square without explicit next", () => {
+    expect(() =>
+      resolveInitialState({
+        metadata: {
+          id: "t",
+          name: "T",
+          minPlayers: 1,
+          maxPlayers: 2,
+          objective: "o",
+        },
+        squares: {
+          "0": { next: [1], prev: [] },
+          "1": { effect: "win", prev: [0] },
+        },
+      }),
+    ).toThrow(/explicit next/);
   });
 });
 
@@ -314,7 +389,7 @@ describe("resolveInitialState with config.habitat", () => {
         maxPlayers: 2,
         objective: "win at 1",
       },
-      habitat: { h0: [[0, 0]], h1: [[1, 1]] },
+      habitat: { h0: [0, 0], h1: [1, 1] },
       squares: {
         "0": { next: [1], prev: [] },
         "1": { effect: "win", next: [], prev: [0] },
