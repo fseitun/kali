@@ -1,0 +1,19 @@
+---
+description: >-
+  When editing LLM prompts or game JSON that feeds the model, follow the
+  project prompt-engineering skill and OpenAI/Anthropic official guides.
+globs:
+  - src/llm/**/*.ts
+  - public/games/**/*.json
+---
+
+# LLM prompting
+
+For **wording, structure, examples, tone, and long-context layout** of anything the model sees, read the project skill **[`.cursor/skills/prompt-engineering/SKILL.md`](../skills/prompt-engineering/SKILL.md)** (folder `prompt-engineering/`).
+
+**Official guides** (index in Cursor as `Prompt OpenAI` and `Prompt Anthropic` if you want `@` mentions):
+
+- OpenAI: [Prompting](https://developers.openai.com/api/docs/guides/prompting), [Prompt guidance](https://developers.openai.com/api/docs/guides/prompt-guidance), [Voice agents](https://developers.openai.com/api/docs/guides/voice-agents), [Text generation](https://developers.openai.com/api/docs/guides/text-generation)
+- Anthropic: [Overview](https://platform.claude.com/docs/en/build-with-claude/prompt-engineering/overview), [System prompts](https://platform.claude.com/docs/en/build-with-claude/prompt-engineering/system-prompts), [Long context](https://platform.claude.com/docs/en/build-with-claude/prompt-engineering/long-context-tips), [Chain prompts](https://platform.claude.com/docs/en/build-with-claude/prompt-engineering/chain-prompts)
+
+**Kali architecture** (interpreter vs orchestrator, primitives, JSON output): [`.cursor/kali-architecture.md`](../kali-architecture.md).

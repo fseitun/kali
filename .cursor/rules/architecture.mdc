@@ -18,7 +18,7 @@ The system is built on a strict separation of duties:
 ### The LLM (Interpreter)
 
 - Translates natural language to primitive actions
-- Game rules provided in prompt context (doesn't "understand" them)
+- Game rules provided in prompt context (doesn't "understand" them); general prompt-engineering guidance lives in [`.cursor/skills/prompt-engineering/SKILL.md`](../skills/prompt-engineering/SKILL.md)
 - Maps player speech to orchestrator primitives
 - Creative but untrusted - orchestrator validates everything
 

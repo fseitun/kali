@@ -81,3 +81,5 @@ await this.processTranscript(`[SYSTEM: Player landed on square 5. Process encoun
 ```
 
 This guarantees the LLM processes important game events without trusting it to remember.
+
+**Prompting vs orchestration:** Flow and validation stay in code here; if you change _how_ the interpreter should react to transcripts or priming text, follow [`.cursor/skills/prompt-engineering/SKILL.md`](../skills/prompt-engineering/SKILL.md) and the OpenAI/Anthropic references in [`.cursor/rules/prompt-engineering.mdc`](prompt-engineering.mdc).

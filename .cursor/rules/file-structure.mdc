@@ -38,6 +38,7 @@ Supporting modules:
 
 LLM clients and system prompts:
 
+- **Prompt engineering:** When changing prompts or model-facing text, follow [`.cursor/skills/prompt-engineering/SKILL.md`](../skills/prompt-engineering/SKILL.md); see also `prompt-engineering.mdc` and OpenAI/Anthropic links there.
 - `LLMClient.ts` - Interface for LLM providers
 - `BaseLLMClient.ts` - Base client with streaming, extended by providers
 - `llm-client-factory.ts` - Creates client from CONFIG.LLM_PROVIDER

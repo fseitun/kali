@@ -82,6 +82,8 @@ Game metadata (objective, summary) is passed to LLM via system prompt:
 - LLM translates player actions to primitives
 - Orchestrator executes primitives deterministically
 
+For **prompt wording, examples, and decision-point text** in JSON, use [`.cursor/skills/prompt-engineering/SKILL.md`](../skills/prompt-engineering/SKILL.md) and the OpenAI/Anthropic doc links in [`.cursor/rules/prompt-engineering.mdc`](prompt-engineering.mdc). Index those docs in Cursor as `Prompt OpenAI` and `Prompt Anthropic` if you want `@` mentions.
+
 ## Current Scope
 
 MVP is Kalimba-only. `BoardEffectsHandler` contains Kalimba board logic (teleports from squares, magic door, square effects). Game rules come from config; orchestrator executes primitives deterministically.

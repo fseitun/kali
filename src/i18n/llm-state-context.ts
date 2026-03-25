@@ -1,9 +1,9 @@
-import { getLocale } from "./locale-manager";
 import {
   type LlmStateContextBundle,
   llmStateContextEnUS,
   llmStateContextEsAR,
 } from "./llm-state-context-bundles";
+import { getLocale } from "./locale-manager";
 
 export type { LlmStateContextBundle } from "./llm-state-context-bundles";
 

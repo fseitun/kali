@@ -24,12 +24,15 @@ description: Step-by-step guides for common development tasks - add primitives, 
 
 ## Modifying LLM Prompts
 
+Use [`.cursor/skills/prompt-engineering/SKILL.md`](../skills/prompt-engineering/SKILL.md) and [`.cursor/rules/prompt-engineering.mdc`](prompt-engineering.mdc) for vendor-agnostic patterns, Kali constraints, and links to OpenAI/Anthropic guides. Index those docs in Cursor as `Prompt OpenAI` and `Prompt Anthropic` for `@` mentions, or open the URLs listed in the skill.
+
 **Where prompts live**
 
 - `src/llm/system-prompt.ts` — Role, primitive contract, JSON-only output rules, locale-specific narration few-shots (`LANGUAGE_INSTRUCTIONS`, `NARRATION_EXAMPLES`).
 - `src/llm/state-context.ts` — Per-turn `<game_state>` text the model sees (volatile; keep stable instructions out of here).
 - `src/i18n/riddle-judge-prompt.ts` — Locale-aware prompt for fuzzy riddle answer grading.
 - `src/llm/BaseLLMClient.ts` — Inline prompts for `extractName`, `analyzeResponse`, and the composed `getActions` user payload (`<game_state>`, `<last_utterance>`, `<user_command>`).
+- `public/games/**/config.json` — Game-facing copy: `metadata`, `decisionPoints[].prompt`, examples where present.
 
 **Spanish-first UX**
 

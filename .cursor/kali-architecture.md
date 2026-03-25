@@ -306,3 +306,7 @@ When adding or reviewing features:
 - New behaviors must either:
   - Be expressed in terms of existing primitives plus game config and prompts, or
   - Introduce a new primitive with validator + orchestrator handling and updated prompt documentation.
+
+## Further reading (prompt engineering)
+
+This document defines **Kali’s** guided-LLM architecture. For **how** to write and structure model instructions (system vs user context, long-context layout, few-shots, voice tone), use the project skill [`.cursor/skills/prompt-engineering/SKILL.md`](skills/prompt-engineering/SKILL.md) and the OpenAI/Anthropic URLs there. Index those vendor docs in Cursor as `Prompt OpenAI` and `Prompt Anthropic` if you want `@` mentions in chat.
