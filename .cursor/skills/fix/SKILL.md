@@ -3,9 +3,10 @@ name: fix
 description: >-
   Turns a user-provided log plus expected behavior into clarifying questions and
   a structured fix plan before implementation. Use in Kali when the user pastes
-  logs, traces, test output, or console output with what they expected; when
-  debugging CI or local failures; or when they run /fix or ask to analyze a log
-  against expected behavior.
+  logs, attaches a file (@path), or gives a path to an exported JSON log; when
+  they pair logs with explicitly labeled expected vs actual output (including
+  voice/TTS lines); when debugging CI or local failures; or when they run /fix
+  or ask to analyze a log against expected behavior.
 disable-model-invocation: true
 ---
 
@@ -21,10 +22,18 @@ Write **everything** produced in this workflow in **English**: the gap summary (
 
 ## Inputs to treat as authoritative
 
-- **Log**: Any pasted text — build output, test failures, stack traces, runtime logs, network traces, LLM/tool transcripts, browser console, etc.
+- **Log**: Pasted text, an `@`-attached file, or a readable **absolute path** — build output, test failures, stack traces, runtime logs, network traces, LLM/tool transcripts, browser console, **Kali exported JSON logs**, etc.
 - **Expected**: What should have happened (correct message, status, state, UI, API response, test pass, voice line, etc.).
 
 If either piece is missing, ask for it before planning.
+
+### Reporter checklist (what to send)
+
+- **Log**: Paste, attach with `@path`, or paste an absolute path the agent can read. For Kali, note when the artifact is an **exported JSON log**.
+- **Expected vs actual**: Prefer explicit labels, for example:
+  - `Expected:` …
+  - `Actual (heard / saw / in log):` …
+- **Agent rule**: If the user sends only **one** quoted string and it is unclear whether it is ground truth or what happened, **ask one short question** before planning (is this expected or observed?).
 
 ## Step 1 — Summarize the gap (brief)
 
@@ -40,26 +49,29 @@ Ask **targeted** questions; skip categories already answered by the log or the u
 
 Use this checklist as a menu — pick what applies:
 
-| Gap                    | Example questions                                                                     |
-| ---------------------- | ------------------------------------------------------------------------------------- |
-| **Environment**        | OS, Node version, branch/commit, `npm run` target, env vars (names only, no secrets). |
-| **Reproduction**       | Exact command or voice/debug UI steps; frequency (always vs flaky); minimal repro.    |
-| **Scope**              | Which layer (see Kali hints below); dev vs CI; browser vs headless if relevant.       |
-| **Timing**             | First failure vs regression; related dependency or prompt change.                     |
-| **Expected precision** | Exact string vs semantic equivalence; ordering; allowed side effects.                 |
-| **Constraints**        | Deadline, voice-only UX, or “no new primitives” if relevant.                          |
-| **Artifacts**          | Related files, configs, or smaller log snippets if the paste was truncated.           |
+| Gap                        | Example questions                                                                                                                                                                         |
+| -------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Environment**            | OS, Node version, branch/commit, `npm run` target, env vars (names only, no secrets).                                                                                                     |
+| **Reproduction**           | Exact command or voice/debug UI steps; frequency (always vs flaky); minimal repro.                                                                                                        |
+| **Scope**                  | Which layer (see Kali hints below); dev vs CI; browser vs headless if relevant.                                                                                                           |
+| **Timing**                 | First failure vs regression; related dependency or prompt change.                                                                                                                         |
+| **Expected precision**     | Exact string vs semantic equivalence; ordering; allowed side effects.                                                                                                                     |
+| **Constraints**            | Deadline, voice-only UX, or “no new primitives” if relevant.                                                                                                                              |
+| **Artifacts**              | Related files, configs, or smaller log snippets if the paste was truncated.                                                                                                               |
+| **Ambiguous quote / i18n** | Is the quoted text **expected** or **observed**? Does **locale** (e.g. `es-AR`) matter? Skip if the log already shows both sides (e.g. `NARRATE` text vs TTS / user-reported heard line). |
 
 **Rules:**
 
 - If the log is **self-contained** (e.g. clear stack trace + file:line), you may ask **zero** questions and state assumptions explicitly.
 - If something is **guessed**, label it **Assumption** in the plan.
 - Never ask for passwords, API keys, or PII; ask for redacted shapes or “whether X is set.”
+- **Ambiguous quoted text** (e.g. a single voice line in another language): ask whether it is **expected** or **observed**, and whether **locale** matters — unless the log already settles it.
 
 ## Kali-specific hints (when reading logs)
 
 Use these to route hypotheses and verification; do not override workspace rules.
 
+- **Kali JSON export logs**: Exports are typically a **JSON array** of objects with fields such as `level`, `category`, `message`, optional `context` (e.g. LLM `fullPrompt` / `fullResponse`, state snapshots). For voice/LLM issues, search entries by `category` (e.g. `llm`, `brain`) and orchestrator-related lines, and any logs of **TTS**, **speak**, or **NARRATE**. Use `iso` timestamps to narrow the repro window.
 - **Subsystems**: orchestrator (primitives, validation), `KaliAppCore` (coordination, turn announcement, voice policy), voice/STT/Vosk pipeline, LLM client + prompts, game content/loaders, Vitest/integration tests.
 - **State**: Orchestrator owns mutations and phase/turn logic; app and UI must not bypass it (see `.cursor/rules/state-axioms.mdc`). If the “expected” outcome implies direct `stateManager.set` from UI, the plan should correct the architecture instead.
 - **Voice / TTS**: Silent success, missing “what to do next,” or invariant failures often touch `MeteredSpeechService`, `gameplay-voice-policy`, orchestrator `VoiceOutcomeHints`, and i18n strings; see `docs/adr/0003-always-prompt-next-player-action.md` when the gap is “player heard X but not Y.”
