@@ -729,6 +729,9 @@ export class BoardEffectsHandler {
     const applied = this.applyDeterministicSquareEffects(path, squareData, {
       skipInverseMode: repeatInversePortal,
     });
+    if (applied.some((label) => label.includes("skip next turn"))) {
+      context.advanceTurnDespitePowerCheckSuppress = true;
+    }
     const squareInfo = JSON.stringify(squareData);
     const transcript = repeatInversePortal
       ? this.buildRepeatInversePortalTranscript(position, squareName)

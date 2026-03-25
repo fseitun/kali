@@ -680,8 +680,11 @@ export class Orchestrator {
     voiceOutcomeHints: VoiceOutcomeHints | undefined,
   ): OrchestratorGameplayResult {
     const turnAdvanced = context.turnAdvancedAfterPowerCheckFail;
+    const dismissPowerCheckSuppress = context.advanceTurnDespitePowerCheckSuppress === true;
     const effectiveShouldAdvance =
-      !turnAdvanced && !context.skipTrailingNarrateForPowerCheck && shouldAdvanceTurn;
+      !turnAdvanced &&
+      (!context.skipTrailingNarrateForPowerCheck || dismissPowerCheckSuppress) &&
+      (shouldAdvanceTurn || dismissPowerCheckSuppress);
     return turnAdvanced
       ? {
           success: true,

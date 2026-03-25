@@ -394,6 +394,58 @@ describe("Orchestrator Integration Tests", () => {
       setLocale("es-AR");
     });
 
+    it("power check win landing on skipTurn sets shouldAdvanceTurn true (next player can be announced)", async () => {
+      mockLLM = createScriptedLLM([
+        [{ action: "NARRATE", text: "Quicksand — you skip next turn." }],
+      ]);
+      setLocale("en-US");
+      const initialState: GameState = {
+        game: {
+          name: "Test Game",
+          phase: GamePhase.PLAYING,
+          turn: "p1",
+          playerOrder: ["p1", "p2"],
+          winner: null,
+          lastRoll: 0,
+          pending: {
+            position: 5,
+            power: 4,
+            playerId: "p1",
+            kind: "powerCheck",
+            riddleCorrect: false,
+          },
+        },
+        players: {
+          p1: { id: "p1", name: "Alice", position: 5 },
+          p2: { id: "p2", name: "Bob", position: 0 },
+        },
+        board: {
+          squares: {
+            "5": { name: "Cobra", power: 4 },
+            "11": { name: "Quicksand", effect: "skipTurn" },
+            "100": { effect: "win" },
+          },
+        },
+      };
+
+      setupGame(initialState);
+
+      const result = await orchestrator.testExecuteActions([
+        { action: "PLAYER_ANSWERED", answer: "6" },
+        { action: "NARRATE", text: "Pasaste." },
+      ]);
+
+      expect(result.success).toBe(true);
+      expect(result.shouldAdvanceTurn).toBe(true);
+      expect(result.turnAdvancedAfterPowerCheckFail).toBeUndefined();
+
+      expect(stateManager.get("game.turn")).toBe("p1");
+      expect(stateManager.get("players.p1.position")).toBe(11);
+      expect(stateManager.get("players.p1.skipTurns")).toBe(1);
+
+      setLocale("es-AR");
+    });
+
     it("does not nest LLM for fork enforcement when initial power-check loss advances turn to a player at fork", async () => {
       mockLLM = createScriptedLLM([
         [{ action: "NARRATE", text: "Should not run — nested fork enforcement" }],
