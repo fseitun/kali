@@ -4,7 +4,7 @@ import { buildSystemPrompt } from "./system-prompt";
 import type { ApiCallOptions, ApiCallResult } from "./types";
 import { CONFIG } from "@/config";
 import type { GameState, PrimitiveAction } from "@/orchestrator/types";
-import { safeParse, parseArray } from "@/utils/json-parser";
+import { safeParse, parseArray, tryCoalesceNdjsonObjectArray } from "@/utils/json-parser";
 import { Logger } from "@/utils/logger";
 import { Profiler } from "@/utils/profiler";
 
@@ -303,9 +303,15 @@ JSON:`;
 
   protected extractActions(content: string): PrimitiveAction[] {
     try {
-      // Try pure JSON first (no markdown extraction)
       const trimmed = content.trim();
-      const result = parseArray<PrimitiveAction>(trimmed);
+      let result = parseArray<PrimitiveAction>(trimmed);
+
+      if (!result.success) {
+        const repaired = tryCoalesceNdjsonObjectArray(trimmed);
+        if (repaired) {
+          result = parseArray<PrimitiveAction>(repaired);
+        }
+      }
 
       if (!result.success) {
         throw new Error(

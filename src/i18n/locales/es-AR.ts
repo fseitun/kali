@@ -32,10 +32,14 @@ export const esAR = {
     afterEncounterRollPrompt:
       "{name}, seguís en el casillero {position}. Tirá el dado y decime qué sacaste.",
     powerCheckFail: "No alcanzó.",
-    riddleCorrect2d6: "¡Correcto! Tirá 2 dados para intentar superarlo.",
-    riddleCorrect3d6: "¡Correcto! Tirá 3 dados para intentar superarlo.",
-    riddleIncorrect1d6: "No acertaste. Tirá 1 dado para intentar superarlo.",
-    riddleIncorrect2d6: "No acertaste. Tirá 2 dados para intentar superarlo.",
+    riddlePowerExtraDieOne: "Tenés un dado extra. ",
+    riddlePowerExtraDiceMany: "Tenés {count} dados extra. ",
+    riddleCorrectPowerRoll:
+      "¡Correcto! {extraDicePhrase}Ahora tirá {diceCount} dados: necesitás superar el puntaje {animalScorePhrase} para avanzar.",
+    riddlePowerRollOneDie: "Tirá 1 dado: ",
+    riddlePowerRollManyDice: "Tirá {count} dados: ",
+    riddleIncorrectPowerRoll:
+      "No acertaste. {diceRollPhrase}Necesitás superar el puntaje {animalScorePhrase} para avanzar.",
     forkChoiceResolvedRoll: "{name}, listo. Tirá el dado.",
   },
   ui: {

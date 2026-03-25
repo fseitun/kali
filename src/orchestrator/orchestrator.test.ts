@@ -4,6 +4,7 @@ import { describe, it, expect, beforeEach, vi } from "vitest";
 import { Orchestrator } from "./orchestrator";
 import type { GameState, PrimitiveAction } from "./types";
 import type { StatusIndicator } from "@/components/status-indicator";
+import { possessiveScorePhraseEs } from "@/i18n/kalimba-encounter-phrases";
 import { t } from "@/i18n/translations";
 import type { LLMClient } from "@/llm/LLMClient";
 import type { SpeechService } from "@/services/speech-service";
@@ -756,6 +757,10 @@ describe("Orchestrator - New Action Handlers", () => {
     });
 
     it("passes riddleIncorrect as lastBotUtterance after wrong riddle answer", async () => {
+      (testState.board as any).squares = {
+        "5": { name: "Cobra", power: 4 },
+        "100": { effect: "win" },
+      };
       (testState.game as any).pending = {
         position: 5,
         power: 3,
@@ -784,10 +789,14 @@ describe("Orchestrator - New Action Handlers", () => {
 
       await orchestrator.handleTranscript("3");
 
+      const expectedWrongRiddleMsg = t("game.riddleIncorrectPowerRoll", {
+        diceRollPhrase: t("game.riddlePowerRollOneDie"),
+        animalScorePhrase: possessiveScorePhraseEs("Cobra"),
+      });
       expect(mockLLM.getActions).toHaveBeenLastCalledWith(
         "3",
         expect.any(Object),
-        t("game.riddleIncorrect1d6"),
+        expectedWrongRiddleMsg,
       );
     });
   });

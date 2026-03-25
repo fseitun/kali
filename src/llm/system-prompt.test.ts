@@ -4,7 +4,7 @@ import { formatStateContext, SYSTEM_PROMPT } from "./system-prompt";
 describe("SYSTEM_PROMPT", () => {
   it("slim base prompt is smaller than legacy (~2.5k+) and has an upper bound", () => {
     expect(SYSTEM_PROMPT.length).toBeGreaterThanOrEqual(1100);
-    expect(SYSTEM_PROMPT.length).toBeLessThanOrEqual(3200);
+    expect(SYSTEM_PROMPT.length).toBeLessThanOrEqual(3500);
   });
 
   it("includes guidance rule: when user asks what to do, NARRATE only and do not emit primitives", () => {
@@ -19,6 +19,11 @@ describe("SYSTEM_PROMPT", () => {
     expect(SYSTEM_PROMPT).toContain("⚠️ POWER CHECK");
     expect(SYSTEM_PROMPT).toContain("⚠️ REVENGE");
     expect(SYSTEM_PROMPT).toMatch(/1d6, 2d6, 3d6/);
+  });
+
+  it("warns against NDJSON (two root objects) vs a single JSON array", () => {
+    expect(SYSTEM_PROMPT).toMatch(/Wrong.*two root objects|single array/i);
+    expect(SYSTEM_PROMPT).toContain("ASK_RIDDLE");
   });
 });
 

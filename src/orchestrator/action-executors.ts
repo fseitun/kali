@@ -6,6 +6,8 @@ import type { RiddlePowerCheckHandler } from "./riddle-power-check";
 import type { TurnManager } from "./turn-manager";
 import type { ExecutionContext, GameState, PrimitiveAction } from "./types";
 import type { IStatusIndicator } from "@/components/status-indicator";
+import { possessiveScorePhraseEn, possessiveScorePhraseEs } from "@/i18n/kalimba-encounter-phrases";
+import { getLocale } from "@/i18n/locale-manager";
 import { t } from "@/i18n/translations";
 import type { ISpeechService } from "@/services/speech-service";
 import type { StateManager } from "@/state-manager";
@@ -111,11 +113,33 @@ export async function executePlayerRolled(
 function riddleOutcomeMessage(
   correct: boolean,
   dice: ReturnType<typeof getPowerCheckDiceConfig>,
+  squareName: string | undefined,
 ): string {
+  const locale = getLocale();
+  const animalScorePhrase =
+    locale === "es-AR" ? possessiveScorePhraseEs(squareName) : possessiveScorePhraseEn(squareName);
+
   if (correct) {
-    return dice.ifRiddleCorrect === 3 ? t("game.riddleCorrect3d6") : t("game.riddleCorrect2d6");
+    const gap = dice.ifRiddleCorrect - dice.ifRiddleWrong;
+    const extraDicePhrase =
+      gap === 1
+        ? t("game.riddlePowerExtraDieOne")
+        : gap > 1
+          ? t("game.riddlePowerExtraDiceMany", { count: gap })
+          : "";
+    return t("game.riddleCorrectPowerRoll", {
+      extraDicePhrase,
+      diceCount: dice.ifRiddleCorrect,
+      animalScorePhrase,
+    });
   }
-  return dice.ifRiddleWrong === 2 ? t("game.riddleIncorrect2d6") : t("game.riddleIncorrect1d6");
+
+  const wrongCount = dice.ifRiddleWrong;
+  const diceRollPhrase =
+    wrongCount === 1
+      ? t("game.riddlePowerRollOneDie")
+      : t("game.riddlePowerRollManyDice", { count: wrongCount });
+  return t("game.riddleIncorrectPowerRoll", { diceRollPhrase, animalScorePhrase });
 }
 
 function parseNumericRoll(answer: string): number | null {
@@ -214,7 +238,12 @@ async function speakAfterRiddleResolved(
     pendingEncounter && typeof pendingEncounter.position === "number"
       ? getSquareDataAtPosition(st, pendingEncounter.position)
       : undefined;
-  const msg = riddleOutcomeMessage(riddleResult.correct, getPowerCheckDiceConfig(squareData));
+  const squareName = typeof squareData?.name === "string" ? squareData.name : undefined;
+  const msg = riddleOutcomeMessage(
+    riddleResult.correct,
+    getPowerCheckDiceConfig(squareData),
+    squareName,
+  );
   ctx.setLastNarration(msg);
   ctx.statusIndicator.setState("speaking");
   await ctx.speechService.speak(msg);

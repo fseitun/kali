@@ -104,6 +104,25 @@ describe("LLM - Pure JSON Parsing", () => {
 
       expect(() => client.testExtractActions(notArray)).toThrow("Expected array, got object");
     });
+
+    it("coalesces two newline-separated root objects into an action array", () => {
+      const ndjson =
+        '{"action":"ASK_RIDDLE","text":"q","options":["a","b","c","d"],"correctOption":"a"}\n{"action":"NARRATE","text":"Asked."}';
+      const actions = client.testExtractActions(ndjson);
+
+      expect(actions).toHaveLength(2);
+      expect(actions[0].action).toBe("ASK_RIDDLE");
+      expect(actions[1]).toEqual({ action: "NARRATE", text: "Asked." });
+    });
+
+    it("coalesces NDJSON when first NARRATE text contains escaped newline", () => {
+      const ndjson = '{"action":"NARRATE","text":"a\\nb"}\n{"action":"PLAYER_ROLLED","value":4}';
+      const actions = client.testExtractActions(ndjson);
+
+      expect(actions).toHaveLength(2);
+      expect((actions[0] as { text: string }).text).toBe("a\nb");
+      expect(actions[1]).toEqual({ action: "PLAYER_ROLLED", value: 4 });
+    });
   });
 
   describe("getActions with retry", () => {

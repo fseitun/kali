@@ -57,6 +57,10 @@ function getBasePrimitivesDocs(): string {
 
 **Return PURE JSON ONLY. No markdown, no backticks. Just the JSON array.**
 
+**Wrong (two root objects — will fail):** \`{"action":"NARRATE","text":"a"}\n{"action":"PLAYER_ROLLED","value":3}\`
+**Right (single array):** \`[{"action":"NARRATE","text":"a"},{"action":"PLAYER_ROLLED","value":3}]\`
+For ASK_RIDDLE + NARRATE together, prefer one minified array on a single line.
+
 State block may include ⚠️ RIDDLE / POWER CHECK / DECISION / REVENGE — follow that instruction.
 
 ## 7 Primitives
