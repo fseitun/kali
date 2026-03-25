@@ -32,10 +32,10 @@ export const enUS = {
     afterEncounterRollPrompt:
       "{name}, you're still on square {position}. Roll the dice and tell me what you got.",
     powerCheckFail: "No luck.",
-    riddleCorrect2d6: "Correct! Roll 2 dice for the power check.",
-    riddleCorrect3d6: "Correct! Roll 3 dice for the power check.",
-    riddleIncorrect1d6: "Wrong. Roll 1 die for the power check.",
-    riddleIncorrect2d6: "Wrong. Roll 2 dice for the power check.",
+    riddleCorrect2d6: "Correct! Roll 2 dice to try to beat it.",
+    riddleCorrect3d6: "Correct! Roll 3 dice to try to beat it.",
+    riddleIncorrect1d6: "Wrong. Roll 1 die to try to beat it.",
+    riddleIncorrect2d6: "Wrong. Roll 2 dice to try to beat it.",
     forkChoiceResolvedRoll: "{name}, you're set. Roll the dice.",
   },
   ui: {

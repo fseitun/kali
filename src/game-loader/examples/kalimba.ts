@@ -9,7 +9,7 @@ export interface GameExample {
   actions: PrimitiveAction[];
 }
 
-/** Kalimba LLM prompt examples. First 5 are sent to the LLM. */
+/** Kalimba LLM prompt examples. First 6 are sent to the LLM (includes animal riddle flow). */
 export const KALIMBA_EXAMPLES: GameExample[] = [
   {
     user: "Quiero el más corto",
@@ -48,7 +48,7 @@ export const KALIMBA_EXAMPLES: GameExample[] = [
       },
       {
         action: "NARRATE",
-        text: "¿Dónde vive el pingüino? A) Desierto B) Océano C) Ártico D) Bosque. Decí la letra.",
+        text: "Sofi, te encontraste con un pingüino en la costa. Para seguir tu viaje, primero tenés una adivinanza. Si la acertás, ganás un dado extra para intentar superar al pingüino.\n\nEscuchá con atención:\n\n¿Dónde vive el pingüino?\n\nOpciones:\nA) Desierto\nB) Océano\nC) Ártico\nD) Bosque\n\nDecime cuál opción creés que es la correcta.",
       },
     ],
   },

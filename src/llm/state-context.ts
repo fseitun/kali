@@ -190,12 +190,47 @@ function formatDecisionPointContext(state: Record<string, unknown>): string {
   return `⚠️ DECISION (${playerName}) fork choice at ${position}. Ask: "${playerName}, ${decisionPoint.prompt}" Always name the player when asking. If user asks what to do or for help → NARRATE the path options (e.g. from the prompt); do NOT emit PLAYER_ANSWERED.${hint} If they state a choice, emit PLAYER_ANSWERED with the correct target number. [current]`;
 }
 
+function buildRiddleEncounterHints(
+  state: Record<string, unknown>,
+  pending: { position?: number; power?: number },
+): string {
+  const pos = pending.position;
+  if (typeof pos !== "number") {
+    return "";
+  }
+  const squareData = getSquareDataAtPosition(state as GameState, pos);
+  if (!squareData) {
+    return "";
+  }
+  const cfg = getPowerCheckDiceConfig(squareData);
+  const powerVal =
+    (typeof pending.power === "number" ? pending.power : undefined) ??
+    (typeof squareData.power === "number" ? squareData.power : 0);
+  let hints = ` After the riddle: if correct, player rolls ${cfg.ifRiddleCorrect}d6 (sum vs animal strength ${powerVal}); if wrong, ${cfg.ifRiddleWrong}d6. In NARRATE (Spanish), say it in plain kid-friendly terms — e.g. un dado extra / más dados para intentar superar al animal — never say "prueba de poder" or "power check".`;
+  const hab = squareData.habitat;
+  if (typeof hab === "string" && hab.trim() !== "") {
+    hints += ` Open the scene in this habitat (square data: ${hab}) — use a natural Spanish place name, not the English key; do not open with casillero number unless necessary.`;
+  }
+  return hints;
+}
+
+const RIDDLE_NARRATION_SHAPE =
+  ' NARRATE shape: player name + animal in habitat; adivinanza + si acertás un dado extra (or más dados) para superar al animal; then "Escuchá con atención:"; then the riddle question; then "Opciones:" with A) B) C) D) one per line in options order; close asking which option they think is correct (e.g. cuál opción creés que es la correcta).';
+
 function formatRiddlePhaseContext(
   playerName: string,
-  pending: { riddlePrompt?: string; riddleOptions?: string[]; correctOption?: string },
+  pending: {
+    riddlePrompt?: string;
+    riddleOptions?: string[];
+    correctOption?: string;
+    position?: number;
+    power?: number;
+  },
+  state: Record<string, unknown>,
 ): string {
   const options = pending.riddleOptions;
   const hasStructuredRiddle = options?.length === 4 && pending.correctOption;
+  const encounterHints = buildRiddleEncounterHints(state, pending);
   const antiLeak =
     " When asking the riddle: ask only the riddle and the four options. Do NOT include the correct answer in that NARRATE.";
   const helpInst =
@@ -203,13 +238,13 @@ function formatRiddlePhaseContext(
       ? " If user asks what to do, NARRATE re-asking the same riddle and the four options."
       : " If user asks what to do or says they didn't hear, you MUST return ASK_RIDDLE (text, options, correctOption, optional correctOptionSynonyms) followed by NARRATE speaking that same riddle and options. Do NOT return only a NARRATE saying 'choose an option' without speaking the actual riddle.";
   if (!hasStructuredRiddle) {
-    return `⚠️ RIDDLE (${playerName}) phase=riddle.${antiLeak} Ask a riddle with exactly FOUR options. The riddle MUST be about the animal kingdom (e.g. animals, habitats, behavior, diet, classification). Return ASK_RIDDLE with "text", "options" (array of 4 strings), "correctOption" (exact text of the correct option), optionally "correctOptionSynonyms" (array of synonyms). Then NARRATE the riddle and options. When user answers, return PLAYER_ANSWERED with what they said - do NOT use RIDDLE_RESOLVED.${helpInst} [current]`;
+    return `⚠️ RIDDLE (${playerName}) phase=riddle.${antiLeak}${encounterHints}${RIDDLE_NARRATION_SHAPE} Ask a riddle with exactly FOUR options. The riddle MUST be about the animal kingdom (e.g. animals, habitats, behavior, diet, classification). Return ASK_RIDDLE with "text", "options" (array of 4 strings), "correctOption" (exact text of the correct option), optionally "correctOptionSynonyms" (array of synonyms). Then NARRATE the riddle and options. When user answers, return PLAYER_ANSWERED with what they said - do NOT use RIDDLE_RESOLVED.${helpInst} [current]`;
   }
   const optionsList = options?.join(", ") ?? "";
   const mapInst =
     optionsList &&
     ` Current options: ${optionsList}. Return PLAYER_ANSWERED with the user's answer (option text or what they said).`;
-  return `⚠️ RIDDLE (${playerName}) phase=riddle. User must choose one of the four options. Return PLAYER_ANSWERED with what the user said - do NOT use RIDDLE_RESOLVED. Orchestrator resolves correct/incorrect (strict match then LLM).${mapInst}${helpInst} [current]`;
+  return `⚠️ RIDDLE (${playerName}) phase=riddle. User must choose one of the four options. Return PLAYER_ANSWERED with what the user said - do NOT use RIDDLE_RESOLVED. Orchestrator resolves correct/incorrect (strict match then LLM).${mapInst}${encounterHints}${RIDDLE_NARRATION_SHAPE}${antiLeak}${helpInst} [current]`;
 }
 
 function formatPowerCheckContext(
@@ -270,7 +305,14 @@ function formatPendingContext(state: Record<string, unknown>): string {
   if (kind === "riddle") {
     return formatRiddlePhaseContext(
       playerName,
-      pending as { riddlePrompt?: string; riddleOptions?: string[]; correctOption?: string },
+      pending as {
+        riddlePrompt?: string;
+        riddleOptions?: string[];
+        correctOption?: string;
+        position?: number;
+        power?: number;
+      },
+      state,
     );
   }
   if (kind === "powerCheck") {

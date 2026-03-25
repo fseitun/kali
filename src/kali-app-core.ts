@@ -155,7 +155,7 @@ export class KaliAppCore {
 
   private formatGameRules(gameModule: GameModule): string {
     const { metadata } = gameModule;
-    const typedExamples = (metadata.id === "kalimba" ? KALIMBA_EXAMPLES : []).slice(0, 5);
+    const typedExamples = (metadata.id === "kalimba" ? KALIMBA_EXAMPLES : []).slice(0, 6);
     const exampleLines = typedExamples.map(
       (ex) => `User: ${ex.user} | You: ${JSON.stringify(ex.actions)}`,
     );

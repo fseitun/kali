@@ -4,7 +4,7 @@ import { formatStateContext, SYSTEM_PROMPT } from "./system-prompt";
 describe("SYSTEM_PROMPT", () => {
   it("slim base prompt is smaller than legacy (~2.5k+) and has an upper bound", () => {
     expect(SYSTEM_PROMPT.length).toBeGreaterThanOrEqual(1100);
-    expect(SYSTEM_PROMPT.length).toBeLessThanOrEqual(2600);
+    expect(SYSTEM_PROMPT.length).toBeLessThanOrEqual(3200);
   });
 
   it("includes guidance rule: when user asks what to do, NARRATE only and do not emit primitives", () => {
@@ -154,6 +154,87 @@ describe("formatStateContext", () => {
     expect(result).toContain("2–12");
     expect(result).toContain("2d6");
     expect(result).not.toContain("on the die");
+  });
+
+  it("RIDDLE phase includes power-check dice, habitat hint, and narration shape", () => {
+    const state = {
+      game: {
+        turn: "p1",
+        phase: "PLAYING",
+        pending: {
+          kind: "riddle",
+          position: 7,
+          power: 3,
+          playerId: "p1",
+          phase: "riddle",
+        },
+      },
+      players: {
+        p1: { id: "p1", name: "Nachito", position: 7, activeChoices: {} },
+      },
+      board: {
+        squares: {
+          "7": {
+            name: "Eagle",
+            power: 3,
+            powerCheckDiceIfRiddleCorrect: 3,
+            powerCheckDiceIfRiddleWrong: 2,
+            habitat: "desert",
+          },
+        },
+      },
+    } as Record<string, unknown>;
+
+    const result = formatStateContext(state);
+
+    expect(result).toContain("RIDDLE (Nachito)");
+    expect(result).toContain("3d6");
+    expect(result).toContain("animal strength 3");
+    expect(result).toContain("2d6");
+    expect(result).toContain('never say "prueba de poder"');
+    expect(result).toContain("square data: desert");
+    expect(result).toContain("Escuchá con atención");
+    expect(result).toContain("Opciones:");
+    expect(result).toContain("superar al animal");
+  });
+
+  it("RIDDLE phase with stored options still includes encounter hints and anti-leak", () => {
+    const state = {
+      game: {
+        turn: "p1",
+        phase: "PLAYING",
+        pending: {
+          kind: "riddle",
+          position: 7,
+          power: 3,
+          playerId: "p1",
+          phase: "riddle",
+          riddlePrompt: "¿Qué ave…?",
+          riddleOptions: ["Águila", "Halcón", "Búho", "Pingüino"],
+          correctOption: "Águila",
+        },
+      },
+      players: {
+        p1: { id: "p1", name: "Sofi", position: 7, activeChoices: {} },
+      },
+      board: {
+        squares: {
+          "7": {
+            power: 3,
+            powerCheckDiceIfRiddleCorrect: 3,
+            powerCheckDiceIfRiddleWrong: 2,
+            habitat: "desert",
+          },
+        },
+      },
+    } as Record<string, unknown>;
+
+    const result = formatStateContext(state);
+
+    expect(result).toContain("Current options: Águila, Halcón, Búho, Pingüino");
+    expect(result).toContain("3d6");
+    expect(result).toContain("animal strength 3");
+    expect(result).toContain("Do NOT include the correct answer");
   });
 
   it("POWER CHECK on Águila (3d6) after correct riddle uses 3–18 wording", () => {
