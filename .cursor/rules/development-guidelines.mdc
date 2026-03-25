@@ -82,7 +82,8 @@ The orchestrator only understands these primitives:
 - `RESET_GAME` - Reset game to initial state
 - `SET_STATE` - Set value in game state (user corrections/overrides)
 - `PLAYER_ROLLED` - Report dice roll; orchestrator calculates position
-- `PLAYER_ANSWERED` - Report player answer (path choice, fight/flee, etc.)
+- `PLAYER_ANSWERED` - Report player answer (path choice, fight/flee, riddle text, power-check/revenge roll, etc.); orchestrator resolves riddle correct/incorrect from this alone
+- `ASK_RIDDLE` - Emit animal-kingdom trivia: four option strings, `correctOption`, optional synonyms; often paired with `NARRATE` in one array
 
 ### State Machine
 

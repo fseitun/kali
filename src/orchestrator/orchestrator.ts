@@ -877,9 +877,6 @@ export class Orchestrator {
       case "ASK_RIDDLE":
         this.riddlePowerCheckHandler.handleAskRiddle(primitive);
         break;
-      case "RIDDLE_RESOLVED":
-        this.riddlePowerCheckHandler.handleRiddleResolved(primitive);
-        break;
       case "PLAYER_ANSWERED":
         await executePlayerAnswered(ctx, primitive, context);
         break;

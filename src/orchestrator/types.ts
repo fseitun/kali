@@ -160,8 +160,7 @@ export type PrimitiveAction =
   | SetStateAction
   | PlayerRolledAction
   | PlayerAnsweredAction
-  | AskRiddleAction
-  | RiddleResolvedAction;
+  | AskRiddleAction;
 
 /**
  * Speaks text aloud via TTS and optionally plays a sound effect.
@@ -227,13 +226,4 @@ export interface AskRiddleAction {
   correctOption: string;
   /** Optional synonyms or common ways to say the correct option; strict match treats these as correct without calling the LLM. */
   correctOptionSynonyms?: string[];
-}
-
-/**
- * Reports the result of a riddle evaluation during an animal encounter.
- * Orchestrator updates phase to powerCheck and applies riddleCorrect. LLM only judges; orchestrator owns state.
- */
-export interface RiddleResolvedAction {
-  action: "RIDDLE_RESOLVED";
-  correct: boolean;
 }

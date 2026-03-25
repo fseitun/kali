@@ -227,7 +227,7 @@ async function tryHandleDirectionalRollAnswer(
   return true;
 }
 
-async function speakAfterRiddleResolved(
+async function speakAfterRiddleOutcome(
   ctx: ActionExecutorContext,
   riddleResult: { correct: boolean },
 ): Promise<void> {
@@ -263,7 +263,7 @@ export async function executePlayerAnswered(
   );
   if (riddleResult) {
     context.skipTrailingNarrateForPowerCheck = true;
-    await speakAfterRiddleResolved(ctx, riddleResult);
+    await speakAfterRiddleOutcome(ctx, riddleResult);
     return;
   }
 

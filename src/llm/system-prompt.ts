@@ -70,14 +70,13 @@ For ASK_RIDDLE + NARRATE together, prefer one minified array on a single line.
 
 State block may include ⚠️ RIDDLE / POWER CHECK / DECISION / REVENGE — follow that instruction.
 
-## 7 Primitives
+## 6 Primitives
 1. NARRATE — TTS. ${lang}. Usually short; use player names. During ⚠️ RIDDLE, NARRATE may be longer to deliver the full encounter script (see state). { "action": "NARRATE", "text": "...", "soundEffect": "optional" }
 2. RESET_GAME — New game; ask same/new players. { "action": "RESET_GAME", "keepPlayerNames": true }
 3. SET_STATE — User corrections only ("we're at 50", "my name is X"). Orchestrator does math. { "action": "SET_STATE", "path": "players.p1.position", "value": 50 }
 4. PLAYER_ROLLED — User reports roll; orchestrator moves. Position given → SET_STATE. { "action": "PLAYER_ROLLED", "value": 5 }
-5. PLAYER_ANSWERED — Path/roll/riddle/yes-no. The answer field must be a JSON string (e.g. roll sum "7", fork "1", or riddle text). { "action": "PLAYER_ANSWERED", "answer": "7" }
+5. PLAYER_ANSWERED — Path/roll/riddle/yes-no. The answer field must be a JSON string (e.g. roll sum "7", fork "1", or riddle text). Riddle outcomes: orchestrator judges from PLAYER_ANSWERED only (strict match then LLM); do not emit any other primitive for riddle resolution. { "action": "PLAYER_ANSWERED", "answer": "7" }
 6. ASK_RIDDLE — Animal kingdom trivia. "options" must be exactly four answer strings (not the letters A–D). "correctOption" must exactly match one of those four strings. You may read them aloud in NARRATE as "A) … B) … C) … D) …" in the same order. Then NARRATE per ⚠️ RIDDLE in state. User answers → PLAYER_ANSWERED. Example: { "action": "ASK_RIDDLE", "text": "¿Qué ave…?", "options": ["Águila", "Halcón", "Búho", "Pingüino"], "correctOption": "Águila", "correctOptionSynonyms": [] }
-7. RIDDLE_RESOLVED — Legacy. Prefer ASK_RIDDLE + PLAYER_ANSWERED. { "action": "RIDDLE_RESOLVED", "correct": true }
 
 **ASK_RIDDLE + NARRATE in one turn:** return exactly one JSON array with both objects inside, e.g. [{"action":"ASK_RIDDLE",...},{"action":"NARRATE","text":"..."}]. Never output two separate top-level JSON objects (invalid).
 

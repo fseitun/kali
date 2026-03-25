@@ -3,7 +3,7 @@ import { applyActionToMockState } from "./validator/mock-state";
 import { validateNarrate, validateResetGame } from "./validator/narrate-reset";
 import { validatePlayerAnswered } from "./validator/player-answered";
 import { validatePlayerRolled } from "./validator/player-rolled";
-import { validateAskRiddle, validateRiddleResolved } from "./validator/riddle";
+import { validateAskRiddle } from "./validator/riddle";
 import { validateSetState } from "./validator/set-state";
 import type { ValidationResult, ValidatorContext } from "./validator/types";
 import type { StateManager } from "@/state-manager";
@@ -25,7 +25,6 @@ const ACTION_VALIDATORS: Record<string, ActionValidator> = {
   PLAYER_ROLLED: (p, s, _, i, ctx) => validatePlayerRolled(p, s, i, ctx),
   PLAYER_ANSWERED: (p, s, _, i) => validatePlayerAnswered(p, s, i),
   ASK_RIDDLE: (p, s, _, i) => validateAskRiddle(p, s, i),
-  RIDDLE_RESOLVED: (p, s, _, i) => validateRiddleResolved(p, s, i),
 };
 
 /**

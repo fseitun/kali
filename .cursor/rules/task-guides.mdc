@@ -6,12 +6,14 @@ description: Step-by-step guides for common development tasks - add primitives, 
 
 ## Adding New Primitive Actions
 
-**Current primitives:** `NARRATE`, `RESET_GAME`, `SET_STATE`, `PLAYER_ROLLED`, `PLAYER_ANSWERED` (see `architecture.mdc`).
+**Current primitives:** `NARRATE`, `RESET_GAME`, `SET_STATE`, `PLAYER_ROLLED`, `PLAYER_ANSWERED`, `ASK_RIDDLE`. Riddle grading is orchestrator-owned after `PLAYER_ANSWERED` (see [ADR 0004](../../docs/adr/0004-no-riddle-resolved-primitive.md)). See `architecture.mdc` and `src/orchestrator/types.ts`.
 
-1. Add new action type to `src/orchestrator/types.ts`
-2. Implement validation in `src/orchestrator/validator.ts`
-3. Add execution handler in `src/orchestrator/orchestrator.ts`
-4. Update system prompt in `src/llm/system-prompt.ts`
+1. Add the new action variant to `src/orchestrator/types.ts`.
+2. Implement validation in `src/orchestrator/validator.ts` and, if the rules are substantial, a focused module under `src/orchestrator/validator/`.
+3. Add execution in `src/orchestrator/action-executors.ts` (and wire through `src/orchestrator/orchestrator.ts` if needed).
+4. Update `src/llm/system-prompt.ts` so interpreters know when and how to emit the primitive.
+5. Add or extend unit tests (`*.test.ts`) for validation and execution paths.
+6. Add or extend integration scenarios under `integration/scenarios/` when the flow is gameplay-visible or cross-cutting (see `integration/README.md`).
 
 ## Adding New Game Support
 
@@ -22,9 +24,37 @@ description: Step-by-step guides for common development tasks - add primitives, 
 
 ## Modifying LLM Prompts
 
-1. Edit `src/llm/system-prompt.ts`
-2. Test with both Gemini and Ollama if possible
-3. Keep prompts concise to reduce latency and cost
+**Where prompts live**
+
+- `src/llm/system-prompt.ts` — Role, primitive contract, JSON-only output rules, locale-specific narration few-shots (`LANGUAGE_INSTRUCTIONS`, `NARRATION_EXAMPLES`).
+- `src/llm/state-context.ts` — Per-turn `<game_state>` text the model sees (volatile; keep stable instructions out of here).
+- `src/i18n/riddle-judge-prompt.ts` — Locale-aware prompt for fuzzy riddle answer grading.
+- `src/llm/BaseLLMClient.ts` — Inline prompts for `extractName`, `analyzeResponse`, and the composed `getActions` user payload (`<game_state>`, `<last_utterance>`, `<user_command>`).
+
+**Spanish-first UX**
+
+- Default locale is `es-AR` (`src/config.ts`, `src/i18n/locale-manager.ts`). Player-facing `NARRATE` text should match Rioplatense/vos guidance in the system prompt when locale is Spanish.
+- Headings and structural instructions in `system-prompt.ts` are largely English by design; improving same-language scaffolding for `es-AR` is a larger follow-up (see `discussions/prioritized-roadmap.md`, LLM prompt language deduplication). When tuning prompts, prioritize Spanish narration examples and dialect instructions first.
+
+**Layout (OpenAI / Anthropic–style)**
+
+- Keep **stable** content in the system string: role, output format, primitives, conventions.
+- Keep **volatile** content in the user turn: formatted state, last bot line, user transcript (already separated in code for clients that support it).
+- OpenRouter and DeepInfra send native `system` + `user` for `getActions`. Gemini uses cached `systemInstruction` + user only when prompt caching is active; uncached Gemini and clients such as Groq and Ollama may send a single user message with the full concatenated prompt. Do not assume every provider uses a native system role until you verify that client.
+
+**After changes**
+
+- Run `npm run full-check`.
+- Re-run or extend `integration/` scenarios for flows you touched; use `Logger.prompt` logs to spot regressions in full prompt/response.
+- For material behavior changes, consider a small eval or scripted transcript suite—models are non-deterministic, so measuring beats guessing.
+
+**Cost and latency**
+
+- Keep prompts concise; long system prompts affect every call.
+
+**Providers to smoke-test**
+
+- At least one cloud provider you rely on in production (e.g. Gemini, Groq, OpenRouter, DeepInfra) and local **Ollama** if you use it (`VITE_LLM_PROVIDER` in `src/config.ts`).
 
 ## Adjusting Voice Flows
 

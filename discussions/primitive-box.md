@@ -6,7 +6,7 @@ Kali treats the LLM (and any future interpreter) as a **swappable box** whose on
 
 At the core of this seam is the `PrimitiveAction[]` contract defined in `src/orchestrator/types.ts`. Any interpreter – LLM clients, debug tools, or future non-LLM paths – must:
 
-- Produce only the allowed primitive actions: `NARRATE`, `RESET_GAME`, `SET_STATE`, `PLAYER_ROLLED`, `PLAYER_ANSWERED`.
+- Produce only the allowed primitive actions: `NARRATE`, `RESET_GAME`, `SET_STATE`, `PLAYER_ROLLED`, `PLAYER_ANSWERED`, `ASK_RIDDLE`.
 - Treat those primitives as **reports of events or corrections**, not as direct state mutations or turn/phase control.
 - Rely on the orchestrator and its subsystems to:
   - Own all state changes via `StateManager`.

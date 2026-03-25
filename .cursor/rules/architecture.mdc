@@ -26,7 +26,7 @@ The system is built on a strict separation of duties:
 
 - Deterministic, authoritative, and simple component
 - Knows nothing about game rules
-- Only understands primitive actions: `NARRATE`, `RESET_GAME`, `SET_STATE`, `PLAYER_ROLLED`, `PLAYER_ANSWERED`
+- Only understands primitive actions: `NARRATE`, `RESET_GAME`, `SET_STATE`, `PLAYER_ROLLED`, `PLAYER_ANSWERED`, `ASK_RIDDLE` (trivia with four string options; riddle outcomes flow from `PLAYER_ANSWERED` only—see [ADR 0004](../../docs/adr/0004-no-riddle-resolved-primitive.md))
 - Validates and executes instructions from the LLM
 - Guarantees game state integrity
 
@@ -52,7 +52,7 @@ When working with turn logic, board effects, or decision points, look in the cor
 - **Build Tool**: Vite
 - **Audio Pipeline**: WebAudio API + AudioWorklet
 - **Speech Recognition**: Vosk (fully offline, wake word + STT)
-- **LLM Clients**: Gemini (fast, recommended) or Ollama (local)
+- **LLM Clients**: Gemini (recommended), Ollama (local), Groq, OpenRouter, DeepInfra (see `CONFIG.LLM_PROVIDER`)
 - **State Storage**: In-memory state management
 - **TTS**: Browser SpeechSynthesis API
 - **Sound Effects**: WebAudio for preloaded local audio

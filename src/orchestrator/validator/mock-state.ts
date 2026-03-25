@@ -259,35 +259,11 @@ function handleAskRiddle(
   };
 }
 
-function handleRiddleResolved(
-  primitive: PrimitiveAction,
-  mockState: GameState,
-  _originalState: GameState,
-): void {
-  if (!("correct" in primitive)) {
-    return;
-  }
-  const game = mockState.game as Record<string, unknown>;
-  const pending = game?.pending as
-    | { position: number; power: number; playerId: string; kind?: string }
-    | null
-    | undefined;
-  if (pending?.kind !== "riddle") {
-    return;
-  }
-  game.pending = {
-    ...pending,
-    kind: "powerCheck",
-    riddleCorrect: primitive.correct,
-  };
-}
-
 const MOCK_STATE_HANDLERS: Partial<Record<string, MockStateHandler>> = {
   SET_STATE: handleSetState,
   PLAYER_ROLLED: handlePlayerRolled,
   PLAYER_ANSWERED: handlePlayerAnswered,
   ASK_RIDDLE: handleAskRiddle,
-  RIDDLE_RESOLVED: handleRiddleResolved,
 };
 
 /**

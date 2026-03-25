@@ -13,4 +13,6 @@ alwaysApply: true
 
 **Instead:** pick one supported shape, update all usages and tests, and record non-obvious choices in an ADR or the relevant `.cursor/rules/*.mdc`. Breaking old JSON or call sites is acceptable when the maintainer controls all consumers.
 
+**Example:** [ADR 0004](../../docs/adr/0004-no-riddle-resolved-primitive.md) removed the `RIDDLE_RESOLVED` interpreter primitive; riddle grading is orchestrator-only after `PLAYER_ANSWERED`.
+
 **Exception:** a short-lived bridge is allowed **only** when the project owner explicitly asks for it in that task. Otherwise treat backward compatibility as out of scope.

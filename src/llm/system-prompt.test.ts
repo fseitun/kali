@@ -3,7 +3,7 @@ import { formatStateContext, SYSTEM_PROMPT } from "./system-prompt";
 import * as localeManager from "@/i18n/locale-manager";
 
 describe("SYSTEM_PROMPT", () => {
-  it("slim base prompt is smaller than legacy (~2.5k+) and has an upper bound", () => {
+  it("slim base prompt has a reasonable size bound (well under historical ~2.5k+ bloated prompts)", () => {
     expect(SYSTEM_PROMPT.length).toBeGreaterThanOrEqual(1100);
     expect(SYSTEM_PROMPT.length).toBeLessThanOrEqual(4000);
   });

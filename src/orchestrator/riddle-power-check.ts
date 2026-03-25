@@ -26,13 +26,14 @@ export interface RiddlePowerCheckDeps {
 }
 
 /**
- * Handles riddle and power-check (animal encounter) logic: ASK_RIDDLE, RIDDLE_RESOLVED,
+ * Handles riddle and power-check (animal encounter) logic: ASK_RIDDLE and
  * PLAYER_ANSWERED for riddle/power-check, turn advance on power-check fail, rewards.
  */
 export class RiddlePowerCheckHandler {
   constructor(private deps: RiddlePowerCheckDeps) {}
 
-  handleRiddleResolved(primitive: { action: "RIDDLE_RESOLVED"; correct: boolean }): void {
+  /** After a riddle answer is judged (strict match or LLM), move pending to power-check. */
+  private transitionRiddleToPowerCheck(correct: boolean): void {
     const state = this.deps.stateManager.getState();
     const game = state.game as Record<string, unknown> | undefined;
     const pending = game?.pending as PendingRiddle | null | undefined;
@@ -46,11 +47,11 @@ export class RiddlePowerCheckHandler {
       playerId: pending.playerId,
       position: pending.position,
       power: pending.power,
-      riddleCorrect: primitive.correct,
+      riddleCorrect: correct,
       phase: "powerCheck",
     };
     this.deps.stateManager.set(GAME_PATH.pending, next);
-    Logger.info(`Riddle resolved: correct=${primitive.correct}, phase→powerCheck`);
+    Logger.info(`Riddle resolved: correct=${correct}, phase→powerCheck`);
   }
 
   private isValidAskRiddleInput(primitive: { options: unknown; correctOption: unknown }): boolean {
@@ -136,7 +137,7 @@ export class RiddlePowerCheckHandler {
         pending.correctOptionSynonyms,
       )
     ) {
-      this.handleRiddleResolved({ action: "RIDDLE_RESOLVED", correct: true });
+      this.transitionRiddleToPowerCheck(true);
       return { correct: true };
     }
 
@@ -146,7 +147,7 @@ export class RiddlePowerCheckHandler {
       options,
       pending.correctOption,
     );
-    this.handleRiddleResolved({ action: "RIDDLE_RESOLVED", correct: result.correct });
+    this.transitionRiddleToPowerCheck(result.correct);
     return { correct: result.correct };
   }
 

@@ -123,7 +123,7 @@ newPosition = currentPosition + rollValue;
 
 All interpreters – LLM clients, debug tools, or any future non-LLM input paths – communicate with the orchestrator **only** by emitting a `PrimitiveAction[]` request. This is the **Primitive Box** contract:
 
-- The only allowed primitives are `NARRATE`, `RESET_GAME`, `SET_STATE`, `PLAYER_ROLLED`, `PLAYER_ANSWERED`.
+- The only allowed primitives are `NARRATE`, `RESET_GAME`, `SET_STATE`, `PLAYER_ROLLED`, `PLAYER_ANSWERED`, and `ASK_RIDDLE`. Animal-encounter riddles use `ASK_RIDDLE` plus `PLAYER_ANSWERED`; the orchestrator applies strict match then optional LLM judge—no separate “riddle resolved” primitive (see [`docs/adr/0004-no-riddle-resolved-primitive.md`](../docs/adr/0004-no-riddle-resolved-primitive.md)).
 - Interpreters:
   - **Report events and corrections** through these primitives.
   - **Never manipulate turns, phases, or winners directly.**
@@ -135,9 +135,10 @@ All interpreters – LLM clients, debug tools, or any future non-LLM input paths
 
 If a new kind of event is needed, it must be introduced as a new primitive with:
 
-- Validation rules in `validator.ts`.
-- Execution logic in `orchestrator.ts`.
+- Validation rules in `validator.ts` (and `validator/` submodule if non-trivial).
+- Execution logic in `action-executors.ts` / `orchestrator.ts` as appropriate.
 - Updated guidance in `system-prompt.ts` so LLMs can emit it.
+- Tests and integration scenarios where behavior is user-visible or state-changing.
 
 ### Why This Matters
 

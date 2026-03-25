@@ -104,6 +104,7 @@ Game definitions (JSON files):
 
 - `translations.ts` - Translation functions (t, setLocale, getNicknames, etc.)
 - `locale-manager.ts` - Locale persistence and selection (getLocale, getTtsLang)
+- `riddle-judge-prompt.ts` - LLM prompt builder for fuzzy riddle answer grading (locale-aware; Spanish-first)
 - `locales/` - Locale files (en-US, es-AR)
 
 ## Utilities
