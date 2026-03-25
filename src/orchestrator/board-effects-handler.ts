@@ -19,7 +19,7 @@ import { Logger } from "@/utils/logger";
  *
  * Responsibilities:
  * - Auto-apply teleports from squares (portals, returnTo187); skip backward when inverseMode
- * - Golden fox (`jumpToLeader`): if the leader stands on a backward portal, occupants on that square move to the exit (e.g. 82→45) without chaining 45→82
+ * - Golden fox (`jumpToLeader`): after moving to the leader’s square, resolve that square’s portals for the mover only (e.g. 82→45); other players on that square are not moved
  * - Magic door bounce (overshooting 186)
  * - Apply deterministic square effects from config (hearts, skipTurn, item, instrument, inverseMode)
  * - Trigger LLM for narration only (no game-rule state from LLM)
@@ -75,13 +75,13 @@ export class BoardEffectsHandler {
     const fromSquareData = squareData;
     this.applyTeleportIfApplicable(path, position, squareData, state, context);
 
-    const afterTeleport = this.stateManager.get(path) as number;
+    const afterJumpToLeader = this.stateManager.get(path) as number;
     if (
       fromSquareData?.effect === "jumpToLeader" &&
-      typeof afterTeleport === "number" &&
-      afterTeleport !== fromPosition
+      typeof afterJumpToLeader === "number" &&
+      afterJumpToLeader !== fromPosition
     ) {
-      await this.applyGoldenFoxOccupantDisplacement(path, afterTeleport, squares, context);
+      this.applyJumpToLeaderLeaderSquarePortal(path, afterJumpToLeader, squares, context);
     }
 
     this.applyMagicDoorBounceIfApplicable(path, squares);
@@ -241,78 +241,28 @@ export class BoardEffectsHandler {
   }
 
   /**
-   * If the leader square has a backward `nextOnLanding` exit, moves every other player on that
-   * square there (Kalimba: golden fox joins leader on ocean–forest portal 82 → occupant to 45).
-   * Suppresses the forest portal chain 45→82 for that placement via {@link ExecutionContext.suppressNextOnLandingAtPosition}.
-   *
-   * @param moverPositionPath - Path of the player who used jumpToLeader
-   * @param leaderSquare - Square index after the jump (leader position)
-   * @param squares - Board squares map
-   * @param context - Execution context (mutated briefly for suppress flag)
+   * After `jumpToLeader`, resolve portals on the leader’s square for the mover only (e.g. 82→45).
+   * If that hop is backward, apply that square’s `inverseMode` (final position may be 45, not 82).
    */
-  private async applyGoldenFoxOccupantDisplacement(
-    moverPositionPath: string,
+  private applyJumpToLeaderLeaderSquarePortal(
+    path: string,
     leaderSquare: number,
     squares: Record<string, Record<string, unknown>>,
     context?: ExecutionContext,
-  ): Promise<void> {
-    const leaderSq = squares[leaderSquare.toString()];
-    const bumpTo = this.getBackwardPortalExit(leaderSquare, leaderSq);
-    if (bumpTo === undefined) {
-      return;
-    }
-    const moverMatch = moverPositionPath.match(/^players\.([^.]+)\.position$/);
-    const moverId = moverMatch?.[1];
-    if (!moverId) {
-      return;
-    }
-    const st = this.stateManager.getState() as {
+  ): void {
+    const stateAfterJump = this.stateManager.getState() as {
       game?: Record<string, unknown>;
       players?: Record<string, Record<string, unknown>>;
     };
-    const playerOrder = st.game?.playerOrder as string[] | undefined;
-    if (!Array.isArray(playerOrder)) {
-      return;
-    }
-    const ctx = context ?? {};
-    for (const pid of playerOrder) {
-      if (pid === moverId) {
-        continue;
-      }
-      const pos = this.stateManager.get(playerStatePath(pid, "position")) as number | undefined;
-      if (pos !== leaderSquare) {
-        continue;
-      }
-      const occPath = playerStatePath(pid, "position");
-      ctx.suppressNextOnLandingAtPosition = bumpTo;
-      try {
-        this.stateManager.set(occPath, bumpTo);
-        await this.checkAndApplyBoardMoves(occPath, ctx);
-      } finally {
-        delete ctx.suppressNextOnLandingAtPosition;
+    const leaderSquareData = squares[leaderSquare.toString()];
+    this.applyTeleportIfApplicable(path, leaderSquare, leaderSquareData, stateAfterJump, context);
+    const positionAfter = this.stateManager.get(path) as number;
+    if (typeof positionAfter === "number" && positionAfter < leaderSquare && leaderSquareData) {
+      const moverId = path.match(/^players\.([^.]+)\.position$/)?.[1];
+      if (moverId) {
+        this.applyInverseModeFromSquare(moverId, leaderSquareData);
       }
     }
-  }
-
-  /**
-   * @param leaderSquare - Index of the square the leader (and fox jumper) share
-   * @param squareData - Config for that square
-   * @returns Lower-index portal exit, or undefined if none
-   */
-  private getBackwardPortalExit(
-    leaderSquare: number,
-    squareData: Record<string, unknown> | undefined,
-  ): number | undefined {
-    if (!squareData) {
-      return undefined;
-    }
-    if (Array.isArray(squareData.nextOnLanding) && squareData.nextOnLanding.length > 0) {
-      const dest = squareData.nextOnLanding[0];
-      if (typeof dest === "number" && dest < leaderSquare) {
-        return dest;
-      }
-    }
-    return undefined;
   }
 
   private applyHeartEffect(playerId: string, squareData: Record<string, unknown>): string | null {

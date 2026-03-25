@@ -223,7 +223,7 @@ describe("BoardEffectsHandler", () => {
       expect(stateManager.get("players.p1.position")).toBe(54);
     });
 
-    it("should displace occupant on backward portal when jumpToLeader joins them (82→45, no 45→82 chain)", async () => {
+    it("should move jumper through square 82 portal (82→45) and leave other players on 82", async () => {
       stateManager.set("board.squares", {
         "45": { name: "Forest-Ocean Portal", nextOnLanding: [82] },
         "54": { effect: "jumpToLeader", name: "Zorro dorado" },
@@ -240,8 +240,31 @@ describe("BoardEffectsHandler", () => {
 
       await boardEffectsHandler.checkAndApplyBoardMoves("players.p1.position");
 
-      expect(stateManager.get("players.p1.position")).toBe(82);
-      expect(stateManager.get("players.p2.position")).toBe(45);
+      expect(stateManager.get("players.p1.position")).toBe(45);
+      expect(stateManager.get("players.p2.position")).toBe(82);
+      expect(stateManager.get("players.p1.inverseMode")).toBe(true);
+    });
+
+    it("should leave every occupant on 82 when jumpToLeader resolves ocean portal (multi-player)", async () => {
+      stateManager.set("board.squares", {
+        "45": { name: "Forest-Ocean Portal", nextOnLanding: [82] },
+        "54": { effect: "jumpToLeader", name: "Zorro dorado" },
+        "82": {
+          name: "Ocean-Forest Portal",
+          nextOnLanding: [45],
+          inverseMode: "activate",
+        },
+      });
+      stateManager.set("game.playerOrder", ["p1", "p2", "p3"]);
+      stateManager.set("players.p1.position", 54);
+      stateManager.set("players.p2.position", 82);
+      stateManager.set("players.p3.position", 82);
+
+      await boardEffectsHandler.checkAndApplyBoardMoves("players.p1.position");
+
+      expect(stateManager.get("players.p1.position")).toBe(45);
+      expect(stateManager.get("players.p2.position")).toBe(82);
+      expect(stateManager.get("players.p3.position")).toBe(82);
     });
   });
 
