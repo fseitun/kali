@@ -29,7 +29,7 @@ export class GeminiClient extends BaseLLMClient {
 
   private async createCache(): Promise<void> {
     if (!this.systemPrompt || this.systemPrompt.length < 1024) {
-      return; // Gemini requires min 1024 tokens for caching (Flash)
+      return; // Skip cache when system prompt is shorter than API minimum (threshold is character count here, not tokens).
     }
     const url = `${CONFIG.GEMINI.CACHED_CONTENTS_URL}?key=${CONFIG.GEMINI.API_KEY}`;
     const response = await fetch(url, {

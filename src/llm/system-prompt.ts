@@ -21,6 +21,7 @@ const NARRATION_EXAMPLES: Record<string, { good: string[]; bad: string[] }> = {
     bad: [
       "game.name is Kalimba, game.turn is p1...",
       "Player 1 moves to position 8. Raw state dump...",
+      "p1: position=8, activeChoices={...} — leé el estado en crudo en voz alta.",
     ],
   },
   "en-US": {
@@ -33,13 +34,19 @@ const NARRATION_EXAMPLES: Record<string, { good: string[]; bad: string[] }> = {
     bad: [
       "game.name is Kalimba, game.turn is p1...",
       "Player 1 moves to position 8. Raw state dump...",
+      "p1: position=8, activeChoices={...} — read the raw state dump out loud.",
     ],
   },
 };
 
 function getNarrationExample(): string {
   const examples = NARRATION_EXAMPLES[getLocale()] ?? NARRATION_EXAMPLES["en-US"];
-  return `GOOD: "${examples.good[0]}" | BAD: "${examples.bad[0]}"`;
+  const n = Math.min(3, examples.good.length, examples.bad.length);
+  const parts: string[] = [];
+  for (let i = 0; i < n; i++) {
+    parts.push(`GOOD: "${examples.good[i]}" | BAD: "${examples.bad[i]}"`);
+  }
+  return parts.join(" ");
 }
 
 const EXAMPLE_NARRATION: Record<string, string> = {

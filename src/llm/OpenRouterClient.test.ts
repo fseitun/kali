@@ -97,7 +97,8 @@ describe("OpenRouterClient", () => {
       expect(body.messages[0].role).toBe("system");
       expect(body.messages[0].content).toContain("Test game rules");
       expect(body.messages[1].role).toBe("user");
-      expect(body.messages[1].content).toContain('User Command: "roll dice"');
+      expect(body.messages[1].content).toContain("<user_command>");
+      expect(body.messages[1].content).toContain("roll dice");
     });
   });
 });

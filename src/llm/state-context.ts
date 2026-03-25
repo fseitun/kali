@@ -1,4 +1,9 @@
 import type { StateDisplayConfig, StateDisplayMetadata } from "@/game-loader/types";
+import {
+  getLlmStateContext,
+  substLlmState,
+  type LlmStateContextBundle,
+} from "@/i18n/llm-state-context";
 import { getEnforceableForkContext } from "@/orchestrator/fork-roll-policy";
 import {
   getPowerCheckDiceConfig,
@@ -122,9 +127,10 @@ export interface FormatStateContextOptions {
   forLog?: boolean;
 }
 
-function buildDecisionPointHint(decisionPoint: {
-  choiceKeywords?: Record<string, string[]>;
-}): string {
+function buildDecisionPointHint(
+  decisionPoint: { choiceKeywords?: Record<string, string[]> },
+  L: LlmStateContextBundle,
+): string {
   const kw = decisionPoint.choiceKeywords;
   const targetNums =
     kw && Object.keys(kw).length > 0
@@ -134,13 +140,20 @@ function buildDecisionPointHint(decisionPoint: {
           .sort((a, b) => a - b)
       : [];
   if (targetNums.length > 0 && kw) {
-    return ` Branch hints from config (not exhaustive): ${Object.entries(kw)
-      .map(([target, phrases]) => `target ${target}: ${phrases.join(", ")}`)
-      .join(
-        " | ",
-      )}. When the user clearly chooses a branch, return PLAYER_ANSWERED with the target position number only (one of: ${targetNums.join(", ")}); do not pass through their exact words if you can resolve. If unclear, NARRATE to ask again.`;
+    const branchLines = Object.entries(kw)
+      .map(([target, phrases]) =>
+        substLlmState(L.decisionHintKeywordLine, {
+          target,
+          phraseList: phrases.join(", "),
+        }),
+      )
+      .join(" | ");
+    return substLlmState(L.decisionHintWithKeywords, {
+      branchLines,
+      targets: targetNums.join(", "),
+    });
   }
-  return ` When intent is clear, return PLAYER_ANSWERED with the target position number; if unclear, NARRATE to ask again.`;
+  return L.decisionHintDefault;
 }
 
 function getPlayerAndPositionAtFork(state: Record<string, unknown>): {
@@ -180,19 +193,28 @@ function getCurrentPlayerAtFork(state: Record<string, unknown>): {
   return { playerName, position, decisionPoint };
 }
 
-function formatDecisionPointContext(state: Record<string, unknown>): string {
+function formatDecisionPointContext(
+  state: Record<string, unknown>,
+  L: LlmStateContextBundle,
+): string {
   const info = getCurrentPlayerAtFork(state);
   if (!info) {
     return "";
   }
   const { playerName, position, decisionPoint } = info;
-  const hint = buildDecisionPointHint(decisionPoint);
-  return `⚠️ DECISION (${playerName}) fork choice at ${position}. Ask: "${playerName}, ${decisionPoint.prompt}" Always name the player when asking. If user asks what to do or for help → NARRATE the path options (e.g. from the prompt); do NOT emit PLAYER_ANSWERED.${hint} If they state a choice, emit PLAYER_ANSWERED with the correct target number. [current]`;
+  const hint = buildDecisionPointHint(decisionPoint, L);
+  return substLlmState(L.decisionBlock, {
+    playerName,
+    position,
+    prompt: decisionPoint.prompt,
+    hint,
+  });
 }
 
 function buildRiddleEncounterHints(
   state: Record<string, unknown>,
   pending: { position?: number; power?: number },
+  L: LlmStateContextBundle,
 ): string {
   const pos = pending.position;
   if (typeof pos !== "number") {
@@ -206,16 +228,17 @@ function buildRiddleEncounterHints(
   const powerVal =
     (typeof pending.power === "number" ? pending.power : undefined) ??
     (typeof squareData.power === "number" ? squareData.power : 0);
-  let hints = ` After the riddle: if correct, player rolls ${cfg.ifRiddleCorrect}d6 (sum vs animal strength ${powerVal}); if wrong, ${cfg.ifRiddleWrong}d6. In NARRATE (Spanish), say it in plain kid-friendly terms — e.g. un dado extra / más dados para intentar superar al animal — never say "prueba de poder" or "power check".`;
+  let hints = substLlmState(L.riddleAfterEncounter, {
+    correctDice: cfg.ifRiddleCorrect,
+    wrongDice: cfg.ifRiddleWrong,
+    power: powerVal,
+  });
   const hab = squareData.habitat;
   if (typeof hab === "string" && hab.trim() !== "") {
-    hints += ` Open the scene in this habitat (square data: ${hab}) — use a natural Spanish place name, not the English key; do not open with casillero number unless necessary.`;
+    hints += substLlmState(L.riddleHabitatNote, { hab });
   }
   return hints;
 }
-
-const RIDDLE_NARRATION_SHAPE =
-  ' NARRATE shape: player name + animal in habitat; adivinanza + si acertás un dado extra (or más dados) para superar al animal; then "Escuchá con atención:"; then the riddle question; then "Opciones:" with A) B) C) D) one per line in options order; close asking which option they think is correct (e.g. cuál opción creés que es la correcta).';
 
 function formatRiddlePhaseContext(
   playerName: string,
@@ -227,54 +250,68 @@ function formatRiddlePhaseContext(
     power?: number;
   },
   state: Record<string, unknown>,
+  L: LlmStateContextBundle,
 ): string {
   const options = pending.riddleOptions;
   const hasStructuredRiddle = options?.length === 4 && pending.correctOption;
-  const encounterHints = buildRiddleEncounterHints(state, pending);
-  const antiLeak =
-    " When asking the riddle: ask only the riddle and the four options. Do NOT include the correct answer in that NARRATE.";
+  const encounterHints = buildRiddleEncounterHints(state, pending, L);
   const helpInst =
     hasStructuredRiddle && pending.riddlePrompt
-      ? " If user asks what to do, NARRATE re-asking the same riddle and the four options."
-      : " If user asks what to do or says they didn't hear, you MUST return ASK_RIDDLE (text, options, correctOption, optional correctOptionSynonyms) followed by NARRATE speaking that same riddle and options. Do NOT return only a NARRATE saying 'choose an option' without speaking the actual riddle.";
+      ? L.riddleHelpRepeatStructured
+      : L.riddleHelpRegenerate;
   if (!hasStructuredRiddle) {
-    return `⚠️ RIDDLE (${playerName}) phase=riddle.${antiLeak}${encounterHints}${RIDDLE_NARRATION_SHAPE} Ask a riddle with exactly FOUR options. The riddle MUST be about the animal kingdom (e.g. animals, habitats, behavior, diet, classification). Return ASK_RIDDLE with "text", "options" (array of 4 strings), "correctOption" (exact text of the correct option), optionally "correctOptionSynonyms" (array of synonyms). Then NARRATE the riddle and options. When user answers, return PLAYER_ANSWERED with what they said - do NOT use RIDDLE_RESOLVED.${helpInst} [current]`;
+    return substLlmState(L.riddlePhaseNoStructured, {
+      playerName,
+      antiLeak: L.riddleAntiLeak,
+      encounterHints,
+      narrationShape: L.riddleNarrationShape,
+      helpInst,
+    });
   }
   const optionsList = options?.join(", ") ?? "";
-  const mapInst =
-    optionsList &&
-    ` Current options: ${optionsList}. Return PLAYER_ANSWERED with the user's answer (option text or what they said).`;
-  return `⚠️ RIDDLE (${playerName}) phase=riddle. User must choose one of the four options. Return PLAYER_ANSWERED with what the user said - do NOT use RIDDLE_RESOLVED. Orchestrator resolves correct/incorrect (strict match then LLM).${mapInst}${encounterHints}${RIDDLE_NARRATION_SHAPE}${antiLeak}${helpInst} [current]`;
+  const mapInst = optionsList ? substLlmState(L.riddleCurrentOptions, { optionsList }) : "";
+  return `${substLlmState(L.riddlePhaseStructuredPrefix, { playerName })}${mapInst}${encounterHints}${L.riddleNarrationShape}${L.riddleAntiLeak}${helpInst} [current]`;
 }
 
 function formatPowerCheckContext(
   playerName: string,
   riddleCorrect: boolean | undefined,
   squareData: Record<string, unknown> | undefined,
+  L: LlmStateContextBundle,
 ): string {
   const spec = getPowerCheckRollSpec("powerCheck", riddleCorrect, squareData);
   const cfg = getPowerCheckDiceConfig(squareData);
   const n = riddleCorrect === true ? cfg.ifRiddleCorrect : cfg.ifRiddleWrong;
   const rollInstruction =
     n === 1
-      ? `PLAYER_ANSWERED with the number on the die (1–6). Examples: "cuatro", "tiré un seis", "6".`
-      : `PLAYER_ANSWERED with the sum (${spec.min}–${spec.max} from ${spec.label}). Examples: "tire un dos y un seis", "ocho", "quince".`;
-  return `⚠️ POWER CHECK (${playerName}) phase=powerCheck. If user REPORTS their roll → ${rollInstruction} Do NOT ask "decime el resultado", "¿alcanza?", "is that enough?", "¿sirve?" — they gave the number; process it immediately. Do NOT NARRATE the roll. Return only PLAYER_ANSWERED. Orchestrator announces pass/fail. If user asks what to do → NARRATE "Tirá ${n} dado(s)... decime el resultado." [current]`;
+      ? L.powerRollOneDie
+      : substLlmState(L.powerRollSum, {
+          min: spec.min,
+          max: spec.max,
+          label: spec.label,
+        });
+  const helpLine =
+    n === 1 ? L.powerCheckHelpOneDie : substLlmState(L.powerCheckHelpManyDice, { n });
+  return substLlmState(L.powerCheckBlock, { playerName, rollInstruction, helpLine });
 }
 
-function formatRevengeContext(playerName: string, power: number): string {
-  return `⚠️ REVENGE (${playerName}) phase=revenge. Same player, not next. 1 die, roll >= ${power} wins. User reports roll → PLAYER_ANSWERED with the number (1-6). Do NOT ask "¿alcanza?", "is that enough?" — process it immediately. Do NOT NARRATE the roll. Return only PLAYER_ANSWERED. Orchestrator announces pass/fail. If user asks what to do → NARRATE that they should roll one die and report the number (need ${power} or more). If prompting, name the player: "${playerName}, tirá el dado." [current]`;
+function formatRevengeContext(playerName: string, power: number, L: LlmStateContextBundle): string {
+  return substLlmState(L.revengeBlock, { playerName, power });
 }
 
-function formatDirectionalRollContext(playerName: string, dice: 1 | 2 | 3): string {
+function formatDirectionalRollContext(
+  playerName: string,
+  dice: 1 | 2 | 3,
+  L: LlmStateContextBundle,
+): string {
   const min = dice;
   const max = dice * 6;
   const label = `${dice}d6`;
   const rollInstruction =
-    dice === 1
-      ? `PLAYER_ANSWERED with the number on the die (1–6).`
-      : `PLAYER_ANSWERED with the sum (${min}–${max} from ${label}). Examples: "ocho", "quince".`;
-  return `⚠️ DIRECTIONAL ROLL (${playerName}) Player must move backward. Roll ${label} and report the result. If user REPORTS their roll → ${rollInstruction} Do NOT NARRATE the roll. Return only PLAYER_ANSWERED. If user asks what to do → NARRATE "Tirá ${dice} dado(s)... decime el resultado." [current]`;
+    dice === 1 ? L.directionalRollOne : substLlmState(L.directionalRollSum, { min, max, label });
+  const helpLine =
+    dice === 1 ? L.directionalHelpOneDie : substLlmState(L.directionalHelpManyDice, { n: dice });
+  return substLlmState(L.directionalBlock, { playerName, label, rollInstruction, helpLine });
 }
 
 function getPendingContext(state: Record<string, unknown>): {
@@ -293,7 +330,7 @@ function getPendingContext(state: Record<string, unknown>): {
   return { playerName, pending };
 }
 
-function formatPendingContext(state: Record<string, unknown>): string {
+function formatPendingContext(state: Record<string, unknown>, L: LlmStateContextBundle): string {
   const ctx = getPendingContext(state);
   if (!ctx) {
     return "";
@@ -313,6 +350,7 @@ function formatPendingContext(state: Record<string, unknown>): string {
         power?: number;
       },
       state,
+      L,
     );
   }
   if (kind === "powerCheck") {
@@ -323,14 +361,15 @@ function formatPendingContext(state: Record<string, unknown>): string {
       playerName,
       pending.riddleCorrect as boolean | undefined,
       squareData,
+      L,
     );
   }
   if (kind === "revenge") {
-    return formatRevengeContext(playerName, power);
+    return formatRevengeContext(playerName, power, L);
   }
   if (kind === "directional") {
     const dice = pending.dice as 1 | 2 | 3;
-    return formatDirectionalRollContext(playerName, dice);
+    return formatDirectionalRollContext(playerName, dice, L);
   }
   return "";
 }
@@ -395,6 +434,7 @@ export function formatStateContext(
   state: Record<string, unknown>,
   options?: FormatStateContextOptions,
 ): string {
+  const L = getLlmStateContext();
   const forLog = options?.forLog === true;
   const valueFormatter: ValueFormatter | undefined = forLog
     ? (v, depth) => formatFieldValueForLog(v, depth, LOG_FORMAT_MAX_DEPTH)
@@ -415,11 +455,11 @@ export function formatStateContext(
     parts.push(boardSection);
   }
 
-  const decisionContext = formatDecisionPointContext(state);
+  const decisionContext = formatDecisionPointContext(state, L);
   if (decisionContext) {
     parts.push(decisionContext);
   }
-  const pendingContext = formatPendingContext(state);
+  const pendingContext = formatPendingContext(state, L);
   if (pendingContext) {
     parts.push(pendingContext);
   }

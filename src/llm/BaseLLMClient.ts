@@ -3,6 +3,7 @@ import { formatStateContext } from "./state-context";
 import { buildSystemPrompt } from "./system-prompt";
 import type { ApiCallOptions, ApiCallResult } from "./types";
 import { CONFIG } from "@/config";
+import { buildValidateRiddleAnswerPrompt } from "@/i18n/riddle-judge-prompt";
 import type { GameState, PrimitiveAction } from "@/orchestrator/types";
 import { safeParse, parseArray, tryCoalesceNdjsonObjectArray } from "@/utils/json-parser";
 import { Logger } from "@/utils/logger";
@@ -128,11 +129,11 @@ export abstract class BaseLLMClient implements LLMClient {
     lastBotUtterance?: string,
   ): Promise<PrimitiveAction[]> {
     const stateContext = formatStateContext(state as Record<string, unknown>);
-    const contextLine =
+    const lastUtteranceBlock =
       lastBotUtterance != null && lastBotUtterance !== ""
-        ? `Last thing Kali said: "${lastBotUtterance}"\n\n`
+        ? `<last_utterance>\n${lastBotUtterance}\n</last_utterance>\n\n`
         : "";
-    const userMessage = `${stateContext}\n\n${contextLine}User Command: "${transcript}"`;
+    const userMessage = `<game_state>\n${stateContext}\n</game_state>\n\n${lastUtteranceBlock}<user_command>\n${transcript}\n</user_command>`;
     const fullPrompt = `${this.systemPrompt}\n\n${userMessage}`;
 
     this.logPrompt("getActions", fullPrompt);
@@ -256,19 +257,7 @@ JSON:`;
     correctOption: string,
   ): Promise<{ correct: boolean }> {
     try {
-      const optionsList = options.map((o, i) => `${i + 1}. ${o}`).join("\n");
-      const prompt = `Eres un juez de respuestas a una pregunta de trivia. Idioma: español (Argentina).
-
-Opciones de la pregunta (exactamente 4):
-${optionsList}
-
-La opción correcta es: "${correctOption}"
-
-El usuario respondió: "${userAnswer}"
-
-¿La respuesta del usuario es correcta? Considera sinónimos, paráfrasis y expresiones equivalentes. Responde ÚNICAMENTE con un JSON válido: {"correct": true} o {"correct": false}. Sin explicación.
-
-JSON:`;
+      const prompt = buildValidateRiddleAnswerPrompt(userAnswer, options, correctOption);
 
       this.logPrompt("validateRiddleAnswer", prompt);
       const startTime = performance.now();

@@ -232,8 +232,12 @@ describe("LLM - Pure JSON Parsing", () => {
 
       await client.getActions("sí", mockState, "¿Tiraste un 3, Federico?");
 
-      expect(client.lastPrompt).toContain('Last thing Kali said: "¿Tiraste un 3, Federico?"');
-      expect(client.lastPrompt).toContain('User Command: "sí"');
+      expect(client.lastPrompt).toContain("<last_utterance>");
+      expect(client.lastPrompt).toContain("¿Tiraste un 3, Federico?");
+      expect(client.lastPrompt).toContain("</last_utterance>");
+      expect(client.lastPrompt).toContain("<user_command>");
+      expect(client.lastPrompt).toContain("sí");
+      expect(client.lastPrompt).toContain("</user_command>");
     });
 
     it("getActions omits lastBotUtterance line when not provided", async () => {
@@ -241,9 +245,10 @@ describe("LLM - Pure JSON Parsing", () => {
 
       await client.getActions("hello", mockState);
 
-      // Injected context line is "Last thing Kali said: \"...\""; rule text only mentions the phrase in quotes, so assert the injected pattern (colon + quote) is absent
-      expect(client.lastPrompt).not.toContain('Last thing Kali said: "');
-      expect(client.lastPrompt).toContain('User Command: "hello"');
+      expect(client.lastPrompt).not.toContain("<last_utterance>");
+      expect(client.lastPrompt).toContain("<game_state>");
+      expect(client.lastPrompt).toContain("<user_command>");
+      expect(client.lastPrompt).toContain("hello");
     });
 
     it("retry logic uses same state (no mutation)", async () => {

@@ -1,4 +1,4 @@
-import type { GameState, SquareData } from "@/orchestrator/types";
+import type { GameState, PrimitiveAction, SquareData } from "@/orchestrator/types";
 
 /**
  * Metadata about a game module.
@@ -14,6 +14,11 @@ export interface GameMetadata {
   initialHabitat?: string;
   /** Optional short summary for NARRATE explanations (2-3 sentences). Not sent as full rules. */
   summary?: string;
+  /**
+   * Optional few-shot examples for the LLM (user line + primitive actions). Up to 6 are sent.
+   * When empty or omitted, Kalimba falls back to built-in examples; other games have none unless set here or in code.
+   */
+  llmExamples?: Array<{ user: string; actions: PrimitiveAction[] }>;
 }
 
 /**
