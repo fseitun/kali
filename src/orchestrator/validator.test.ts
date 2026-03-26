@@ -1199,6 +1199,34 @@ describe("Validator - New Primitives", () => {
       expect(result.error).toContain("powerCheck");
     });
 
+    it("blocks PLAYER_ROLLED when pending completeRollMovement for current player", () => {
+      const stateWithPending = {
+        ...mockState,
+        game: {
+          ...mockState.game,
+          turn: "p1",
+          pending: {
+            kind: "completeRollMovement",
+            playerId: "p1",
+            remainingSteps: 1,
+            direction: "forward" as const,
+          },
+        },
+      };
+
+      const actions = [{ action: "PLAYER_ROLLED", value: 3 }];
+      const result = validateActions(
+        actions,
+        stateWithPending,
+        mockStateManager as unknown as StateManager,
+        mockValidatorContext,
+      );
+
+      expect(result.valid).toBe(false);
+      expect(result.errorCode).toBe("finishForkMoveFirst");
+      expect(result.error).toContain("fork branch");
+    });
+
     it("allows PLAYER_ROLLED when pending is for different player", () => {
       const stateWithPending = {
         ...mockState,

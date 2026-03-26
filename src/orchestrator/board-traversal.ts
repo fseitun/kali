@@ -127,6 +127,70 @@ export function computeNewPositionFromState(
  * `activeChoices` does not already fix the branch. Uses the same step/landing-hop rules as
  * `simulateRollFromState`.
  */
+/**
+ * Result of applying a movement roll when forks may require an explicit choice mid-path.
+ * If the roll would admit multiple landing squares (`distinctEndPositionsAfterRoll` > 1),
+ * simulation stops on the fork square with `remainingSteps` left to apply after the player
+ * sets `activeChoices[forkSquare]` (see `completeRollMovement` pending).
+ */
+export type ApplyRollMovementResult =
+  | { kind: "complete"; finalPosition: number }
+  | {
+      kind: "forkPause";
+      positionAtFork: number;
+      remainingSteps: number;
+      direction: RollMovementDirection;
+    };
+
+/**
+ * Applies a roll like `simulateRollFromState`, but if the roll is ambiguous (multiple possible
+ * end squares without stored fork choices), pauses on the first unresolved fork instead of
+ * defaulting to `targets[0]`.
+ */
+export function applyRollMovementResolvingForks(
+  state: GameState,
+  playerId: string,
+  start: number,
+  roll: number,
+  direction: RollMovementDirection = "forward",
+): ApplyRollMovementResult {
+  if (roll <= 0) {
+    return { kind: "complete", finalPosition: start };
+  }
+  const { activeChoices } = readRollContext(state, playerId);
+  if (distinctEndPositionsAfterRoll(state, playerId, start, roll, direction).size <= 1) {
+    return {
+      kind: "complete",
+      finalPosition: simulateRollFromState(state, playerId, start, roll, direction, activeChoices),
+    };
+  }
+
+  const { squares, retreatEffectsReversed, winPosition } = readRollContext(state, playerId);
+  const forward = direction === "forward";
+  let current = start;
+
+  for (let i = 0; i < roll; i++) {
+    const sq = squares?.[String(current)];
+    const targets = getTargets(sq, current, forward, winPosition);
+    const saved = activeChoices[current];
+    const hasResolvedBranch = saved !== undefined && targets.includes(saved);
+    if (targets.length > 1 && !hasResolvedBranch) {
+      return {
+        kind: "forkPause",
+        positionAtFork: current,
+        remainingSteps: roll - i,
+        direction,
+      };
+    }
+    current = advanceOneStep(current, targets, activeChoices);
+    if (i === roll - 1) {
+      current = applyLandingHop(current, squares, retreatEffectsReversed, forward);
+    }
+  }
+
+  return { kind: "complete", finalPosition: current };
+}
+
 export function distinctEndPositionsAfterRoll(
   state: GameState,
   playerId: string,

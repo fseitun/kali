@@ -29,6 +29,8 @@ export type LlmStateContextBundle = {
   directionalRollSum: string;
   directionalHelpOneDie: string;
   directionalHelpManyDice: string;
+  /** After a dice move paused on a fork mid-path (pending completeRollMovement). */
+  completeRollMovementBlock: string;
 };
 
 export const llmStateContextEsAR: LlmStateContextBundle = {
@@ -78,6 +80,8 @@ export const llmStateContextEsAR: LlmStateContextBundle = {
   directionalRollOne: "PLAYER_ANSWERED con el número del dado (1–6).",
   directionalRollSum:
     "PLAYER_ANSWERED con la suma ({min}–{max} de {label}). Ejemplos: «ocho», «quince».",
+  completeRollMovementBlock:
+    "⚠️ MOVIMIENTO A MEDIAS ({playerName}) El tiro de dados ya está contado: falta elegir el camino para terminar de moverse. NO pidas tirar de nuevo para avanzar. Seguí la línea ⚠️ DECISION (misma bifurcación); PLAYER_ANSWERED con el número de casilla destino. [current]",
 };
 
 export const llmStateContextEnUS: LlmStateContextBundle = {
@@ -129,4 +133,6 @@ export const llmStateContextEnUS: LlmStateContextBundle = {
   directionalRollOne: "PLAYER_ANSWERED with the number on the die (1–6).",
   directionalRollSum:
     'PLAYER_ANSWERED with the sum ({min}–{max} from {label}). Examples: "eight", "fifteen".',
+  completeRollMovementBlock:
+    "⚠️ MOVE IN PROGRESS ({playerName}) The dice roll is already counted — they must pick a branch to finish moving. Do NOT ask them to roll again to move. Follow the ⚠️ DECISION line (same fork); PLAYER_ANSWERED with the target square number. [current]",
 };

@@ -107,7 +107,7 @@ export class TurnManager {
     }
     if (this.hasPendingForCurrentTurn()) {
       Logger.info(
-        "Turn advancement blocked: pending state (riddle/powerCheck/revenge/directional)",
+        "Turn advancement blocked: pending state (riddle/powerCheck/revenge/directional/completeRollMovement)",
       );
       return null;
     }

@@ -387,6 +387,9 @@ function formatPendingContext(state: Record<string, unknown>, L: LlmStateContext
     const dice = pending.dice as 1 | 2 | 3;
     return formatDirectionalRollContext(state, playerName, dice, L);
   }
+  if (kind === "completeRollMovement") {
+    return substLlmState(L.completeRollMovementBlock, { playerName });
+  }
   return "";
 }
 

@@ -6,6 +6,7 @@ export const VALIDATION_ERROR_I18N: Record<string, string> = {
   answerRiddleFirst: "errors.answerRiddleFirst",
   sayEncounterRollAsAnswer: "errors.sayEncounterRollAsAnswer",
   sayRollAsAnswer: "errors.sayEncounterRollAsAnswer",
+  finishForkMoveFirst: "errors.finishForkMoveFirst",
   wrongPhaseForRoll: "errors.wrongPhaseForRoll",
   invalidAnswer: "errors.invalidAnswer",
   wrongTurn: "errors.wrongTurn",

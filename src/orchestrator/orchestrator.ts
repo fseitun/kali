@@ -737,7 +737,10 @@ export class Orchestrator {
     const game = this.stateManager.getState().game as Record<string, unknown> | undefined;
     const pending = game?.pending as { kind?: string } | null | undefined;
     return Boolean(
-      pending && ["riddle", "powerCheck", "revenge", "directional"].includes(pending.kind ?? ""),
+      pending &&
+      ["riddle", "powerCheck", "revenge", "directional", "completeRollMovement"].includes(
+        pending.kind ?? "",
+      ),
     );
   }
 

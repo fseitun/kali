@@ -1,7 +1,8 @@
 import type { BoardEffectsHandler } from "./board-effects-handler";
-import { computeNewPositionFromState } from "./board-traversal";
+import { applyRollMovementResolvingForks, simulateRollFromState } from "./board-traversal";
 import { getDecisionPointApplyState } from "./decision-helpers";
 import { getMovementDirectionForState } from "./fork-roll-policy";
+import type { PendingCompleteRollMovement } from "./pending-types";
 import { getPowerCheckDiceConfig, getSquareDataAtPosition } from "./power-check-dice";
 import type { RiddlePowerCheckHandler } from "./riddle-power-check";
 import type { TurnManager } from "./turn-manager";
@@ -126,20 +127,39 @@ export async function executePlayerRolled(
     throw new Error(`Cannot process PLAYER_ROLLED: ${path} is not a number`);
   }
 
-  const newPosition = computeNewPositionFromState(
+  const direction = getMovementDirectionForState(state as GameState, currentTurn);
+  const movement = applyRollMovementResolvingForks(
     state as GameState,
     currentTurn,
     currentPosition,
     primitive.value,
+    direction,
   );
 
-  Logger.write(`Player rolled ${primitive.value}: ${path} ${currentPosition} → ${newPosition}`);
+  if (movement.kind === "complete") {
+    Logger.write(
+      `Player rolled ${primitive.value}: ${path} ${currentPosition} → ${movement.finalPosition}`,
+    );
+    ctx.stateManager.set(path, movement.finalPosition);
+  } else {
+    Logger.write(
+      `Player rolled ${primitive.value}: ${path} ${currentPosition} → ${movement.positionAtFork} (fork; ${movement.remainingSteps} step(s) left)`,
+    );
+    ctx.stateManager.set(path, movement.positionAtFork);
+    ctx.stateManager.set(GAME_PATH.pending, {
+      kind: "completeRollMovement",
+      playerId: currentTurn,
+      remainingSteps: movement.remainingSteps,
+      direction: movement.direction,
+    } satisfies PendingCompleteRollMovement);
+  }
 
-  ctx.stateManager.set(path, newPosition);
   context.positionPathsSetByRoll?.add(path);
   ctx.stateManager.set(GAME_PATH.lastRoll, primitive.value);
   await ctx.boardEffectsHandler.checkAndApplyBoardMoves(path, context);
-  await ctx.boardEffectsHandler.checkAndApplySquareEffects(path, context);
+  if (movement.kind === "complete") {
+    await ctx.boardEffectsHandler.checkAndApplySquareEffects(path, context);
+  }
   ctx.checkAndApplyWinCondition(path);
 }
 
@@ -215,23 +235,98 @@ async function applyDirectionalRoll(
 ): Promise<void> {
   const state = ctx.stateManager.getState() as GameState;
   const direction = getMovementDirectionForState(state, currentTurn);
-  const newPosition = computeNewPositionFromState(
+  const movement = applyRollMovementResolvingForks(
     state,
     currentTurn,
     currentPosition,
     roll,
     direction,
   );
-  Logger.write(
-    `Directional roll ${roll}: ${path} ${currentPosition} → ${newPosition} (${direction})`,
-  );
-  ctx.stateManager.set(path, newPosition);
-  ctx.stateManager.set(GAME_PATH.pending, null);
+
+  if (movement.kind === "complete") {
+    Logger.write(
+      `Directional roll ${roll}: ${path} ${currentPosition} → ${movement.finalPosition} (${direction})`,
+    );
+    ctx.stateManager.set(path, movement.finalPosition);
+  } else {
+    Logger.write(
+      `Directional roll ${roll}: ${path} ${currentPosition} → ${movement.positionAtFork} (${direction}, fork; ${movement.remainingSteps} step(s) left)`,
+    );
+    ctx.stateManager.set(path, movement.positionAtFork);
+    ctx.stateManager.set(GAME_PATH.pending, {
+      kind: "completeRollMovement",
+      playerId: currentTurn,
+      remainingSteps: movement.remainingSteps,
+      direction: movement.direction,
+    } satisfies PendingCompleteRollMovement);
+  }
+
+  if (movement.kind === "complete") {
+    ctx.stateManager.set(GAME_PATH.pending, null);
+  }
   ctx.stateManager.set(GAME_PATH.lastRoll, roll);
   context.positionPathsSetByRoll?.add(path);
   await ctx.boardEffectsHandler.checkAndApplyBoardMoves(path, context);
+  if (movement.kind === "complete") {
+    await ctx.boardEffectsHandler.checkAndApplySquareEffects(path, context);
+  }
+  ctx.checkAndApplyWinCondition(path);
+}
+
+function getCompleteRollMovementResolution(
+  state: GameState,
+  pending: PendingCompleteRollMovement | null | undefined,
+  currentTurn: string | undefined,
+  getPosition: (path: string) => unknown,
+): { path: string; pos: number; newPos: number } | null {
+  if (
+    pending?.kind !== "completeRollMovement" ||
+    pending.playerId !== currentTurn ||
+    pending.remainingSteps <= 0 ||
+    !currentTurn
+  ) {
+    return null;
+  }
+  const path = playerStatePath(currentTurn, "position");
+  const pos = getPosition(path) as number;
+  if (typeof pos !== "number") {
+    return null;
+  }
+  const player = (state.players as Record<string, Record<string, unknown>>)?.[currentTurn];
+  const activeChoices = (player?.activeChoices as Record<string, number>) ?? {};
+  const newPos = simulateRollFromState(
+    state,
+    currentTurn,
+    pos,
+    pending.remainingSteps,
+    pending.direction,
+    activeChoices,
+  );
+  return { path, pos, newPos };
+}
+
+async function tryCompletePendingRollAfterForkChoice(
+  ctx: ActionExecutorContext,
+  context: ExecutionContext,
+): Promise<boolean> {
+  const state = ctx.stateManager.getState() as GameState;
+  const game = state.game as Record<string, unknown> | undefined;
+  const pending = game?.pending as PendingCompleteRollMovement | null | undefined;
+  const currentTurn = game?.turn as string | undefined;
+  const resolved = getCompleteRollMovementResolution(state, pending, currentTurn, (p) =>
+    ctx.stateManager.get(p),
+  );
+  if (!resolved) {
+    return false;
+  }
+  const { path, pos, newPos } = resolved;
+  ctx.stateManager.set(path, newPos);
+  ctx.stateManager.set(GAME_PATH.pending, null);
+  Logger.write(`Completed fork-paused movement: ${path} ${pos} → ${newPos}`);
+  await ctx.boardEffectsHandler.checkAndApplyBoardMoves(path, context);
   await ctx.boardEffectsHandler.checkAndApplySquareEffects(path, context);
   ctx.checkAndApplyWinCondition(path);
+  return true;
 }
 
 async function tryHandleDirectionalRollAnswer(
@@ -330,6 +425,10 @@ export async function executePlayerAnswered(
       `Auto-applying PLAYER_ANSWERED to decision point: ${applyState.path} = ${JSON.stringify(applyState.value)}`,
     );
     ctx.stateManager.set(applyState.path, applyState.value);
+    const completedForkMove = await tryCompletePendingRollAfterForkChoice(ctx, context);
+    if (completedForkMove) {
+      return;
+    }
     await ctx.boardEffectsHandler.checkAndApplyBoardMoves(applyState.path, context);
     await ctx.boardEffectsHandler.checkAndApplySquareEffects(applyState.path, context);
   }

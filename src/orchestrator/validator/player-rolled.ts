@@ -19,6 +19,14 @@ function isAwaitingRollForTurn(pending: Pending, currentTurn: string | undefined
   );
 }
 
+function isAwaitingForkMoveCompletion(pending: Pending, currentTurn: string | undefined): boolean {
+  return (
+    pending?.kind === "completeRollMovement" &&
+    Boolean(currentTurn) &&
+    pending.playerId === currentTurn
+  );
+}
+
 function checkPendingBlocksRoll(
   pending: Pending,
   currentTurn: string | undefined,
@@ -38,6 +46,13 @@ function checkPendingBlocksRoll(
       valid: false,
       errorCode: "sayRollAsAnswer",
       error: `PLAYER_ROLLED at index ${index}: Awaiting ${phaseLabel} roll. Say the number as your answer (PLAYER_ANSWERED), not as a movement roll.`,
+    };
+  }
+  if (isAwaitingForkMoveCompletion(pending, currentTurn)) {
+    return {
+      valid: false,
+      errorCode: "finishForkMoveFirst",
+      error: `PLAYER_ROLLED at index ${index}: Choose the fork branch first (PLAYER_ANSWERED with the target square). The movement roll is already applied.`,
     };
   }
   return null;

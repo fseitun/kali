@@ -1,3 +1,4 @@
+import type { RollMovementDirection } from "./board-traversal";
 import { getPowerCheckRollSpec, getSquareDataAtPosition } from "./power-check-dice";
 import type { GameState } from "./types";
 
@@ -41,7 +42,24 @@ export interface PendingDirectional {
   dice: 1 | 2 | 3;
 }
 
-export type Pending = PendingRiddle | PendingPowerCheck | PendingRevenge | PendingDirectional;
+/**
+ * A dice roll (normal or encounter) was applied partially: the player stopped on a fork and
+ * must choose a branch via `activeChoices` before the remaining steps run.
+ */
+export interface PendingCompleteRollMovement {
+  kind: "completeRollMovement";
+  playerId: string;
+  remainingSteps: number;
+  direction: RollMovementDirection;
+  phase?: "completeRollMovement";
+}
+
+export type Pending =
+  | PendingRiddle
+  | PendingPowerCheck
+  | PendingRevenge
+  | PendingDirectional
+  | PendingCompleteRollMovement;
 
 export function isPendingRollKind(p: Pending | null | undefined): boolean {
   return p?.kind === "powerCheck" || p?.kind === "revenge" || p?.kind === "directional";

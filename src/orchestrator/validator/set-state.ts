@@ -18,7 +18,7 @@ const FORBIDDEN_PATH_ERRORS: Record<string, { allowScenarioNull?: boolean; error
   [GAME_PATH.pending]: {
     allowScenarioNull: true,
     error:
-      "Cannot set game.pending. The orchestrator owns pending state (riddle, powerCheck, revenge, directional). Use PLAYER_ANSWERED for riddle answers and encounter rolls as appropriate.",
+      "Cannot set game.pending. The orchestrator owns pending state (riddle, powerCheck, revenge, directional, completeRollMovement). Use PLAYER_ANSWERED for riddle answers and encounter rolls as appropriate.",
   },
 };
 

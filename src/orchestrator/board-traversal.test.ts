@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { computeNewPositionFromState } from "./board-traversal";
+import { applyRollMovementResolvingForks, computeNewPositionFromState } from "./board-traversal";
 import type { GameState, SquareData } from "./types";
 
 function makeSquares(upTo: number): Record<string, SquareData> {
@@ -296,5 +296,81 @@ describe("computeNewPositionFromState", () => {
     } as GameState;
 
     expect(computeNewPositionFromState(state, "p1", 81, 1)).toBe(82);
+  });
+});
+
+/** Kalimba-like arctic fork: 97→98→101, then 102 vs 105 (matches public/games/kalimba/config.json subset). */
+function kalimbaArcticForkSquares(): Record<string, SquareData> {
+  const squares: Record<string, SquareData> = {};
+  for (let i = 90; i < 97; i++) {
+    squares[String(i)] = { next: [i + 1], prev: i > 0 ? [i - 1] : [] };
+  }
+  squares["97"] = { name: "Penguin", power: 2, prev: [96] } as SquareData;
+  squares["98"] = { next: [101], prev: [97] } as SquareData;
+  squares["99"] = { prev: [96] } as SquareData;
+  squares["100"] = { prev: [99] } as SquareData;
+  squares["101"] = {
+    next: { "102": ["102", "down"], "105": ["105", "polar bear", "up"] },
+    prev: { "98": ["98", "down"], "100": ["100", "up"] },
+    name: "Walrus",
+    power: 3,
+  } as SquareData;
+  squares["102"] = { prev: [101] } as SquareData;
+  squares["105"] = { prev: [101] } as SquareData;
+  return squares;
+}
+
+describe("applyRollMovementResolvingForks", () => {
+  const baseGame = {
+    name: "Kalimba",
+    phase: "PLAYING" as const,
+    turn: "p1",
+    winner: null,
+    playerOrder: ["p1"],
+  };
+
+  it("pauses on fork 101 when roll 3 from 97 without activeChoices", () => {
+    const state = {
+      game: baseGame,
+      players: {
+        p1: { id: "p1", name: "A", position: 97, activeChoices: {} },
+      },
+      board: { squares: kalimbaArcticForkSquares() },
+    } as GameState;
+
+    expect(applyRollMovementResolvingForks(state, "p1", 97, 3, "forward")).toEqual({
+      kind: "forkPause",
+      positionAtFork: 101,
+      remainingSteps: 1,
+      direction: "forward",
+    });
+  });
+
+  it("lands in one shot when activeChoices fix the fork before rolling", () => {
+    const state = {
+      game: baseGame,
+      players: {
+        p1: { id: "p1", name: "A", position: 97, activeChoices: { 101: 105 } },
+      },
+      board: { squares: kalimbaArcticForkSquares() },
+    } as GameState;
+
+    const r = applyRollMovementResolvingForks(state, "p1", 97, 3, "forward");
+    expect(r).toEqual({ kind: "complete", finalPosition: 105 });
+  });
+
+  it("uses single-end fast path when roll cannot reach a divergent fork (roll 1 from 97)", () => {
+    const state = {
+      game: baseGame,
+      players: {
+        p1: { id: "p1", name: "A", position: 97, activeChoices: {} },
+      },
+      board: { squares: kalimbaArcticForkSquares() },
+    } as GameState;
+
+    expect(applyRollMovementResolvingForks(state, "p1", 97, 1, "forward")).toEqual({
+      kind: "complete",
+      finalPosition: 98,
+    });
   });
 });

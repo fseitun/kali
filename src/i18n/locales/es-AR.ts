@@ -78,6 +78,8 @@ export const esAR = {
     answerRiddleFirst: "Primero respondé la pregunta del animal. Después tirás para moverte.",
     sayEncounterRollAsAnswer:
       "Ahora decime en voz alta el número que te salió, como respuesta. Todavía no es la tirada de movimiento.",
+    finishForkMoveFirst:
+      "Primero elegí el camino en la bifurcación (decime el número de casilla). Esa tirada de dados ya contó para moverte.",
     wrongPhaseForRoll: "Ese número no es lo que necesito ahora.",
     invalidAnswer: "No me quedó claro. Intentá de nuevo con una respuesta clara.",
     wrongTurn: "No es tu turno para cambiar eso.",

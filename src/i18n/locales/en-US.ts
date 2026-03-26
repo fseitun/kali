@@ -77,6 +77,8 @@ export const enUS = {
     answerRiddleFirst: "Answer the animal question first. You can roll for your move after that.",
     sayEncounterRollAsAnswer:
       "For this step, just say the number you rolled out loud - not like a normal turn roll yet.",
+    finishForkMoveFirst:
+      "Pick your path at the fork first (say the target square number). That dice roll already counted for your move.",
     wrongPhaseForRoll: "That roll isn't what I need right now.",
     invalidAnswer: "I didn't catch that. Try again with a clear answer.",
     wrongTurn: "It's not your turn to change that.",

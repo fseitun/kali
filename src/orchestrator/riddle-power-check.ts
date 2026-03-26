@@ -1,6 +1,11 @@
 import type { BoardEffectsHandler } from "./board-effects-handler";
-import { computeNewPositionFromState } from "./board-traversal";
-import type { PendingPowerCheck, PendingRevenge, PendingRiddle } from "./pending-types";
+import { applyRollMovementResolvingForks } from "./board-traversal";
+import type {
+  PendingCompleteRollMovement,
+  PendingPowerCheck,
+  PendingRevenge,
+  PendingRiddle,
+} from "./pending-types";
 import { getPowerCheckRollSpec } from "./power-check-dice";
 import { isStrictRiddleCorrect } from "./riddle-answer";
 import type { TurnManager } from "./turn-manager";
@@ -165,19 +170,46 @@ export class RiddlePowerCheckHandler {
     await this.deps.speechService.speak(passMsg);
 
     const winJumpTo = squareData?.winJumpTo as number | undefined;
-    const newPosition =
-      typeof winJumpTo === "number"
-        ? winJumpTo
-        : computeNewPositionFromState(state as GameState, playerId, currentPos, roll);
+    let newPosition: number;
+    let pendingAfter: PendingCompleteRollMovement | null = null;
+
+    if (typeof winJumpTo === "number") {
+      newPosition = winJumpTo;
+    } else {
+      const movement = applyRollMovementResolvingForks(
+        state as GameState,
+        playerId,
+        currentPos,
+        roll,
+        "forward",
+      );
+      if (movement.kind === "complete") {
+        newPosition = movement.finalPosition;
+      } else {
+        newPosition = movement.positionAtFork;
+        pendingAfter = {
+          kind: "completeRollMovement",
+          playerId,
+          remainingSteps: movement.remainingSteps,
+          direction: movement.direction,
+        };
+      }
+    }
 
     this.deps.stateManager.set(playerStatePath(playerId, "position"), newPosition);
     this.applyAnimalEncounterRewards(playerId, squareData);
-    this.deps.stateManager.set(GAME_PATH.pending, null);
-    Logger.info(`Power check WIN: ${playerId} advances to ${newPosition}`);
+    this.deps.stateManager.set(GAME_PATH.pending, pendingAfter);
+    Logger.info(
+      pendingAfter
+        ? `Power check WIN: ${playerId} pauses at fork ${newPosition}, ${pendingAfter.remainingSteps} step(s) remain`
+        : `Power check WIN: ${playerId} advances to ${newPosition}`,
+    );
 
     const positionPath = playerStatePath(playerId, "position");
     await this.deps.boardEffectsHandler.checkAndApplyBoardMoves(positionPath, context);
-    await this.deps.boardEffectsHandler.checkAndApplySquareEffects(positionPath, context);
+    if (!pendingAfter) {
+      await this.deps.boardEffectsHandler.checkAndApplySquareEffects(positionPath, context);
+    }
     this.deps.checkAndApplyWinCondition(positionPath);
 
     if (this.shouldSpeakAfterEncounterMovementNudge(playerId, context)) {

@@ -328,6 +328,21 @@ describe("Orchestrator Authority - LLM Adversarial Tests", () => {
       (testState.players as any).p1.activeChoices = {};
       (testState.players as any).p1.position = 10;
 
+      mockStateManager.set = vi.fn(async (path: string, value: unknown) => {
+        if (path === "players.p1.activeChoices") {
+          (testState.players as any).p1.activeChoices = value;
+        }
+        if (path === "players.p1.position") {
+          (testState.players as any).p1.position = value;
+        }
+        if (path === "game.pending") {
+          (testState.game as any).pending = value;
+        }
+        if (path === "game.lastRoll") {
+          (testState.game as any).lastRoll = value;
+        }
+      });
+
       const actions: PrimitiveAction[] = [
         { action: "SET_STATE", path: "players.p1.activeChoices", value: { 10: 11 } },
         { action: "PLAYER_ROLLED", value: 5 },
