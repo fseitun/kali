@@ -55,8 +55,8 @@ export interface SquareData {
    * Forward edges: either a single path `number[]` or a fork map (target index string → phrases for that branch).
    */
   next?: number[] | Record<string, string[]>;
-  /** Graph edges: prev[pos] = squares reachable in inverse direction */
-  prev?: number[];
+  /** Backward edges: linear `number[]` or fork map (target index → phrases), same shape as `next`. */
+  prev?: number[] | Record<string, string[]>;
   /** Jump applied only when this square is the final step of a roll (e.g. 93→97) */
   nextOnLanding?: number[];
   /** Inverse-mode counterpart of nextOnLanding */

@@ -4,7 +4,7 @@ import type { GameState } from "./types";
 
 type SquareShape = {
   next?: number[] | Record<string, string[]>;
-  prev?: number[];
+  prev?: number[] | Record<string, string[]>;
   nextOnLanding?: number[];
   prevOnLanding?: number[];
 };

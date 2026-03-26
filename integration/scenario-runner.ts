@@ -181,7 +181,10 @@ export async function runScenario(scenario: Scenario): Promise<void> {
     { allowScenarioOnlyStatePaths: true, allowBypassPositionDecisionGate: true },
   );
 
-  if (scenario.players !== undefined) {
+  // setupPlayers() rebuilds all player records from the template and clears fields like
+  // activeChoices. Scenarios that set initialState.players (e.g. fork pre-choice) must keep
+  // that map intact—only call setupPlayers when the scenario does not supply players.
+  if (scenario.players !== undefined && scenario.initialState?.players === undefined) {
     const names = Array.from({ length: scenario.players }, (_, i) => `Player ${i + 1}`);
     orchestrator.setupPlayers(names);
   }

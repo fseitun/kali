@@ -1,6 +1,7 @@
 import {
   getForkKeywordsWithImplicitTargets,
   getNextTargets,
+  getPrevForkKeywordsWithImplicitTargets,
   getPrevTargets,
   isNextFork,
   isPrevFork,
@@ -100,13 +101,18 @@ export function inferBackwardDecisionPoints(board: BoardConfig | undefined): Dec
       return;
     }
     const { sorted, positionOptions } = buildSortedPositionOptions(getPrevTargets(sq, position));
+    const choiceKeywords = getPrevForkKeywordsWithImplicitTargets(sq);
     const prompt = `¿Hacia atrás, al ${sorted.join(" o al ")}?`;
-    result.push({
+    const dp: DecisionPoint = {
       position,
       prompt,
       positionOptions,
       direction: "backward",
-    });
+    };
+    if (choiceKeywords) {
+      dp.choiceKeywords = choiceKeywords;
+    }
+    result.push(dp);
   });
 
   result.sort((a, b) => a.position - b.position);

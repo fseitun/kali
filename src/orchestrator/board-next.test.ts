@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   getForkKeywordsWithImplicitTargets,
   getNextTargets,
+  getPrevForkKeywordsWithImplicitTargets,
   getPrevTargets,
   getTargets,
   isMultiBranchTargets,
@@ -57,6 +58,14 @@ describe("board-next", () => {
     });
   });
 
+  describe("getPrevTargets object fork", () => {
+    it("parses object prev keys as sorted targets", () => {
+      expect(
+        getPrevTargets({ prev: { "105": ["105", "up"], "102": ["102", "down"] } }, 101),
+      ).toEqual([102, 105]);
+    });
+  });
+
   describe("isMultiBranchTargets", () => {
     it("mirrors fork detection for forward and prev edges", () => {
       expect(isMultiBranchTargets(getNextTargets({ next: [1, 15] }))).toBe(true);
@@ -81,6 +90,10 @@ describe("board-next", () => {
   describe("isPrevFork", () => {
     it("is true when prev lists multiple targets at this position", () => {
       expect(isPrevFork({ prev: [3, 4] }, 5)).toBe(true);
+    });
+
+    it("is true for object prev with two targets", () => {
+      expect(isPrevFork({ prev: { "98": ["down"], "100": ["up"] } }, 101)).toBe(true);
     });
 
     it("is false for implicit single backward edge", () => {
@@ -116,6 +129,18 @@ describe("board-next", () => {
         next: { "15": ["15", "derecha"] },
       });
       expect(kw).toEqual({ "15": ["15", "derecha"] });
+    });
+  });
+
+  describe("getPrevForkKeywordsWithImplicitTargets", () => {
+    it("mirrors next fork keyword shape for prev", () => {
+      const kw = getPrevForkKeywordsWithImplicitTargets({
+        prev: { "102": ["102", "down"], "105": ["polar bear", "up"] },
+      });
+      expect(kw).toEqual({
+        "102": ["102", "down"],
+        "105": ["polar bear", "up", "105"],
+      });
     });
   });
 

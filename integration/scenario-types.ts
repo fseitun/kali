@@ -44,7 +44,11 @@ export interface Scenario {
   /** Optional: merge over game's initialState. Use for PLAYING phase, custom players, etc. */
   initialState?: Record<string, unknown>;
 
-  /** Number of players. Used to call setupPlayers() with default names if initialState doesn't define them. */
+  /**
+   * Player count. When set and `initialState.players` is omitted, the runner calls
+   * `setupPlayers()` so count and names match. If `initialState.players` is set, the runner
+   * does not call `setupPlayers()` (it would reset `activeChoices` and other fields).
+   */
   players?: number;
 
   /**

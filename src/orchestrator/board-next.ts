@@ -3,16 +3,24 @@ import type { SquareData } from "./types";
 /** `next` may be a linear edge list or a fork map (target index → phrases for that branch). */
 export type NextField = SquareData["next"];
 
+/** `prev` may be a linear edge list or a fork map, mirroring {@link NextField}. */
+export type PrevField = SquareData["prev"];
+
 /**
- * True when `next` is the object (fork) form, not a number array.
- * @param next - Square's `next` field
- * @returns Whether next is a non-array object
+ * True when an edge field is the object (fork) form, not a number array.
  */
 export function isNextRecord(next: NextField | undefined): next is Record<string, string[]> {
   return next !== undefined && next !== null && typeof next === "object" && !Array.isArray(next);
 }
 
-type SquareWithEdges = { next?: NextField; prev?: number[] } | undefined;
+/**
+ * True when `prev` is the object (fork) form, not a number array.
+ */
+export function isPrevRecord(prev: PrevField | undefined): prev is Record<string, string[]> {
+  return prev !== undefined && prev !== null && typeof prev === "object" && !Array.isArray(prev);
+}
+
+type SquareWithEdges = { next?: NextField; prev?: PrevField } | undefined;
 
 /**
  * Returns sorted unique target indices from a square's `next` or `prev` field.
@@ -37,14 +45,19 @@ function getForwardTargetsFromNext(
   return [...new Set(nums)].sort((a, b) => a - b);
 }
 
-function getBackwardTargetsFromPrev(prev: number[] | undefined | null, current: number): number[] {
+function getBackwardTargetsFromPrev(prev: PrevField | undefined | null, current: number): number[] {
   if (prev === undefined || prev === null) {
     return current > 0 ? [current - 1] : [];
   }
-  if (Array.isArray(prev) && prev.length === 0) {
-    return [];
+  if (Array.isArray(prev)) {
+    if (prev.length === 0) {
+      return [];
+    }
+    return [...prev];
   }
-  return Array.isArray(prev) ? [...prev] : [];
+  const keys = Object.keys(prev as Record<string, unknown>);
+  const nums = keys.map((k) => parseInt(k, 10)).filter((n) => !Number.isNaN(n));
+  return [...new Set(nums)].sort((a, b) => a - b);
 }
 
 /**
@@ -86,15 +99,8 @@ export function getNextTargets(sq: { next?: NextField } | undefined): number[] {
  * @param current - Current position (fallback when prev is missing)
  * @returns List of reachable backward targets
  */
-export function getPrevTargets(sq: { prev?: number[] } | undefined, current: number): number[] {
-  const prev = sq?.prev;
-  if (prev === undefined || prev === null) {
-    return current > 0 ? [current - 1] : [];
-  }
-  if (Array.isArray(prev) && prev.length === 0) {
-    return [];
-  }
-  return [...prev];
+export function getPrevTargets(sq: { prev?: PrevField } | undefined, current: number): number[] {
+  return getBackwardTargetsFromPrev(sq?.prev, current);
 }
 
 /** True when the resolved edge list has more than one branch (fork). */
@@ -105,7 +111,7 @@ export function isMultiBranchTargets(targets: number[]): boolean {
 /**
  * True when moving backward from `current` on this square has more than one `prev` target.
  */
-export function isPrevFork(sq: { prev?: number[] } | undefined, current: number): boolean {
+export function isPrevFork(sq: { prev?: PrevField } | undefined, current: number): boolean {
   return isMultiBranchTargets(getPrevTargets(sq, current));
 }
 
@@ -133,6 +139,32 @@ export function getForkKeywordsWithImplicitTargets(
   const obj = next;
   const result: Record<string, string[]> = {};
   for (const [key, phrases] of Object.entries(obj)) {
+    const n = parseInt(key, 10);
+    if (Number.isNaN(n)) {
+      continue;
+    }
+    const keyStr = String(n);
+    const list = Array.isArray(phrases) ? [...phrases] : [];
+    if (!list.includes(keyStr)) {
+      list.push(keyStr);
+    }
+    result[keyStr] = list;
+  }
+  return Object.keys(result).length > 0 ? result : undefined;
+}
+
+/**
+ * For fork `prev` objects, same phrase→target behavior as {@link getForkKeywordsWithImplicitTargets}.
+ */
+export function getPrevForkKeywordsWithImplicitTargets(
+  sq: { prev?: PrevField } | undefined,
+): Record<string, string[]> | undefined {
+  const prev = sq?.prev;
+  if (!isPrevRecord(prev)) {
+    return undefined;
+  }
+  const result: Record<string, string[]> = {};
+  for (const [key, phrases] of Object.entries(prev)) {
     const n = parseInt(key, 10);
     if (Number.isNaN(n)) {
       continue;
