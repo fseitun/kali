@@ -5,7 +5,7 @@ const SQUARE_EFFECT_FORBIDDEN_PLAYER_KEYS = new Set(["skipTurns", "position"]);
 
 /**
  * Player state keys that may be SET_STATE during square effect: explicit user choices (activeChoices),
- * game-designed non-deterministic outcomes (bonusDiceNextTurn, inverseMode), rewards after riddle
+ * game-designed non-deterministic outcomes (bonusDiceNextTurn), rewards after riddle
  * (hearts for animal squares), and clearing items/instruments after use.
  */
 const SQUARE_EFFECT_ALLOWED_PLAYER_KEYS = new Set([
@@ -13,7 +13,6 @@ const SQUARE_EFFECT_ALLOWED_PLAYER_KEYS = new Set([
   "items",
   "instruments",
   "bonusDiceNextTurn",
-  "inverseMode",
   "hearts",
 ]);
 

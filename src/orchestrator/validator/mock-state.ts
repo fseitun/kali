@@ -1,5 +1,6 @@
 import { computeNewPositionFromState } from "../board-traversal";
 import { getDecisionPointApplyState } from "../decision-helpers";
+import { getMovementDirectionForState } from "../fork-roll-policy";
 import { isStrictRiddleCorrect } from "../riddle-answer";
 import type { GameState, PrimitiveAction } from "../types";
 
@@ -160,7 +161,7 @@ function applyRollAnswerToMock(
       currentTurn,
       player.position,
       roll,
-      "backward",
+      getMovementDirectionForState(mockState, currentTurn),
     );
   }
   return mockState;

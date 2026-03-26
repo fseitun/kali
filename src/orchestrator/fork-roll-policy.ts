@@ -10,6 +10,10 @@ export function getMovementDirectionForState(
   const game = state.game as Record<string, unknown> | undefined;
   const pending = game?.pending as { kind?: string; playerId?: string } | undefined;
   if (pending?.kind === "directional" && pending.playerId === playerId) {
+    const player = (state.players as Record<string, Record<string, unknown>>)?.[playerId];
+    if (player?.retreatEffectsReversed === true) {
+      return "forward";
+    }
     return "backward";
   }
   return "forward";

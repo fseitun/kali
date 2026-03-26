@@ -835,16 +835,10 @@ describe("Orchestrator Integration Tests", () => {
     it("teleports forward via board.moves and processes square effect", async () => {
       const responses: PrimitiveAction[][] = [
         [
-          { action: "PLAYER_ROLLED", value: 2 },
+          { action: "PLAYER_ROLLED", value: 1 },
           { action: "NARRATE", text: "Moving to portal..." },
         ],
-        [
-          { action: "SET_STATE", path: "players.p1.inverseMode", value: false },
-          {
-            action: "NARRATE",
-            text: "Portal activated! Inverse mode deactivated.",
-          },
-        ],
+        [{ action: "NARRATE", text: "Landed after portal." }],
       ];
 
       mockLLM = createScriptedLLM(responses);
@@ -859,19 +853,19 @@ describe("Orchestrator Integration Tests", () => {
           lastRoll: 0,
         },
         players: {
-          p1: { id: "p1", name: "Alice", position: 43, inverseMode: false },
+          p1: { id: "p1", name: "Alice", position: 44, activeChoices: {} },
         },
         board: {
           squares: {
+            "44": { next: [45], prev: [43] },
             "45": {
               name: "Portal Forward",
               destination: 82,
-              inverseMode: "activate",
             },
             "82": {
               name: "Portal Destination",
-              destination: 82,
-              inverseMode: "deactivate",
+              next: [83],
+              prev: [81],
             },
           },
         },
@@ -879,29 +873,19 @@ describe("Orchestrator Integration Tests", () => {
 
       setupGame(initialState);
 
-      await orchestrator.handleTranscript("I rolled a 2");
+      await orchestrator.handleTranscript("I rolled 1");
 
-      const p1Position = stateManager.get("players.p1.position");
-      const inverseMode = stateManager.get("players.p1.inverseMode");
-
-      expect(p1Position).toBe(82);
-      expect(inverseMode).toBe(false);
-      expect(mockLLM.getCallCount()).toBe(2);
+      expect(stateManager.get("players.p1.position")).toBe(82);
+      expect(mockLLM.getCallCount()).toBe(1);
     });
 
-    it("teleports backward and activates inverse mode via square effect", async () => {
+    it("teleports backward without Kalimba one-shot flags (no penalty fields)", async () => {
       const responses: PrimitiveAction[][] = [
         [
           { action: "PLAYER_ROLLED", value: 2 },
           { action: "NARRATE", text: "Moving to portal..." },
         ],
-        [
-          { action: "SET_STATE", path: "players.p1.inverseMode", value: true },
-          {
-            action: "NARRATE",
-            text: "Portal activated! Inverse mode activated.",
-          },
-        ],
+        [{ action: "NARRATE", text: "Arrived after backward portal." }],
       ];
 
       mockLLM = createScriptedLLM(responses);
@@ -916,19 +900,20 @@ describe("Orchestrator Integration Tests", () => {
           lastRoll: 0,
         },
         players: {
-          p1: { id: "p1", name: "Alice", position: 80, inverseMode: false },
+          p1: { id: "p1", name: "Alice", position: 80, activeChoices: {} },
         },
         board: {
           squares: {
+            "80": { next: [81], prev: [79] },
+            "81": { next: [82], prev: [80] },
             "82": {
               name: "Portal Backward",
               destination: 45,
-              inverseMode: "deactivate",
             },
             "45": {
               name: "Portal Destination",
-              destination: 45,
-              inverseMode: "activate",
+              next: [46],
+              prev: [44],
             },
           },
         },
@@ -938,15 +923,13 @@ describe("Orchestrator Integration Tests", () => {
 
       await orchestrator.handleTranscript("I rolled a 2");
 
-      const p1Position = stateManager.get("players.p1.position");
-      const inverseMode = stateManager.get("players.p1.inverseMode");
-
-      expect(p1Position).toBe(45);
-      expect(inverseMode).toBe(true);
-      expect(mockLLM.getCallCount()).toBe(2);
+      expect(stateManager.get("players.p1.position")).toBe(45);
+      expect(stateManager.get("players.p1.oceanForestPenaltyConsumed")).toBeUndefined();
+      expect(stateManager.get("players.p1.retreatEffectsReversed")).toBeUndefined();
+      expect(mockLLM.getCallCount()).toBe(1);
     });
 
-    it("second roll onto ocean portal 82 keeps inverseMode and uses repeat narration LLM round", async () => {
+    it("second roll onto ocean portal 82 stays on 82 and uses repeat narration after one-shot penalty", async () => {
       const portalSquares = {
         "44": { next: [45], prev: [43] },
         "45": { next: [46], prev: [44], name: "Forest-Ocean Portal", nextOnLanding: [82] },
@@ -960,7 +943,7 @@ describe("Orchestrator Integration Tests", () => {
           prev: [81],
           name: "Ocean-Forest Portal",
           nextOnLanding: [45],
-          inverseMode: "activate",
+          oceanForestOneShotPortal: true,
         },
         "83": { next: [84], prev: [82] },
         "84": { next: [85], prev: [83] },
@@ -971,12 +954,10 @@ describe("Orchestrator Integration Tests", () => {
           { action: "PLAYER_ROLLED", value: 1 },
           { action: "NARRATE", text: "Moving to portal" },
         ],
-        [{ action: "NARRATE", text: "First portal square narration" }],
         [
           { action: "PLAYER_ROLLED", value: 1 },
           { action: "NARRATE", text: "Rolling again" },
         ],
-        [{ action: "NARRATE", text: "Brief repeat line" }],
       ];
 
       mockLLM = createScriptedLLM(responses);
@@ -995,7 +976,8 @@ describe("Orchestrator Integration Tests", () => {
             id: "p1",
             name: "Alice",
             position: 81,
-            inverseMode: false,
+            oceanForestPenaltyConsumed: false,
+            retreatEffectsReversed: false,
             activeChoices: {},
           },
         },
@@ -1005,14 +987,16 @@ describe("Orchestrator Integration Tests", () => {
       setupGame(initialState);
 
       await orchestrator.handleTranscript("I rolled 1");
-      expect(stateManager.get("players.p1.position")).toBe(82);
-      expect(stateManager.get("players.p1.inverseMode")).toBe(true);
+      expect(stateManager.get("players.p1.position")).toBe(45);
+      expect(stateManager.get("players.p1.oceanForestPenaltyConsumed")).toBe(true);
+      expect(stateManager.get("players.p1.retreatEffectsReversed")).toBe(true);
 
       stateManager.set("players.p1.position", 81);
       await orchestrator.handleTranscript("I rolled 1 again");
 
       expect(stateManager.get("players.p1.position")).toBe(82);
-      expect(stateManager.get("players.p1.inverseMode")).toBe(true);
+      expect(stateManager.get("players.p1.oceanForestPenaltyConsumed")).toBe(true);
+      expect(stateManager.get("players.p1.retreatEffectsReversed")).toBe(true);
       expect(mockLLM.getCallCount()).toBe(4);
     });
   });

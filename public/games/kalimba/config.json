@@ -16,7 +16,7 @@
     "players": {
       "primary": ["id", "position"],
       "secondary": ["hearts", "instruments", "items", "skipTurns", "activeChoices"],
-      "hidden": ["bonusDiceNextTurn", "inverseMode"]
+      "hidden": ["bonusDiceNextTurn", "oceanForestPenaltyConsumed", "retreatEffectsReversed"]
     },
     "board": {
       "primary": [],
@@ -72,7 +72,7 @@
     "77": { "name": "Piranhas", "effect": "skipTurn" },
     "78": { "name": "Octopus and starfish", "power": 3 },
     "79": { "item": "torch" },
-    "82": { "name": "Ocean-Forest Portal", "nextOnLanding": [45], "inverseMode": "activate" },
+    "82": { "name": "Ocean-Forest Portal", "nextOnLanding": [45], "oceanForestOneShotPortal": true },
     "84": { "name": "Clownfish", "power": 1 },
     "85": { "name": "Night falls", "effect": "checkTorch" },
     "87": { "name": "Sea turtle", "power": 2 },

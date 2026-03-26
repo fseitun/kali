@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { computeNewPositionFromState, isPlayerInverseModeActive } from "./board-traversal";
+import { computeNewPositionFromState } from "./board-traversal";
 import type { GameState, SquareData } from "./types";
 
 function makeSquares(upTo: number): Record<string, SquareData> {
@@ -14,7 +14,7 @@ function makeSquares(upTo: number): Record<string, SquareData> {
 }
 
 describe("computeNewPositionFromState", () => {
-  it("moves forward on normal dice roll even when inverseMode is true", () => {
+  it("moves forward on normal dice roll even when retreatEffectsReversed is true", () => {
     const squares = makeSquares(20);
     const state: GameState = {
       game: {
@@ -29,7 +29,7 @@ describe("computeNewPositionFromState", () => {
           id: "p1",
           name: "Alice",
           position: 5,
-          inverseMode: true,
+          retreatEffectsReversed: true,
           activeChoices: {},
         },
       },
@@ -38,11 +38,11 @@ describe("computeNewPositionFromState", () => {
 
     const result = computeNewPositionFromState(state, "p1", 5, 3);
 
-    // With inverseMode, normal dice should still move FORWARD (5 + 3 = 8), not backward
+    // Normal dice always move forward; retreatEffectsReversed only affects landing hops / teleports policy
     expect(result).toBe(8);
   });
 
-  it("moves forward on normal dice roll when inverseMode is false", () => {
+  it("moves forward on normal dice roll when retreatEffectsReversed is false", () => {
     const squares = makeSquares(20);
     const state: GameState = {
       game: {
@@ -57,7 +57,7 @@ describe("computeNewPositionFromState", () => {
           id: "p1",
           name: "Alice",
           position: 5,
-          inverseMode: false,
+          retreatEffectsReversed: false,
           activeChoices: {},
         },
       },
@@ -69,7 +69,7 @@ describe("computeNewPositionFromState", () => {
     expect(result).toBe(8);
   });
 
-  it("ignores prevOnLanding when inverseMode (stay on landed square)", () => {
+  it("ignores prevOnLanding on forward roll when retreatEffectsReversed (stay on landed square)", () => {
     const squares = makeSquares(25);
     squares["10"] = {
       next: [11],
@@ -90,7 +90,7 @@ describe("computeNewPositionFromState", () => {
           id: "p1",
           name: "Alice",
           position: 8,
-          inverseMode: true,
+          retreatEffectsReversed: true,
           activeChoices: {},
         },
       },
@@ -99,11 +99,11 @@ describe("computeNewPositionFromState", () => {
 
     const result = computeNewPositionFromState(state, "p1", 8, 2);
 
-    // Roll 2 from 8: 8->9, 9->10. Land on 10. With inverseMode, prevOnLanding is ignored — stay on 10
+    // Roll 2 from 8: 8->9, 9->10. Land on 10. With retreatEffectsReversed, prevOnLanding is ignored — stay on 10
     expect(result).toBe(10);
   });
 
-  it("still applies nextOnLanding when inverseMode and square has both nextOnLanding and prevOnLanding", () => {
+  it("still applies nextOnLanding when retreatEffectsReversed and square has both nextOnLanding and prevOnLanding", () => {
     const squares = makeSquares(25);
     squares["10"] = {
       next: [11],
@@ -125,7 +125,7 @@ describe("computeNewPositionFromState", () => {
           id: "p1",
           name: "Alice",
           position: 8,
-          inverseMode: true,
+          retreatEffectsReversed: true,
           activeChoices: {},
         },
       },
@@ -136,7 +136,7 @@ describe("computeNewPositionFromState", () => {
     expect(result).toBe(20);
   });
 
-  it("uses nextOnLanding (forward) regardless of inverseMode", () => {
+  it("uses nextOnLanding (forward) with retreatEffectsReversed when no conflicting prevOnLanding behavior", () => {
     const squares = makeSquares(100);
     squares["4"] = {
       next: [5],
@@ -157,7 +157,7 @@ describe("computeNewPositionFromState", () => {
           id: "p1",
           name: "Alice",
           position: 2,
-          inverseMode: true,
+          retreatEffectsReversed: true,
           activeChoices: {},
         },
       },
@@ -256,16 +256,45 @@ describe("computeNewPositionFromState", () => {
     // Roll 2 backward from 12: 12->11->10. Land on 10, prevOnLanding [3] applies
     expect(result).toBe(3);
   });
-});
 
-describe("isPlayerInverseModeActive", () => {
-  it("is true only for boolean true or activate string", () => {
-    expect(isPlayerInverseModeActive({ inverseMode: true })).toBe(true);
-    expect(isPlayerInverseModeActive({ inverseMode: "activate" })).toBe(true);
-    expect(isPlayerInverseModeActive({ inverseMode: false })).toBe(false);
-    expect(isPlayerInverseModeActive({ inverseMode: "deactivate" })).toBe(false);
-    expect(isPlayerInverseModeActive({ inverseMode: "anything" })).toBe(false);
-    expect(isPlayerInverseModeActive(undefined)).toBe(false);
-    expect(isPlayerInverseModeActive({})).toBe(false);
+  it("does not apply nextOnLanding on Kalimba ocean–forest one-shot portal (82); board effects teleport", () => {
+    const squares: Record<
+      string,
+      {
+        next: number[];
+        prev: number[];
+        nextOnLanding?: number[];
+        oceanForestOneShotPortal?: boolean;
+      }
+    > = {
+      "81": { next: [82], prev: [80] },
+      "82": {
+        next: [83],
+        prev: [81],
+        nextOnLanding: [45],
+        oceanForestOneShotPortal: true,
+      },
+    };
+
+    const state = {
+      game: {
+        name: "Kalimba",
+        phase: "PLAYING" as const,
+        turn: "p1",
+        winner: null,
+        playerOrder: ["p1"],
+      },
+      players: {
+        p1: {
+          id: "p1",
+          name: "Alice",
+          position: 81,
+          activeChoices: {},
+        },
+      },
+      board: { squares },
+    } as GameState;
+
+    expect(computeNewPositionFromState(state, "p1", 81, 1)).toBe(82);
   });
 });

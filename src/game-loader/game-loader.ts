@@ -288,7 +288,9 @@ function buildInitialStateFromParts(config: GameConfigInput): GameState {
             bonusDiceNextTurn: false,
             activeChoices: {},
             skipTurns: 0,
-            inverseMode: false,
+            oceanForestPenaltyConsumed: false,
+            /** After ocean–forest penalty: retreat Nd6 forward; backward teleports and prevOnLanding hops use this flag in traversal. */
+            retreatEffectsReversed: false,
           }
         : { id, name, position: 0 };
   }

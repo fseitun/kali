@@ -38,7 +38,7 @@ Casillero 75| Cangrejo \- retrocedes con 3 dados.
 Casillero 77| Pirañas \- pierdes 1 turno  
 Casillero 78| Pulpo y estrella de mar \- 3 pts  
 Casillero 79| Antorcha \- (no perderás 1 turno de caer en el casillero “cae la noche”)  
-Casillero 82| Portal \- te lleva al casillero 45  
+Casillero 82| Portal \- la **primera** vez que caés ahí te lleva al 45; después te quedás en el 82 (ver §7)  
 Casillero 84| Pez payaso \- 1pts  
 Casillero 85| Cae la noche \- pierdes 1 turno  
 Casillero 87| Tortuga marina \- 2pts  
@@ -251,17 +251,19 @@ Casilleros con corazones:
 
 ### **7️⃣ Portales 🔁**
 
-Los portales están en los casilleros 45 y 82, y conectan entre sí.
+Los portales están en los casilleros 45 y 82 (Océano–Bosque / Bosque–Océano).
 
-- Si caés en el 45, viajás automáticamente al 82\.
+- Si caés en el **45**, viajás **siempre** al **82**.
 
-- Si caés en el 82, viajás automáticamente al 45\.
+- Si caés en el **82** (cualquier forma: dados, portal desde el 45, recompensa de animal, etc.):
+  - La **primera vez** en la partida que **tu ficha termina en el 82**, el portal te manda **una sola vez** al **45** (penalidad de travesía). En ese momento se activa la **inversión de retiros** (ver abajo).
+  - La **segunda vez en adelante** que terminás en el **82**, **te quedás en el 82**: no volvés al 45 por este portal.
 
-- Si el portal te hace retroceder (del 82 al 45), se activa el poder inverso de Kalimba:
+- Si la **inversión de retiros** ya está activa y una regla del juego **anula** el salto “hacia atrás” del 82 al 45 en ese momento, **igual cuenta** como que **ya usaste** la penalidad única del portal: no te volverán a mandar al 45 por este portal en el resto de la partida.
 
-✨ Desde ese momento, **solo** los casilleros que normalmente te harían retroceder ahora te hacen avanzar. Tus tiradas normales de dados siguen siendo hacia adelante. Si un casillero te hace avanzar, sigues avanzando igual. Solo se invierten las penalidades de retroceso.
+**Inversión de retiros (tras la penalidad del 82→45):**
 
-Esto no aplica a trampas que hacen perder turno ni a eventos como “Cae la noche” o “Ataque de avispas”.
+✨ Desde entonces, en los casilleros que te hacen **tirar dados para retroceder** (p\. ej. “retrocedés con 1/2/3 dados”), en lugar de retroceder **avanzás** esa misma cantidad de casilleros por el camino. Tus tiradas **normales** de movimiento siguen siendo hacia adelante. Los **teletransportes que te mandan a una casilla menor** (p\. ej. calaveras hacia el 187) **no te mueven** mientras siga activa la inversión. No cambia el comportamiento de trampas de “perder turno”, Cae la noche, avispas, ni de los saltos que solo te hacen **avanzar** (ej\. 93, 141, 145).
 
 ---
 
@@ -319,7 +321,7 @@ Casilleros especiales
 
 - Si caes en el casillero 45 “portal”: vas al casillero 82\.
 - Si caes en el casillero 54 “Zorro dorado”: vas a la primera posición.
-- Si caes en el casillero 82 “portal”: vas al casillero 45\. Si esto ocurre, se activa el **Poder Inverso de Kalimba**: a partir de ese momento, **solo** los casilleros que te harían retroceder se invierten — en lugar de retroceder, avanzas. Tus tiradas normales de dados siguen siendo hacia adelante. Los casilleros que te hacen avanzar (ej\. 93, 141, 145) siguen funcionando igual. Solo las penalidades de retroceso se convierten en avance.
+- Si caes en el casillero 82 “portal”: la **primera vez** en la partida vas al 45; las **siguientes** veces te quedás en el 82\. Cuando aplica el viaje al 45, se activa la **inversión de retiros** (los casilleros de “retrocedés con X dados” te hacen avanzar esa suma; otros saltos hacia atrás del tablero también quedan anulados mientras siga activa, según §7).
 - Si caes en el 93, subis al 97
 - Si caes en el casillero 141, te lleva al casillero 165\.
 - Si caes en el casillero 145 y le ganas a la jirafa, te lleva al casillero 162\.

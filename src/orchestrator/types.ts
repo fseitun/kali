@@ -49,8 +49,10 @@ export interface SquareData {
   item?: string;
   instrument?: string;
   heart?: boolean;
-  /** Orchestrator sets player flag: `"activate"` → on, `"deactivate"` → off (boolean in state). */
-  inverseMode?: string;
+  /**
+   * Kalimba ocean–forest portal (e.g. square 82): marks the one-shot 82→45 penalty square for BoardEffectsHandler.
+   */
+  oceanForestOneShotPortal?: boolean;
   /**
    * Forward edges: either a single path `number[]` or a fork map (target index string → phrases for that branch).
    */
@@ -59,7 +61,7 @@ export interface SquareData {
   prev?: number[] | Record<string, string[]>;
   /** Jump applied only when this square is the final step of a roll (e.g. 93→97) */
   nextOnLanding?: number[];
-  /** Inverse-mode counterpart of nextOnLanding */
+  /** Applied on backward roll endings when not overridden by retreat inversion (see BoardEffectsHandler / board-traversal). */
   prevOnLanding?: number[];
   [key: string]: unknown; // Allow game-specific fields
 }

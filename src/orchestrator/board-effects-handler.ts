@@ -1,5 +1,4 @@
 import { findSquareByEffect, getWinPosition } from "./board-helpers";
-import { isPlayerInverseModeActive } from "./board-traversal";
 import {
   getDirectionalRollDice,
   getSquareKind,
@@ -18,10 +17,10 @@ import { Logger } from "@/utils/logger";
  * Handles automatic board mechanics and square-based effects for Kalimba.
  *
  * Responsibilities:
- * - Auto-apply teleports from squares (portals, returnTo187); skip backward when inverseMode
+ * - Auto-apply teleports from squares (portals, returnTo187); skip backward when retreatEffectsReversed
  * - Golden fox (`jumpToLeader`): after moving to the leader’s square, resolve that square’s portals for the mover only (e.g. 82→45); other players on that square are not moved
  * - Magic door bounce (overshooting 186)
- * - Apply deterministic square effects from config (hearts, skipTurn, item, instrument, inverseMode)
+ * - Apply deterministic square effects from config (hearts, skipTurn, item, instrument)
  * - Trigger LLM for narration only (no game-rule state from LLM)
  */
 export class BoardEffectsHandler {
@@ -46,7 +45,7 @@ export class BoardEffectsHandler {
 
   /**
    * Applies teleports from squares (portals, returnTo187) after position changes.
-   * Skips backward teleports when player has inverseMode.
+   * Skips backward teleports when player has retreatEffectsReversed.
    *
    * @param path - State path that was mutated
    * @param context - Optional execution context; when a teleport is applied, sets arrivedViaTeleportFrom
@@ -159,6 +158,56 @@ export class BoardEffectsHandler {
     return undefined;
   }
 
+  /**
+   * Kalimba ocean–forest portal (square 82): one backward hop to 45 per player per game,
+   * identified by `oceanForestOneShotPortal` on that square in board JSON.
+   */
+  private isKalimbaOceanForestPortal82Hop(
+    squareData: Record<string, unknown> | undefined,
+    landingPosition: number,
+    portalTarget: number,
+  ): boolean {
+    return (
+      landingPosition === 82 && portalTarget === 45 && squareData?.oceanForestOneShotPortal === true
+    );
+  }
+
+  private consumeOceanForestPortal82Penalty(playerId: string): void {
+    this.stateManager.set(playerStatePath(playerId, "oceanForestPenaltyConsumed"), true);
+    this.stateManager.set(playerStatePath(playerId, "retreatEffectsReversed"), true);
+  }
+
+  /**
+   * Portal/ladder forward target from `nextOnLanding` / `destination`, or undefined if suppressed
+   * or Kalimba 82→45 already consumed for this player.
+   */
+  private resolvePortalForwardDestination(
+    squareData: Record<string, unknown>,
+    path: string,
+    state: { players?: Record<string, Record<string, unknown>> },
+    landingPosition: number,
+    suppressNextOnLanding: boolean,
+  ): number | undefined {
+    if (suppressNextOnLanding) {
+      return undefined;
+    }
+    const portalForward = this.readSquarePortalForwardTarget(squareData);
+    if (portalForward === undefined) {
+      return undefined;
+    }
+    const playerId = path.match(/^players\.([^.]+)\.position$/)?.[1];
+    if (
+      playerId &&
+      this.isKalimbaOceanForestPortal82Hop(squareData, landingPosition, portalForward)
+    ) {
+      const player = (state.players as Record<string, Record<string, unknown>>)?.[playerId];
+      if (player?.oceanForestPenaltyConsumed === true) {
+        return undefined;
+      }
+    }
+    return portalForward;
+  }
+
   private getTeleportDestination(
     squareData: Record<string, unknown>,
     path: string,
@@ -169,11 +218,15 @@ export class BoardEffectsHandler {
     const suppressNextOnLanding =
       context?.suppressNextOnLandingAtPosition !== undefined &&
       context.suppressNextOnLandingAtPosition === landingPosition;
-    if (!suppressNextOnLanding) {
-      const portalForward = this.readSquarePortalForwardTarget(squareData);
-      if (portalForward !== undefined) {
-        return portalForward;
-      }
+    const portal = this.resolvePortalForwardDestination(
+      squareData,
+      path,
+      state,
+      landingPosition,
+      suppressNextOnLanding,
+    );
+    if (portal !== undefined) {
+      return portal;
     }
     if (squareData.effect === "returnTo187") {
       return 187;
@@ -199,13 +252,33 @@ export class BoardEffectsHandler {
     const player = playerId
       ? (state.players as Record<string, Record<string, unknown>>)?.[playerId]
       : undefined;
-    return isPlayerInverseModeActive(player);
+    return player?.retreatEffectsReversed === true;
   }
 
   /**
-   * Applies teleport (portal, returnTo187, jumpToLeader) if applicable. Uses early returns.
-   * Skips backward teleports when player has inverseMode.
+   * One-shot Kalimba 82→45 penalty + retreat flip; suppress 45→82 in the same resolution wave when we actually moved.
    */
+  private finishKalimbaOceanForestPortal82Hop(
+    squareData: Record<string, unknown>,
+    fromPosition: number,
+    destination: number,
+    path: string,
+    didApplyPositionChange: boolean,
+    context?: ExecutionContext,
+  ): void {
+    if (!this.isKalimbaOceanForestPortal82Hop(squareData, fromPosition, destination)) {
+      return;
+    }
+    const moverId = path.match(/^players\.([^.]+)\.position$/)?.[1];
+    if (!moverId) {
+      return;
+    }
+    this.consumeOceanForestPortal82Penalty(moverId);
+    if (didApplyPositionChange && context) {
+      context.suppressNextOnLandingAtPosition = 45;
+    }
+  }
+
   private applyTeleportIfApplicable(
     path: string,
     position: number,
@@ -227,7 +300,15 @@ export class BoardEffectsHandler {
 
     if (this.shouldSkipBackwardTeleport(path, position, destination, state)) {
       Logger.info(
-        `Skipping backward teleport (inverseMode): position ${position} → ${destination}`,
+        `Skipping backward teleport (retreatEffectsReversed): position ${position} → ${destination}`,
+      );
+      this.finishKalimbaOceanForestPortal82Hop(
+        squareData,
+        position,
+        destination,
+        path,
+        false,
+        context,
       );
       return;
     }
@@ -238,11 +319,19 @@ export class BoardEffectsHandler {
     const moveType = destination < position ? "snake" : "ladder";
     Logger.info(`Auto-applying ${moveType}: position ${position} → ${destination}`);
     this.stateManager.set(path, destination);
+    this.finishKalimbaOceanForestPortal82Hop(
+      squareData,
+      position,
+      destination,
+      path,
+      true,
+      context,
+    );
   }
 
   /**
    * After `jumpToLeader`, resolve portals on the leader’s square for the mover only (e.g. 82→45).
-   * If that hop is backward, apply that square’s `inverseMode` (final position may be 45, not 82).
+   * Penalty flags are set inside `applyTeleportIfApplicable` / `finishKalimbaOceanForestPortal82Hop`.
    */
   private applyJumpToLeaderLeaderSquarePortal(
     path: string,
@@ -256,13 +345,6 @@ export class BoardEffectsHandler {
     };
     const leaderSquareData = squares[leaderSquare.toString()];
     this.applyTeleportIfApplicable(path, leaderSquare, leaderSquareData, stateAfterJump, context);
-    const positionAfter = this.stateManager.get(path) as number;
-    if (typeof positionAfter === "number" && positionAfter < leaderSquare && leaderSquareData) {
-      const moverId = path.match(/^players\.([^.]+)\.position$/)?.[1];
-      if (moverId) {
-        this.applyInverseModeFromSquare(moverId, leaderSquareData);
-      }
-    }
   }
 
   private applyHeartEffect(playerId: string, squareData: Record<string, unknown>): string | null {
@@ -351,43 +433,17 @@ export class BoardEffectsHandler {
   }
 
   /**
-   * Sets `players.*.inverseMode` from square config (`activate` / `deactivate`).
-   *
-   * @param playerId - Current player id
-   * @param squareData - Square config
-   * @returns Short label for narration prompt, or null if no inverseMode field
+   * Ocean–forest one-shot portal: player already consumed 82→45; short LLM path on later visits to 82.
    */
-  private applyInverseModeFromSquare(
-    playerId: string,
-    squareData: Record<string, unknown>,
-  ): string | null {
-    const mode = squareData.inverseMode;
-    if (mode === "activate") {
-      this.stateManager.set(playerStatePath(playerId, "inverseMode"), true);
-      return "inverse mode on";
-    }
-    if (mode === "deactivate") {
-      this.stateManager.set(playerStatePath(playerId, "inverseMode"), false);
-      return "inverse mode off";
-    }
-    return null;
-  }
-
-  /**
-   * Portal square that turns inverse mode on, visited again while already in inverse mode — kid-friendly short path.
-   */
-  private isRepeatInverseActivatePortal(
+  private isRepeatOceanForestPortalVisit(
     squareData: Record<string, unknown>,
     kind: ReturnType<typeof getSquareKind>,
     playerId: string,
   ): boolean {
-    if (squareData.inverseMode !== "activate" || kind !== "portal") {
+    if (kind !== "portal" || squareData.oceanForestOneShotPortal !== true) {
       return false;
     }
-    const player = this.stateManager.get(playerStatePath(playerId)) as
-      | Record<string, unknown>
-      | undefined;
-    return isPlayerInverseModeActive(player);
+    return this.stateManager.get(playerStatePath(playerId, "oceanForestPenaltyConsumed")) === true;
   }
 
   /**
@@ -395,27 +451,25 @@ export class BoardEffectsHandler {
    * @param squareName - Display name
    * @returns SYSTEM transcript for LLM: one brief line, no state changes
    */
-  private buildRepeatInversePortalTranscript(position: number, squareName: string): string {
+  private buildRepeatOceanForestPortalTranscript(position: number, squareName: string): string {
     return (
-      `[SYSTEM: Current player landed again on square ${position} (${squareName}), a portal they already used. ` +
-      `Inverse mode stays on (friendly penalties). Narrate ONE very short reassuring line. ` +
-      `Do not change game state. Do not re-explain the portal.]`
+      `[SYSTEM: Current player landed again on square ${position} (${squareName}), the ocean–forest portal they already crossed. ` +
+      `They stay here (one-way penalty already applied). Narrate ONE very short reassuring line. ` +
+      `Do not change game state. Do not re-explain the full portal rules.]`
     );
   }
 
   /**
-   * Applies deterministic square effects from config (heart, skipTurn, item, instrument, inverseMode).
+   * Applies deterministic square effects from config (heart, skipTurn, item, instrument).
    * Mutates state for the current player only. Used before asking LLM to narrate.
    *
    * @param path - State path that was mutated (e.g. players.p1.position)
    * @param squareData - Square config from board.squares[position]
-   * @param options - When `skipInverseMode`, do not apply square `inverseMode` (repeat portal visit)
    * @returns Summary of applied effects for narration prompt
    */
   private applyDeterministicSquareEffects(
     path: string,
     squareData: Record<string, unknown>,
-    options?: { skipInverseMode?: boolean },
   ): string[] {
     const match = path.match(/^players\.([^.]+)\.position$/);
     const playerId = match?.[1];
@@ -453,24 +507,7 @@ export class BoardEffectsHandler {
       applied.push(itemResult);
     }
 
-    this.appendInverseModeToApplied(applied, playerId, squareData, options?.skipInverseMode);
-
     return applied;
-  }
-
-  private appendInverseModeToApplied(
-    applied: string[],
-    playerId: string,
-    squareData: Record<string, unknown>,
-    skipInverseMode?: boolean,
-  ): void {
-    if (skipInverseMode) {
-      return;
-    }
-    const inverseResult = this.applyInverseModeFromSquare(playerId, squareData);
-    if (inverseResult) {
-      applied.push(inverseResult);
-    }
   }
 
   /**
@@ -625,6 +662,7 @@ export class BoardEffectsHandler {
     squareInfo: string,
     arrivedViaTeleportFrom?: number,
     squareData?: Record<string, unknown>,
+    playerId?: string,
   ): string {
     if (isAnimalEncounterKind(kind)) {
       return (
@@ -638,10 +676,16 @@ export class BoardEffectsHandler {
       const dice = getDirectionalRollDice(squareData?.effect as string | undefined) ?? 2;
       const min = dice;
       const max = dice * 6;
+      const retreatReversed =
+        !!playerId &&
+        this.stateManager.get(playerStatePath(playerId, "retreatEffectsReversed")) === true;
+      const movementPhrase = retreatReversed
+        ? "forward that many spaces along the path (retreat squares are inverted for this player after the ocean–forest portal)"
+        : "backward that many spaces along the path";
       return (
         `[SYSTEM: Current player landed on square ${position} (${squareName}). ` +
         `Follow the ⚠️ DIRECTIONAL ROLL line in state. ` +
-        `Narrate briefly, then ask the player to roll ${dice} d6 and report the sum; they move backward that many spaces along the path. ` +
+        `Narrate briefly, then ask the player to roll ${dice} d6 and report the sum; they move ${movementPhrase}. ` +
         `When they report their roll, return PLAYER_ANSWERED with the number (${min}–${max}). ` +
         `Do not change game state. Square data for flavour: ${squareInfo}]`
       );
@@ -675,16 +719,14 @@ export class BoardEffectsHandler {
       this.setPendingDirectionalRoll(playerId, position, squareData.effect as string | undefined);
     }
 
-    const repeatInversePortal = this.isRepeatInverseActivatePortal(squareData, kind, playerId);
-    const applied = this.applyDeterministicSquareEffects(path, squareData, {
-      skipInverseMode: repeatInversePortal,
-    });
+    const repeatOceanForestPortal = this.isRepeatOceanForestPortalVisit(squareData, kind, playerId);
+    const applied = this.applyDeterministicSquareEffects(path, squareData);
     if (applied.some((label) => label.includes("skip next turn"))) {
       context.advanceTurnDespitePowerCheckSuppress = true;
     }
     const squareInfo = JSON.stringify(squareData);
-    const transcript = repeatInversePortal
-      ? this.buildRepeatInversePortalTranscript(position, squareName)
+    const transcript = repeatOceanForestPortal
+      ? this.buildRepeatOceanForestPortalTranscript(position, squareName)
       : this.buildSquareEffectTranscript(
           kind,
           position,
@@ -694,6 +736,7 @@ export class BoardEffectsHandler {
           squareInfo,
           context.arrivedViaTeleportFrom,
           squareData,
+          playerId,
         );
 
     this.syncAnimalEncounterState(kind, playerId, position, power, false);

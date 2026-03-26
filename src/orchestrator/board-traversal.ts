@@ -7,6 +7,8 @@ type SquareShape = {
   prev?: number[] | Record<string, string[]>;
   nextOnLanding?: number[];
   prevOnLanding?: number[];
+  /** When true, do not apply `nextOnLanding`/`prevOnLanding` here; BoardEffectsHandler owns the hop (Kalimba 82→45). */
+  oceanForestOneShotPortal?: boolean;
 };
 
 export type RollMovementDirection = "forward" | "backward";
@@ -22,9 +24,9 @@ function advanceOneStep(
 
 function getForwardLandingHop(
   landedSq: SquareShape | undefined,
-  inverseMode: boolean,
+  retreatEffectsReversed: boolean,
 ): number[] | undefined {
-  if (inverseMode && landedSq?.prevOnLanding?.length) {
+  if (retreatEffectsReversed && landedSq?.prevOnLanding?.length) {
     return landedSq?.nextOnLanding;
   }
   return landedSq?.nextOnLanding ?? landedSq?.prevOnLanding;
@@ -32,47 +34,37 @@ function getForwardLandingHop(
 
 function getLandingHopTargets(
   landedSq: SquareShape | undefined,
-  inverseMode: boolean,
+  retreatEffectsReversed: boolean,
   forward: boolean,
 ): number[] | undefined {
   return forward
-    ? getForwardLandingHop(landedSq, inverseMode)
+    ? getForwardLandingHop(landedSq, retreatEffectsReversed)
     : (landedSq?.prevOnLanding ?? landedSq?.nextOnLanding);
 }
 
 function applyLandingHop(
   current: number,
   squares: Record<string, SquareShape> | undefined,
-  inverseMode: boolean,
+  retreatEffectsReversed: boolean,
   forward: boolean,
 ): number {
   const landedSq = squares?.[String(current)];
-  const landingHop = getLandingHopTargets(landedSq, inverseMode, forward);
+  if (landedSq?.oceanForestOneShotPortal === true) {
+    return current;
+  }
+  const landingHop = getLandingHopTargets(landedSq, retreatEffectsReversed, forward);
   return landingHop?.length ? landingHop[0] : current;
 }
 
 /**
- * Whether the player’s inverse-mode rules apply (penalty slides ignored, backward teleports skipped).
- * Only `true` or the string `"activate"` count as on so values like `"deactivate"` are never truthy by accident.
- *
- * @param player - Player object from game state, or undefined
- * @returns true when inverse mode is active
- */
-export function isPlayerInverseModeActive(player: Record<string, unknown> | undefined): boolean {
-  const v = player?.inverseMode;
-  return v === true || v === "activate";
-}
-
-/**
- * Slice of state needed to simulate movement. `inverseMode` is a **player flag** that changes how
- * forward landing hops resolve (see `getForwardLandingHop`); it is not the same as movement
- * {@link RollMovementDirection} — normal dice always pass `direction: "forward"` regardless of inverseMode.
+ * Slice of state needed to simulate movement. `retreatEffectsReversed` (after Kalimba ocean–forest penalty)
+ * changes how forward landing hops resolve (`prevOnLanding` vs `nextOnLanding`); it is not roll direction —
+ * normal dice always pass `direction: "forward"` regardless of this flag.
  */
 type RollSimulationSlice = {
   squares: Record<string, SquareShape> | undefined;
   winPosition: number;
-  /** Player inverse-mode flag for landing-hop rules on forward steps, not roll direction. */
-  inverseMode: boolean;
+  retreatEffectsReversed: boolean;
   activeChoices: Record<string, number>;
 };
 
@@ -81,9 +73,9 @@ function readRollContext(state: GameState, playerId: string): RollSimulationSlic
   const squares = board?.squares as Record<string, SquareShape> | undefined;
   const winPosition = getWinPosition(squares as Record<string, { effect?: string }> | undefined);
   const player = (state.players as Record<string, Record<string, unknown>>)?.[playerId];
-  const inverseMode = isPlayerInverseModeActive(player);
+  const retreatEffectsReversed = player?.retreatEffectsReversed === true;
   const activeChoices = (player?.activeChoices as Record<string, number>) ?? {};
-  return { squares, winPosition, inverseMode, activeChoices };
+  return { squares, winPosition, retreatEffectsReversed, activeChoices };
 }
 
 /**
@@ -98,7 +90,7 @@ export function simulateRollFromState(
   direction: RollMovementDirection,
   activeChoices: Record<string, number>,
 ): number {
-  const { squares, inverseMode, winPosition } = readRollContext(state, playerId);
+  const { squares, retreatEffectsReversed, winPosition } = readRollContext(state, playerId);
   const forward = direction === "forward";
   let current = start;
 
@@ -108,7 +100,7 @@ export function simulateRollFromState(
     current = advanceOneStep(current, targets, activeChoices);
 
     if (i === roll - 1) {
-      current = applyLandingHop(current, squares, inverseMode, forward);
+      current = applyLandingHop(current, squares, retreatEffectsReversed, forward);
     }
   }
 
@@ -142,7 +134,10 @@ export function distinctEndPositionsAfterRoll(
   roll: number,
   direction: RollMovementDirection,
 ): Set<number> {
-  const { squares, inverseMode, activeChoices, winPosition } = readRollContext(state, playerId);
+  const { squares, retreatEffectsReversed, activeChoices, winPosition } = readRollContext(
+    state,
+    playerId,
+  );
   const forward = direction === "forward";
   const results = new Set<number>();
 
@@ -162,7 +157,7 @@ export function distinctEndPositionsAfterRoll(
         const nextChoices = { ...choices, [current]: t };
         const nextPos = t;
         if (stepsLeft === 1) {
-          results.add(applyLandingHop(nextPos, squares, inverseMode, forward));
+          results.add(applyLandingHop(nextPos, squares, retreatEffectsReversed, forward));
         } else {
           dfs(nextPos, stepsLeft - 1, nextChoices);
         }
@@ -172,7 +167,7 @@ export function distinctEndPositionsAfterRoll(
 
     const nextPos = advanceOneStep(current, targets, choices);
     if (stepsLeft === 1) {
-      results.add(applyLandingHop(nextPos, squares, inverseMode, forward));
+      results.add(applyLandingHop(nextPos, squares, retreatEffectsReversed, forward));
     } else {
       dfs(nextPos, stepsLeft - 1, choices);
     }

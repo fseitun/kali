@@ -102,12 +102,12 @@ describe("BoardEffectsHandler", () => {
       expect(stateManager.get("players.p1.position")).toBe(187);
     });
 
-    it("should skip backward teleport when player has inverseMode", async () => {
+    it("should skip backward teleport when player has retreatEffectsReversed", async () => {
       stateManager.set("board.squares", {
         "82": { destination: 45 },
       });
       stateManager.set("players.p1.position", 82);
-      stateManager.set("players.p1.inverseMode", true);
+      stateManager.set("players.p1.retreatEffectsReversed", true);
 
       await boardEffectsHandler.checkAndApplyBoardMoves("players.p1.position");
 
@@ -115,24 +115,24 @@ describe("BoardEffectsHandler", () => {
       expect(stateManager.get("players.p1.position")).toBe(82);
     });
 
-    it("should apply forward teleport even when inverseMode", async () => {
+    it("should apply forward teleport even when retreatEffectsReversed", async () => {
       stateManager.set("board.squares", {
         "45": { destination: 82 },
       });
       stateManager.set("players.p1.position", 45);
-      stateManager.set("players.p1.inverseMode", true);
+      stateManager.set("players.p1.retreatEffectsReversed", true);
 
       await boardEffectsHandler.checkAndApplyBoardMoves("players.p1.position");
 
       expect(stateManager.get("players.p1.position")).toBe(82);
     });
 
-    it("should not skip backward teleport when player has inverseMode string deactivate", async () => {
+    it("should not skip backward teleport when retreatEffectsReversed is false", async () => {
       stateManager.set("board.squares", {
         "82": { destination: 45 },
       });
       stateManager.set("players.p1.position", 82);
-      stateManager.set("players.p1.inverseMode", "deactivate");
+      stateManager.set("players.p1.retreatEffectsReversed", false);
 
       await boardEffectsHandler.checkAndApplyBoardMoves("players.p1.position");
 
@@ -149,6 +149,68 @@ describe("BoardEffectsHandler", () => {
       await boardEffectsHandler.checkAndApplyBoardMoves("players.p1.position");
 
       expect(stateManager.get("players.p1.position")).toBe(82);
+    });
+
+    it("Kalimba ocean-forest portal (82): first landing slides to 45, sets flags, suppresses 45→82 chain", async () => {
+      stateManager.set("board.squares", {
+        "45": { next: [46], prev: [44], name: "Forest-Ocean Portal", nextOnLanding: [82] },
+        "82": {
+          next: [83],
+          prev: [81],
+          name: "Ocean-Forest Portal",
+          nextOnLanding: [45],
+          oceanForestOneShotPortal: true,
+        },
+      });
+      stateManager.set("players.p1.position", 82);
+      stateManager.set("players.p1.oceanForestPenaltyConsumed", false);
+      const context: ExecutionContext = {};
+
+      await boardEffectsHandler.checkAndApplyBoardMoves("players.p1.position", context);
+
+      expect(stateManager.get("players.p1.position")).toBe(45);
+      expect(stateManager.get("players.p1.oceanForestPenaltyConsumed")).toBe(true);
+      expect(stateManager.get("players.p1.retreatEffectsReversed")).toBe(true);
+      expect(context.suppressNextOnLandingAtPosition).toBe(45);
+    });
+
+    it("Kalimba ocean-forest portal (82): after penalty consumed, further landings on 82 stay", async () => {
+      stateManager.set("board.squares", {
+        "82": {
+          next: [83],
+          prev: [81],
+          name: "Ocean-Forest Portal",
+          nextOnLanding: [45],
+          oceanForestOneShotPortal: true,
+        },
+      });
+      stateManager.set("players.p1.position", 82);
+      stateManager.set("players.p1.oceanForestPenaltyConsumed", true);
+
+      await boardEffectsHandler.checkAndApplyBoardMoves("players.p1.position");
+
+      expect(stateManager.get("players.p1.position")).toBe(82);
+    });
+
+    it("Kalimba ocean-forest portal (82): retreatEffectsReversed skips slide but still consumes penalty + retreat flip", async () => {
+      stateManager.set("board.squares", {
+        "82": {
+          next: [83],
+          prev: [81],
+          name: "Ocean-Forest Portal",
+          nextOnLanding: [45],
+          oceanForestOneShotPortal: true,
+        },
+      });
+      stateManager.set("players.p1.position", 82);
+      stateManager.set("players.p1.retreatEffectsReversed", true);
+      stateManager.set("players.p1.oceanForestPenaltyConsumed", false);
+
+      await boardEffectsHandler.checkAndApplyBoardMoves("players.p1.position");
+
+      expect(stateManager.get("players.p1.position")).toBe(82);
+      expect(stateManager.get("players.p1.oceanForestPenaltyConsumed")).toBe(true);
+      expect(stateManager.get("players.p1.retreatEffectsReversed")).toBe(true);
     });
 
     it("should set arrivedViaTeleportFrom when applying ladder and context is passed", async () => {
@@ -230,19 +292,19 @@ describe("BoardEffectsHandler", () => {
         "82": {
           name: "Ocean-Forest Portal",
           nextOnLanding: [45],
-          inverseMode: "activate",
+          oceanForestOneShotPortal: true,
         },
       });
       stateManager.set("game.playerOrder", ["p1", "p2"]);
       stateManager.set("players.p1.position", 54);
       stateManager.set("players.p2.position", 82);
-      stateManager.set("players.p2.inverseMode", true);
 
       await boardEffectsHandler.checkAndApplyBoardMoves("players.p1.position");
 
       expect(stateManager.get("players.p1.position")).toBe(45);
       expect(stateManager.get("players.p2.position")).toBe(82);
-      expect(stateManager.get("players.p1.inverseMode")).toBe(true);
+      expect(stateManager.get("players.p1.oceanForestPenaltyConsumed")).toBe(true);
+      expect(stateManager.get("players.p1.retreatEffectsReversed")).toBe(true);
     });
 
     it("should leave every occupant on 82 when jumpToLeader resolves ocean portal (multi-player)", async () => {
@@ -252,7 +314,7 @@ describe("BoardEffectsHandler", () => {
         "82": {
           name: "Ocean-Forest Portal",
           nextOnLanding: [45],
-          inverseMode: "activate",
+          oceanForestOneShotPortal: true,
         },
       });
       stateManager.set("game.playerOrder", ["p1", "p2", "p3"]);
@@ -573,64 +635,25 @@ describe("BoardEffectsHandler", () => {
       );
     });
 
-    it("applies inverseMode activate from portal square deterministically", async () => {
+    it("repeat visit to ocean-forest one-shot portal uses short transcript when penalty already consumed", async () => {
       stateManager.set("board.squares", {
         "82": {
           next: [83],
           prev: [81],
           name: "Ocean-Forest Portal",
           nextOnLanding: [45],
-          inverseMode: "activate",
+          oceanForestOneShotPortal: true,
         },
       });
       stateManager.set("players.p1.position", 82);
-      stateManager.set("players.p1.inverseMode", false);
+      stateManager.set("players.p1.oceanForestPenaltyConsumed", true);
 
       await boardEffectsHandler.checkAndApplySquareEffects("players.p1.position", baseContext);
 
-      expect(stateManager.get("players.p1.inverseMode")).toBe(true);
-      expect(mockProcessTranscript).toHaveBeenCalledWith(
-        expect.stringContaining("inverse mode on"),
-        expect.anything(),
-      );
-    });
-
-    it("repeat visit to inverse-activate portal uses short transcript and keeps inverseMode", async () => {
-      stateManager.set("board.squares", {
-        "82": {
-          next: [83],
-          prev: [81],
-          name: "Ocean-Forest Portal",
-          nextOnLanding: [45],
-          inverseMode: "activate",
-        },
-      });
-      stateManager.set("players.p1.position", 82);
-      stateManager.set("players.p1.inverseMode", true);
-
-      await boardEffectsHandler.checkAndApplySquareEffects("players.p1.position", baseContext);
-
-      expect(stateManager.get("players.p1.inverseMode")).toBe(true);
       expect(mockProcessTranscript).toHaveBeenCalledTimes(1);
       const transcript = mockProcessTranscript.mock.calls[0]?.[0] ?? "";
       expect(transcript).toContain("landed again");
       expect(transcript).not.toContain("Square data for flavour");
-    });
-
-    it("applies inverseMode deactivate from square deterministically", async () => {
-      stateManager.set("board.squares", {
-        "50": { destination: 60, name: "Inverse off", inverseMode: "deactivate" },
-      });
-      stateManager.set("players.p1.position", 50);
-      stateManager.set("players.p1.inverseMode", true);
-
-      await boardEffectsHandler.checkAndApplySquareEffects("players.p1.position", baseContext);
-
-      expect(stateManager.get("players.p1.inverseMode")).toBe(false);
-      expect(mockProcessTranscript).toHaveBeenCalledWith(
-        expect.stringContaining("inverse mode off"),
-        expect.anything(),
-      );
     });
 
     it("portal at 82 when arrived from 45: no choice, stay, narrate briefly only", async () => {
@@ -642,7 +665,7 @@ describe("BoardEffectsHandler", () => {
           habitat: "ocean",
           name: "Ocean-Forest Portal",
           nextOnLanding: [45],
-          inverseMode: "deactivate",
+          oceanForestOneShotPortal: true,
         },
       });
       stateManager.set("players.p1.position", 82);

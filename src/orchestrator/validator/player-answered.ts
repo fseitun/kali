@@ -1,5 +1,5 @@
 import { getDecisionPoints } from "../decision-point-inference";
-import { forkChoiceBlockingValidation } from "../fork-roll-policy";
+import { forkChoiceBlockingValidation, getMovementDirectionForState } from "../fork-roll-policy";
 import type { Pending } from "../pending-types";
 import { getPending, getPendingRollSpec, isPendingRollKind } from "../pending-types";
 import type { GameState, PrimitiveAction } from "../types";
@@ -57,7 +57,12 @@ function validatePendingRollAnswer(
     };
   }
   if (pending.kind === "directional") {
-    const forkErr = forkChoiceBlockingValidation(state, index, roll, "backward");
+    const forkErr = forkChoiceBlockingValidation(
+      state,
+      index,
+      roll,
+      getMovementDirectionForState(state, currentTurn),
+    );
     if (forkErr) {
       return forkErr;
     }

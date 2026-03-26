@@ -1,6 +1,7 @@
 import type { BoardEffectsHandler } from "./board-effects-handler";
 import { computeNewPositionFromState } from "./board-traversal";
 import { getDecisionPointApplyState } from "./decision-helpers";
+import { getMovementDirectionForState } from "./fork-roll-policy";
 import { getPowerCheckDiceConfig, getSquareDataAtPosition } from "./power-check-dice";
 import type { RiddlePowerCheckHandler } from "./riddle-power-check";
 import type { TurnManager } from "./turn-manager";
@@ -180,15 +181,18 @@ async function applyDirectionalRoll(
   roll: number,
   context: ExecutionContext,
 ): Promise<void> {
-  const state = ctx.stateManager.getState();
+  const state = ctx.stateManager.getState() as GameState;
+  const direction = getMovementDirectionForState(state, currentTurn);
   const newPosition = computeNewPositionFromState(
     state,
     currentTurn,
     currentPosition,
     roll,
-    "backward",
+    direction,
   );
-  Logger.write(`Directional roll ${roll}: ${path} ${currentPosition} → ${newPosition} (backward)`);
+  Logger.write(
+    `Directional roll ${roll}: ${path} ${currentPosition} → ${newPosition} (${direction})`,
+  );
   ctx.stateManager.set(path, newPosition);
   ctx.stateManager.set(GAME_PATH.pending, null);
   ctx.stateManager.set(GAME_PATH.lastRoll, roll);

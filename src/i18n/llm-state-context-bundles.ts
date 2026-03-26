@@ -23,6 +23,8 @@ export type LlmStateContextBundle = {
   powerCheckHelpManyDice: string;
   revengeBlock: string;
   directionalBlock: string;
+  directionalMoveHintBackward: string;
+  directionalMoveHintForwardRetreat: string;
   directionalRollOne: string;
   directionalRollSum: string;
   directionalHelpOneDie: string;
@@ -66,8 +68,10 @@ export const llmStateContextEsAR: LlmStateContextBundle = {
     "PLAYER_ANSWERED con la suma ({min}–{max} de {label}). Ejemplos: «tiré un dos y un seis», «ocho», «quince».",
   revengeBlock:
     "⚠️ REVENGE ({playerName}) phase=revenge. Sigue el mismo jugador, no el siguiente. 1 dado, tirada ≥ {power} gana. Si reporta la tirada → PLAYER_ANSWERED con el número (1–6). NO preguntes si alcanza ni «is that enough?» — procesalo ya. NO NARRATES la tirada. Solo PLAYER_ANSWERED. El orquestador anuncia el resultado. Si pregunta qué hacer → NARRATE que tire un dado y diga el número (necesita {power} o más). Si indicás la acción, nombrá al jugador: «{playerName}, tirá el dado.» [current]",
+  directionalMoveHintBackward: "Hay que retroceder.",
+  directionalMoveHintForwardRetreat: "Tenés que avanzar.",
   directionalBlock:
-    "⚠️ DIRECTIONAL ROLL ({playerName}) Hay que retroceder. Tirá {label} y decí el resultado. Si REPORTA su tirada → {rollInstruction} NO NARRATES la tirada. Solo PLAYER_ANSWERED.{helpLine} [current]",
+    "⚠️ DIRECTIONAL ROLL ({playerName}) {moveHint} Tirá {label} y decí el resultado. Si REPORTA su tirada → {rollInstruction} NO NARRATES la tirada. Solo PLAYER_ANSWERED.{helpLine} [current]",
   directionalHelpOneDie: " Si pregunta qué hacer → NARRATE «Tirá un dado... decime el resultado.»",
   directionalHelpManyDice:
     " Si pregunta qué hacer → NARRATE «Tirá {n} dados... decime el resultado.»",
@@ -114,8 +118,10 @@ export const llmStateContextEnUS: LlmStateContextBundle = {
     'PLAYER_ANSWERED with the sum ({min}–{max} from {label}). Examples: "I rolled a two and a six", "eight", "fifteen".',
   revengeBlock:
     '⚠️ REVENGE ({playerName}) phase=revenge. Same player, not the next one. 1 die, roll ≥ {power} wins. User reports roll → PLAYER_ANSWERED with the number (1–6). Do NOT ask "does that count" or "is that enough" — process it immediately. Do NOT NARRATE the roll. Return only PLAYER_ANSWERED. The orchestrator announces pass/fail. If the user asks what to do → NARRATE that they should roll one die and report the number (need {power} or more). When prompting, name the player: "{playerName}, roll the die." [current]',
+  directionalMoveHintBackward: "The player must move backward.",
+  directionalMoveHintForwardRetreat: "The player must move forward.",
   directionalBlock:
-    "⚠️ DIRECTIONAL ROLL ({playerName}) The player must move backward. Roll {label} and report the result. If the user REPORTS their roll → {rollInstruction} Do NOT NARRATE the roll. Return only PLAYER_ANSWERED.{helpLine} [current]",
+    "⚠️ DIRECTIONAL ROLL ({playerName}) {moveHint} Roll {label} and report the result. If the user REPORTS their roll → {rollInstruction} Do NOT NARRATE the roll. Return only PLAYER_ANSWERED.{helpLine} [current]",
   directionalHelpOneDie:
     ' If the user asks what to do → NARRATE "Roll one die and tell me what you rolled."',
   directionalHelpManyDice:

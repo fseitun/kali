@@ -300,10 +300,20 @@ function formatRevengeContext(playerName: string, power: number, L: LlmStateCont
 }
 
 function formatDirectionalRollContext(
+  state: Record<string, unknown>,
   playerName: string,
   dice: 1 | 2 | 3,
   L: LlmStateContextBundle,
 ): string {
+  const game = state.game as Record<string, unknown> | undefined;
+  const pending = game?.pending as { kind?: string; playerId?: string } | undefined;
+  const playerId = pending?.playerId;
+  const players = state.players as Record<string, Record<string, unknown>> | undefined;
+  const retreatReversed =
+    playerId && players?.[playerId]?.retreatEffectsReversed === true ? true : false;
+  const moveHint = retreatReversed
+    ? L.directionalMoveHintForwardRetreat
+    : L.directionalMoveHintBackward;
   const min = dice;
   const max = dice * 6;
   const label = `${dice}d6`;
@@ -311,7 +321,13 @@ function formatDirectionalRollContext(
     dice === 1 ? L.directionalRollOne : substLlmState(L.directionalRollSum, { min, max, label });
   const helpLine =
     dice === 1 ? L.directionalHelpOneDie : substLlmState(L.directionalHelpManyDice, { n: dice });
-  return substLlmState(L.directionalBlock, { playerName, label, rollInstruction, helpLine });
+  return substLlmState(L.directionalBlock, {
+    playerName,
+    label,
+    rollInstruction,
+    helpLine,
+    moveHint,
+  });
 }
 
 function getPendingContext(state: Record<string, unknown>): {
@@ -369,7 +385,7 @@ function formatPendingContext(state: Record<string, unknown>, L: LlmStateContext
   }
   if (kind === "directional") {
     const dice = pending.dice as 1 | 2 | 3;
-    return formatDirectionalRollContext(playerName, dice, L);
+    return formatDirectionalRollContext(state, playerName, dice, L);
   }
   return "";
 }
