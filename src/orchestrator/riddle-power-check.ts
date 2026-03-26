@@ -3,7 +3,6 @@ import { computeNewPositionFromState } from "./board-traversal";
 import type { PendingPowerCheck, PendingRevenge, PendingRiddle } from "./pending-types";
 import { getPowerCheckRollSpec } from "./power-check-dice";
 import { isStrictRiddleCorrect } from "./riddle-answer";
-import { squareTriggersLandingPipeline } from "./square-types";
 import type { TurnManager } from "./turn-manager";
 import { GamePhase, type ExecutionContext, type GameState } from "./types";
 import type { IStatusIndicator } from "@/components/status-indicator";
@@ -181,7 +180,7 @@ export class RiddlePowerCheckHandler {
     await this.deps.boardEffectsHandler.checkAndApplySquareEffects(positionPath, context);
     this.deps.checkAndApplyWinCondition(positionPath);
 
-    if (this.shouldSpeakAfterEncounterMovementNudge(playerId)) {
+    if (this.shouldSpeakAfterEncounterMovementNudge(playerId, context)) {
       const name = this.displayNameForPlayer(
         this.deps.stateManager.getState() as GameState,
         playerId,
@@ -204,25 +203,28 @@ export class RiddlePowerCheckHandler {
 
   /**
    * After a power-check or revenge win, the same player keeps the turn but the app does not
-   * auto-announce movement dice. Prompt when the encounter chain is done and the square does
-   * not still require a mechanic (trap, animal, etc.).
+   * auto-announce movement dice. Prompt when the encounter chain is done: `game.pending` is
+   * cleared, the mover is still `game.turn`, and the batch is not forcing immediate turn handoff
+   * (e.g. skip-turn landing sets `ExecutionContext.advanceTurnDespitePowerCheckSuppress`).
    */
-  private shouldSpeakAfterEncounterMovementNudge(playerId: string): boolean {
+  private shouldSpeakAfterEncounterMovementNudge(
+    playerId: string,
+    context: ExecutionContext,
+  ): boolean {
+    if (context.advanceTurnDespitePowerCheckSuppress === true) {
+      return false;
+    }
     const state = this.deps.stateManager.getState() as GameState;
     const game = state.game as Record<string, unknown> | undefined;
     if (!game || game.pending != null || game.phase !== GamePhase.PLAYING || game.winner != null) {
       return false;
     }
-    const position = (state.players as Record<string, Record<string, unknown>>)?.[playerId]
-      ?.position;
-    if (typeof position !== "number") {
+    if (game.turn !== playerId) {
       return false;
     }
-    const squares = (state.board as Record<string, unknown>)?.squares as
-      | Record<string, Record<string, unknown>>
-      | undefined;
-    const squareData = squares?.[String(position)];
-    return !squareTriggersLandingPipeline(squareData);
+    const position = (state.players as Record<string, Record<string, unknown>>)?.[playerId]
+      ?.position;
+    return typeof position === "number";
   }
 
   private async handlePowerCheckLose(pending: PendingPowerCheck): Promise<{

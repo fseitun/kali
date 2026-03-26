@@ -394,6 +394,70 @@ describe("Orchestrator Integration Tests", () => {
       setLocale("es-AR");
     });
 
+    it("after power check win through snake to no-choice portal speaks afterEncounterRollPrompt (ADR 0003)", async () => {
+      mockLLM = createScriptedLLM([
+        [{ action: "NARRATE", text: "You arrived at the forest-ocean portal." }],
+      ]);
+      setLocale("en-US");
+      const initialState: GameState = {
+        game: {
+          name: "Test Game",
+          phase: GamePhase.PLAYING,
+          turn: "p1",
+          playerOrder: ["p1", "p2"],
+          winner: null,
+          lastRoll: 0,
+          pending: {
+            position: 7,
+            power: 3,
+            playerId: "p1",
+            kind: "powerCheck",
+            riddleCorrect: true,
+          },
+        },
+        players: {
+          p1: { id: "p1", name: "Alice", position: 7 },
+          p2: { id: "p2", name: "Bob", position: 0 },
+        },
+        board: {
+          squares: {
+            "7": {
+              name: "Eagle",
+              power: 3,
+              winJumpTo: 82,
+              next: [8],
+              powerCheckDiceIfRiddleCorrect: 3,
+            },
+            "82": { destination: 45, name: "Chute top", next: [83] },
+            "45": { name: "Forest-Ocean Portal", nextOnLanding: [82] },
+            "100": { effect: "win" },
+          },
+        },
+      };
+
+      setupGame(initialState);
+
+      const result = await orchestrator.testExecuteActions([
+        { action: "PLAYER_ANSWERED", answer: "17" },
+      ]);
+
+      expect(result.success).toBe(true);
+      expect(result.shouldAdvanceTurn).toBe(false);
+      expect(stateManager.get("players.p1.position")).toBe(45);
+      expect(stateManager.get("game.pending")).toBeNull();
+
+      expect(mockSpeech.speak).toHaveBeenNthCalledWith(1, "You passed.");
+      expect(mockSpeech.speak).toHaveBeenNthCalledWith(
+        2,
+        "You arrived at the forest-ocean portal.",
+      );
+      expect(mockSpeech.speak).toHaveBeenNthCalledWith(
+        3,
+        "Alice, you're still on square 45. Roll the dice and tell me what you got.",
+      );
+      setLocale("es-AR");
+    });
+
     it("power check win landing on skipTurn sets shouldAdvanceTurn true (next player can be announced)", async () => {
       mockLLM = createScriptedLLM([
         [{ action: "NARRATE", text: "Quicksand — you skip next turn." }],

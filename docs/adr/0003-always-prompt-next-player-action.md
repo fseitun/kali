@@ -22,8 +22,12 @@ Implementers should ask: _After this line, would someone who only hears audio kn
 - Regressions are likely when `shouldAdvanceTurn` is false but the same player continues: the app may skip `checkAndAdvanceTurn`, so **orchestrator-owned or app-layer speech** must cover the nudge.
 - Tests should assert `speak` content or order when adding encounter or turn-edge behavior.
 
+### Implementation note (recorded regression, 2026-03)
+
+Power-check or revenge **win** can chain **automatic** board moves (e.g. snake) and then nested square narration (e.g. a **no-choice portal**: SYSTEM text tells the LLM not to ask questions). In that case the model may speak only flavor; the player still holds the turn and needs a **movement roll**. Do **not** suppress deterministic `afterEncounterRollPrompt` just because the final square has board metadata (e.g. `nextOnLanding`): use **`game.pending`**, **`game.turn ===` mover**, and **`ExecutionContext.advanceTurnDespitePowerCheckSuppress`** (skip-turn style handoff) to decide whether to nudge. See [`src/orchestrator/riddle-power-check.ts`](../../src/orchestrator/riddle-power-check.ts) (`shouldSpeakAfterEncounterMovementNudge`). Regression test: `after power check win through snake to no-choice portal speaks afterEncounterRollPrompt` in [`src/orchestrator/orchestrator.integration.test.ts`](../../src/orchestrator/orchestrator.integration.test.ts).
+
 ## Links
 
 - Rule: [`.cursor/rules/development-guidelines.mdc`](../../.cursor/rules/development-guidelines.mdc) (Voice-Only UX — next-action clarity)
 - Code: [`src/orchestrator/riddle-power-check.ts`](../../src/orchestrator/riddle-power-check.ts) (`afterEncounterRollPrompt`), [`src/kali-app-core.ts`](../../src/kali-app-core.ts) (`checkAndAdvanceTurn`, `announceCurrentTurnIfPending`), [`src/voice/gameplay-voice-policy.ts`](../../src/voice/gameplay-voice-policy.ts) (`VoiceOutcomeHints`)
-- Tests: `src/orchestrator/orchestrator.integration.test.ts` (power-check win speech order)
+- Tests: [`src/orchestrator/orchestrator.integration.test.ts`](../../src/orchestrator/orchestrator.integration.test.ts) (power-check win speech order; portal/snake chain + `afterEncounterRollPrompt`)
