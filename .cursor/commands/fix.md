@@ -10,14 +10,14 @@ Write **everything** produced in this workflow in **English**: the gap summary (
 
 ## Inputs to treat as authoritative
 
-- **Log**: Pasted text, an `@`-attached file, or a readable **absolute path** — build output, test failures, stack traces, runtime logs, network traces, LLM/tool transcripts, browser console, **Kali exported JSON logs**, etc.
+- **Log**: Pasted text, an `@`-attached file, or a readable **absolute path** — build output, test failures, stack traces, runtime logs, network traces, LLM/tool transcripts, browser console, **Kali exported JSON logs** (see [Kali JSON export logs](#kali-specific-hints-when-reading-logs)), etc.
 - **Expected**: What should have happened (correct message, status, state, UI, API response, test pass, voice line, etc.).
 
 If either piece is missing, ask for it before planning.
 
 ### Reporter checklist (what to send)
 
-- **Log**: Paste, attach with `@path`, or paste an absolute path the agent can read. For Kali, note when the artifact is an **exported JSON log**.
+- **Log**: Paste, attach with `@path`, or paste an absolute path the agent can read. For Kali, exported logs are **JSON** files named **`kali-logs-<timestamp>.json`** (ISO timestamp with `:` / `.` normalized for the filename). **Convention:** the bug evidence is often **near the bottom** of the file (newest entries last), but that is **not mandatory** — scan the whole export when needed.
 - **Expected vs actual**: Prefer explicit labels, for example:
   - `Expected:` …
   - `Actual (heard / saw / in log):` …
@@ -59,7 +59,7 @@ Use this checklist as a menu — pick what applies:
 
 Use these to route hypotheses and verification; do not override workspace rules.
 
-- **Kali JSON export logs**: Exports are typically a **JSON array** of objects with fields such as `level`, `category`, `message`, optional `context` (e.g. LLM `fullPrompt` / `fullResponse`, state snapshots). For voice/LLM issues, search entries by `category` (e.g. `llm`, `brain`) and orchestrator-related lines, and any logs of **TTS**, **speak**, or **NARRATE**. Use `iso` timestamps to narrow the repro window.
+- **Kali JSON export logs**: The artifact is **JSON**, saved as **`kali-logs-<timestamp>.json`**. Exports are typically a **JSON array** of objects with fields such as `level`, `category`, `message`, optional `context` (e.g. LLM `fullPrompt` / `fullResponse`, state snapshots). **Ordering:** it is **expected** (but **not required**) that the relevant failure or surprising behavior appears **toward the bottom** of the file — treat that as a hint, not a rule; use `iso` timestamps and categories to find the repro window anywhere in the array. For voice/LLM issues, search entries by `category` (e.g. `llm`, `brain`) and orchestrator-related lines, and any logs of **TTS**, **speak**, or **NARRATE**.
 - **Subsystems**: orchestrator (primitives, validation), `KaliAppCore` (coordination, turn announcement, voice policy), voice/STT/Vosk pipeline, LLM client + prompts, game content/loaders, Vitest/integration tests. If the gap looks like **prompt quality, structure, or systematic misinterpretation** (not validation bugs), read the project skill **`prompt-engineering`** (`.cursor/skills/prompt-engineering/SKILL.md`).
 - **State**: Orchestrator owns mutations and phase/turn logic; app and UI must not bypass it (see `.cursor/rules/state-axioms.mdc`). If the “expected” outcome implies direct `stateManager.set` from UI, the plan should correct the architecture instead.
 - **Voice / TTS**: Silent success, missing “what to do next,” or invariant failures often touch `MeteredSpeechService`, `gameplay-voice-policy`, orchestrator `VoiceOutcomeHints`, and i18n strings; see `docs/adr/0003-always-prompt-next-player-action.md` when the gap is “player heard X but not Y.”
