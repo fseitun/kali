@@ -234,6 +234,49 @@ describe("Orchestrator Integration Tests", () => {
       const p1Position = stateManager.get("players.p1.position");
       expect(p1Position).toBe(14);
     });
+
+    it("Golden Fox (jumpToLeader): NARRATE speaks final leader square, not dice landing", async () => {
+      setLocale("en-US");
+      mockLLM = createScriptedLLM([]);
+
+      const initialState: GameState = {
+        game: {
+          name: "Test Game",
+          phase: GamePhase.PLAYING,
+          turn: "p2",
+          playerOrder: ["p1", "p2"],
+          winner: null,
+          lastRoll: 0,
+        },
+        players: {
+          p1: { id: "p1", name: "F", position: 91 },
+          p2: { id: "p2", name: "B", position: 51 },
+        },
+        board: {
+          squares: {
+            "54": { effect: "jumpToLeader", name: "Golden fox" },
+            "100": { effect: "win" },
+          },
+        },
+      };
+
+      setupGame(initialState);
+
+      const result = await orchestrator.testExecuteActions([
+        { action: "PLAYER_ROLLED", value: 3 },
+        { action: "NARRATE", text: "B, you landed on square 54." },
+      ]);
+
+      expect(result.success).toBe(true);
+      expect(result.shouldAdvanceTurn).toBe(true);
+      expect(stateManager.get("players.p2.position")).toBe(91);
+      expect(mockSpeech.speak).toHaveBeenCalled();
+      const speakMock = mockSpeech.speak as ReturnType<typeof vi.fn>;
+      const spoken = String(speakMock.mock.calls[0]?.[0] ?? "");
+      expect(spoken).toContain("91");
+      expect(spoken).not.toContain("54");
+      expect(spoken).toMatch(/Golden Fox|first place/i);
+    });
   });
 
   describe("Animal Encounters", () => {

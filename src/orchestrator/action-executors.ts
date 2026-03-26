@@ -27,32 +27,64 @@ export interface ActionExecutorContext {
   checkAndApplyWinCondition: (positionPath: string) => void;
 }
 
+/**
+ * When the roller was moved by Golden Fox, replace LLM narration with deterministic final-square text.
+ * @returns Spoken line, or undefined to use the primitive / default path.
+ */
+function tryGoldenFoxNarrationOverride(
+  ctx: ActionExecutorContext,
+  context: ExecutionContext,
+): string | undefined {
+  const jump = context.jumpToLeaderRelocated;
+  if (!jump || !context.positionPathsSetByRoll?.size) {
+    return undefined;
+  }
+  const state = ctx.stateManager.getState();
+  const game = state.game as Record<string, unknown> | undefined;
+  const turn = game?.turn as string | undefined;
+  const players = state.players as Record<string, Record<string, unknown>> | undefined;
+  const player = turn ? players?.[turn] : undefined;
+  const name = typeof player?.name === "string" ? player.name : "";
+  context.jumpToLeaderRelocated = undefined;
+  return t("game.goldenFoxJump", { name, square: jump.toPosition });
+}
+
 export async function executeNarrate(
   ctx: ActionExecutorContext,
   primitive: Extract<PrimitiveAction, { action: "NARRATE" }>,
-  _context: ExecutionContext,
+  context: ExecutionContext,
 ): Promise<void> {
   const state = ctx.stateManager.getState();
   const game = state.game as Record<string, unknown> | undefined;
   const pending = game?.pending as { kind?: string; riddlePrompt?: string } | null | undefined;
-  if (
-    ctx.boardEffectsHandler.isProcessingEffect() &&
-    pending?.kind === "riddle" &&
-    primitive.text
-  ) {
-    ctx.stateManager.set(GAME_PATH.pending, {
-      ...pending,
-      riddlePrompt: primitive.text,
-    });
+
+  const goldenFoxLine = tryGoldenFoxNarrationOverride(ctx, context);
+  let textToSpeak: string;
+  if (goldenFoxLine !== undefined) {
+    textToSpeak = goldenFoxLine;
+    ctx.setLastNarration(textToSpeak);
+  } else {
+    if (
+      ctx.boardEffectsHandler.isProcessingEffect() &&
+      pending?.kind === "riddle" &&
+      primitive.text
+    ) {
+      ctx.stateManager.set(GAME_PATH.pending, {
+        ...pending,
+        riddlePrompt: primitive.text,
+      });
+    }
+    if (primitive.text) {
+      ctx.setLastNarration(primitive.text);
+    }
+    textToSpeak = primitive.text ?? "";
   }
-  if (primitive.text) {
-    ctx.setLastNarration(primitive.text);
-  }
+
   ctx.statusIndicator.setState("speaking");
   if (primitive.soundEffect) {
     ctx.speechService.playSound(primitive.soundEffect);
   }
-  await ctx.speechService.speak(primitive.text);
+  await ctx.speechService.speak(textToSpeak);
 }
 
 export async function executeSetState(

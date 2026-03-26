@@ -41,6 +41,8 @@ export const esAR = {
     riddleIncorrectPowerRoll:
       "No acertaste. {diceRollPhrase}Necesitás superar el puntaje {animalScorePhrase} para avanzar.",
     forkChoiceResolvedRoll: "{name}, listo. Tirá el dado.",
+    goldenFoxJump:
+      "{name}, el Zorro Dorado te lleva al primer puesto. Estás en el casillero {square}.",
   },
   ui: {
     startButton: "Jugar",

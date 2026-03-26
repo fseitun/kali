@@ -272,6 +272,37 @@ describe("BoardEffectsHandler", () => {
       expect(stateManager.get("players.p1.position")).toBe(80);
     });
 
+    it("should prefer jumpToLeader over nextOnLanding on the same square (misauthored config)", async () => {
+      stateManager.set("board.squares", {
+        "54": {
+          effect: "jumpToLeader",
+          name: "Zorro dorado",
+          nextOnLanding: [99],
+        },
+      });
+      stateManager.set("game.playerOrder", ["p1", "p2"]);
+      stateManager.set("players.p1.position", 54);
+      stateManager.set("players.p2.position", 80);
+
+      await boardEffectsHandler.checkAndApplyBoardMoves("players.p1.position");
+
+      expect(stateManager.get("players.p1.position")).toBe(80);
+    });
+
+    it("should set jumpToLeaderRelocated on context when fox moves the player", async () => {
+      stateManager.set("board.squares", {
+        "54": { effect: "jumpToLeader", name: "Zorro dorado" },
+      });
+      stateManager.set("game.playerOrder", ["p1", "p2"]);
+      stateManager.set("players.p1.position", 54);
+      stateManager.set("players.p2.position", 80);
+      const context: ExecutionContext = {};
+
+      await boardEffectsHandler.checkAndApplyBoardMoves("players.p1.position", context);
+
+      expect(context.jumpToLeaderRelocated).toEqual({ toPosition: 80 });
+    });
+
     it("should keep position when jumpToLeader but current player is already leader", async () => {
       stateManager.set("board.squares", {
         "54": { effect: "jumpToLeader", name: "Zorro dorado" },

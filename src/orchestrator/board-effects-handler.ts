@@ -70,20 +70,49 @@ export class BoardEffectsHandler {
     }
 
     const squareData = squares[position.toString()];
-    const fromPosition = position;
-    const fromSquareData = squareData;
+    const landingPosition = position;
+    const landingSquareData = squareData;
     this.applyTeleportIfApplicable(path, position, squareData, state, context);
 
     const afterJumpToLeader = this.stateManager.get(path) as number;
     if (
-      fromSquareData?.effect === "jumpToLeader" &&
+      landingSquareData?.effect === "jumpToLeader" &&
       typeof afterJumpToLeader === "number" &&
-      afterJumpToLeader !== fromPosition
+      afterJumpToLeader !== landingPosition
     ) {
       this.applyJumpToLeaderLeaderSquarePortal(path, afterJumpToLeader, squares, context);
     }
 
     this.applyMagicDoorBounceIfApplicable(path, squares);
+
+    const finalPosition = this.stateManager.get(path) as number;
+    this.setJumpToLeaderRelocatedIfNeeded(
+      context,
+      landingSquareData,
+      landingPosition,
+      finalPosition,
+    );
+  }
+
+  /**
+   * Records Golden Fox relocation on the execution context for accurate post-roll narration.
+   */
+  private setJumpToLeaderRelocatedIfNeeded(
+    context: ExecutionContext | undefined,
+    landingSquareData: Record<string, unknown> | undefined,
+    landingPosition: number,
+    finalPosition: number,
+  ): void {
+    if (
+      !context ||
+      landingSquareData?.effect !== "jumpToLeader" ||
+      typeof finalPosition !== "number" ||
+      typeof landingPosition !== "number" ||
+      finalPosition === landingPosition
+    ) {
+      return;
+    }
+    context.jumpToLeaderRelocated = { toPosition: finalPosition };
   }
 
   /**
@@ -215,6 +244,9 @@ export class BoardEffectsHandler {
     landingPosition: number,
     context?: ExecutionContext,
   ): number | undefined {
+    if (squareData.effect === "jumpToLeader") {
+      return this.getLeaderPosition(path, state);
+    }
     const suppressNextOnLanding =
       context?.suppressNextOnLandingAtPosition !== undefined &&
       context.suppressNextOnLandingAtPosition === landingPosition;
@@ -230,9 +262,6 @@ export class BoardEffectsHandler {
     }
     if (squareData.effect === "returnTo187") {
       return 187;
-    }
-    if (squareData.effect === "jumpToLeader") {
-      return this.getLeaderPosition(path, state);
     }
     return undefined;
   }
@@ -316,7 +345,12 @@ export class BoardEffectsHandler {
     if (context) {
       context.arrivedViaTeleportFrom = position;
     }
-    const moveType = destination < position ? "snake" : "ladder";
+    const moveType =
+      squareData.effect === "jumpToLeader"
+        ? "jumpToLeader"
+        : destination < position
+          ? "snake"
+          : "ladder";
     Logger.info(`Auto-applying ${moveType}: position ${position} → ${destination}`);
     this.stateManager.set(path, destination);
     this.finishKalimbaOceanForestPortal82Hop(

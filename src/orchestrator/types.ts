@@ -122,6 +122,11 @@ export interface ExecutionContext {
    * `destination` once (used so a player placed on 45 after a golden-fox bump does not immediately chain 45→82).
    */
   suppressNextOnLandingAtPosition?: number;
+  /**
+   * Set when the player landed on Golden Fox (`jumpToLeader`) and ended on a different square after
+   * board moves (including leader-square portal). Used so `NARRATE` can speak the real final cell.
+   */
+  jumpToLeaderRelocated?: { toPosition: number };
 }
 
 /**
