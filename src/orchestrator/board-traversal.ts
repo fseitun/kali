@@ -129,8 +129,8 @@ export function computeNewPositionFromState(
  */
 /**
  * Result of applying a movement roll when forks may require an explicit choice mid-path.
- * If the roll would admit multiple landing squares (`distinctEndPositionsAfterRoll` > 1),
- * simulation stops on the fork square with `remainingSteps` left to apply after the player
+ * If the path hits a square with multiple forward targets and `activeChoices` does not fix the branch,
+ * simulation stops on that fork square with `remainingSteps` left to apply after the player
  * sets `activeChoices[forkSquare]` (see `completeRollMovement` pending).
  */
 export type ApplyRollMovementResult =
@@ -157,15 +157,10 @@ export function applyRollMovementResolvingForks(
   if (roll <= 0) {
     return { kind: "complete", finalPosition: start };
   }
-  const { activeChoices } = readRollContext(state, playerId);
-  if (distinctEndPositionsAfterRoll(state, playerId, start, roll, direction).size <= 1) {
-    return {
-      kind: "complete",
-      finalPosition: simulateRollFromState(state, playerId, start, roll, direction, activeChoices),
-    };
-  }
-
-  const { squares, retreatEffectsReversed, winPosition } = readRollContext(state, playerId);
+  const { squares, retreatEffectsReversed, winPosition, activeChoices } = readRollContext(
+    state,
+    playerId,
+  );
   const forward = direction === "forward";
   let current = start;
 

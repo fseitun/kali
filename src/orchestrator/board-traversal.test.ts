@@ -1,6 +1,14 @@
+import { readFileSync } from "node:fs";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
 import { describe, it, expect } from "vitest";
 import { applyRollMovementResolvingForks, computeNewPositionFromState } from "./board-traversal";
-import type { GameState, SquareData } from "./types";
+import { GamePhase, type GameState, type SquareData } from "./types";
+import { resolveInitialState } from "@/game-loader/game-loader";
+import type { GameConfigInput } from "@/game-loader/types";
+
+const _dir = dirname(fileURLToPath(import.meta.url));
+const kalimbaConfigPath = join(_dir, "../../public/games/kalimba/config.json");
 
 function makeSquares(upTo: number): Record<string, SquareData> {
   const sq: Record<string, SquareData> = {};
@@ -371,6 +379,37 @@ describe("applyRollMovementResolvingForks", () => {
     expect(applyRollMovementResolvingForks(state, "p1", 97, 1, "forward")).toEqual({
       kind: "complete",
       finalPosition: 98,
+    });
+  });
+});
+
+describe("applyRollMovementResolvingForks (Kalimba config from disk)", () => {
+  it("roll 6 from 97 pauses at fork 101 with 4 steps remaining (penguin power-check movement)", () => {
+    const raw = readFileSync(kalimbaConfigPath, "utf-8");
+    const config = JSON.parse(raw) as GameConfigInput;
+    const base = resolveInitialState(config);
+    const p2 = base.players.p2;
+    if (!p2) {
+      throw new Error("Kalimba state must include p2");
+    }
+    const state: GameState = {
+      ...base,
+      game: { ...base.game, phase: GamePhase.PLAYING, turn: "p2" },
+      players: {
+        ...base.players,
+        p2: {
+          ...p2,
+          position: 97,
+          activeChoices: { 0: 1 },
+        },
+      },
+    };
+
+    expect(applyRollMovementResolvingForks(state, "p2", 97, 6, "forward")).toEqual({
+      kind: "forkPause",
+      positionAtFork: 101,
+      remainingSteps: 4,
+      direction: "forward",
     });
   });
 });

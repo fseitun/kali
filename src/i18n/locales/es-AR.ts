@@ -29,6 +29,9 @@ export const esAR = {
     winner: "¡{name} ganó! ¡Felicitaciones!",
     position: "Estás en el casillero {position}.",
     powerCheckPass: "Pasaste.",
+    powerCheckPassForkPrompt:
+      "{name}, te quedan {remainingSteps} casilleros por mover. Estás en la bifurcación del {forkSquare}: decime si vas al {options}.",
+    powerCheckPassLandedAt: "{name}, caíste en el casillero {position}.",
     afterEncounterRollPrompt:
       "{name}, seguís en el casillero {position}. Tirá el dado y decime qué sacaste.",
     powerCheckFail: "No alcanzó.",

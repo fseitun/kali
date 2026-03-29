@@ -85,6 +85,7 @@
     "99": { "prev": [96] },
     "100": { "name": "Narwhal", "power": 2 },
     "101": { "next": { "102": ["102", "down"], "105": ["105", "polar bear", "up"] }, "prev": { "98": ["98", "down"], "100": ["100", "up"] }, "name": "Walrus", "power": 3 },
+    "102": { "prev": [101], "next": [103] },
     "103": { "name": "Iceberg", "effect": "retreat1d6" },
     "104": { "next": [106] },
     "105": { "prev": [101], "name": "Polar bear", "power": 4 },

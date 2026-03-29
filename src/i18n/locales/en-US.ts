@@ -29,6 +29,9 @@ export const enUS = {
     winner: "{name} won! Congratulations!",
     position: "You're at position {position}.",
     powerCheckPass: "You passed.",
+    powerCheckPassForkPrompt:
+      "{name}, you have {remainingSteps} spaces left to move. You're at the fork on square {forkSquare}: say whether you're going to {options}.",
+    powerCheckPassLandedAt: "{name}, you landed on square {position}.",
     afterEncounterRollPrompt:
       "{name}, you're still on square {position}. Roll the dice and tell me what you got.",
     powerCheckFail: "No luck.",

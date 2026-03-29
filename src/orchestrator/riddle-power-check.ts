@@ -1,4 +1,5 @@
 import type { BoardEffectsHandler } from "./board-effects-handler";
+import { getNextTargets } from "./board-next";
 import { applyRollMovementResolvingForks } from "./board-traversal";
 import type {
   PendingCompleteRollMovement,
@@ -9,8 +10,9 @@ import type {
 import { getPowerCheckRollSpec } from "./power-check-dice";
 import { isStrictRiddleCorrect } from "./riddle-answer";
 import type { TurnManager } from "./turn-manager";
-import { GamePhase, type ExecutionContext, type GameState } from "./types";
+import { GamePhase, type ExecutionContext, type GameState, type SquareData } from "./types";
 import type { IStatusIndicator } from "@/components/status-indicator";
+import { getLocale } from "@/i18n/locale-manager";
 import { t } from "@/i18n/translations";
 import type { LLMClient } from "@/llm/LLMClient";
 import type { ISpeechService } from "@/services/speech-service";
@@ -207,8 +209,16 @@ export class RiddlePowerCheckHandler {
 
     const positionPath = playerStatePath(playerId, "position");
     await this.deps.boardEffectsHandler.checkAndApplyBoardMoves(positionPath, context);
-    if (!pendingAfter) {
-      await this.deps.boardEffectsHandler.checkAndApplySquareEffects(positionPath, context);
+
+    if (pendingAfter?.kind === "completeRollMovement") {
+      await this.maybeSpeakPowerCheckForkPrompt(playerId, newPosition, pendingAfter);
+    } else {
+      await this.speakLandedOnAnimalIfNeededThenSquareEffects(
+        playerId,
+        newPosition,
+        positionPath,
+        context,
+      );
     }
     this.deps.checkAndApplyWinCondition(positionPath);
 
@@ -231,6 +241,61 @@ export class RiddlePowerCheckHandler {
     const p = (state.players as Record<string, Record<string, unknown>>)?.[playerId];
     const name = p?.name;
     return typeof name === "string" && name.length > 0 ? name : playerId;
+  }
+
+  private async maybeSpeakPowerCheckForkPrompt(
+    playerId: string,
+    forkSquare: number,
+    pending: PendingCompleteRollMovement,
+  ): Promise<void> {
+    const postMove = this.deps.stateManager.getState() as GameState;
+    const forkSq = (postMove.board as { squares?: Record<string, SquareData> })?.squares?.[
+      String(forkSquare)
+    ];
+    const forkTargets = getNextTargets(forkSq);
+    if (forkTargets.length < 2) {
+      return;
+    }
+    const forkName = this.displayNameForPlayer(postMove, playerId);
+    const options = this.formatForkOptionsForSpeech(forkTargets);
+    const forkMsg = t("game.powerCheckPassForkPrompt", {
+      name: forkName,
+      forkSquare,
+      remainingSteps: pending.remainingSteps,
+      options,
+    });
+    this.deps.setLastNarration(forkMsg);
+    this.deps.statusIndicator.setState("speaking");
+    await this.deps.speechService.speak(forkMsg);
+  }
+
+  private async speakLandedOnAnimalIfNeededThenSquareEffects(
+    playerId: string,
+    newPosition: number,
+    positionPath: string,
+    context: ExecutionContext,
+  ): Promise<void> {
+    const postMove = this.deps.stateManager.getState() as GameState;
+    const landSq = (postMove.board as { squares?: Record<string, Record<string, unknown>> })
+      ?.squares?.[String(newPosition)];
+    const landPower = landSq?.power;
+    if (typeof landPower === "number" && landPower >= 1) {
+      const moverName = this.displayNameForPlayer(postMove, playerId);
+      const landedMsg = t("game.powerCheckPassLandedAt", {
+        name: moverName,
+        position: newPosition,
+      });
+      this.deps.setLastNarration(landedMsg);
+      this.deps.statusIndicator.setState("speaking");
+      await this.deps.speechService.speak(landedMsg);
+    }
+    await this.deps.boardEffectsHandler.checkAndApplySquareEffects(positionPath, context);
+  }
+
+  private formatForkOptionsForSpeech(targets: number[]): string {
+    const locale = getLocale();
+    const sep = locale === "es-AR" ? " o " : " or ";
+    return targets.map(String).join(sep);
   }
 
   /**
