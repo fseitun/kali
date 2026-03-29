@@ -44,7 +44,7 @@ export const llmStateContextEsAR: LlmStateContextBundle = {
   riddleAfterEncounter:
     " Después de la adivinanza: si acerta, tira {correctDice}d6 (suma frente a fuerza del animal {power}); si falla, {wrongDice}d6. En NARRATE (español argentino, voseo), decilo simple para chicos — por ejemplo un dado extra o más dados para intentar superar al animal — no digas «prueba de poder» ni «power check».",
   riddleHabitatNote:
-    " Abrí la escena en este hábitat (dato de casilla: {hab}) — usá un nombre natural en español, no la clave en inglés; no empieces con el número de casillero salvo que haga falta.",
+    " Abrí la escena en este hábitat (dato de casilla: {hab}) — usá nombre de animal en español natural, no el token en inglés de la config (ej. «morsa», no «walrus»); no empieces con el número de casillero salvo que haga falta.",
   riddleNarrationShape:
     " Forma del NARRATE: nombre del jugador + animal en el hábitat; adivinanza + si acertás un dado extra (o más dados) para superar al animal; después «Escuchá con atención:»; la pregunta; después «Opciones:» con A) B) C) D) una por línea en el orden de options; cerrá preguntando cuál opción cree que es correcta (p. ej. «¿cuál opción creés que es la correcta?»).",
   riddleAntiLeak:

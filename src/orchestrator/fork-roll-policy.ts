@@ -33,6 +33,24 @@ function findDecisionPointAt(
   );
 }
 
+/**
+ * When the current player has an encounter-phase pending (riddle, power check, etc.),
+ * fork choice must not appear in LLM/voice context — it would collide with phase prompts
+ * (e.g. riddle on Kalimba 101 + fork 102/105). Not applied to completeRollMovement, where
+ * resolving the fork is the active task.
+ */
+function encounterPendingSuppressesForkContext(
+  game: Record<string, unknown> | undefined,
+  currentTurn: string,
+): boolean {
+  const pending = game?.pending as { kind?: string; playerId?: string } | null | undefined;
+  if (pending?.playerId !== currentTurn) {
+    return false;
+  }
+  const kind = pending.kind;
+  return kind === "riddle" || kind === "powerCheck" || kind === "revenge" || kind === "directional";
+}
+
 function getCurrentTurnPlayerSlice(state: GameState): {
   currentTurn: string;
   currentPlayer: Record<string, unknown>;
@@ -175,23 +193,6 @@ export function hasMovementForkBlockingPlay(state: GameState): boolean {
 }
 
 /**
- * True while the current player's animal encounter expects a dice report before anything else.
- * Fork prompts and DECISION hints are deferred until this clears (roll first).
- */
-export function isEncounterRollPendingForCurrentTurn(state: GameState): boolean {
-  const slice = getCurrentTurnPlayerSlice(state);
-  if (!slice) {
-    return false;
-  }
-  const game = state.game as Record<string, unknown> | undefined;
-  const pending = game?.pending as { kind?: string; playerId?: string } | undefined;
-  return (
-    (pending?.kind === "powerCheck" || pending?.kind === "revenge") &&
-    pending.playerId === slice.currentTurn
-  );
-}
-
-/**
  * Fork context to enforce in LLM / voice when a choice matters for at least one legal roll.
  */
 export function getEnforceableForkContext(state: GameState): {
@@ -204,7 +205,8 @@ export function getEnforceableForkContext(state: GameState): {
   if (!slice) {
     return null;
   }
-  if (isEncounterRollPendingForCurrentTurn(state)) {
+  const game = state.game as Record<string, unknown> | undefined;
+  if (encounterPendingSuppressesForkContext(game, slice.currentTurn)) {
     return null;
   }
   const { currentTurn, currentPlayer, position } = slice;
