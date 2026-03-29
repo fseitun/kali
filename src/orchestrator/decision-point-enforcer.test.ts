@@ -101,6 +101,43 @@ describe("DecisionPointEnforcer", () => {
       expect(mockProcessTranscript).toHaveBeenCalledTimes(1);
     });
 
+    it("should not trigger processTranscript when powerCheck is pending for current player at fork", async () => {
+      stateManager.set("board.squares", {
+        "101": { next: [102, 105], prev: [100] },
+      });
+      stateManager.set("players.p1.position", 101);
+      stateManager.set("players.p1.activeChoices", { 0: 1 });
+      stateManager.set("game.pending", {
+        kind: "powerCheck",
+        position: 101,
+        power: 3,
+        playerId: "p1",
+        riddleCorrect: false,
+      });
+
+      await decisionPointEnforcer.enforceDecisionPoints(baseContext);
+
+      expect(mockProcessTranscript).not.toHaveBeenCalled();
+    });
+
+    it("should not trigger processTranscript when revenge is pending for current player at fork", async () => {
+      stateManager.set("board.squares", {
+        "101": { next: [102, 105], prev: [100] },
+      });
+      stateManager.set("players.p1.position", 101);
+      stateManager.set("players.p1.activeChoices", {});
+      stateManager.set("game.pending", {
+        kind: "revenge",
+        position: 101,
+        power: 3,
+        playerId: "p1",
+      });
+
+      await decisionPointEnforcer.enforceDecisionPoints(baseContext);
+
+      expect(mockProcessTranscript).not.toHaveBeenCalled();
+    });
+
     it("should trigger processTranscript when decision pending (undefined value)", async () => {
       stateManager.set("board.squares", {
         "5": { next: [6, 7], prev: [4] },

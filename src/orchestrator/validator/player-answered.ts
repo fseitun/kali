@@ -1,3 +1,4 @@
+import { getDecisionPointApplyState } from "../decision-helpers";
 import { getDecisionPoints } from "../decision-point-inference";
 import { forkChoiceBlockingValidation, getMovementDirectionForState } from "../fork-roll-policy";
 import type { Pending } from "../pending-types";
@@ -159,6 +160,10 @@ export function validatePlayerAnswered(
   const riddleResult = validateRiddlePhaseAnswer(pending, currentTurn, answer, index);
   if (riddleResult !== null) {
     return riddleResult;
+  }
+
+  if (getDecisionPointApplyState(state, answer) !== null) {
+    return { valid: true };
   }
 
   const rollResult = validatePendingRollAnswer(pending, currentTurn, answer, state, index);

@@ -580,6 +580,47 @@ describe("Validator - New Primitives", () => {
       expect(result.valid).toBe(true);
     });
 
+    it("allows fork destination numbers 102 and 105 when powerCheck pending and player at fork (not invalidDiceRoll)", () => {
+      const stateForkAndPowerCheck = {
+        ...mockState,
+        game: {
+          ...mockState.game,
+          turn: "p1",
+          pending: {
+            position: 101,
+            power: 3,
+            playerId: "p1",
+            kind: "powerCheck",
+            riddleCorrect: false,
+          },
+        },
+        players: {
+          ...mockState.players,
+          p1: {
+            ...(mockState.players as Record<string, Record<string, unknown>>).p1,
+            position: 101,
+            activeChoices: { 0: 1 },
+          },
+        },
+        board: {
+          squares: {
+            "101": { next: [102, 105], prev: [100] },
+          },
+        },
+      } as unknown as GameState;
+
+      for (const answer of ["102", "105"]) {
+        const result = validateActions(
+          [{ action: "PLAYER_ANSWERED", answer }],
+          stateForkAndPowerCheck,
+          mockStateManager as unknown as StateManager,
+          mockValidatorContext,
+        );
+        expect(result.valid).toBe(true);
+        expect(result.errorCode).toBeUndefined();
+      }
+    });
+
     it("rejects numeric answer 2 when powerCheck on Águila with 3d6 (riddleCorrect true)", () => {
       const stateWithPowerCheck = {
         ...mockState,

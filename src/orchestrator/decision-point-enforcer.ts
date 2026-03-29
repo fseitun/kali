@@ -1,4 +1,5 @@
 import { getEnforceableForkContext } from "./fork-roll-policy";
+import { shouldDeferForkPromptForPendingEncounter } from "./pending-types";
 import type { ExecutionContext } from "./types";
 import type { StateManager } from "@/state-manager";
 import { Logger } from "@/utils/logger";
@@ -30,6 +31,9 @@ export class DecisionPointEnforcer {
   async enforceDecisionPoints(_context: ExecutionContext): Promise<void> {
     try {
       const state = this.stateManager.getState();
+      if (shouldDeferForkPromptForPendingEncounter(state)) {
+        return;
+      }
       const info = getEnforceableForkContext(state);
       if (!info) {
         return;

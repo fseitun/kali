@@ -5,6 +5,7 @@ import {
   type LlmStateContextBundle,
 } from "@/i18n/llm-state-context";
 import { getEnforceableForkContext } from "@/orchestrator/fork-roll-policy";
+import { shouldDeferForkPromptForPendingEncounter } from "@/orchestrator/pending-types";
 import {
   getPowerCheckDiceConfig,
   getPowerCheckRollSpec,
@@ -197,6 +198,9 @@ function formatDecisionPointContext(
   state: Record<string, unknown>,
   L: LlmStateContextBundle,
 ): string {
+  if (shouldDeferForkPromptForPendingEncounter(state)) {
+    return "";
+  }
   const info = getCurrentPlayerAtFork(state);
   if (!info) {
     return "";

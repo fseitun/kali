@@ -149,6 +149,64 @@ describe("formatStateContext (es-AR)", () => {
     expect(result).not.toContain("confirm the roll");
   });
 
+  it("omits DECISION when powerCheck is pending for current player even at a fork square", () => {
+    const state = {
+      game: {
+        turn: "p1",
+        phase: "PLAYING",
+        pending: {
+          kind: "powerCheck",
+          position: 101,
+          power: 3,
+          playerId: "p1",
+          riddleCorrect: false,
+        },
+      },
+      players: {
+        p1: { id: "p1", name: "F", position: 101, activeChoices: { 0: 1 } },
+      },
+      board: {
+        squares: {
+          "101": { next: [102, 105], prev: [100] },
+        },
+      },
+    } as Record<string, unknown>;
+
+    const result = formatStateContext(state);
+
+    expect(result).not.toContain("DECISION (F)");
+    expect(result).not.toContain("bifurcación");
+    expect(result).toContain("POWER CHECK (F)");
+  });
+
+  it("omits DECISION when revenge is pending for current player at a fork square", () => {
+    const state = {
+      game: {
+        turn: "p1",
+        phase: "PLAYING",
+        pending: {
+          kind: "revenge",
+          position: 101,
+          power: 3,
+          playerId: "p1",
+        },
+      },
+      players: {
+        p1: { id: "p1", name: "F", position: 101, activeChoices: {} },
+      },
+      board: {
+        squares: {
+          "101": { next: [102, 105], prev: [100] },
+        },
+      },
+    } as Record<string, unknown>;
+
+    const result = formatStateContext(state);
+
+    expect(result).not.toContain("DECISION (F)");
+    expect(result).toContain("REVENGE (F)");
+  });
+
   it("POWER CHECK after correct riddle uses 2d6 (2–12) wording", () => {
     const state = {
       game: {

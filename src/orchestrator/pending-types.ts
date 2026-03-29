@@ -96,3 +96,22 @@ export function hasPendingForCurrentTurn(state: {
 export function getPending(game: Record<string, unknown> | undefined): Pending | null | undefined {
   return game?.pending as Pending | null | undefined;
 }
+
+/**
+ * When the current player owes a power check or revenge roll, fork prompts and DECISION
+ * LLM lines should wait until that roll is resolved (encounter before branch choice).
+ */
+export function shouldDeferForkPromptForPendingEncounter(state: {
+  game?: Record<string, unknown>;
+}): boolean {
+  const game = state.game;
+  const currentTurn = game?.turn as string | undefined;
+  const pending = game?.pending as Pending | null | undefined;
+  if (!currentTurn || !pending || typeof pending !== "object") {
+    return false;
+  }
+  if (pending.playerId !== currentTurn) {
+    return false;
+  }
+  return pending.kind === "powerCheck" || pending.kind === "revenge";
+}
