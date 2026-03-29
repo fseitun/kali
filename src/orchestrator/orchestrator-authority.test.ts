@@ -236,7 +236,6 @@ describe("Orchestrator Authority - LLM Adversarial Tests", () => {
     });
 
     it("orchestrator triggers square effects even if LLM uses SET_STATE", async () => {
-      let effectTriggered = false;
       (testState.players as any).p1.position = 15;
 
       mockStateManager.get = vi.fn((path: string) => {
@@ -251,12 +250,7 @@ describe("Orchestrator Authority - LLM Adversarial Tests", () => {
         }
       });
 
-      mockLLM.getActions = vi.fn(async (transcript: string) => {
-        if (transcript.includes("square 20")) {
-          effectTriggered = true;
-        }
-        return [{ action: "NARRATE", text: "Square effect!" }];
-      });
+      mockLLM.getActions = vi.fn(async () => [{ action: "NARRATE", text: "Square effect!" }]);
 
       const actions: PrimitiveAction[] = [
         { action: "SET_STATE", path: "players.p1.position", value: 20 },
@@ -264,7 +258,10 @@ describe("Orchestrator Authority - LLM Adversarial Tests", () => {
 
       await orchestrator.testExecuteActions(actions);
 
-      expect(effectTriggered).toBe(true);
+      const speakMock = mockSpeech.speak as ReturnType<typeof vi.fn>;
+      expect(speakMock).toHaveBeenCalled();
+      const spoken = speakMock.mock.calls.map((c: unknown[]) => String(c[0])).join(" ");
+      expect(spoken).toMatch(/square 20|Dragon|skip/i);
     });
 
     it("LLM cannot bypass decision points", async () => {
@@ -588,22 +585,16 @@ describe("Orchestrator Authority - LLM Adversarial Tests", () => {
         }
       });
 
-      mockLLM.getActions = vi.fn(async (transcript: string) => {
-        if (
-          transcript.includes("[SYSTEM: Current player just landed") ||
-          transcript.includes("[SYSTEM: Animal encounter")
-        ) {
-          return [{ action: "NARRATE", text: "You fell into a trap!" }];
-        }
-        return [];
-      });
+      mockLLM.getActions = vi.fn(async () => []);
 
       const actions: PrimitiveAction[] = [{ action: "PLAYER_ROLLED", value: 5 }];
 
       const { success } = await orchestrator.testExecuteActions(actions);
 
       expect(success).toBe(true);
-      expect(mockSpeech.speak).toHaveBeenCalledWith("You fell into a trap!");
+      expect(mockSpeech.speak).toHaveBeenCalledWith(
+        expect.stringMatching(/square 10.*Trap|skip your next turn/s),
+      );
     });
 
     it("animal squares: orchestrator does not apply rewards on landing; defers to after riddle", async () => {
@@ -709,19 +700,16 @@ describe("Orchestrator Authority - LLM Adversarial Tests", () => {
       const getActionsCalls: string[] = [];
       mockLLM.getActions = vi.fn(async (transcript: string) => {
         getActionsCalls.push(transcript);
-        if (transcript.includes("[SYSTEM:")) {
-          return [
-            { action: "NARRATE", text: "Fico, ¿querés ir por la izquierda o por la derecha?" },
-          ];
-        }
-        return [{ action: "NARRATE", text: "Dale, Fico, contame qué onda." }];
+        return [{ action: "NARRATE", text: "Alice, welcome to the fork." }];
       });
 
       await orchestrator.handleTranscript("empezamos");
 
-      expect(getActionsCalls).toHaveLength(2);
+      expect(getActionsCalls).toHaveLength(1);
       expect(getActionsCalls[0]).not.toContain("[SYSTEM:");
-      expect(getActionsCalls[1]).toContain("[SYSTEM:");
+      expect(mockSpeech.speak).toHaveBeenCalledWith(
+        expect.stringMatching(/Alice.*izquierda|Alice.*derecha/),
+      );
     });
   });
 
@@ -767,15 +755,7 @@ describe("Orchestrator Authority - LLM Adversarial Tests", () => {
         }
       });
 
-      mockLLM.getActions = vi.fn(async (transcript: string) => {
-        if (
-          transcript.includes("[SYSTEM: Current player just landed") ||
-          transcript.includes("[SYSTEM: Animal encounter")
-        ) {
-          return [{ action: "NARRATE", text: "You fell into carnivorous plants!" }];
-        }
-        return [];
-      });
+      mockLLM.getActions = vi.fn(async () => []);
 
       const actions: PrimitiveAction[] = [
         { action: "PLAYER_ANSWERED", answer: "7" },
@@ -786,7 +766,10 @@ describe("Orchestrator Authority - LLM Adversarial Tests", () => {
 
       expect(success).toBe(true);
       expect(mockSpeech.speak).toHaveBeenNthCalledWith(1, "You passed.");
-      expect(mockSpeech.speak).toHaveBeenNthCalledWith(2, "You fell into carnivorous plants!");
+      expect(mockSpeech.speak).toHaveBeenNthCalledWith(
+        2,
+        expect.stringMatching(/Carnivorous|square 17|skip your next turn/i),
+      );
     });
   });
 });

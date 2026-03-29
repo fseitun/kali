@@ -47,6 +47,33 @@ export const esAR = {
     goldenFoxJump:
       "{name}, el Zorro Dorado te lleva al primer puesto. Estás en el casillero {square}.",
     rollMovementLanded: "{name}, sacaste un {roll}. Estás en el casillero {square}.",
+    forkChoiceAsk: "{name}, {prompt}",
+    helpGameplay:
+      "Escuchá lo que acabo de decir y hacé eso. Si tenés que tirar el dado, decime el número. Si tenés que elegir camino, decime el número de casillero o izquierda o derecha.",
+  },
+  squares: {
+    oceanForestRepeat:
+      "{name}, seguís en el casillero {position} ({squareName}). El cruce bosque–océano ya pasó — te quedás acá.",
+    directionalIntro:
+      "{name}, caíste en el casillero {position}: {squareName}. Tirá {dice} dados de seis, sumalos y decime el total. Te movés {movementPhrase}. Cuando estés listo, decime la suma como respuesta.",
+    directionalMovementBackward: "hacia atrás por el camino esa cantidad de casilleros",
+    directionalMovementForwardRetreat:
+      "hacia adelante por el camino esa cantidad de casilleros (los casilleros de retirada están invertidos para vos después del portal bosque–océano)",
+    landedBase: "{name}, estás en el casillero {position}: {squareName}.",
+    landedWithApplied: "{base} {applied}",
+    appliedHeart: "Ganás un corazón.",
+    appliedInstrument: "Agarrás un instrumento: {instrument}.",
+    appliedItem: "Agarrás: {item}.",
+    appliedSkipTurn: "Saltás el próximo turno.",
+    appliedTorchUsed: "La antorcha te ayuda — no saltás turno.",
+    appliedSkipNoTorch: "Sin antorcha — saltás el próximo turno.",
+    appliedAntiWaspUsed: "El traje anti-avispas te ayuda — no saltás turno.",
+    appliedSkipNoAntiWasp: "Sin traje anti-avispas — saltás el próximo turno.",
+    landedStayHint:
+      " Ya estás en este casillero — no digas que te moviste acá; solo contá qué pasa.",
+    landedPortalNoChoice:
+      " Llegaste por el portal desde el casillero {fromSquare}. Te quedás acá — no hay elección.",
+    landedTeleportHint: " Decí el número de casillero donde estás para que todos sepan.",
   },
   ui: {
     startButton: "Jugar",

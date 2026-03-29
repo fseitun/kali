@@ -144,10 +144,11 @@ export abstract class BaseLLMClient implements LLMClient {
     Profiler.start("llm.network");
     const startTime = performance.now();
     const result = await this.makeApiCall(fullPrompt, {
-      temperature: 0.7,
+      temperature: 0.2,
       maxTokens: 512,
       contextParts: { systemPrompt: this.systemPrompt, userMessage },
       timeoutMs: CONFIG.LLM.GET_ACTIONS_TIMEOUT_MS,
+      responseMimeApplicationJson: true,
     });
     const durationMs = performance.now() - startTime;
     Profiler.end("llm.network");

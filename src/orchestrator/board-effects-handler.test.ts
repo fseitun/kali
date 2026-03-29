@@ -2,14 +2,21 @@ import { describe, it, expect, beforeEach, vi } from "vitest";
 import { BoardEffectsHandler } from "./board-effects-handler";
 import { GamePhase } from "./types";
 import type { ExecutionContext } from "./types";
+import type { IStatusIndicator } from "@/components/status-indicator";
+import { setLocale } from "@/i18n/translations";
+import type { ISpeechService } from "@/services/speech-service";
 import { StateManager } from "@/state-manager";
 
 describe("BoardEffectsHandler", () => {
   let boardEffectsHandler: BoardEffectsHandler;
   let stateManager: StateManager;
   let mockProcessTranscript: ReturnType<typeof vi.fn>;
+  let mockSpeak: ReturnType<typeof vi.fn>;
+  let mockIndicator: { setState: ReturnType<typeof vi.fn> };
+  let mockSetLastNarration: ReturnType<typeof vi.fn>;
 
   beforeEach(() => {
+    setLocale("en-US");
     stateManager = new StateManager();
     stateManager.init({
       game: {
@@ -30,12 +37,18 @@ describe("BoardEffectsHandler", () => {
     });
 
     mockProcessTranscript = vi.fn().mockResolvedValue(true);
+    mockSpeak = vi.fn().mockResolvedValue(undefined);
+    mockIndicator = { setState: vi.fn() };
+    mockSetLastNarration = vi.fn();
     boardEffectsHandler = new BoardEffectsHandler(
       stateManager,
       mockProcessTranscript as unknown as (
         transcript: string,
         context: ExecutionContext,
       ) => Promise<boolean>,
+      { speak: mockSpeak } as unknown as ISpeechService,
+      mockIndicator as unknown as IStatusIndicator,
+      mockSetLastNarration as unknown as (text: string) => void,
     );
   });
 
@@ -472,21 +485,32 @@ describe("BoardEffectsHandler", () => {
         boardEffectsHandler.checkAndApplySquareEffects("players.p1.position", baseContext),
       ).rejects.toThrow("Test error");
 
-      // Flag should still be cleared
       expect(boardEffectsHandler.isProcessingEffect()).toBe(false);
     });
 
-    it("should pass isNestedCall: true when invoking processTranscript", async () => {
+    it("should clear flag even if deterministic speak throws error", async () => {
+      const squareData = { name: "Quicksand", effect: "skipTurn" };
+      stateManager.set("board.squares", { "5": squareData });
+      stateManager.set("players.p1.position", 5);
+
+      mockSpeak.mockRejectedValue(new Error("TTS error"));
+
+      await expect(
+        boardEffectsHandler.checkAndApplySquareEffects("players.p1.position", baseContext),
+      ).rejects.toThrow("TTS error");
+
+      expect(boardEffectsHandler.isProcessingEffect()).toBe(false);
+    });
+
+    it("deterministic squares do not call processTranscript (nested LLM)", async () => {
       const squareData = { name: "Quicksand", effect: "skipTurn" };
       stateManager.set("board.squares", { "5": squareData });
       stateManager.set("players.p1.position", 5);
 
       await boardEffectsHandler.checkAndApplySquareEffects("players.p1.position", baseContext);
 
-      expect(mockProcessTranscript).toHaveBeenCalledWith(
-        expect.stringContaining("[SYSTEM: Current player just landed on square 5"),
-        { isNestedCall: true },
-      );
+      expect(mockProcessTranscript).not.toHaveBeenCalled();
+      expect(mockSpeak).toHaveBeenCalledWith(expect.stringMatching(/square 5|Quicksand|skip/i));
     });
 
     it("should include square data in synthetic transcript", async () => {
@@ -545,9 +569,9 @@ describe("BoardEffectsHandler", () => {
       await boardEffectsHandler.checkAndApplySquareEffects("players.p2.position", baseContext);
 
       expect(stateManager.get("players.p2.skipTurns")).toBe(1);
-      expect(mockProcessTranscript).toHaveBeenCalledWith(
-        expect.stringContaining("Orchestrator applied: skip next turn"),
-        expect.anything(),
+      expect(mockProcessTranscript).not.toHaveBeenCalled();
+      expect(mockSpeak).toHaveBeenCalledWith(
+        expect.stringMatching(/Quicksand|skip your next turn/i),
       );
     });
 
@@ -656,13 +680,9 @@ describe("BoardEffectsHandler", () => {
         position: 55,
         dice: 2,
       });
-      expect(mockProcessTranscript).toHaveBeenCalledWith(
-        expect.stringMatching(/DIRECTIONAL ROLL|roll.*d6|Jivaro Indians/i),
-        expect.anything(),
-      );
-      expect(mockProcessTranscript).toHaveBeenCalledWith(
-        expect.stringContaining("Jivaro Indians"),
-        expect.anything(),
+      expect(mockProcessTranscript).not.toHaveBeenCalled();
+      expect(mockSpeak).toHaveBeenCalledWith(
+        expect.stringMatching(/Jivaro Indians|Roll 2|two|dice/i),
       );
     });
 
@@ -681,10 +701,10 @@ describe("BoardEffectsHandler", () => {
 
       await boardEffectsHandler.checkAndApplySquareEffects("players.p1.position", baseContext);
 
-      expect(mockProcessTranscript).toHaveBeenCalledTimes(1);
-      const transcript = mockProcessTranscript.mock.calls[0]?.[0] ?? "";
-      expect(transcript).toContain("landed again");
-      expect(transcript).not.toContain("Square data for flavour");
+      expect(mockProcessTranscript).not.toHaveBeenCalled();
+      expect(mockSpeak).toHaveBeenCalledWith(
+        expect.stringMatching(/Ocean-Forest Portal|already|crossed|stay/i),
+      );
     });
 
     it("portal at 82 when arrived from 45: no choice, stay, narrate briefly only", async () => {
@@ -704,12 +724,8 @@ describe("BoardEffectsHandler", () => {
 
       await boardEffectsHandler.checkAndApplySquareEffects("players.p1.position", context);
 
-      expect(mockProcessTranscript).toHaveBeenCalledTimes(1);
-      const transcript = mockProcessTranscript.mock.calls[0]?.[0] ?? "";
-      expect(transcript).toContain("arrived via the portal from square 45");
-      expect(transcript).toContain("Do NOT offer any choice");
-      expect(transcript).toContain("Do NOT ask questions");
-      expect(transcript).toContain("Narrate briefly only");
+      expect(mockProcessTranscript).not.toHaveBeenCalled();
+      expect(mockSpeak).toHaveBeenCalledWith(expect.stringMatching(/45|portal|stay|Alice/i));
     });
 
     it("checkTorch hazard applies skipTurn when player has no torch", async () => {
@@ -723,10 +739,8 @@ describe("BoardEffectsHandler", () => {
       await boardEffectsHandler.checkAndApplySquareEffects("players.p1.position", baseContext);
 
       expect(stateManager.get("players.p1.skipTurns")).toBe(1);
-      expect(mockProcessTranscript).toHaveBeenCalledWith(
-        expect.stringContaining("skip next turn (no torch)"),
-        expect.anything(),
-      );
+      expect(mockProcessTranscript).not.toHaveBeenCalled();
+      expect(mockSpeak).toHaveBeenCalledWith(expect.stringMatching(/skip your next turn|torch/i));
     });
 
     it("checkTorch hazard consumes torch and does not apply skipTurn when player has torch", async () => {
@@ -741,10 +755,8 @@ describe("BoardEffectsHandler", () => {
 
       expect(stateManager.get("players.p1.items")).toEqual([]);
       expect(stateManager.get("players.p1.skipTurns")).toBe(0);
-      expect(mockProcessTranscript).toHaveBeenCalledWith(
-        expect.stringContaining("torch used (no skip)"),
-        expect.anything(),
-      );
+      expect(mockProcessTranscript).not.toHaveBeenCalled();
+      expect(mockSpeak).toHaveBeenCalledWith(expect.stringMatching(/torch|skip/i));
     });
 
     it("checkAntiWasp hazard applies skipTurn when player has no anti-wasp", async () => {
@@ -758,10 +770,8 @@ describe("BoardEffectsHandler", () => {
       await boardEffectsHandler.checkAndApplySquareEffects("players.p1.position", baseContext);
 
       expect(stateManager.get("players.p1.skipTurns")).toBe(1);
-      expect(mockProcessTranscript).toHaveBeenCalledWith(
-        expect.stringContaining("skip next turn (no anti-wasp)"),
-        expect.anything(),
-      );
+      expect(mockProcessTranscript).not.toHaveBeenCalled();
+      expect(mockSpeak).toHaveBeenCalledWith(expect.stringMatching(/anti-wasp|skip/i));
     });
 
     it("checkAntiWasp hazard consumes anti-wasp and does not apply skipTurn when player has it", async () => {
@@ -776,10 +786,8 @@ describe("BoardEffectsHandler", () => {
 
       expect(stateManager.get("players.p1.items")).toEqual([]);
       expect(stateManager.get("players.p1.skipTurns")).toBe(0);
-      expect(mockProcessTranscript).toHaveBeenCalledWith(
-        expect.stringContaining("anti-wasp used (no skip)"),
-        expect.anything(),
-      );
+      expect(mockProcessTranscript).not.toHaveBeenCalled();
+      expect(mockSpeak).toHaveBeenCalledWith(expect.stringMatching(/anti-wasp|suit|skip/i));
     });
 
     it("torch protectionItem square adds torch item immediately", async () => {

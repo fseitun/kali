@@ -279,6 +279,7 @@ describe("Orchestrator Integration Tests", () => {
     });
 
     it("hazard square (checkAntiWasp): skips trailing movement NARRATE after nested encounter line", async () => {
+      setLocale("en-US");
       mockLLM = createScriptedLLM([[{ action: "NARRATE", text: "Nested wasp narration." }]]);
 
       const initialState: GameState = {
@@ -317,7 +318,16 @@ describe("Orchestrator Integration Tests", () => {
       expect(stateManager.get("players.p1.skipTurns")).toBe(1);
       const speakMock = mockSpeech.speak as ReturnType<typeof vi.fn>;
       expect(speakMock).toHaveBeenCalledTimes(1);
-      expect(speakMock).toHaveBeenCalledWith("Nested wasp narration.");
+      const waspBase = t("squares.landedBase", {
+        name: "Alice",
+        position: 116,
+        squareName: "Wasps",
+      });
+      const expectedWaspLanding = `${t("squares.landedWithApplied", {
+        base: waspBase,
+        applied: t("squares.appliedSkipNoAntiWasp"),
+      })}${t("squares.landedStayHint")}`.trim();
+      expect(speakMock).toHaveBeenCalledWith(expectedWaspLanding);
     });
   });
 
@@ -532,10 +542,12 @@ describe("Orchestrator Integration Tests", () => {
       expect(stateManager.get("game.pending")).toBeNull();
 
       expect(mockSpeech.speak).toHaveBeenNthCalledWith(1, "You passed.");
-      expect(mockSpeech.speak).toHaveBeenNthCalledWith(
-        2,
-        "You arrived at the forest-ocean portal.",
-      );
+      const portalLine = `${t("squares.landedBase", {
+        name: "Alice",
+        position: 45,
+        squareName: "Forest-Ocean Portal",
+      })}${t("squares.landedPortalNoChoice", { fromSquare: 82 })}`.trim();
+      expect(mockSpeech.speak).toHaveBeenNthCalledWith(2, portalLine);
       expect(mockSpeech.speak).toHaveBeenNthCalledWith(
         3,
         "Alice, you're still on square 45. Roll the dice and tell me what you got.",
@@ -1082,7 +1094,7 @@ describe("Orchestrator Integration Tests", () => {
       expect(stateManager.get("players.p1.position")).toBe(82);
       expect(stateManager.get("players.p1.oceanForestPenaltyConsumed")).toBe(true);
       expect(stateManager.get("players.p1.retreatEffectsReversed")).toBe(true);
-      expect(mockLLM.getCallCount()).toBe(4);
+      expect(mockLLM.getCallCount()).toBe(2);
     });
   });
 

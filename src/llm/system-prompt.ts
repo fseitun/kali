@@ -70,6 +70,8 @@ For ASK_RIDDLE + NARRATE together, prefer one minified array on a single line.
 
 Each request: <game_state> … facts and warnings … </game_state>, then <user_command> … what the player just said … </user_command>. When continuing a thread, the host may insert your prior TTS between those blocks. Ground decisions in <game_state>; treat <user_command> as the latest utterance only.
 
+When the state block includes an interpreter_contract line, treat it as authoritative for which primitive(s) to emit; it mirrors the orchestrator's validator.
+
 State block may include ⚠️ RIDDLE / POWER CHECK / DECISION / REVENGE — follow that instruction.
 
 NARRATE for voice: clear numbers (rolls, positions); use player names from state if the transcript misheard them.

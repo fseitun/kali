@@ -46,6 +46,33 @@ export const enUS = {
     forkChoiceResolvedRoll: "{name}, you're set. Roll the dice.",
     goldenFoxJump: "{name}, the Golden Fox takes you to first place. You're on square {square}.",
     rollMovementLanded: "{name}, you rolled {roll}. You're on square {square}.",
+    forkChoiceAsk: "{name}, {prompt}",
+    helpGameplay:
+      "Listen to what I just said and follow that. If you need to roll, say the number you got. If you need to pick a path, say the square number or left or right.",
+  },
+  squares: {
+    oceanForestRepeat:
+      "{name}, you're still on square {position} ({squareName}). The forest–ocean crossing already happened — you stay here.",
+    directionalIntro:
+      "{name}, you landed on square {position}: {squareName}. Roll {dice} six-sided dice, add them up, and tell me the total. You move {movementPhrase}. Say the sum as your answer when you're ready.",
+    directionalMovementBackward: "backward along the path that many spaces",
+    directionalMovementForwardRetreat:
+      "forward along the path that many spaces (retreat squares are flipped for you after the forest–ocean portal)",
+    landedBase: "{name}, you're on square {position}: {squareName}.",
+    landedWithApplied: "{base} {applied}",
+    appliedHeart: "You gain a heart.",
+    appliedInstrument: "You pick up an instrument: {instrument}.",
+    appliedItem: "You pick up: {item}.",
+    appliedSkipTurn: "You skip your next turn.",
+    appliedTorchUsed: "Your torch helps — no skip.",
+    appliedSkipNoTorch: "No torch — you skip your next turn.",
+    appliedAntiWaspUsed: "Your anti-wasp suit helps — no skip.",
+    appliedSkipNoAntiWasp: "No anti-wasp suit — you skip your next turn.",
+    landedStayHint:
+      " You're already on this square — don't say you moved here; only describe what happens.",
+    landedPortalNoChoice:
+      " You came through the portal from square {fromSquare}. You stay here — no choice to make.",
+    landedTeleportHint: " Say the square number you're on so everyone knows.",
   },
   ui: {
     startButton: "Start",

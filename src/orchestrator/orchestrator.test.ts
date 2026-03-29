@@ -5,7 +5,7 @@ import { Orchestrator } from "./orchestrator";
 import type { GameState, PrimitiveAction } from "./types";
 import type { StatusIndicator } from "@/components/status-indicator";
 import { possessiveScorePhraseEs } from "@/i18n/kalimba-encounter-phrases";
-import { t } from "@/i18n/translations";
+import { setLocale, t } from "@/i18n/translations";
 import type { LLMClient } from "@/llm/LLMClient";
 import type { SpeechService } from "@/services/speech-service";
 import { StateManager } from "@/state-manager";
@@ -538,7 +538,7 @@ describe("Orchestrator - New Action Handlers", () => {
   });
 
   describe("Square Effects - Orchestrator Triggers", () => {
-    it("triggers LLM call when landing on special square", async () => {
+    it("applies skipTurn square with deterministic TTS (no LLM for non-animal special squares)", async () => {
       testState.board = {
         squares: {
           "20": {
@@ -574,7 +574,8 @@ describe("Orchestrator - New Action Handlers", () => {
 
       await orchestrator.testExecuteActions(actions);
 
-      expect(llmCallCount).toBeGreaterThanOrEqual(1);
+      expect(llmCallCount).toBe(0);
+      expect(mockSpeech.speak).toHaveBeenCalled();
     });
   });
 
@@ -757,6 +758,7 @@ describe("Orchestrator - New Action Handlers", () => {
     });
 
     it("passes riddleIncorrect as lastBotUtterance after wrong riddle answer", async () => {
+      setLocale("es-AR");
       (testState.board as any).squares = {
         "5": { name: "Cobra", power: 4 },
         "100": { effect: "win" },
@@ -787,17 +789,18 @@ describe("Orchestrator - New Action Handlers", () => {
 
       await orchestrator.testExecuteActions([{ action: "PLAYER_ANSWERED", answer: "Desert" }]);
 
-      await orchestrator.handleTranscript("3");
+      await orchestrator.handleTranscript("tres");
 
       const expectedWrongRiddleMsg = t("game.riddleIncorrectPowerRoll", {
         diceRollPhrase: t("game.riddlePowerRollOneDie"),
         animalScorePhrase: possessiveScorePhraseEs("Cobra"),
       });
       expect(mockLLM.getActions).toHaveBeenLastCalledWith(
-        "3",
+        "tres",
         expect.any(Object),
         expectedWrongRiddleMsg,
       );
+      setLocale("en-US");
     });
   });
 

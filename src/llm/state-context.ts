@@ -1,3 +1,4 @@
+import { formatInterpretationContract } from "./interpretation-contract";
 import type { StateDisplayConfig, StateDisplayMetadata } from "@/game-loader/types";
 import {
   getLlmStateContext,
@@ -485,6 +486,11 @@ export function formatStateContext(
   const pendingContext = formatPendingContext(state, L);
   if (pendingContext) {
     parts.push(pendingContext);
+  }
+
+  const contract = formatInterpretationContract(state);
+  if (contract) {
+    parts.push(contract);
   }
 
   return parts.join("\n");

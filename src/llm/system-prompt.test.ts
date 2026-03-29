@@ -5,7 +5,7 @@ import * as localeManager from "@/i18n/locale-manager";
 describe("SYSTEM_PROMPT", () => {
   it("slim base prompt has a reasonable size bound (well under historical ~2.5k+ bloated prompts)", () => {
     expect(SYSTEM_PROMPT.length).toBeGreaterThanOrEqual(1100);
-    expect(SYSTEM_PROMPT.length).toBeLessThanOrEqual(4500);
+    expect(SYSTEM_PROMPT.length).toBeLessThanOrEqual(4700);
   });
 
   it("includes guidance rule: when user asks what to do, NARRATE only and do not emit primitives", () => {

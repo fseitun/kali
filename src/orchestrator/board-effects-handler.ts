@@ -8,7 +8,9 @@ import {
   squareTriggersLandingPipeline,
 } from "./square-types";
 import type { ExecutionContext } from "./types";
+import type { IStatusIndicator } from "@/components/status-indicator";
 import { t } from "@/i18n/translations";
+import type { ISpeechService } from "@/services/speech-service";
 import type { StateManager } from "@/state-manager";
 import { GAME_PATH, playerStatePath, STATE_PLAYERS_PREFIX } from "@/state-paths";
 import { Logger } from "@/utils/logger";
@@ -21,7 +23,7 @@ import { Logger } from "@/utils/logger";
  * - Golden fox (`jumpToLeader`): after moving to the leader’s square, resolve that square’s portals for the mover only (e.g. 82→45); other players on that square are not moved
  * - Magic door bounce (overshooting 186)
  * - Apply deterministic square effects from config (hearts, skipTurn, item, instrument)
- * - Trigger LLM for narration only (no game-rule state from LLM)
+ * - Trigger LLM only for animal encounters (ASK_RIDDLE + NARRATE); other squares use deterministic TTS
  */
 export class BoardEffectsHandler {
   private isProcessingSquareEffect = false;
@@ -32,6 +34,9 @@ export class BoardEffectsHandler {
       transcript: string,
       context: ExecutionContext,
     ) => Promise<boolean>,
+    private speechService: ISpeechService,
+    private statusIndicator: IStatusIndicator,
+    private setLastNarration: (text: string) => void,
   ) {}
 
   /**
@@ -481,19 +486,6 @@ export class BoardEffectsHandler {
   }
 
   /**
-   * @param position - Square index
-   * @param squareName - Display name
-   * @returns SYSTEM transcript for LLM: one brief line, no state changes
-   */
-  private buildRepeatOceanForestPortalTranscript(position: number, squareName: string): string {
-    return (
-      `[SYSTEM: Current player landed again on square ${position} (${squareName}), the ocean–forest portal they already crossed. ` +
-      `They stay here (one-way penalty already applied). Narrate ONE very short reassuring line. ` +
-      `Do not change game state. Do not re-explain the full portal rules.]`
-    );
-  }
-
-  /**
    * Applies deterministic square effects from config (heart, skipTurn, item, instrument).
    * Mutates state for the current player only. Used before asking LLM to narrate.
    *
@@ -639,100 +631,129 @@ export class BoardEffectsHandler {
     }
   }
 
-  private buildNoChoicePortalHint(
+  private getNoChoicePortalFromSquare(
     kind: ReturnType<typeof getSquareKind>,
     arrivedViaTeleportFrom: number | undefined,
     squareData: Record<string, unknown> | undefined,
-  ): string {
+  ): number | undefined {
     const teleportKinds = ["portal", "goldenFox", "skull"] as const;
     const isTeleport = kind && teleportKinds.includes(kind as (typeof teleportKinds)[number]);
     const raw = squareData?.nextOnLanding;
     const nextOnLanding = Array.isArray(raw) ? (raw as number[]) : [];
-    const isNoChoicePortal =
+    if (
       isTeleport &&
       typeof arrivedViaTeleportFrom === "number" &&
-      nextOnLanding.includes(arrivedViaTeleportFrom);
-    return isNoChoicePortal
-      ? ` The player arrived via the portal from square ${arrivedViaTeleportFrom}. They stay here. Do NOT offer any choice. Do NOT ask questions. Narrate briefly only.`
-      : "";
+      nextOnLanding.includes(arrivedViaTeleportFrom)
+    ) {
+      return arrivedViaTeleportFrom;
+    }
+    return undefined;
   }
 
-  private buildNonAnimalSquareEffectTranscript(
+  private formatAppliedEffectsForSpeech(applied: string[]): string {
+    if (applied.length === 0) {
+      return "";
+    }
+    const parts = applied.map((label) => {
+      if (label === "+1 heart") {
+        return t("squares.appliedHeart");
+      }
+      if (label.startsWith("instrument: ")) {
+        return t("squares.appliedInstrument", { instrument: label.slice("instrument: ".length) });
+      }
+      if (label.startsWith("item: ")) {
+        const itemKey = label.slice("item: ".length);
+        const itemLabel =
+          t(`items.${itemKey}`) !== `items.${itemKey}` ? t(`items.${itemKey}`) : itemKey;
+        return t("squares.appliedItem", { item: itemLabel });
+      }
+      if (label === "skip next turn") {
+        return t("squares.appliedSkipTurn");
+      }
+      if (label === "torch used (no skip)") {
+        return t("squares.appliedTorchUsed");
+      }
+      if (label === "skip next turn (no torch)") {
+        return t("squares.appliedSkipNoTorch");
+      }
+      if (label === "anti-wasp used (no skip)") {
+        return t("squares.appliedAntiWaspUsed");
+      }
+      if (label === "skip next turn (no anti-wasp)") {
+        return t("squares.appliedSkipNoAntiWasp");
+      }
+      return label;
+    });
+    return parts.join(" ");
+  }
+
+  private async speakDeterministicLanding(text: string): Promise<void> {
+    this.setLastNarration(text);
+    this.statusIndicator.setState("speaking");
+    await this.speechService.speak(text);
+  }
+
+  private buildAnimalEncounterSystemTranscript(
+    position: number,
+    squareName: string,
+    power: number,
+    squareInfo: string,
+  ): string {
+    return (
+      `[SYSTEM: Animal encounter at square ${position} (${squareName}, power ${power}), phase=riddle. ` +
+      `Follow the ⚠️ RIDDLE line in state: ASK_RIDDLE with exactly four options (animal kingdom) + correctOption (and optional synonyms), then NARRATE the same riddle; user answer → PLAYER_ANSWERED. ` +
+      `For powerCheck/revenge phases, roll → PLAYER_ANSWERED with the number. Orchestrator owns transitions and rewards. ` +
+      `Square data (flavour only): ${squareInfo}]`
+    );
+  }
+
+  private buildDirectionalDeterministicSpeech(
+    playerName: string,
+    position: number,
+    squareName: string,
+    squareData: Record<string, unknown>,
+    playerId: string,
+  ): string {
+    const dice = getDirectionalRollDice(squareData.effect as string | undefined) ?? 2;
+    const retreatReversed =
+      this.stateManager.get(playerStatePath(playerId, "retreatEffectsReversed")) === true;
+    const movementPhrase = retreatReversed
+      ? t("squares.directionalMovementForwardRetreat")
+      : t("squares.directionalMovementBackward");
+    return t("squares.directionalIntro", {
+      name: playerName,
+      position,
+      squareName,
+      dice,
+      movementPhrase,
+    });
+  }
+
+  private buildNonAnimalDeterministicSpeech(
+    playerName: string,
     position: number,
     squareName: string,
     applied: string[],
-    squareInfo: string,
     kind: ReturnType<typeof getSquareKind>,
     arrivedViaTeleportFrom: number | undefined,
     squareData: Record<string, unknown> | undefined,
   ): string {
-    const appliedText = applied.length > 0 ? ` Orchestrator applied: ${applied.join(", ")}.` : "";
+    const appliedSummary = this.formatAppliedEffectsForSpeech(applied);
+    let base = t("squares.landedBase", { name: playerName, position, squareName });
+    if (appliedSummary) {
+      base = t("squares.landedWithApplied", { base, applied: appliedSummary });
+    }
     const teleportKinds = ["portal", "goldenFox", "skull"] as const;
     const isTeleport = kind && teleportKinds.includes(kind as (typeof teleportKinds)[number]);
-    const noChoicePortalHint = this.buildNoChoicePortalHint(
-      kind,
-      arrivedViaTeleportFrom,
-      squareData,
-    );
-    const noMoveHint = !isTeleport
-      ? ` The player landed on and stays at square ${position}. Do NOT say they move to or go to square ${position} — they are already there. Narrate only the effect.`
-      : "";
+    const portalFrom = this.getNoChoicePortalFromSquare(kind, arrivedViaTeleportFrom, squareData);
+    const noMoveHint = !isTeleport ? t("squares.landedStayHint") : "";
+    const portalSuffix =
+      portalFrom !== undefined ? t("squares.landedPortalNoChoice", { fromSquare: portalFrom }) : "";
     const teleportHint =
-      isTeleport && !noChoicePortalHint ? ` ${t("narration.stateSquareNumber")}` : "";
-    const hints = `${noMoveHint}${noChoicePortalHint}${teleportHint}`;
-    const base =
-      applied.length > 0
-        ? `[SYSTEM: Current player just landed on square ${position} (${squareName}).${appliedText} Narrate this encounter.${hints} Square data for flavour: ${squareInfo}]`
-        : `[SYSTEM: Current player just landed on square ${position} (${squareName}). Narrate this encounter. Do not change game state.${hints} Square data for flavour: ${squareInfo}]`;
-    return base;
-  }
-
-  private buildSquareEffectTranscript(
-    kind: ReturnType<typeof getSquareKind>,
-    position: number,
-    squareName: string,
-    power: number,
-    applied: string[],
-    squareInfo: string,
-    arrivedViaTeleportFrom?: number,
-    squareData?: Record<string, unknown>,
-    playerId?: string,
-  ): string {
-    if (isAnimalEncounterKind(kind)) {
-      return (
-        `[SYSTEM: Animal encounter at square ${position} (${squareName}, power ${power}), phase=riddle. ` +
-        `Follow the ⚠️ RIDDLE line in state: ASK_RIDDLE with exactly four options (animal kingdom) + correctOption (and optional synonyms), then NARRATE the same riddle; user answer → PLAYER_ANSWERED. ` +
-        `For powerCheck/revenge phases, roll → PLAYER_ANSWERED with the number. Orchestrator owns transitions and rewards. ` +
-        `Square data (flavour only): ${squareInfo}]`
-      );
-    }
-    if (kind === "rollDirectional") {
-      const dice = getDirectionalRollDice(squareData?.effect as string | undefined) ?? 2;
-      const min = dice;
-      const max = dice * 6;
-      const retreatReversed =
-        !!playerId &&
-        this.stateManager.get(playerStatePath(playerId, "retreatEffectsReversed")) === true;
-      const movementPhrase = retreatReversed
-        ? "forward that many spaces along the path (retreat squares are inverted for this player after the ocean–forest portal)"
-        : "backward that many spaces along the path";
-      return (
-        `[SYSTEM: Current player landed on square ${position} (${squareName}). ` +
-        `Follow the ⚠️ DIRECTIONAL ROLL line in state. ` +
-        `Narrate briefly, then ask the player to roll ${dice} d6 and report the sum; they move ${movementPhrase}. ` +
-        `When they report their roll, return PLAYER_ANSWERED with the number (${min}–${max}). ` +
-        `Do not change game state. Square data for flavour: ${squareInfo}]`
-      );
-    }
-    return this.buildNonAnimalSquareEffectTranscript(
-      position,
-      squareName,
-      applied,
-      squareInfo,
-      kind,
-      arrivedViaTeleportFrom,
-      squareData,
-    );
+      isTeleport && portalFrom === undefined
+        ? `${t("squares.landedTeleportHint")} ${t("narration.stateSquareNumber")}`
+        : "";
+    return `${base}${noMoveHint}${portalSuffix}${teleportHint}`.trim();
   }
 
   async checkAndApplySquareEffects(path: string, context: ExecutionContext): Promise<void> {
@@ -759,27 +780,104 @@ export class BoardEffectsHandler {
       context.advanceTurnDespitePowerCheckSuppress = true;
     }
     const squareInfo = JSON.stringify(squareData);
-    const transcript = repeatOceanForestPortal
-      ? this.buildRepeatOceanForestPortalTranscript(position, squareName)
-      : this.buildSquareEffectTranscript(
-          kind,
-          position,
-          squareName,
-          power,
-          applied,
-          squareInfo,
-          context.arrivedViaTeleportFrom,
-          squareData,
-          playerId,
-        );
 
     this.syncAnimalEncounterState(kind, playerId, position, power, false);
 
+    const state = this.stateManager.getState() as {
+      players?: Record<string, Record<string, unknown>>;
+    };
+    const rawName = state.players?.[playerId]?.name;
+    const playerName =
+      typeof rawName === "string" && rawName.trim() !== "" ? rawName.trim() : playerId;
+
     this.isProcessingSquareEffect = true;
     try {
-      await this.processTranscriptFn(transcript, { isNestedCall: true });
+      await this.deliverSquareLandingSpeech({
+        kind,
+        position,
+        squareName,
+        power,
+        squareInfo,
+        playerName,
+        playerId,
+        squareData,
+        applied,
+        repeatOceanForestPortal,
+        arrivedViaTeleportFrom: context.arrivedViaTeleportFrom,
+      });
     } finally {
       this.isProcessingSquareEffect = false;
     }
+  }
+
+  private async deliverSquareLandingSpeech(args: {
+    kind: ReturnType<typeof getSquareKind>;
+    position: number;
+    squareName: string;
+    power: number;
+    squareInfo: string;
+    playerName: string;
+    playerId: string;
+    squareData: Record<string, unknown>;
+    applied: string[];
+    repeatOceanForestPortal: boolean;
+    arrivedViaTeleportFrom: number | undefined;
+  }): Promise<void> {
+    const {
+      kind,
+      position,
+      squareName,
+      power,
+      squareInfo,
+      playerName,
+      playerId,
+      squareData,
+      applied,
+      repeatOceanForestPortal,
+      arrivedViaTeleportFrom,
+    } = args;
+
+    if (isAnimalEncounterKind(kind)) {
+      const transcript = this.buildAnimalEncounterSystemTranscript(
+        position,
+        squareName,
+        power,
+        squareInfo,
+      );
+      await this.processTranscriptFn(transcript, { isNestedCall: true });
+      return;
+    }
+
+    if (repeatOceanForestPortal) {
+      await this.speakDeterministicLanding(
+        t("squares.oceanForestRepeat", { name: playerName, position, squareName }),
+      );
+      return;
+    }
+
+    if (kind === "rollDirectional") {
+      await this.speakDeterministicLanding(
+        this.buildDirectionalDeterministicSpeech(
+          playerName,
+          position,
+          squareName,
+          squareData,
+          playerId,
+        ),
+      );
+      return;
+    }
+
+    await this.speakDeterministicLanding(
+      this.buildNonAnimalDeterministicSpeech(
+        playerName,
+        position,
+        squareName,
+        applied,
+        kind,
+        arrivedViaTeleportFrom,
+        squareData,
+      ),
+    );
   }
 }

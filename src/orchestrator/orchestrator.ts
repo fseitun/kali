@@ -14,6 +14,7 @@ import { reorderPowerCheckBeforeRoll } from "./reorder-power-check";
 import { resolveRiddleAnswerToOption } from "./riddle-answer";
 import { RiddlePowerCheckHandler } from "./riddle-power-check";
 import { squareTriggersLandingPipeline } from "./square-types";
+import { tryFastPathTranscript } from "./transcript-fast-path";
 import { TurnManager } from "./turn-manager";
 import {
   GamePhase,
@@ -105,10 +106,19 @@ export class Orchestrator {
     this.boardEffectsHandler = new BoardEffectsHandler(
       stateManager,
       this.processTranscriptAsBool.bind(this),
+      speechService,
+      statusIndicator,
+      (text) => {
+        this.lastNarration = text;
+      },
     );
     this.decisionPointEnforcer = new DecisionPointEnforcer(
       stateManager,
-      this.processTranscriptAsBool.bind(this),
+      speechService,
+      statusIndicator,
+      (text) => {
+        this.lastNarration = text;
+      },
     );
     this.riddlePowerCheckHandler = new RiddlePowerCheckHandler({
       stateManager,
@@ -349,6 +359,79 @@ export class Orchestrator {
     return this.processTranscript(transcript, context).then((r) => r.success);
   }
 
+  /**
+   * When transcript matches a deterministic pattern, validate and run without the LLM.
+   * @returns Result when fast path ran successfully; null to fall through to the LLM
+   */
+  private async tryConsumeFastPathTranscript(
+    transcript: string,
+    state: GameState,
+    context: ExecutionContext,
+  ): Promise<OrchestratorGameplayResult | null> {
+    const fastPathActions = tryFastPathTranscript(
+      state,
+      transcript,
+      context,
+      this.getValidatorContext(),
+    );
+    if (!fastPathActions) {
+      return null;
+    }
+    const normalizedFast = this.coerceMovementPlayerAnsweredToPlayerRolled(
+      this.normalizeRiddleAnswerFromTranscript(fastPathActions, transcript),
+    );
+    const fastValidation = validateActions(
+      normalizedFast,
+      state,
+      this.stateManager,
+      this.getValidatorContext(),
+    );
+    if (!fastValidation.valid) {
+      return null;
+    }
+    Logger.info(`Fast path primitives: ${normalizedFast.map((a) => a.action).join(", ")}`);
+    return await this.runValidatedActions(normalizedFast, context, "orchestrator");
+  }
+
+  private async fetchLlmActionsAndExecute(
+    transcript: string,
+    state: GameState,
+    context: ExecutionContext,
+    profilerKey: "nested" | "top",
+    lastBotUtterance: string | undefined,
+  ): Promise<OrchestratorGameplayResult> {
+    Profiler.start(`orchestrator.llm.${profilerKey}`);
+    const actions = await this.llmClient.getActions(transcript, state, lastBotUtterance);
+    Profiler.end(`orchestrator.llm.${profilerKey}`);
+
+    if (Array.isArray(actions)) {
+      Logger.robot(
+        `LLM returned ${actions.length} action(s): ${actions.map((a) => a.action).join(", ")}`,
+      );
+    } else {
+      Logger.robot("LLM returned non-array response");
+    }
+
+    if (Array.isArray(actions) && actions.length === 0) {
+      const retryActions = await this.handleEmptyActionsWithRetry(
+        transcript,
+        context,
+        lastBotUtterance,
+        profilerKey,
+      );
+      if (retryActions && retryActions.length > 0) {
+        return await this.runValidatedActions(retryActions, context, "orchestrator");
+      }
+      Logger.warn("No actions returned from LLM");
+      await this.speechService.speak(t("llm.allRetriesFailed"));
+      return { success: false, shouldAdvanceTurn: false };
+    }
+    const normalizedActions = this.coerceMovementPlayerAnsweredToPlayerRolled(
+      this.normalizeRiddleAnswerFromTranscript(actions, transcript),
+    );
+    return await this.runValidatedActions(normalizedActions, context, "orchestrator");
+  }
+
   private async processTranscript(
     transcript: string,
     context: ExecutionContext,
@@ -363,37 +446,20 @@ export class Orchestrator {
         "Current state:\n" + formatStateContext(state as Record<string, unknown>, { forLog: true }),
       );
       const profilerKey = context.isNestedCall ? "nested" : "top";
-      Profiler.start(`orchestrator.llm.${profilerKey}`);
       const lastBotUtterance = this.lastNarration !== "" ? this.lastNarration : undefined;
-      const actions = await this.llmClient.getActions(transcript, state, lastBotUtterance);
-      Profiler.end(`orchestrator.llm.${profilerKey}`);
 
-      if (Array.isArray(actions)) {
-        Logger.robot(
-          `LLM returned ${actions.length} action(s): ${actions.map((a) => a.action).join(", ")}`,
-        );
-      } else {
-        Logger.robot("LLM returned non-array response");
+      const fastPathResult = await this.tryConsumeFastPathTranscript(transcript, state, context);
+      if (fastPathResult) {
+        return fastPathResult;
       }
 
-      if (Array.isArray(actions) && actions.length === 0) {
-        const retryActions = await this.handleEmptyActionsWithRetry(
-          transcript,
-          context,
-          lastBotUtterance,
-          profilerKey,
-        );
-        if (retryActions && retryActions.length > 0) {
-          return await this.runValidatedActions(retryActions, context, "orchestrator");
-        }
-        Logger.warn("No actions returned from LLM");
-        await this.speechService.speak(t("llm.allRetriesFailed"));
-        return { success: false, shouldAdvanceTurn: false };
-      }
-      const normalizedActions = this.coerceMovementPlayerAnsweredToPlayerRolled(
-        this.normalizeRiddleAnswerFromTranscript(actions, transcript),
+      return await this.fetchLlmActionsAndExecute(
+        transcript,
+        state,
+        context,
+        profilerKey,
+        lastBotUtterance,
       );
-      return await this.runValidatedActions(normalizedActions, context, "orchestrator");
     } catch (error) {
       Logger.error("Orchestrator error:", error);
       await this.speechService.speak(t("errors.somethingWentWrong"));

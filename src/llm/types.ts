@@ -17,6 +17,8 @@ export interface ApiCallOptions {
   contextParts?: ContextParts;
   /** When true, pass response_format: { type: "json_object" } for supported providers */
   responseFormatJson?: boolean;
+  /** When true, Gemini uses responseMimeType application/json (JSON array output for getActions). */
+  responseMimeApplicationJson?: boolean;
   /** Override request timeout for this call (ms). Used for getActions which can need longer. */
   timeoutMs?: number;
 }

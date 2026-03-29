@@ -101,6 +101,9 @@ export class GeminiClient extends BaseLLMClient {
           generationConfig: {
             temperature: options.temperature ?? 0.7,
             maxOutputTokens: options.maxTokens ?? 512,
+            ...(options.responseMimeApplicationJson && {
+              responseMimeType: "application/json",
+            }),
           },
         }),
       },
@@ -129,6 +132,9 @@ export class GeminiClient extends BaseLLMClient {
           generationConfig: {
             temperature: options.temperature ?? 0.7,
             maxOutputTokens: options.maxTokens ?? 512,
+            ...(options.responseMimeApplicationJson && {
+              responseMimeType: "application/json",
+            }),
           },
         }),
       },
