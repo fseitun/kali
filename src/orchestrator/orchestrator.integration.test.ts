@@ -277,6 +277,48 @@ describe("Orchestrator Integration Tests", () => {
       expect(spoken).not.toContain("54");
       expect(spoken).toMatch(/Golden Fox|first place/i);
     });
+
+    it("hazard square (checkAntiWasp): skips trailing movement NARRATE after nested encounter line", async () => {
+      mockLLM = createScriptedLLM([[{ action: "NARRATE", text: "Nested wasp narration." }]]);
+
+      const initialState: GameState = {
+        game: {
+          name: "Test Game",
+          phase: GamePhase.PLAYING,
+          turn: "p1",
+          playerOrder: ["p1", "p2"],
+          winner: null,
+          lastRoll: 0,
+        },
+        players: {
+          p1: { id: "p1", name: "Alice", position: 110, activeChoices: {} },
+          p2: { id: "p2", name: "Bob", position: 0 },
+        },
+        board: {
+          squares: {
+            "200": { effect: "win" },
+            "116": { name: "Wasps", effect: "checkAntiWasp" },
+          },
+        },
+      };
+
+      setupGame(initialState);
+
+      const result = await orchestrator.testExecuteActions([
+        { action: "PLAYER_ROLLED", value: 6 },
+        {
+          action: "NARRATE",
+          text: "Trailing movement line that must not be spoken.",
+        },
+      ]);
+
+      expect(result.success).toBe(true);
+      expect(stateManager.get("players.p1.position")).toBe(116);
+      expect(stateManager.get("players.p1.skipTurns")).toBe(1);
+      const speakMock = mockSpeech.speak as ReturnType<typeof vi.fn>;
+      expect(speakMock).toHaveBeenCalledTimes(1);
+      expect(speakMock).toHaveBeenCalledWith("Nested wasp narration.");
+    });
   });
 
   describe("Animal Encounters", () => {

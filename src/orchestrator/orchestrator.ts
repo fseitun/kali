@@ -13,6 +13,7 @@ import { DecisionPointEnforcer } from "./decision-point-enforcer";
 import { reorderPowerCheckBeforeRoll } from "./reorder-power-check";
 import { resolveRiddleAnswerToOption } from "./riddle-answer";
 import { RiddlePowerCheckHandler } from "./riddle-power-check";
+import { squareTriggersLandingPipeline } from "./square-types";
 import { TurnManager } from "./turn-manager";
 import {
   GamePhase,
@@ -33,7 +34,7 @@ import type { LLMClient } from "@/llm/LLMClient";
 import { formatStateContext } from "@/llm/state-context";
 import type { ISpeechService } from "@/services/speech-service";
 import type { StateManager } from "@/state-manager";
-import { GAME_PATH, STATE_PLAYERS_PREFIX } from "@/state-paths";
+import { GAME_PATH, playerStatePath, STATE_PLAYERS_PREFIX } from "@/state-paths";
 import { Logger } from "@/utils/logger";
 import { Profiler } from "@/utils/profiler";
 
@@ -733,15 +734,37 @@ export class Orchestrator {
     }
   }
 
+  /**
+   * After PLAYER_ROLLED, skip any trailing movement NARRATE in the same LLM batch when either:
+   * - `pending` holds an encounter that will narrate separately, or
+   * - the final landing square runs `checkAndApplySquareEffects` (nested narration), e.g. hazards
+   *   that clear `pending` (Wasps, Night falls) — see BoardEffectsHandler.syncAnimalEncounterState.
+   */
   private handlePlayerRolledPostExecute(): boolean {
-    const game = this.stateManager.getState().game as Record<string, unknown> | undefined;
+    const state = this.stateManager.getState();
+    const game = state.game as Record<string, unknown> | undefined;
     const pending = game?.pending as { kind?: string } | null | undefined;
-    return Boolean(
+    if (
       pending &&
       ["riddle", "powerCheck", "revenge", "directional", "completeRollMovement"].includes(
         pending.kind ?? "",
-      ),
-    );
+      )
+    ) {
+      return true;
+    }
+    const currentTurn = game?.turn as string | undefined;
+    if (!currentTurn) {
+      return false;
+    }
+    const path = playerStatePath(currentTurn, "position");
+    const pos = this.stateManager.get(path);
+    const board = state.board as { squares?: Record<string, Record<string, unknown>> } | undefined;
+    const squares = board?.squares;
+    if (typeof pos !== "number" || !squares) {
+      return false;
+    }
+    const squareData = squares[String(pos)];
+    return squareTriggersLandingPipeline(squareData);
   }
 
   /**
