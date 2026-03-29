@@ -6,7 +6,7 @@ When the user supplies **(1) a log** and **(2) expected output/behavior**, do **
 
 ## Language
 
-Write **everything** produced in this workflow in **English**: the gap summary (Step 1), clarifying questions (Step 2), and the full fix plan (Step 3). Quote log lines or user text in their original language when needed; explain and plan in English.
+Write **everything** produced in this workflow in **English**: the gap summary (Step 1), clarifying questions and decisions (Step 2), and the full fix plan (Step 3). Quote log lines or user text in their original language when needed; explain and plan in English.
 
 ## Inputs to treat as authoritative
 
@@ -31,9 +31,24 @@ In a few sentences:
 - How that differs from the expected outcome.
 - Whether the failure is **deterministic** from the log alone or **ambiguous** (multiple plausible causes).
 
-## Step 2 — Clarifying questions (ask only what you need)
+## Step 2 — Clarifying questions and decisions (ask only what you need)
 
 Ask **targeted** questions; skip categories already answered by the log or the user’s message. Group questions so the user can answer in one reply.
+
+### How to ask (so the user can decide)
+
+Every question that needs a **human call** must carry enough context that someone who did not run the repro can answer correctly:
+
+1. **Anchor** — One sentence: what you observed (log snippet, symptom, or missing piece) and **why** it leaves a gap (e.g. “stack points at `foo.ts` but two code paths could set that state”).
+2. **The fork** — State **explicit options** when it is a product or design choice (A vs B), not a hidden default. Use bullets or “Option A / Option B” so “yes” is unambiguous.
+3. **Recommendation (optional)** — If you have a leaning, say so **after** presenting options, with one line of reasoning; do not bury the choice in prose.
+4. **Default if silent** — If the user might skip the question, say what you will assume and proceed with (or that you will block until they answer), in one short line.
+
+**Bad:** “Should we change the orchestrator or the app?”  
+**Better:** “The log shows `PLAYER_ANSWERED` applied but no `NARRATE`. **Observed:** … **Gap:** Either (A) orchestrator should emit a hint for deterministic TTS here, or (B) app should treat this branch like other silent-success paths. **Which behavior do you want for voice-only players?** If no preference, I will assume (A) to match ADR 0003.”
+
+**Bad:** “Is this expected?”  
+**Better:** “You quoted: `…`. **Question:** Is that what the player **should** hear (expected), or what they **did** hear (actual)? The log only shows …”
 
 Use this checklist as a menu — pick what applies:
 
@@ -53,7 +68,8 @@ Use this checklist as a menu — pick what applies:
 - If the log is **self-contained** (e.g. clear stack trace + file:line), you may ask **zero** questions and state assumptions explicitly.
 - If something is **guessed**, label it **Assumption** in the plan.
 - Never ask for passwords, API keys, or PII; ask for redacted shapes or “whether X is set.”
-- **Ambiguous quoted text** (e.g. a single voice line in another language): ask whether it is **expected** or **observed**, and whether **locale** matters — unless the log already settles it.
+- **Ambiguous quoted text** (e.g. a single voice line in another language): use the **Anchor / fork** pattern — quote the text, say what the log does or does not show, then ask whether it is **expected** or **observed**, and whether **locale** matters — unless the log already settles it.
+- **Decisions with tradeoffs** (behavior, scope, breaking vs compatible): always list options and the user-visible impact; avoid “fix it the right way” without naming what “right” means in this repo.
 
 ## Kali-specific hints (when reading logs)
 
@@ -105,4 +121,5 @@ After they approve the plan (or say “go ahead”), switch to normal agent mode
 - Planning a fix without acknowledging missing context (silent guesses).
 - Vague plans (“fix the bug in auth”) without files, steps, or verification.
 - Asking long questionnaires when the log already pins the issue.
+- **Vague or context-free questions** (“what do you want?”, “is this OK?”) without anchoring to the log, naming options, or stating what happens if unanswered.
 - Suggesting state/phase/turn changes outside the orchestrator for Kali gameplay.
