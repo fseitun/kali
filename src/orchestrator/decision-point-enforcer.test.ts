@@ -101,18 +101,19 @@ describe("DecisionPointEnforcer", () => {
       expect(mockProcessTranscript).toHaveBeenCalledTimes(1);
     });
 
-    it("should not trigger processTranscript when powerCheck is pending for current player at fork", async () => {
+    it("does not enforce fork when powerCheck is pending for current player (roll first)", async () => {
       stateManager.set("board.squares", {
-        "101": { next: [102, 105], prev: [100] },
+        "5": { next: [6, 7], prev: [4] },
       });
-      stateManager.set("players.p1.position", 101);
-      stateManager.set("players.p1.activeChoices", { 0: 1 });
+      stateManager.set("players.p1.position", 5);
+      stateManager.set("players.p1.activeChoices", {});
       stateManager.set("game.pending", {
         kind: "powerCheck",
-        position: 101,
-        power: 3,
         playerId: "p1",
+        position: 5,
+        power: 3,
         riddleCorrect: false,
+        phase: "powerCheck",
       });
 
       await decisionPointEnforcer.enforceDecisionPoints(baseContext);
@@ -120,17 +121,18 @@ describe("DecisionPointEnforcer", () => {
       expect(mockProcessTranscript).not.toHaveBeenCalled();
     });
 
-    it("should not trigger processTranscript when revenge is pending for current player at fork", async () => {
+    it("does not enforce fork when revenge is pending for current player", async () => {
       stateManager.set("board.squares", {
-        "101": { next: [102, 105], prev: [100] },
+        "5": { next: [6, 7], prev: [4] },
       });
-      stateManager.set("players.p1.position", 101);
+      stateManager.set("players.p1.position", 5);
       stateManager.set("players.p1.activeChoices", {});
       stateManager.set("game.pending", {
         kind: "revenge",
-        position: 101,
-        power: 3,
         playerId: "p1",
+        position: 5,
+        power: 3,
+        phase: "revenge",
       });
 
       await decisionPointEnforcer.enforceDecisionPoints(baseContext);

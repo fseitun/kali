@@ -51,6 +51,9 @@ function validatePendingRollAnswer(
     state,
   );
   if (roll < min || roll > max) {
+    if (getDecisionPointApplyState(state, answer) !== null) {
+      return null;
+    }
     return {
       valid: false,
       error: `PLAYER_ANSWERED at index ${index}: Roll must be ${min}-${max} (${label}), got ${roll}.`,

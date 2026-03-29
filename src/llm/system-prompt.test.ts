@@ -78,6 +78,40 @@ describe("formatStateContext (es-AR)", () => {
     expect(result).not.toContain("DECISION (Bob)");
   });
 
+  it("omits DECISION while powerCheck is pending at a fork (roll first)", () => {
+    const state = {
+      game: {
+        turn: "p1",
+        phase: "PLAYING",
+        pending: {
+          kind: "powerCheck",
+          position: 101,
+          power: 3,
+          playerId: "p1",
+          riddleCorrect: false,
+        },
+      },
+      players: {
+        p1: { id: "p1", name: "Alice", position: 101, activeChoices: {} },
+      },
+      board: {
+        squares: {
+          "101": {
+            next: { "102": ["102", "down"], "105": ["105", "up"] },
+            prev: { "98": ["98"] },
+            name: "Walrus",
+            power: 3,
+          },
+        },
+      },
+    } as Record<string, unknown>;
+
+    const result = formatStateContext(state);
+
+    expect(result).toContain("POWER CHECK (Alice)");
+    expect(result).not.toContain("DECISION (Alice)");
+  });
+
   it("includes branch hints when decision point has choiceKeywords", () => {
     const state = {
       game: { turn: "p1", phase: "PLAYING" },

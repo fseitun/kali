@@ -175,6 +175,23 @@ export function hasMovementForkBlockingPlay(state: GameState): boolean {
 }
 
 /**
+ * True while the current player's animal encounter expects a dice report before anything else.
+ * Fork prompts and DECISION hints are deferred until this clears (roll first).
+ */
+export function isEncounterRollPendingForCurrentTurn(state: GameState): boolean {
+  const slice = getCurrentTurnPlayerSlice(state);
+  if (!slice) {
+    return false;
+  }
+  const game = state.game as Record<string, unknown> | undefined;
+  const pending = game?.pending as { kind?: string; playerId?: string } | undefined;
+  return (
+    (pending?.kind === "powerCheck" || pending?.kind === "revenge") &&
+    pending.playerId === slice.currentTurn
+  );
+}
+
+/**
  * Fork context to enforce in LLM / voice when a choice matters for at least one legal roll.
  */
 export function getEnforceableForkContext(state: GameState): {
@@ -185,6 +202,9 @@ export function getEnforceableForkContext(state: GameState): {
 } | null {
   const slice = getCurrentTurnPlayerSlice(state);
   if (!slice) {
+    return null;
+  }
+  if (isEncounterRollPendingForCurrentTurn(state)) {
     return null;
   }
   const { currentTurn, currentPlayer, position } = slice;
