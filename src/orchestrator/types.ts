@@ -127,6 +127,12 @@ export interface ExecutionContext {
    * board moves (including leader-square portal). Used so `NARRATE` can speak the real final cell.
    */
   jumpToLeaderRelocated?: { toPosition: number };
+  /**
+   * After a completed movement PLAYER_ROLLED (non-nested), the graph-resolved landing square for the
+   * next NARRATE in the same batch. Consumed in executeNarrate for deterministic position TTS; cleared
+   * if the batch ends without a matching NARRATE.
+   */
+  pendingMovementRollNarration?: { playerId: string; roll: number; square: number };
 }
 
 /**

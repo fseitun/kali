@@ -5,7 +5,7 @@ import * as localeManager from "@/i18n/locale-manager";
 describe("SYSTEM_PROMPT", () => {
   it("slim base prompt has a reasonable size bound (well under historical ~2.5k+ bloated prompts)", () => {
     expect(SYSTEM_PROMPT.length).toBeGreaterThanOrEqual(1100);
-    expect(SYSTEM_PROMPT.length).toBeLessThanOrEqual(4200);
+    expect(SYSTEM_PROMPT.length).toBeLessThanOrEqual(4500);
   });
 
   it("includes guidance rule: when user asks what to do, NARRATE only and do not emit primitives", () => {
@@ -20,6 +20,11 @@ describe("SYSTEM_PROMPT", () => {
     expect(SYSTEM_PROMPT).toContain("⚠️ POWER CHECK");
     expect(SYSTEM_PROMPT).toContain("⚠️ REVENGE");
     expect(SYSTEM_PROMPT).toMatch(/1d6, 2d6, 3d6/);
+  });
+
+  it("tells the model not to guess final square after movement PLAYER_ROLLED", () => {
+    expect(SYSTEM_PROMPT).toMatch(/Movement PLAYER_ROLLED \+ NARRATE/);
+    expect(SYSTEM_PROMPT).toMatch(/authoritative landing/);
   });
 
   it("warns against NDJSON (two root objects) vs a single JSON array", () => {

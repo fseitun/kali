@@ -807,6 +807,9 @@ export class Orchestrator {
         Logger.error("Failed to execute action:", action, error);
       }
     }
+    if (context.pendingMovementRollNarration !== undefined) {
+      context.pendingMovementRollNarration = undefined;
+    }
   }
 
   /**

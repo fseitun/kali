@@ -46,6 +46,7 @@ export const esAR = {
     forkChoiceResolvedRoll: "{name}, listo. Tirá el dado.",
     goldenFoxJump:
       "{name}, el Zorro Dorado te lleva al primer puesto. Estás en el casillero {square}.",
+    rollMovementLanded: "{name}, sacaste un {roll}. Estás en el casillero {square}.",
   },
   ui: {
     startButton: "Jugar",

@@ -45,6 +45,7 @@ export const enUS = {
       "Wrong answer. {diceRollPhrase}You need to beat {animalScorePhrase} to advance.",
     forkChoiceResolvedRoll: "{name}, you're set. Roll the dice.",
     goldenFoxJump: "{name}, the Golden Fox takes you to first place. You're on square {square}.",
+    rollMovementLanded: "{name}, you rolled {roll}. You're on square {square}.",
   },
   ui: {
     startButton: "Start",

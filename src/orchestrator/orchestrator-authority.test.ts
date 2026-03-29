@@ -182,7 +182,7 @@ describe("Orchestrator Authority - LLM Adversarial Tests", () => {
   });
 
   describe("LLM Cannot Skip Orchestrator Logic", () => {
-    it("allows SET_STATE for position but orchestrator still applies board moves", async () => {
+    it("SET_STATE for position is authoritative: suppresses auto destination/nextOnLanding on that square", async () => {
       let currentPosition = 10;
       mockStateManager.get = vi.fn((path: string) => {
         if (path === "players.p1.position") {
@@ -202,7 +202,37 @@ describe("Orchestrator Authority - LLM Adversarial Tests", () => {
 
       await orchestrator.testExecuteActions(actions);
 
-      expect(currentPosition).toBe(30);
+      expect(currentPosition).toBe(15);
+    });
+
+    it("SET_STATE to Kalimba Forest-Ocean portal (45) stays on 45 (no instant 45→82)", async () => {
+      (testState.board as any).squares["45"] = {
+        name: "Forest-Ocean Portal",
+        nextOnLanding: [82],
+      };
+      (testState.board as any).squares["82"] = {
+        name: "Ocean-Forest Portal",
+        nextOnLanding: [45],
+        oceanForestOneShotPortal: true,
+      };
+      let currentPosition = 10;
+      mockStateManager.get = vi.fn((path: string) => {
+        if (path === "players.p1.position") {
+          return currentPosition;
+        }
+        return undefined;
+      });
+      mockStateManager.set = vi.fn(async (path: string, value: unknown) => {
+        if (path === "players.p1.position") {
+          currentPosition = value as number;
+        }
+      });
+
+      await orchestrator.testExecuteActions([
+        { action: "SET_STATE", path: "players.p1.position", value: 45 },
+      ]);
+
+      expect(currentPosition).toBe(45);
     });
 
     it("orchestrator triggers square effects even if LLM uses SET_STATE", async () => {

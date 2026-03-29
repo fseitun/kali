@@ -13,8 +13,12 @@ import { getLocale } from "@/i18n/locale-manager";
 import { t } from "@/i18n/translations";
 import type { ISpeechService } from "@/services/speech-service";
 import type { StateManager } from "@/state-manager";
-import { GAME_PATH, playerStatePath } from "@/state-paths";
+import { GAME_PATH, playerStatePath, STATE_PLAYERS_PREFIX } from "@/state-paths";
 import { Logger } from "@/utils/logger";
+
+function isPlayerPositionPath(path: string): boolean {
+  return path.startsWith(STATE_PLAYERS_PREFIX) && path.endsWith(".position");
+}
 
 export interface ActionExecutorContext {
   stateManager: StateManager;
@@ -50,36 +54,73 @@ function tryGoldenFoxNarrationOverride(
   return t("game.goldenFoxJump", { name, square: jump.toPosition });
 }
 
+function tryMovementRollNarrationOverride(
+  ctx: ActionExecutorContext,
+  context: ExecutionContext,
+  primitive: Extract<PrimitiveAction, { action: "NARRATE" }>,
+): string | undefined {
+  const pending = context.pendingMovementRollNarration;
+  if (pending === undefined) {
+    return undefined;
+  }
+  const text = primitive.text;
+  if (text === undefined || text.trim() === "") {
+    return undefined;
+  }
+  const state = ctx.stateManager.getState();
+  const game = state.game as Record<string, unknown> | undefined;
+  if (game?.turn !== pending.playerId) {
+    return undefined;
+  }
+  context.pendingMovementRollNarration = undefined;
+  const players = state.players as Record<string, Record<string, unknown>> | undefined;
+  const name =
+    typeof players?.[pending.playerId]?.name === "string"
+      ? (players[pending.playerId].name as string)
+      : "";
+  return t("game.rollMovementLanded", { name, roll: pending.roll, square: pending.square });
+}
+
+function computeNarrateSpeech(
+  ctx: ActionExecutorContext,
+  primitive: Extract<PrimitiveAction, { action: "NARRATE" }>,
+  context: ExecutionContext,
+): string {
+  const goldenFoxLine = tryGoldenFoxNarrationOverride(ctx, context);
+  if (goldenFoxLine !== undefined) {
+    ctx.setLastNarration(goldenFoxLine);
+    return goldenFoxLine;
+  }
+  const movementRollLine = tryMovementRollNarrationOverride(ctx, context, primitive);
+  if (movementRollLine !== undefined) {
+    ctx.setLastNarration(movementRollLine);
+    return movementRollLine;
+  }
+  const state = ctx.stateManager.getState();
+  const game = state.game as Record<string, unknown> | undefined;
+  const pending = game?.pending as { kind?: string; riddlePrompt?: string } | null | undefined;
+  if (
+    ctx.boardEffectsHandler.isProcessingEffect() &&
+    pending?.kind === "riddle" &&
+    primitive.text
+  ) {
+    ctx.stateManager.set(GAME_PATH.pending, {
+      ...pending,
+      riddlePrompt: primitive.text,
+    });
+  }
+  if (primitive.text) {
+    ctx.setLastNarration(primitive.text);
+  }
+  return primitive.text ?? "";
+}
+
 export async function executeNarrate(
   ctx: ActionExecutorContext,
   primitive: Extract<PrimitiveAction, { action: "NARRATE" }>,
   context: ExecutionContext,
 ): Promise<void> {
-  const state = ctx.stateManager.getState();
-  const game = state.game as Record<string, unknown> | undefined;
-  const pending = game?.pending as { kind?: string; riddlePrompt?: string } | null | undefined;
-
-  const goldenFoxLine = tryGoldenFoxNarrationOverride(ctx, context);
-  let textToSpeak: string;
-  if (goldenFoxLine !== undefined) {
-    textToSpeak = goldenFoxLine;
-    ctx.setLastNarration(textToSpeak);
-  } else {
-    if (
-      ctx.boardEffectsHandler.isProcessingEffect() &&
-      pending?.kind === "riddle" &&
-      primitive.text
-    ) {
-      ctx.stateManager.set(GAME_PATH.pending, {
-        ...pending,
-        riddlePrompt: primitive.text,
-      });
-    }
-    if (primitive.text) {
-      ctx.setLastNarration(primitive.text);
-    }
-    textToSpeak = primitive.text ?? "";
-  }
+  const textToSpeak = computeNarrateSpeech(ctx, primitive, context);
 
   ctx.statusIndicator.setState("speaking");
   if (primitive.soundEffect) {
@@ -102,7 +143,20 @@ export async function executeSetState(
   await ctx.turnManager.assertPlayerTurnOwnership(primitive.path);
   Logger.write(`Setting state: ${primitive.path} = ${JSON.stringify(primitive.value)}`);
   ctx.stateManager.set(primitive.path, primitive.value);
-  await ctx.boardEffectsHandler.checkAndApplyBoardMoves(primitive.path, context);
+
+  const prevSuppress = context.suppressNextOnLandingAtPosition;
+  const shouldSuppressLandingTeleport =
+    isPlayerPositionPath(primitive.path) && typeof primitive.value === "number";
+  if (shouldSuppressLandingTeleport) {
+    context.suppressNextOnLandingAtPosition = primitive.value as number;
+  }
+  try {
+    await ctx.boardEffectsHandler.checkAndApplyBoardMoves(primitive.path, context);
+  } finally {
+    if (shouldSuppressLandingTeleport) {
+      context.suppressNextOnLandingAtPosition = prevSuppress;
+    }
+  }
   await ctx.boardEffectsHandler.checkAndApplySquareEffects(primitive.path, context);
   ctx.checkAndApplyWinCondition(primitive.path);
 }
@@ -161,6 +215,17 @@ export async function executePlayerRolled(
     await ctx.boardEffectsHandler.checkAndApplySquareEffects(path, context);
   }
   ctx.checkAndApplyWinCondition(path);
+
+  if (movement.kind === "complete" && !context.isNestedCall) {
+    const finalSquare = ctx.stateManager.get(path);
+    if (typeof finalSquare === "number") {
+      context.pendingMovementRollNarration = {
+        playerId: currentTurn,
+        roll: primitive.value,
+        square: finalSquare,
+      };
+    }
+  }
 }
 
 function riddleOutcomeMessage(
