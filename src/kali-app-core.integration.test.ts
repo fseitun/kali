@@ -164,7 +164,7 @@ describe("KaliAppCore Integration - Runtime Flows", () => {
   });
 
   describe("testExecuteActions", () => {
-    it("executes actions and advances turn when shouldAdvanceTurn", async () => {
+    it("executes actions and advances turn when turnAdvance is callAdvanceTurn", async () => {
       phaseOverride.value = GamePhase.PLAYING;
 
       const core = new KaliAppCore(mockUIService, mockSpeechService, { skipWakeWord: true });
@@ -177,7 +177,7 @@ describe("KaliAppCore Integration - Runtime Flows", () => {
       ]);
 
       expect(result.success).toBe(true);
-      expect(result.shouldAdvanceTurn).toBe(true);
+      expect(result.turnAdvance.kind).toBe("callAdvanceTurn");
       expect(mockSpeechService.speak).toHaveBeenCalled();
     });
   });

@@ -268,7 +268,7 @@ describe("Orchestrator Integration Tests", () => {
       ]);
 
       expect(result.success).toBe(true);
-      expect(result.shouldAdvanceTurn).toBe(true);
+      expect(result.turnAdvance.kind).toBe("callAdvanceTurn");
       expect(stateManager.get("players.p2.position")).toBe(91);
       expect(mockSpeech.speak).toHaveBeenCalled();
       const speakMock = mockSpeech.speak as ReturnType<typeof vi.fn>;
@@ -378,7 +378,7 @@ describe("Orchestrator Integration Tests", () => {
       expect(mockLLM.getCallCount()).toBe(2);
     });
 
-    it("advances turn to next player on power check failure and returns turnAdvancedAfterPowerCheckFail", async () => {
+    it("advances turn to next player on power check failure and returns alreadyAdvanced", async () => {
       const initialState: GameState = {
         game: {
           name: "Test Game",
@@ -415,11 +415,9 @@ describe("Orchestrator Integration Tests", () => {
       ]);
 
       expect(result.success).toBe(true);
-      expect(result.shouldAdvanceTurn).toBe(false);
-      expect(result.turnAdvancedAfterPowerCheckFail).toEqual({
-        playerId: "p2",
-        name: "Bob",
-        position: 0,
+      expect(result.turnAdvance).toEqual({
+        kind: "alreadyAdvanced",
+        nextPlayer: { playerId: "p2", name: "Bob", position: 0 },
       });
 
       const turn = stateManager.get("game.turn");
@@ -472,8 +470,7 @@ describe("Orchestrator Integration Tests", () => {
       ]);
 
       expect(result.success).toBe(true);
-      expect(result.shouldAdvanceTurn).toBe(true);
-      expect(result.turnAdvancedAfterPowerCheckFail).toBeUndefined();
+      expect(result.turnAdvance.kind).toBe("callAdvanceTurn");
 
       const turn = stateManager.get("game.turn");
       expect(turn).toBe("p1");
@@ -526,7 +523,7 @@ describe("Orchestrator Integration Tests", () => {
       ]);
 
       expect(result.success).toBe(true);
-      expect(result.shouldAdvanceTurn).toBe(true);
+      expect(result.turnAdvance.kind).toBe("callAdvanceTurn");
       expect(stateManager.get("players.p1.position")).toBe(20);
       expect(stateManager.get("game.pending")).toBeNull();
       expect(mockSpeech.speak).toHaveBeenNthCalledWith(1, "You passed.");
@@ -582,7 +579,7 @@ describe("Orchestrator Integration Tests", () => {
       ]);
 
       expect(result.success).toBe(true);
-      expect(result.shouldAdvanceTurn).toBe(false);
+      expect(result.turnAdvance.kind).toBe("none");
       expect(stateManager.get("players.p1.position")).toBe(45);
       expect(stateManager.get("game.pending")).toBeNull();
 
@@ -600,7 +597,7 @@ describe("Orchestrator Integration Tests", () => {
       setLocale("es-AR");
     });
 
-    it("power check win landing on skipTurn sets shouldAdvanceTurn true (next player can be announced)", async () => {
+    it("power check win landing on skipTurn sets turnAdvance callAdvanceTurn (next player can be announced)", async () => {
       mockLLM = createScriptedLLM([
         [{ action: "NARRATE", text: "Quicksand — you skip next turn." }],
       ]);
@@ -642,8 +639,7 @@ describe("Orchestrator Integration Tests", () => {
       ]);
 
       expect(result.success).toBe(true);
-      expect(result.shouldAdvanceTurn).toBe(true);
-      expect(result.turnAdvancedAfterPowerCheckFail).toBeUndefined();
+      expect(result.turnAdvance.kind).toBe("callAdvanceTurn");
 
       expect(stateManager.get("game.turn")).toBe("p1");
       expect(stateManager.get("players.p1.position")).toBe(11);
@@ -694,10 +690,9 @@ describe("Orchestrator Integration Tests", () => {
       ]);
 
       expect(result.success).toBe(true);
-      expect(result.turnAdvancedAfterPowerCheckFail).toEqual({
-        playerId: "p2",
-        name: "Bob",
-        position: 0,
+      expect(result.turnAdvance).toEqual({
+        kind: "alreadyAdvanced",
+        nextPlayer: { playerId: "p2", name: "Bob", position: 0 },
       });
       expect(mockLLM.getCallCount()).toBe(0);
     });

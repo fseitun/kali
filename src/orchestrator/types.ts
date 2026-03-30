@@ -149,15 +149,29 @@ export interface VoiceOutcomeHints {
 }
 
 /**
+ * Discriminated union describing how the app should handle turn advancement
+ * after the orchestrator finishes processing a transcript.
+ */
+export type TurnAdvance =
+  | { kind: "none" }
+  | { kind: "callAdvanceTurn" }
+  | { kind: "alreadyAdvanced"; nextPlayer: { playerId: string; name: string; position: number } };
+
+/**
  * Result of orchestrator transcript or direct primitive execution (gameplay paths).
  */
 export interface OrchestratorGameplayResult {
   success: boolean;
-  shouldAdvanceTurn: boolean;
-  turnAdvancedAfterPowerCheckFail?: { playerId: string; name: string; position: number };
+  turnAdvance: TurnAdvance;
   /** Present on successful top-level runs when the batch matches a silent-success pattern for voice policy. */
   voiceOutcomeHints?: VoiceOutcomeHints;
 }
+
+/** Shared failure result — no turn advance, no voice hints. */
+export const FAILED_RESULT: OrchestratorGameplayResult = {
+  success: false,
+  turnAdvance: { kind: "none" },
+};
 
 export type ActionHandler = (action: PrimitiveAction, context: ExecutionContext) => Promise<void>;
 

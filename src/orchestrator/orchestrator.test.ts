@@ -176,7 +176,7 @@ describe("Orchestrator - New Action Handlers", () => {
       expect(mockStateManager.set).toHaveBeenCalledWith("players.p1.activeChoices.0", 15);
     });
 
-    it("PLAYER_ANSWERED path choice at position 0 does not set shouldAdvanceTurn", async () => {
+    it("PLAYER_ANSWERED path choice at position 0 does not advance turn", async () => {
       (testState.players as any).p1.position = 0;
       (testState.players as any).p1.activeChoices = {};
       (testState.board as any).squares = {
@@ -195,7 +195,7 @@ describe("Orchestrator - New Action Handlers", () => {
       const result = await orchestrator.testExecuteActions(actions);
 
       expect(result.success).toBe(true);
-      expect(result.shouldAdvanceTurn).toBe(false);
+      expect(result.turnAdvance.kind).toBe("none");
     });
 
     it("PLAYER_ANSWERED + NARRATE at fork 0 does not advance turn", async () => {
@@ -220,7 +220,7 @@ describe("Orchestrator - New Action Handlers", () => {
       const result = await orchestrator.testExecuteActions(actions);
 
       expect(result.success).toBe(true);
-      expect(result.shouldAdvanceTurn).toBe(false);
+      expect(result.turnAdvance.kind).toBe("none");
     });
   });
 
@@ -703,7 +703,7 @@ describe("Orchestrator - New Action Handlers", () => {
       expect(mockStateManager.set).not.toHaveBeenCalledWith("game.turn", "p2");
     });
 
-    it("NARRATE-only returns shouldAdvanceTurn false (State Query fix)", async () => {
+    it("NARRATE-only returns turnAdvance none (State Query fix)", async () => {
       mockLLM.getActions = vi.fn(async () => [
         { action: "NARRATE", text: "Fico is ahead at position 45" },
       ]);
@@ -711,10 +711,10 @@ describe("Orchestrator - New Action Handlers", () => {
       const result = await orchestrator.handleTranscript("Who is winning?");
 
       expect(result.success).toBe(true);
-      expect(result.shouldAdvanceTurn).toBe(false);
+      expect(result.turnAdvance.kind).toBe("none");
     });
 
-    it("PLAYER_ROLLED plus NARRATE returns shouldAdvanceTurn true", async () => {
+    it("PLAYER_ROLLED plus NARRATE returns turnAdvance callAdvanceTurn", async () => {
       mockLLM.getActions = vi.fn(async () => [
         { action: "PLAYER_ROLLED", value: 4 },
         { action: "NARRATE", text: "Moving 4 spaces!" },
@@ -723,7 +723,7 @@ describe("Orchestrator - New Action Handlers", () => {
       const result = await orchestrator.handleTranscript("I rolled a 4");
 
       expect(result.success).toBe(true);
-      expect(result.shouldAdvanceTurn).toBe(true);
+      expect(result.turnAdvance.kind).toBe("callAdvanceTurn");
     });
 
     it("passes last NARRATE as lastBotUtterance when user confirms (roll clarification)", async () => {
@@ -852,8 +852,8 @@ describe("Orchestrator - New Action Handlers", () => {
       const results = await Promise.all([promise1, promise2]);
 
       expect(callCount).toBe(1);
-      expect(results[0]).toEqual({ success: true, shouldAdvanceTurn: false });
-      expect(results[1]).toEqual({ success: false, shouldAdvanceTurn: false });
+      expect(results[0]).toEqual({ success: true, turnAdvance: { kind: "none" } });
+      expect(results[1]).toEqual({ success: false, turnAdvance: { kind: "none" } });
     });
 
     it("releases lock after successful execution", async () => {

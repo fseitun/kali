@@ -17,12 +17,14 @@ import { squareTriggersLandingPipeline } from "./square-types";
 import { tryFastPathTranscript } from "./transcript-fast-path";
 import { TurnManager } from "./turn-manager";
 import {
+  FAILED_RESULT,
   GamePhase,
   type OrchestratorGameplayResult,
   type PrimitiveAction,
   type ExecutionContext,
   type ActionHandler,
   type GameState,
+  type TurnAdvance,
   type VoiceOutcomeHints,
 } from "./types";
 import { VALIDATION_ERROR_I18N } from "./validation-i18n";
@@ -182,7 +184,7 @@ export class Orchestrator {
    * This is the main entry point for handling user voice commands.
    * @param transcript - The transcribed user command
    * @param options - Optional flags; skipDecisionPointEnforcement for system-initiated flows (e.g. proactive start)
-   * @returns Success, turn flags, optional next-player-after-power-check-fail, and voice hints for app-layer fallback TTS
+   * @returns Object with success, turnAdvance (discriminated union), and optional voice hints for app-layer fallback TTS
    */
   async handleTranscript(
     transcript: string,
@@ -190,7 +192,7 @@ export class Orchestrator {
   ): Promise<OrchestratorGameplayResult> {
     if (!this.tryAcquireProcessing()) {
       Logger.warn("Orchestrator busy, ignoring new request");
-      return { success: false, shouldAdvanceTurn: false };
+      return FAILED_RESULT;
     }
     this.statusIndicator.setState("processing");
     Profiler.start("orchestrator.total");
@@ -213,12 +215,12 @@ export class Orchestrator {
    * Test-only: Execute actions directly without LLM interpretation.
    * Bypasses LLM for testing orchestrator validation and execution logic.
    * @param actions - Array of primitive actions to validate and execute
-   * @returns Object with success, shouldAdvanceTurn, and optional voice hints
+   * @returns Object with success, turnAdvance, and optional voice hints
    */
   async testExecuteActions(actions: PrimitiveAction[]): Promise<OrchestratorGameplayResult> {
     if (!this.tryAcquireProcessing()) {
       Logger.warn("Orchestrator busy, ignoring test request");
-      return { success: false, shouldAdvanceTurn: false };
+      return FAILED_RESULT;
     }
     this.statusIndicator.setState("processing");
     Profiler.start("orchestrator.test");
@@ -235,7 +237,7 @@ export class Orchestrator {
       return result;
     } catch (error) {
       Logger.error("Test execution error:", error);
-      return { success: false, shouldAdvanceTurn: false };
+      return FAILED_RESULT;
     } finally {
       this.isProcessing = false;
       Profiler.end("orchestrator.test");
@@ -248,12 +250,12 @@ export class Orchestrator {
    * Intended for non-LLM interpreters (debug tools, alternate UIs) that already
    * produced a validated PrimitiveAction[] request.
    * @param actions - Array of primitive actions to validate and execute
-   * @returns Object with success, shouldAdvanceTurn, and optional voice hints
+   * @returns Object with success, turnAdvance, and optional voice hints
    */
   async executePrimitiveActions(actions: PrimitiveAction[]): Promise<OrchestratorGameplayResult> {
     if (!this.tryAcquireProcessing()) {
       Logger.warn("Orchestrator busy, ignoring primitive execution request");
-      return { success: false, shouldAdvanceTurn: false };
+      return FAILED_RESULT;
     }
     this.statusIndicator.setState("processing");
     Profiler.start("orchestrator.primitives.total");
@@ -424,7 +426,7 @@ export class Orchestrator {
       }
       Logger.warn("No actions returned from LLM");
       await this.speechService.speak(t("llm.allRetriesFailed"));
-      return { success: false, shouldAdvanceTurn: false };
+      return FAILED_RESULT;
     }
     const normalizedActions = this.coerceMovementPlayerAnsweredToPlayerRolled(
       this.normalizeRiddleAnswerFromTranscript(actions, transcript),
@@ -463,7 +465,7 @@ export class Orchestrator {
     } catch (error) {
       Logger.error("Orchestrator error:", error);
       await this.speechService.speak(t("errors.somethingWentWrong"));
-      return { success: false, shouldAdvanceTurn: false };
+      return FAILED_RESULT;
     }
   }
 
@@ -690,7 +692,7 @@ export class Orchestrator {
     if (!validation.valid) {
       Logger.warn("Validation failed:", validation.error);
       await this.speechService.speak(t(this.resolveValidationErrorI18n(validation)));
-      return { success: false, shouldAdvanceTurn: false };
+      return FAILED_RESULT;
     }
 
     const { hasPendingDecisions, isForkAnswerAtStart, onlyResolvedForkChoice } =
@@ -738,28 +740,21 @@ export class Orchestrator {
       await this.decisionPointEnforcer.enforceDecisionPoints(context);
     }
 
-    return this.buildActionResult(context, shouldAdvanceTurn, voiceOutcomeHints);
+    const turnAdvance = this.computeTurnAdvance(context, shouldAdvanceTurn);
+    return { success: true, turnAdvance, voiceOutcomeHints };
   }
 
-  private buildActionResult(
+  private computeTurnAdvance(
     context: ExecutionContext,
-    shouldAdvanceTurn: boolean,
-    voiceOutcomeHints: VoiceOutcomeHints | undefined,
-  ): OrchestratorGameplayResult {
-    const turnAdvanced = context.turnAdvancedAfterPowerCheckFail;
-    const dismissPowerCheckSuppress = context.advanceTurnDespitePowerCheckSuppress === true;
-    const effectiveShouldAdvance =
-      !turnAdvanced &&
-      (!context.skipTrailingNarrateForPowerCheck || dismissPowerCheckSuppress) &&
-      (shouldAdvanceTurn || dismissPowerCheckSuppress);
-    return turnAdvanced
-      ? {
-          success: true,
-          shouldAdvanceTurn: false,
-          turnAdvancedAfterPowerCheckFail: turnAdvanced,
-          voiceOutcomeHints,
-        }
-      : { success: true, shouldAdvanceTurn: effectiveShouldAdvance, voiceOutcomeHints };
+    shouldAdvanceTurnFromActions: boolean,
+  ): TurnAdvance {
+    if (context.turnAdvancedAfterPowerCheckFail) {
+      return { kind: "alreadyAdvanced", nextPlayer: context.turnAdvancedAfterPowerCheckFail };
+    }
+    const dismissSuppress = context.advanceTurnDespitePowerCheckSuppress === true;
+    const blocked = context.skipTrailingNarrateForPowerCheck && !dismissSuppress;
+    const advance = !blocked && (shouldAdvanceTurnFromActions || dismissSuppress);
+    return advance ? { kind: "callAdvanceTurn" } : { kind: "none" };
   }
 
   private shouldSkipAction(

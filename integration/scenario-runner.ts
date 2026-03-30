@@ -128,12 +128,12 @@ async function runScenarioStep(
         `Integration scenario step ${stepIndex} failed: testExecuteActions (llmResponses) returned success=false`,
       );
     }
-    if (effectResult.shouldAdvanceTurn) {
+    if (effectResult.turnAdvance.kind === "callAdvanceTurn") {
       result = effectResult;
     }
   }
 
-  if (result.shouldAdvanceTurn) {
+  if (result.turnAdvance.kind === "callAdvanceTurn") {
     await orchestrator.advanceTurn();
   }
 

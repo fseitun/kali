@@ -9,8 +9,10 @@ import { inferDecisionPoints } from "./orchestrator/decision-point-inference";
 import { NameCollector } from "./orchestrator/name-collector";
 import { Orchestrator } from "./orchestrator/orchestrator";
 import {
+  FAILED_RESULT,
   GamePhase,
   type GameState,
+  type OrchestratorGameplayResult,
   type PrimitiveAction,
   type VoiceOutcomeHints,
 } from "./orchestrator/types";
@@ -244,14 +246,13 @@ ${summary ? `**Summary (for NARRATE explanations):** ${summary}\n` : ""}${exampl
       // directly. Avoids proactiveGameStart LLM also asking, causing duplicate path ask.
       await this.announceCurrentTurnIfPending();
     } else {
-      const { success, shouldAdvanceTurn, voiceOutcomeHints } =
-        await this.orchestrator.handleTranscript(t("game.proactiveStart"), {
-          skipDecisionPointEnforcement: true,
-        });
-      if (success && shouldAdvanceTurn) {
+      const result = await this.orchestrator.handleTranscript(t("game.proactiveStart"), {
+        skipDecisionPointEnforcement: true,
+      });
+      if (result.success && result.turnAdvance.kind === "callAdvanceTurn") {
         await this.checkAndAdvanceTurn();
       }
-      await this.maybeApplySilentGameplayVoice(success, voiceOutcomeHints);
+      await this.maybeApplySilentGameplayVoice(result.success, result.voiceOutcomeHints);
     }
   }
 
@@ -462,27 +463,27 @@ ${summary ? `**Summary (for NARRATE explanations):** ${summary}\n` : ""}${exampl
 
     if (this.orchestrator) {
       this.speechService.beginGameplayTurn();
-      const { success, shouldAdvanceTurn, turnAdvancedAfterPowerCheckFail, voiceOutcomeHints } =
-        await this.orchestrator.handleTranscript(text);
+      const result = await this.orchestrator.handleTranscript(text);
 
-      if (success && turnAdvancedAfterPowerCheckFail) {
+      if (result.success && result.turnAdvance.kind === "alreadyAdvanced") {
+        const { nextPlayer } = result.turnAdvance;
         const pendingPrompt = this.orchestrator.getPendingDecisionPrompt();
-        const revengeMsg = pendingPrompt
+        const msg = pendingPrompt
           ? t("game.turnAnnouncementWithDecision", {
-              name: turnAdvancedAfterPowerCheckFail.name,
-              position: turnAdvancedAfterPowerCheckFail.position,
+              name: nextPlayer.name,
+              position: nextPlayer.position,
               prompt: pendingPrompt,
             })
           : t("game.turnAnnouncement", {
-              name: turnAdvancedAfterPowerCheckFail.name,
-              position: turnAdvancedAfterPowerCheckFail.position,
+              name: nextPlayer.name,
+              position: nextPlayer.position,
             });
-        await this.speechService.speak(revengeMsg);
-        this.orchestrator.setLastNarrationForVoicePolicy(revengeMsg);
-      } else if (success && shouldAdvanceTurn) {
+        await this.speechService.speak(msg);
+        this.orchestrator.setLastNarrationForVoicePolicy(msg);
+      } else if (result.success && result.turnAdvance.kind === "callAdvanceTurn") {
         await this.checkAndAdvanceTurn();
       }
-      await this.maybeApplySilentGameplayVoice(success, voiceOutcomeHints);
+      await this.maybeApplySilentGameplayVoice(result.success, result.voiceOutcomeHints);
     }
 
     this.uiService.updateStatus(
@@ -609,16 +610,11 @@ ${summary ? `**Summary (for NARRATE explanations):** ${summary}\n` : ""}${exampl
    * @param square - Target square index from the loaded game board
    * @returns Same shape as {@link KaliAppCore.testExecuteActions}
    */
-  async submitDebugPositionTeleport(square: number): Promise<{
-    success: boolean;
-    shouldAdvanceTurn: boolean;
-    turnAdvancedAfterPowerCheckFail?: { playerId: string; name: string; position: number };
-    voiceOutcomeHints?: VoiceOutcomeHints;
-  }> {
+  async submitDebugPositionTeleport(square: number): Promise<OrchestratorGameplayResult> {
     const resolved = this.resolveDebugTeleportOrError(square);
     if (!resolved.ok) {
       Logger.warn(`submitDebugPositionTeleport: ${resolved.msg}`);
-      return { success: false, shouldAdvanceTurn: false };
+      return FAILED_RESULT;
     }
     const path = playerStatePath(resolved.turn, "position");
     return this.testExecuteActions([{ action: "SET_STATE", path, value: square }]);
@@ -628,14 +624,9 @@ ${summary ? `**Summary (for NARRATE explanations):** ${summary}\n` : ""}${exampl
    * Test-only: Execute actions directly without LLM interpretation.
    * Only available when orchestrator is initialized.
    * @param actions - Array of primitive actions to validate and execute
-   * @returns true if execution succeeded, false otherwise
+   * @returns Orchestrator result with turnAdvance discriminated union
    */
-  async testExecuteActions(actions: PrimitiveAction[]): Promise<{
-    success: boolean;
-    shouldAdvanceTurn: boolean;
-    turnAdvancedAfterPowerCheckFail?: { playerId: string; name: string; position: number };
-    voiceOutcomeHints?: VoiceOutcomeHints;
-  }> {
+  async testExecuteActions(actions: PrimitiveAction[]): Promise<OrchestratorGameplayResult> {
     if (!this.orchestrator) {
       throw new Error("Orchestrator not initialized");
     }
@@ -643,21 +634,22 @@ ${summary ? `**Summary (for NARRATE explanations):** ${summary}\n` : ""}${exampl
     this.speechService.beginGameplayTurn();
     const result = await this.orchestrator.testExecuteActions(actions);
 
-    if (result.success && result.turnAdvancedAfterPowerCheckFail) {
+    if (result.success && result.turnAdvance.kind === "alreadyAdvanced") {
+      const { nextPlayer } = result.turnAdvance;
       const pendingPrompt = this.orchestrator.getPendingDecisionPrompt();
       const msg = pendingPrompt
         ? t("game.turnAnnouncementWithDecision", {
-            name: result.turnAdvancedAfterPowerCheckFail.name,
-            position: result.turnAdvancedAfterPowerCheckFail.position,
+            name: nextPlayer.name,
+            position: nextPlayer.position,
             prompt: pendingPrompt,
           })
         : t("game.turnAnnouncement", {
-            name: result.turnAdvancedAfterPowerCheckFail.name,
-            position: result.turnAdvancedAfterPowerCheckFail.position,
+            name: nextPlayer.name,
+            position: nextPlayer.position,
           });
       await this.speechService.speak(msg);
       this.orchestrator.setLastNarrationForVoicePolicy(msg);
-    } else if (result.success && result.shouldAdvanceTurn) {
+    } else if (result.success && result.turnAdvance.kind === "callAdvanceTurn") {
       await this.checkAndAdvanceTurn();
     }
 
