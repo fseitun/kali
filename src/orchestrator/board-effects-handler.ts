@@ -746,14 +746,13 @@ export class BoardEffectsHandler {
     const teleportKinds = ["portal", "goldenFox", "skull"] as const;
     const isTeleport = kind && teleportKinds.includes(kind as (typeof teleportKinds)[number]);
     const portalFrom = this.getNoChoicePortalFromSquare(kind, arrivedViaTeleportFrom, squareData);
-    const noMoveHint = !isTeleport ? t("squares.landedStayHint") : "";
     const portalSuffix =
       portalFrom !== undefined ? t("squares.landedPortalNoChoice", { fromSquare: portalFrom }) : "";
     const teleportHint =
       isTeleport && portalFrom === undefined
         ? `${t("squares.landedTeleportHint")} ${t("narration.stateSquareNumber")}`
         : "";
-    return `${base}${noMoveHint}${portalSuffix}${teleportHint}`.trim();
+    return `${base}${portalSuffix}${teleportHint}`.trim();
   }
 
   async checkAndApplySquareEffects(path: string, context: ExecutionContext): Promise<void> {

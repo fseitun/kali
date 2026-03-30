@@ -323,10 +323,10 @@ describe("Orchestrator Integration Tests", () => {
         position: 116,
         squareName: "Wasps",
       });
-      const expectedWaspLanding = `${t("squares.landedWithApplied", {
+      const expectedWaspLanding = t("squares.landedWithApplied", {
         base: waspBase,
         applied: t("squares.appliedSkipNoAntiWasp"),
-      })}${t("squares.landedStayHint")}`.trim();
+      }).trim();
       expect(speakMock).toHaveBeenCalledWith(expectedWaspLanding);
     });
   });

@@ -68,8 +68,6 @@ export const enUS = {
     appliedSkipNoTorch: "No torch — you skip your next turn.",
     appliedAntiWaspUsed: "Your anti-wasp suit helps — no skip.",
     appliedSkipNoAntiWasp: "No anti-wasp suit — you skip your next turn.",
-    landedStayHint:
-      " You're already on this square — don't say you moved here; only describe what happens.",
     landedPortalNoChoice:
       " You came through the portal from square {fromSquare}. You stay here — no choice to make.",
     landedTeleportHint: " Say the square number you're on so everyone knows.",

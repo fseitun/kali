@@ -69,8 +69,6 @@ export const esAR = {
     appliedSkipNoTorch: "Sin antorcha — saltás el próximo turno.",
     appliedAntiWaspUsed: "El traje anti-avispas te ayuda — no saltás turno.",
     appliedSkipNoAntiWasp: "Sin traje anti-avispas — saltás el próximo turno.",
-    landedStayHint:
-      " Ya estás en este casillero — no digas que te moviste acá; solo contá qué pasa.",
     landedPortalNoChoice:
       " Llegaste por el portal desde el casillero {fromSquare}. Te quedás acá — no hay elección.",
     landedTeleportHint: " Decí el número de casillero donde estás para que todos sepan.",
