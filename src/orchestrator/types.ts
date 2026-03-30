@@ -107,8 +107,10 @@ export interface ExecutionContext {
   /** Set when power check/revenge was handled; skip trailing NARRATE from LLM (orchestrator speaks pass/fail). */
   skipTrailingNarrateForPowerCheck?: boolean;
   /**
-   * Set when deterministic square effects applied "skip next turn" on this landing (e.g. skipTurn trap).
-   * Allows turn advancement despite skipTrailingNarrateForPowerCheck (power-check win path).
+   * Allows turn advancement despite `skipTrailingNarrateForPowerCheck` after power-check/revenge
+   * resolution: (1) skip-turn trap on the landing square, or (2) power/revenge win where the
+   * winning roll already advanced the token along the graph (Kalimba §2B/C — see
+   * `RiddlePowerCheckHandler.handlePowerCheckWin`).
    */
   advanceTurnDespitePowerCheckSuppress?: boolean;
   /** Set when we just spoke a NARRATE that asks for the current decision; skip enforceDecisionPoints this round. */

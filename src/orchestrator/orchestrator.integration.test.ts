@@ -433,7 +433,7 @@ describe("Orchestrator Integration Tests", () => {
       expect(pending.kind).toBe("revenge");
     });
 
-    it("does not advance turn on power check win (shouldAdvanceTurn false)", async () => {
+    it("power check win advances turn when power die completed graph movement (Kalimba §2B)", async () => {
       mockLLM = createScriptedLLM([]);
       setLocale("en-US");
       const initialState: GameState = {
@@ -472,7 +472,7 @@ describe("Orchestrator Integration Tests", () => {
       ]);
 
       expect(result.success).toBe(true);
-      expect(result.shouldAdvanceTurn).toBe(false);
+      expect(result.shouldAdvanceTurn).toBe(true);
       expect(result.turnAdvancedAfterPowerCheckFail).toBeUndefined();
 
       const turn = stateManager.get("game.turn");
@@ -481,11 +481,56 @@ describe("Orchestrator Integration Tests", () => {
       const pending = stateManager.get("game.pending");
       expect(pending).toBeNull();
 
+      expect(stateManager.get("players.p1.position")).toBe(11);
+
       expect(mockSpeech.speak).toHaveBeenNthCalledWith(1, "You passed.");
-      expect(mockSpeech.speak).toHaveBeenNthCalledWith(
-        2,
-        "Alice, you're still on square 11. Roll the dice and tell me what you got.",
-      );
+      expect(mockSpeech.speak).toHaveBeenCalledTimes(1);
+      setLocale("es-AR");
+    });
+
+    it("beetle-like power check win (1d6 after wrong riddle) does not prompt second movement die (regression)", async () => {
+      mockLLM = createScriptedLLM([]);
+      setLocale("en-US");
+      const initialState: GameState = {
+        game: {
+          name: "Test Game",
+          phase: GamePhase.PLAYING,
+          turn: "p1",
+          playerOrder: ["p1", "p2"],
+          winner: null,
+          lastRoll: 2,
+          pending: {
+            position: 16,
+            power: 1,
+            playerId: "p1",
+            kind: "powerCheck",
+            riddleCorrect: false,
+          },
+        },
+        players: {
+          p1: { id: "p1", name: "Fico", position: 16 },
+          p2: { id: "p2", name: "Fede", position: 0 },
+        },
+        board: {
+          squares: {
+            "16": { name: "Beetle", power: 1 },
+            "100": { effect: "win" },
+          },
+        },
+      };
+
+      setupGame(initialState);
+
+      const result = await orchestrator.testExecuteActions([
+        { action: "PLAYER_ANSWERED", answer: "4" },
+      ]);
+
+      expect(result.success).toBe(true);
+      expect(result.shouldAdvanceTurn).toBe(true);
+      expect(stateManager.get("players.p1.position")).toBe(20);
+      expect(stateManager.get("game.pending")).toBeNull();
+      expect(mockSpeech.speak).toHaveBeenNthCalledWith(1, "You passed.");
+      expect(mockSpeech.speak).toHaveBeenCalledTimes(1);
       setLocale("es-AR");
     });
 

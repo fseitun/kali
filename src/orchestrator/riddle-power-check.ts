@@ -174,6 +174,8 @@ export class RiddlePowerCheckHandler {
     const winJumpTo = squareData?.winJumpTo as number | undefined;
     let newPosition: number;
     let pendingAfter: PendingCompleteRollMovement | null = null;
+    /** Kalimba §2B/C: the power/revenge die both beats the animal and advances along the graph; no separate movement die. */
+    let powerDieWasFullGraphAdvance = false;
 
     if (typeof winJumpTo === "number") {
       newPosition = winJumpTo;
@@ -187,6 +189,7 @@ export class RiddlePowerCheckHandler {
       );
       if (movement.kind === "complete") {
         newPosition = movement.finalPosition;
+        powerDieWasFullGraphAdvance = true;
       } else {
         newPosition = movement.positionAtFork;
         pendingAfter = {
@@ -221,6 +224,10 @@ export class RiddlePowerCheckHandler {
       );
     }
     this.deps.checkAndApplyWinCondition(positionPath);
+
+    if (powerDieWasFullGraphAdvance) {
+      context.advanceTurnDespitePowerCheckSuppress = true;
+    }
 
     if (this.shouldSpeakAfterEncounterMovementNudge(playerId, context)) {
       const name = this.displayNameForPlayer(
@@ -299,10 +306,17 @@ export class RiddlePowerCheckHandler {
   }
 
   /**
-   * After a power-check or revenge win, the same player keeps the turn but the app does not
-   * auto-announce movement dice. Prompt when the encounter chain is done: `game.pending` is
-   * cleared, the mover is still `game.turn`, and the batch is not forcing immediate turn handoff
-   * (e.g. skip-turn landing sets `ExecutionContext.advanceTurnDespitePowerCheckSuppress`).
+   * Prompt for a **separate** movement die only when the encounter resolution did not already
+   * move the token along the board graph with the power/revenge roll (Kalimba §2B/C: winning
+   * that roll advances immediately by that amount). That case sets
+   * `advanceTurnDespitePowerCheckSuppress` and skips this nudge.
+   *
+   * Still prompt when `winJumpTo` or chained board effects placed the player without that
+   * semantics (e.g. ADR 0003 portal after eagle jump), or when `game.pending` holds fork
+   * remainder (`completeRollMovement` — fork prompt is spoken separately).
+   *
+   * Also skipped when `advanceTurnDespitePowerCheckSuppress` is already true (e.g. skip-turn
+   * landing from `BoardEffectsHandler`).
    */
   private shouldSpeakAfterEncounterMovementNudge(
     playerId: string,
