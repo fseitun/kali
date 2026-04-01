@@ -8,6 +8,8 @@ export type LlmStateContextBundle = {
   decisionHintKeywordLine: string;
   decisionHintDefault: string;
   riddleAfterEncounter: string;
+  /** When square has winJumpTo: tell LLM to mention shortcut destination in NARRATE (riddle/power/revenge). */
+  encounterWinJumpHint: string;
   riddleHabitatNote: string;
   riddleNarrationShape: string;
   riddleAntiLeak: string;
@@ -43,6 +45,8 @@ export const llmStateContextEsAR: LlmStateContextBundle = {
     " Cuando la intención es clara, devolvé PLAYER_ANSWERED con el número de casilla destino; si no, NARRATE para volver a preguntar.",
   riddleAfterEncounter:
     " Después de la adivinanza: si acerta, tira {correctDice}d6 (suma frente a fuerza del animal {power}); si falla, {wrongDice}d6. En NARRATE (español argentino, voseo), decilo simple para chicos — por ejemplo un dado extra o más dados para intentar superar al animal — no digas «prueba de poder» ni «power check».",
+  encounterWinJumpHint:
+    " Atajo en esta casilla: si superás al animal con el tiro, el tablero te lleva al casillero {targetSquare}. Mencioná esa posibilidad al armar la escena (NARRATE), sin spoilear la respuesta de la adivinanza.",
   riddleHabitatNote:
     " Abrí la escena en este hábitat (dato de casilla: {hab}) — usá nombre de animal en español natural, no el token en inglés de la config (ej. «morsa», no «walrus»); no empieces con el número de casillero salvo que haga falta.",
   riddleNarrationShape:
@@ -94,6 +98,8 @@ export const llmStateContextEnUS: LlmStateContextBundle = {
     " When intent is clear, return PLAYER_ANSWERED with the target square number; if unclear, NARRATE to ask again.",
   riddleAfterEncounter:
     ' After the riddle: if correct, player rolls {correctDice}d6 (sum vs animal strength {power}); if wrong, {wrongDice}d6. In NARRATE (US English), say it in plain kid-friendly terms — e.g. an extra die / more dice to try to beat the animal — never say "prueba de poder" or "power check".',
+  encounterWinJumpHint:
+    " Shortcut on this square: if you beat the animal on the roll, the board sends you to square {targetSquare}. Mention that when setting the scene (NARRATE), without spoiling the riddle answer.",
   riddleHabitatNote:
     " Open the scene in this habitat (square data: {hab}) — use a natural English place name, not the raw key; do not open with the square number unless necessary.",
   riddleNarrationShape:

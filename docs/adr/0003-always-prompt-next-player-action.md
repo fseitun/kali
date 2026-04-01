@@ -26,6 +26,8 @@ Implementers should ask: _After this line, would someone who only hears audio kn
 
 Power-check or revenge **win** can chain **automatic** board moves (e.g. snake) and then nested square narration (e.g. a **no-choice portal**: SYSTEM text tells the LLM not to ask questions). In that case the model may speak only flavor; the player still holds the turn and needs a **movement roll**. Do **not** suppress deterministic `afterEncounterRollPrompt` just because the final square has board metadata (e.g. `nextOnLanding`): use **`game.pending`**, **`game.turn ===` mover**, and **`ExecutionContext.advanceTurnDespitePowerCheckSuppress`** (skip-turn style handoff) to decide whether to nudge. See [`src/orchestrator/riddle-power-check.ts`](../../src/orchestrator/riddle-power-check.ts) (`shouldSpeakAfterEncounterMovementNudge`). Regression test: `after power check win through snake to no-choice portal speaks afterEncounterRollPrompt` in [`src/orchestrator/orchestrator.integration.test.ts`](../../src/orchestrator/orchestrator.integration.test.ts).
 
+When **`winJumpTo`** applies and the token **remains** on that jump square after chained moves, the encounter die has already resolved placement: suppress `afterEncounterRollPrompt` and rely on turn advance + app turn announcement instead (e.g. Giraffe → 162). Regression: `revenge win with winJumpTo when token stays on jump square skips afterEncounterRollPrompt` in the same integration file.
+
 ## Links
 
 - Rule: [`.cursor/rules/development-guidelines.mdc`](../../.cursor/rules/development-guidelines.mdc) (Voice-Only UX — next-action clarity)

@@ -228,9 +228,15 @@ export class RiddlePowerCheckHandler {
     );
     this.deps.checkAndApplyWinCondition(positionPath);
 
-    if (powerDieWasFullGraphAdvance) {
-      context.advanceTurnDespitePowerCheckSuppress = true;
-    }
+    this.deps.stateManager.set(GAME_PATH.lastRoll, roll);
+
+    this.applyEncounterWinSuppressForTurnAdvance(
+      context,
+      playerId,
+      powerDieWasFullGraphAdvance,
+      pendingAfter,
+      winJumpTo,
+    );
 
     if (this.shouldSpeakAfterEncounterMovementNudge(playerId, context)) {
       const name = this.displayNameForPlayer(
@@ -245,6 +251,26 @@ export class RiddlePowerCheckHandler {
     }
 
     return { handled: true, passed: true };
+  }
+
+  private applyEncounterWinSuppressForTurnAdvance(
+    context: ExecutionContext,
+    playerId: string,
+    powerDieWasFullGraphAdvance: boolean,
+    pendingAfter: PendingCompleteRollMovement | null,
+    winJumpTo: number | undefined,
+  ): void {
+    if (powerDieWasFullGraphAdvance) {
+      context.advanceTurnDespitePowerCheckSuppress = true;
+      return;
+    }
+    if (pendingAfter !== null || typeof winJumpTo !== "number") {
+      return;
+    }
+    const landed = this.deps.stateManager.get(playerStatePath(playerId, "position")) as number;
+    if (landed === winJumpTo) {
+      context.advanceTurnDespitePowerCheckSuppress = true;
+    }
   }
 
   private displayNameForPlayer(state: GameState, playerId: string): string {
@@ -377,9 +403,10 @@ export class RiddlePowerCheckHandler {
    * that roll advances immediately by that amount). That case sets
    * `advanceTurnDespitePowerCheckSuppress` and skips this nudge.
    *
-   * Still prompt when `winJumpTo` or chained board effects placed the player without that
-   * semantics (e.g. ADR 0003 portal after eagle jump), or when `game.pending` holds fork
-   * remainder (`completeRollMovement` — fork prompt is spoken separately).
+   * Also skip when `winJumpTo` was applied and the token **remains** on that jump square after
+   * board moves and square effects (e.g. Giraffe → 162). Still prompt when chained board moves
+   * slide the player **off** the jump target (ADR 0003: eagle → chute → portal) or when
+   * `game.pending` holds fork remainder (`completeRollMovement` — fork prompt is spoken separately).
    *
    * Also skipped when `advanceTurnDespitePowerCheckSuppress` is already true (e.g. skip-turn
    * landing from `BoardEffectsHandler`).

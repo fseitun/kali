@@ -216,6 +216,17 @@ function formatDecisionPointContext(
   });
 }
 
+function appendEncounterWinJumpHint(
+  squareData: Record<string, unknown> | undefined,
+  L: LlmStateContextBundle,
+): string {
+  const j = squareData?.winJumpTo;
+  if (typeof j !== "number") {
+    return "";
+  }
+  return substLlmState(L.encounterWinJumpHint, { targetSquare: String(j) });
+}
+
 function buildRiddleEncounterHints(
   state: Record<string, unknown>,
   pending: { position?: number; power?: number },
@@ -238,6 +249,7 @@ function buildRiddleEncounterHints(
     wrongDice: cfg.ifRiddleWrong,
     power: powerVal,
   });
+  hints += appendEncounterWinJumpHint(squareData, L);
   const hab = squareData.habitat;
   if (typeof hab === "string" && hab.trim() !== "") {
     hints += substLlmState(L.riddleHabitatNote, { hab });
@@ -297,11 +309,21 @@ function formatPowerCheckContext(
         });
   const helpLine =
     n === 1 ? L.powerCheckHelpOneDie : substLlmState(L.powerCheckHelpManyDice, { n });
-  return substLlmState(L.powerCheckBlock, { playerName, rollInstruction, helpLine });
+  return (
+    substLlmState(L.powerCheckBlock, { playerName, rollInstruction, helpLine }) +
+    appendEncounterWinJumpHint(squareData, L)
+  );
 }
 
-function formatRevengeContext(playerName: string, power: number, L: LlmStateContextBundle): string {
-  return substLlmState(L.revengeBlock, { playerName, power });
+function formatRevengeContext(
+  playerName: string,
+  power: number,
+  squareData: Record<string, unknown> | undefined,
+  L: LlmStateContextBundle,
+): string {
+  return (
+    substLlmState(L.revengeBlock, { playerName, power }) + appendEncounterWinJumpHint(squareData, L)
+  );
 }
 
 function formatDirectionalRollContext(
@@ -386,7 +408,10 @@ function formatPendingContext(state: Record<string, unknown>, L: LlmStateContext
     );
   }
   if (kind === "revenge") {
-    return formatRevengeContext(playerName, power, L);
+    const revPos = pending.position as number | undefined;
+    const revSquare =
+      typeof revPos === "number" ? getSquareDataAtPosition(state as GameState, revPos) : undefined;
+    return formatRevengeContext(playerName, power, revSquare, L);
   }
   if (kind === "directional") {
     const dice = pending.dice as 1 | 2 | 3;

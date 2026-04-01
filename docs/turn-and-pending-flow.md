@@ -11,7 +11,7 @@ Reference for how a player turn works end-to-end, what `game.pending` means, and
 
 **Dice:** correct answer gives +1 die; wrong gives +0 extra. Exact counts come from [`getPowerCheckRollSpec`](../src/orchestrator/power-check-dice.ts).
 
-**Power check:** sum of Nd6 **`>`** animal power → win. Player advances by that roll on the board graph (Kalimba §2B/C — no separate movement die). Exception: `winJumpTo` or portal chain → [`afterEncounterRollPrompt`](../src/i18n/locales/en-US.ts) asks for a separate roll.
+**Power check:** sum of Nd6 **`>`** animal power → win. Player advances by that roll on the board graph (Kalimba §2B/C — no separate movement die). If the square has `winJumpTo` and the token **remains** on that jump square after board moves and square effects (e.g. Giraffe → 162), the encounter die fully resolved placement — no separate movement roll. [`afterEncounterRollPrompt`](../src/i18n/locales/en-US.ts) still runs when chained board moves slide the player **off** the jump target (ADR 0003: eagle jump then chute/portal).
 
 **Power check lose:** `pending` becomes `revenge`; turn passes to the next player via `advanceTurnMechanical`.
 

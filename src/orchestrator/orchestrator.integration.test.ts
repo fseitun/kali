@@ -597,6 +597,54 @@ describe("Orchestrator Integration Tests", () => {
       setLocale("es-AR");
     });
 
+    it("revenge win with winJumpTo when token stays on jump square skips afterEncounterRollPrompt (Giraffe → 162)", async () => {
+      mockLLM = createScriptedLLM([]);
+      setLocale("en-US");
+      const initialState: GameState = {
+        game: {
+          name: "Test Game",
+          phase: GamePhase.PLAYING,
+          turn: "p1",
+          playerOrder: ["p1", "p2"],
+          winner: null,
+          lastRoll: 5,
+          pending: {
+            kind: "revenge",
+            playerId: "p1",
+            position: 145,
+            power: 2,
+            phase: "revenge",
+          },
+        },
+        players: {
+          p1: { id: "p1", name: "F", position: 145 },
+          p2: { id: "p2", name: "B", position: 0 },
+        },
+        board: {
+          squares: {
+            "145": { name: "Giraffe", power: 2, winJumpTo: 162, habitat: "savanna" },
+            "162": {},
+            "100": { effect: "win" },
+          },
+        },
+      };
+
+      setupGame(initialState);
+
+      const result = await orchestrator.testExecuteActions([
+        { action: "PLAYER_ANSWERED", answer: "3" },
+      ]);
+
+      expect(result.success).toBe(true);
+      expect(result.turnAdvance.kind).toBe("callAdvanceTurn");
+      expect(stateManager.get("players.p1.position")).toBe(162);
+      expect(stateManager.get("game.pending")).toBeNull();
+      expect(stateManager.get("game.lastRoll")).toBe(3);
+      expect(mockSpeech.speak).toHaveBeenNthCalledWith(1, "You passed.");
+      expect(mockSpeech.speak).toHaveBeenCalledTimes(1);
+      setLocale("es-AR");
+    });
+
     it("power check win landing on skipTurn sets turnAdvance callAdvanceTurn (next player can be announced)", async () => {
       mockLLM = createScriptedLLM([
         [{ action: "NARRATE", text: "Quicksand — you skip next turn." }],
