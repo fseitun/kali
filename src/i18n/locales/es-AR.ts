@@ -22,6 +22,8 @@ export const esAR = {
       "{name}, te toca. Estás en el casillero {position}. Tira el dado y decime qué sacaste.",
     turnAnnouncementMagicDoor:
       "{name}, te toca. Estás en el casillero {position}, la puerta mágica. Tenés {heartsPhrase}. Tirá un dado solo para intentar abrir la puerta: el número del dado más tus corazones tiene que sumar {target} o más; con lo que tenés ahora, necesitás al menos un {minDie} en el dado. Decime qué sacaste.",
+    turnAnnouncementMagicDoorWithScimitar:
+      "{name}, te toca. Estás en el casillero {position}, la puerta mágica. Tenés {heartsPhrase} y la cimitarra, que suma un punto más para abrirla. Tirá un dado solo para intentar abrir la puerta: el número del dado más tus corazones más un punto por la cimitarra tiene que sumar {target} o más; con lo que tenés ahora, necesitás al menos un {minDie} en el dado. Decime qué sacaste.",
     turnHandoff: "Ahora le toca a {name}.",
     turnAnnouncementWithDecision: "{name}, te toca. Estás en el casillero {position}. {prompt}",
     skipTurnAnnouncement: "{name}, saltás este turno.",
@@ -84,6 +86,10 @@ export const esAR = {
     magicDoorHeartsMany: "{hearts} corazones",
     magicDoorLanding:
       "{name}, caíste justo en el casillero {position} ({squareName}). Tu tirada de movimiento ya contó: en la puerta no avanzás hasta abrirla. Ahora le toca a los demás — sigue {nextPlayer}. Cuando vuelva a tocarte, te recuerdo tus corazones y tirás un dado solo para abrir: el dado más tus corazones tiene que sumar {target} o más. Ahora tenés {heartsPhrase}; cuando intentes abrir, vas a necesitar sacar al menos un {minDie} en el dado.",
+    magicDoorLandingWithScimitar:
+      "{name}, caíste justo en el casillero {position} ({squareName}). Tu tirada de movimiento ya contó: en la puerta no avanzás hasta abrirla. Ahora le toca a los demás — sigue {nextPlayer}. Cuando vuelva a tocarte, tirás un dado solo para abrir: el dado más tus corazones más un punto por la cimitarra tiene que sumar {target} o más. Ahora tenés {heartsPhrase} y la cimitarra; cuando intentes abrir, vas a necesitar sacar al menos un {minDie} en el dado.",
+    scimitarDoorHint:
+      "La cimitarra suma un punto más cuando intentes abrir la puerta mágica: el dado más tus corazones más ese punto tienen que sumar {target} o más.",
   },
   ui: {
     startButton: "Jugar",

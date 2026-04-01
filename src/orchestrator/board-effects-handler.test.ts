@@ -565,6 +565,22 @@ describe("BoardEffectsHandler", () => {
       expect(text).toMatch(/4|die/i);
     });
 
+    it("magic door landing with scimitar uses lower min die in copy", async () => {
+      stateManager.set("board.squares", {
+        "186": { name: "Magic Door", effect: "magicDoorCheck", target: 6 },
+      });
+      stateManager.set("players.p1.position", 186);
+      stateManager.set("players.p1.hearts", 1);
+      stateManager.set("players.p1.items", ["scimitar"]);
+      stateManager.set("game.turn", "p1");
+
+      await boardEffectsHandler.checkAndApplySquareEffects("players.p1.position", baseContext);
+
+      const text = String(mockSpeak.mock.calls[0]?.[0] ?? "");
+      expect(text).toMatch(/scimitar/i);
+      expect(text).toMatch(/at least a 4/i);
+    });
+
     it("should include square data in synthetic transcript", async () => {
       const squareData = {
         name: "Bear",
@@ -683,6 +699,21 @@ describe("BoardEffectsHandler", () => {
       await boardEffectsHandler.checkAndApplySquareEffects("players.p1.position", baseContext);
 
       expect(stateManager.get("players.p1.items")).toEqual(["scimitar"]);
+    });
+
+    it("scimitar pickup speech includes magic door hint with configured target", async () => {
+      stateManager.set("board.squares", {
+        "176": { item: "scimitar" },
+        "186": { name: "Magic Door", effect: "magicDoorCheck", target: 6 },
+      });
+      stateManager.set("players.p1.position", 176);
+      stateManager.set("players.p1.items", []);
+
+      await boardEffectsHandler.checkAndApplySquareEffects("players.p1.position", baseContext);
+
+      const text = String(mockSpeak.mock.calls[0]?.[0] ?? "");
+      expect(text).toMatch(/scimitar|extra point|magic door/i);
+      expect(text).toMatch(/6/);
     });
 
     it("Eagle (animal + extra power dice) sets pending encounter; no rewards on landing", async () => {

@@ -22,6 +22,8 @@ export const enUS = {
       "{name}, it's your turn. You're at position {position}. Roll the dice and tell me what you got.",
     turnAnnouncementMagicDoor:
       "{name}, it's your turn. You're on square {position}, the magic door. You have {heartsPhrase}. Roll one die only to try to open the door: your die plus your hearts must add up to {target} or more; with what you have now, you need at least a {minDie} on the die. Tell me what you rolled.",
+    turnAnnouncementMagicDoorWithScimitar:
+      "{name}, it's your turn. You're on square {position}, the magic door. You have {heartsPhrase} and the scimitar, which counts as an extra point toward opening it. Roll one die only to try to open the door: your die plus your hearts plus one for the scimitar must add up to {target} or more; with what you have now, you need at least a {minDie} on the die. Tell me what you rolled.",
     turnHandoff: "Now it's {name}'s turn.",
     turnAnnouncementWithDecision: "{name}, it's your turn. You're at position {position}. {prompt}",
     skipTurnAnnouncement: "{name}, you're skipping this turn.",
@@ -83,6 +85,10 @@ export const enUS = {
     magicDoorHeartsMany: "{hearts} hearts",
     magicDoorLanding:
       "{name}, you landed exactly on square {position} ({squareName}). Your move roll is done — you don't advance further until you open the door. The others play now — {nextPlayer} is next. When it's your turn again, I'll remind you how many hearts you have and you'll roll one die only to open: your die plus your hearts must add up to {target} or more. Right now you have {heartsPhrase}; when you try to open, you'll need at least a {minDie} on the die.",
+    magicDoorLandingWithScimitar:
+      "{name}, you landed exactly on square {position} ({squareName}). Your move roll is done — you don't advance further until you open the door. The others play now — {nextPlayer} is next. When it's your turn again, you'll roll one die only to open: your die plus your hearts plus one for the scimitar must add up to {target} or more. Right now you have {heartsPhrase} and the scimitar; when you try to open, you'll need at least a {minDie} on the die.",
+    scimitarDoorHint:
+      "The scimitar counts as an extra point when you try to open the magic door: die plus hearts plus that point must reach {target} or more.",
   },
   ui: {
     startButton: "Start",

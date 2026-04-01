@@ -4,6 +4,7 @@ import {
   getMagicDoorConfig,
   getWinPosition,
   minDieToOpenMagicDoor,
+  scimitarDoorBonusFromItems,
 } from "./board-helpers";
 
 describe("findSquareByEffect", () => {
@@ -79,5 +80,21 @@ describe("minDieToOpenMagicDoor", () => {
     expect(minDieToOpenMagicDoor(6, 3)).toBe(3);
     expect(minDieToOpenMagicDoor(6, 5)).toBe(1);
     expect(minDieToOpenMagicDoor(6, 6)).toBe(1);
+  });
+
+  it("treats scimitar bonus like an extra heart for the door threshold", () => {
+    expect(minDieToOpenMagicDoor(6, 0, 1)).toBe(5);
+    expect(minDieToOpenMagicDoor(6, 1, 1)).toBe(4);
+    expect(minDieToOpenMagicDoor(6, 5, 1)).toBe(1);
+  });
+});
+
+describe("scimitarDoorBonusFromItems", () => {
+  it("returns 1 only when scimitar is in items", () => {
+    expect(scimitarDoorBonusFromItems(undefined)).toBe(0);
+    expect(scimitarDoorBonusFromItems([])).toBe(0);
+    expect(scimitarDoorBonusFromItems(["torch"])).toBe(0);
+    expect(scimitarDoorBonusFromItems(["scimitar"])).toBe(1);
+    expect(scimitarDoorBonusFromItems(["torch", "scimitar"])).toBe(1);
   });
 });

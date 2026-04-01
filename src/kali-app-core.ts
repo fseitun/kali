@@ -2,15 +2,10 @@ import { CONFIG } from "./config";
 import { KALIMBA_EXAMPLES } from "./game-loader/examples/kalimba";
 import { GameLoader } from "./game-loader/game-loader";
 import type { GameModule } from "./game-loader/types";
-import { magicDoorHeartsPhrase } from "./i18n/magic-door-phrases";
+import { buildMagicDoorTurnAnnouncementIfOnDoor } from "./i18n/magic-door-turn-announcement";
 import { t } from "./i18n/translations";
 import { createLLMClient } from "./llm/llm-client-factory";
 import type { LLMClient } from "./llm/LLMClient";
-import {
-  getMagicDoorConfig,
-  minDieToOpenMagicDoor,
-  type SquareLike,
-} from "./orchestrator/board-helpers";
 import { inferDecisionPoints } from "./orchestrator/decision-point-inference";
 import { NameCollector } from "./orchestrator/name-collector";
 import { Orchestrator } from "./orchestrator/orchestrator";
@@ -410,21 +405,7 @@ ${summary ? `**Summary (for NARRATE explanations):** ${summary}\n` : ""}${exampl
     nextPlayer: { playerId: string; name: string; position: number },
     state: GameState | undefined,
   ): string | null {
-    const squares = state?.board?.squares as Record<string, SquareLike> | undefined;
-    const door = getMagicDoorConfig(squares);
-    if (nextPlayer.position !== door?.position) {
-      return null;
-    }
-    const heartsRaw = state?.players?.[nextPlayer.playerId]?.hearts;
-    const hearts = typeof heartsRaw === "number" && heartsRaw >= 0 ? heartsRaw : 0;
-    const minDie = minDieToOpenMagicDoor(door.target, hearts);
-    return t("game.turnAnnouncementMagicDoor", {
-      name: nextPlayer.name,
-      position: nextPlayer.position,
-      heartsPhrase: magicDoorHeartsPhrase(hearts),
-      target: door.target,
-      minDie,
-    });
+    return buildMagicDoorTurnAnnouncementIfOnDoor(nextPlayer, state);
   }
 
   /**
