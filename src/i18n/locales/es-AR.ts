@@ -32,6 +32,8 @@ export const esAR = {
     powerCheckPassForkPrompt:
       "{name}, te quedan {remainingSteps} casilleros por mover. Estás en la bifurcación del {forkSquare}: decime si vas al {options}.",
     powerCheckPassLandedAt: "{name}, caíste en el casillero {position}.",
+    powerCheckPassBoardJump:
+      "{name}, caíste en el casillero {fromSquare} y un atajo del tablero te lleva al casillero {toSquare}{suffix}.",
     afterEncounterRollPrompt:
       "{name}, seguís en el casillero {position}. Tirá el dado y decime qué sacaste.",
     powerCheckFail: "No alcanzó.",

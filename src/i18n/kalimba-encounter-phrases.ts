@@ -119,3 +119,41 @@ export function possessiveScorePhraseEn(configName: string | undefined): string 
   }
   return POSSESSIVE_SCORE_PHRASE_EN[configName] ?? FALLBACK_EN;
 }
+
+/** Short noun phrase for TTS when naming a destination square (e.g. after a board shortcut). */
+export function squareSpeechLabelEs(configName: string | undefined): string | undefined {
+  if (!configName) {
+    return undefined;
+  }
+  const p = POSSESSIVE_SCORE_PHRASE_ES[configName];
+  if (!p) {
+    return undefined;
+  }
+  if (p.startsWith("del ")) {
+    return `el ${p.slice(4)}`;
+  }
+  if (p.startsWith("de la ")) {
+    return `la ${p.slice(6)}`;
+  }
+  if (p.startsWith("de los ")) {
+    return `los ${p.slice(7)}`;
+  }
+  return undefined;
+}
+
+export function squareSpeechLabelEn(configName: string | undefined): string | undefined {
+  if (!configName) {
+    return undefined;
+  }
+  const p = POSSESSIVE_SCORE_PHRASE_EN[configName];
+  if (!p) {
+    return configName;
+  }
+  if (p.endsWith("'s power")) {
+    return p.slice(0, -"'s power".length);
+  }
+  if (p.endsWith(" power")) {
+    return p.slice(0, -" power".length).trim();
+  }
+  return p;
+}

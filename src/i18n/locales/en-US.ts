@@ -32,6 +32,8 @@ export const enUS = {
     powerCheckPassForkPrompt:
       "{name}, you have {remainingSteps} spaces left to move. You're at the fork on square {forkSquare}: say whether you're going to {options}.",
     powerCheckPassLandedAt: "{name}, you landed on square {position}.",
+    powerCheckPassBoardJump:
+      "{name}, you landed on square {fromSquare} and a board shortcut takes you to square {toSquare}{suffix}.",
     afterEncounterRollPrompt:
       "{name}, you're still on square {position}. Roll the dice and tell me what you got.",
     powerCheckFail: "No luck.",
