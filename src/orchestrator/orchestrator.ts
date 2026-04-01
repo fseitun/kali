@@ -729,13 +729,14 @@ export class Orchestrator {
         }),
     );
 
-    // After initial power-check loss the app announces the next player (incl. fork prompt);
-    // skip nested enforce here to avoid duplicating the fork question (see turnAdvancedAfterPowerCheckFail).
+    // After power-check loss or §2B win the app announces the next player (incl. fork prompt);
+    // skip nested enforce here to avoid duplicating the fork question.
     const shouldEnforceDecisionPoints =
       !context.isNestedCall &&
       !context.skipDecisionPointEnforcement &&
       !context.justNarratedDecisionAsk &&
-      !context.turnAdvancedAfterPowerCheckFail;
+      !context.turnAdvancedAfterPowerCheckFail &&
+      !context.turnAdvancedAfterPowerCheckWin;
     if (shouldEnforceDecisionPoints) {
       await this.decisionPointEnforcer.enforceDecisionPoints(context);
     }
@@ -748,8 +749,10 @@ export class Orchestrator {
     context: ExecutionContext,
     shouldAdvanceTurnFromActions: boolean,
   ): TurnAdvance {
-    if (context.turnAdvancedAfterPowerCheckFail) {
-      return { kind: "alreadyAdvanced", nextPlayer: context.turnAdvancedAfterPowerCheckFail };
+    const mechanicalNext =
+      context.turnAdvancedAfterPowerCheckWin ?? context.turnAdvancedAfterPowerCheckFail;
+    if (mechanicalNext) {
+      return { kind: "alreadyAdvanced", nextPlayer: mechanicalNext };
     }
     const dismissSuppress = context.advanceTurnDespitePowerCheckSuppress === true;
     const blocked = context.skipTrailingNarrateForPowerCheck && !dismissSuppress;

@@ -104,13 +104,19 @@ export interface ExecutionContext {
   skipDecisionPointEnforcement?: boolean;
   /** Set when power check fails and turn was advanced; app should announce next player. */
   turnAdvancedAfterPowerCheckFail?: { playerId: string; name: string; position: number };
+  /**
+   * Set when power-check win used Kalimba §2B full graph advance; orchestrator advanced `game.turn`
+   * mechanically so the app announces the next player (same UX as `turnAdvancedAfterPowerCheckFail`).
+   */
+  turnAdvancedAfterPowerCheckWin?: { playerId: string; name: string; position: number };
   /** Set when power check/revenge was handled; skip trailing NARRATE from LLM (orchestrator speaks pass/fail). */
   skipTrailingNarrateForPowerCheck?: boolean;
   /**
    * Allows turn advancement despite `skipTrailingNarrateForPowerCheck` after power-check/revenge
-   * resolution: (1) skip-turn trap on the landing square, or (2) power/revenge win where the
-   * winning roll already advanced the token along the graph (Kalimba §2B/C — see
-   * `RiddlePowerCheckHandler.handlePowerCheckWin`).
+   * resolution: (1) skip-turn trap on the landing square, (2) power/revenge win where the
+   * winning roll already advanced the token along the graph (Kalimba §2B/C), or (3) stable
+   * `winJumpTo` landing (token still on the jump target after `checkAndApplyBoardMoves`).
+   * See `RiddlePowerCheckHandler.handlePowerCheckWin`.
    */
   advanceTurnDespitePowerCheckSuppress?: boolean;
   /** Set when we just spoke a NARRATE that asks for the current decision; skip enforceDecisionPoints this round. */

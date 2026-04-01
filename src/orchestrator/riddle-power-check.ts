@@ -12,7 +12,6 @@ import { isStrictRiddleCorrect } from "./riddle-answer";
 import type { TurnManager } from "./turn-manager";
 import { GamePhase, type ExecutionContext, type GameState, type SquareData } from "./types";
 import type { IStatusIndicator } from "@/components/status-indicator";
-import { squareSpeechLabelEn, squareSpeechLabelEs } from "@/i18n/kalimba-encounter-phrases";
 import { getLocale } from "@/i18n/locale-manager";
 import { t } from "@/i18n/translations";
 import type { LLMClient } from "@/llm/LLMClient";
@@ -214,62 +213,84 @@ export class RiddlePowerCheckHandler {
     const positionPath = playerStatePath(playerId, "position");
     await this.deps.boardEffectsHandler.checkAndApplyBoardMoves(positionPath, context);
 
-    const rawFinalPos = this.deps.stateManager.get(positionPath);
-    const finalPosition =
-      typeof rawFinalPos === "number" && Number.isFinite(rawFinalPos) ? rawFinalPos : newPosition;
-
-    await this.finishPowerCheckWinAfterBoardMoves(
-      playerId,
-      newPosition,
-      finalPosition,
-      pendingAfter,
-      positionPath,
-      context,
-    );
+    if (pendingAfter?.kind === "completeRollMovement") {
+      await this.maybeSpeakPowerCheckForkPrompt(playerId, newPosition, pendingAfter);
+    } else {
+      await this.speakLandedOnAnimalIfNeededThenSquareEffects(
+        playerId,
+        newPosition,
+        positionPath,
+        context,
+      );
+    }
     this.deps.checkAndApplyWinCondition(positionPath);
 
-    this.deps.stateManager.set(GAME_PATH.lastRoll, roll);
-
-    this.applyEncounterWinSuppressForTurnAdvance(
-      context,
-      playerId,
+    await this.applyPowerCheckWinSpeechAndTurnFollowUp(playerId, context, positionPath, {
       powerDieWasFullGraphAdvance,
-      pendingAfter,
       winJumpTo,
-    );
-
-    if (this.shouldSpeakAfterEncounterMovementNudge(playerId, context)) {
-      const name = this.displayNameForPlayer(
-        this.deps.stateManager.getState() as GameState,
-        playerId,
-      );
-      const landed = this.deps.stateManager.get(playerStatePath(playerId, "position")) as number;
-      const nudge = t("game.afterEncounterRollPrompt", { name, position: landed });
-      this.deps.setLastNarration(nudge);
-      this.deps.statusIndicator.setState("speaking");
-      await this.deps.speechService.speak(nudge);
-    }
+      pendingAfter,
+    });
 
     return { handled: true, passed: true };
   }
 
-  private applyEncounterWinSuppressForTurnAdvance(
-    context: ExecutionContext,
+  /**
+   * §2B full graph advance, stable winJumpTo (turn ends / app advances), or ADR 0003-style nudge.
+   */
+  private async applyPowerCheckWinSpeechAndTurnFollowUp(
     playerId: string,
-    powerDieWasFullGraphAdvance: boolean,
-    pendingAfter: PendingCompleteRollMovement | null,
-    winJumpTo: number | undefined,
-  ): void {
+    context: ExecutionContext,
+    positionPath: string,
+    args: {
+      powerDieWasFullGraphAdvance: boolean;
+      winJumpTo: number | undefined;
+      pendingAfter: PendingCompleteRollMovement | null;
+    },
+  ): Promise<void> {
+    const { powerDieWasFullGraphAdvance, winJumpTo, pendingAfter } = args;
     if (powerDieWasFullGraphAdvance) {
+      this.applyPowerDieFullGraphAdvanceFollowUp(context);
+      return;
+    }
+    if (
+      typeof winJumpTo === "number" &&
+      !pendingAfter &&
+      (this.deps.stateManager.get(positionPath) as number) === winJumpTo
+    ) {
+      // Win jump completed in one step; portal off the jump target keeps the ADR 0003 nudge path.
       context.advanceTurnDespitePowerCheckSuppress = true;
       return;
     }
-    if (pendingAfter !== null || typeof winJumpTo !== "number") {
+    if (!this.shouldSpeakAfterEncounterMovementNudge(playerId, context)) {
       return;
     }
+    const name = this.displayNameForPlayer(
+      this.deps.stateManager.getState() as GameState,
+      playerId,
+    );
     const landed = this.deps.stateManager.get(playerStatePath(playerId, "position")) as number;
-    if (landed === winJumpTo) {
+    const nudge = t("game.afterEncounterRollPrompt", { name, position: landed });
+    this.deps.setLastNarration(nudge);
+    this.deps.statusIndicator.setState("speaking");
+    await this.deps.speechService.speak(nudge);
+  }
+
+  /**
+   * After §2B full graph advance: end the turn unless the landing square opened a new encounter
+   * for the current player (e.g. chained animal).
+   */
+  private applyPowerDieFullGraphAdvanceFollowUp(context: ExecutionContext): void {
+    if (this.deps.turnManager.hasPendingForCurrentTurn()) {
       context.advanceTurnDespitePowerCheckSuppress = true;
+      return;
+    }
+    const next = this.deps.turnManager.advanceTurnMechanical();
+    if (next) {
+      context.turnAdvancedAfterPowerCheckWin = {
+        playerId: next.playerId,
+        name: next.name,
+        position: next.position,
+      };
     }
   }
 
@@ -277,39 +298,6 @@ export class RiddlePowerCheckHandler {
     const p = (state.players as Record<string, Record<string, unknown>>)?.[playerId];
     const name = p?.name;
     return typeof name === "string" && name.length > 0 ? name : playerId;
-  }
-
-  private async finishPowerCheckWinAfterBoardMoves(
-    playerId: string,
-    newPosition: number,
-    finalPosition: number,
-    pendingAfter: PendingCompleteRollMovement | null,
-    positionPath: string,
-    context: ExecutionContext,
-  ): Promise<void> {
-    /** Forward hops only: backward teleports (e.g. 82→45) get full portal narration from square effects. */
-    if (finalPosition !== newPosition && finalPosition > newPosition) {
-      await this.speakPowerCheckBoardJump(playerId, newPosition, finalPosition);
-    }
-
-    if (pendingAfter?.kind === "completeRollMovement") {
-      await this.maybeSpeakPowerCheckForkPrompt(playerId, newPosition, pendingAfter);
-      return;
-    }
-
-    const postBoard = this.deps.stateManager.getState() as GameState;
-    const destSq = (postBoard.board as { squares?: Record<string, Record<string, unknown>> })
-      ?.squares?.[String(finalPosition)];
-    const destPower = destSq?.power;
-    const skipAnimalLandedLine =
-      finalPosition > newPosition && typeof destPower === "number" && destPower >= 1;
-    await this.speakLandedOnAnimalIfNeededThenSquareEffects(
-      playerId,
-      finalPosition,
-      positionPath,
-      context,
-      skipAnimalLandedLine,
-    );
   }
 
   private async maybeSpeakPowerCheckForkPrompt(
@@ -338,51 +326,21 @@ export class RiddlePowerCheckHandler {
     await this.deps.speechService.speak(forkMsg);
   }
 
-  private async speakPowerCheckBoardJump(
-    playerId: string,
-    fromSquare: number,
-    toSquare: number,
-  ): Promise<void> {
-    const state = this.deps.stateManager.getState() as GameState;
-    const moverName = this.displayNameForPlayer(state, playerId);
-    const squares = (state.board as { squares?: Record<string, Record<string, unknown>> })?.squares;
-    const destName = squares?.[String(toSquare)]?.name as string | undefined;
-    const locale = getLocale();
-    const destLabel =
-      locale === "es-AR" ? squareSpeechLabelEs(destName) : squareSpeechLabelEn(destName);
-    const suffix =
-      destLabel && destLabel.length > 0
-        ? locale === "es-AR"
-          ? `, donde te espera ${destLabel}`
-          : `, where you'll find ${destLabel}`
-        : "";
-    const msg = t("game.powerCheckPassBoardJump", {
-      name: moverName,
-      fromSquare,
-      toSquare,
-      suffix,
-    });
-    this.deps.setLastNarration(msg);
-    this.deps.statusIndicator.setState("speaking");
-    await this.deps.speechService.speak(msg);
-  }
-
   private async speakLandedOnAnimalIfNeededThenSquareEffects(
     playerId: string,
-    landPosition: number,
+    newPosition: number,
     positionPath: string,
     context: ExecutionContext,
-    skipAnimalLandedLine = false,
   ): Promise<void> {
     const postMove = this.deps.stateManager.getState() as GameState;
     const landSq = (postMove.board as { squares?: Record<string, Record<string, unknown>> })
-      ?.squares?.[String(landPosition)];
+      ?.squares?.[String(newPosition)];
     const landPower = landSq?.power;
-    if (!skipAnimalLandedLine && typeof landPower === "number" && landPower >= 1) {
+    if (typeof landPower === "number" && landPower >= 1) {
       const moverName = this.displayNameForPlayer(postMove, playerId);
       const landedMsg = t("game.powerCheckPassLandedAt", {
         name: moverName,
-        position: landPosition,
+        position: newPosition,
       });
       this.deps.setLastNarration(landedMsg);
       this.deps.statusIndicator.setState("speaking");
@@ -399,17 +357,15 @@ export class RiddlePowerCheckHandler {
 
   /**
    * Prompt for a **separate** movement die only when the encounter resolution did not already
-   * move the token along the board graph with the power/revenge roll (Kalimba §2B/C: winning
-   * that roll advances immediately by that amount). That case sets
-   * `advanceTurnDespitePowerCheckSuppress` and skips this nudge.
+   * move the token along the board graph with the power/revenge roll (Kalimba §2B/C: full graph
+   * advance ends the turn via `advanceTurnMechanical` + `turnAdvancedAfterPowerCheckWin`, not this nudge).
    *
-   * Also skip when `winJumpTo` was applied and the token **remains** on that jump square after
-   * board moves and square effects (e.g. Giraffe → 162). Still prompt when chained board moves
-   * slide the player **off** the jump target (ADR 0003: eagle → chute → portal) or when
-   * `game.pending` holds fork remainder (`completeRollMovement` — fork prompt is spoken separately).
+   * Still prompt when `winJumpTo` or chained board effects placed the player without that
+   * semantics (e.g. ADR 0003 portal after eagle jump), or when `game.pending` holds fork
+   * remainder (`completeRollMovement` — fork prompt is spoken separately).
    *
-   * Also skipped when `advanceTurnDespitePowerCheckSuppress` is already true (e.g. skip-turn
-   * landing from `BoardEffectsHandler`).
+   * Skipped when `advanceTurnDespitePowerCheckSuppress` is already true (e.g. skip-turn landing
+   * from `BoardEffectsHandler`) without §2B mechanical advance.
    */
   private shouldSpeakAfterEncounterMovementNudge(
     playerId: string,
@@ -517,6 +473,8 @@ export class RiddlePowerCheckHandler {
     if (roll === null) {
       return false;
     }
+
+    this.deps.stateManager.set(GAME_PATH.lastRoll, roll);
 
     const win = isRevenge ? roll >= power : roll > power;
 

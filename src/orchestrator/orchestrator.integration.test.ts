@@ -1,12 +1,20 @@
+import { readFileSync } from "node:fs";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import { Orchestrator } from "./orchestrator";
 import { GamePhase } from "./types";
 import type { GameState, PrimitiveAction } from "./types";
 import type { StatusIndicator } from "@/components/status-indicator";
+import { resolveInitialState } from "@/game-loader/game-loader";
+import type { GameConfigInput } from "@/game-loader/types";
 import { setLocale, t } from "@/i18n/translations";
 import { MockLLMClient } from "@/llm/MockLLMClient";
 import type { SpeechService } from "@/services/speech-service";
 import { StateManager } from "@/state-manager";
+
+const orchestratorTestDir = dirname(fileURLToPath(import.meta.url));
+const kalimbaConfigPath = join(orchestratorTestDir, "../../public/games/kalimba/config.json");
 
 /**
  * ARCHITECTURE: Integration tests use MockLLM to simulate game actions.
@@ -470,10 +478,14 @@ describe("Orchestrator Integration Tests", () => {
       ]);
 
       expect(result.success).toBe(true);
-      expect(result.turnAdvance.kind).toBe("callAdvanceTurn");
+      expect(result.turnAdvance.kind).toBe("alreadyAdvanced");
+      expect(result.turnAdvance).toMatchObject({
+        kind: "alreadyAdvanced",
+        nextPlayer: { playerId: "p2", name: "Bob", position: 0 },
+      });
 
       const turn = stateManager.get("game.turn");
-      expect(turn).toBe("p1");
+      expect(turn).toBe("p2");
 
       const pending = stateManager.get("game.pending");
       expect(pending).toBeNull();
@@ -523,11 +535,86 @@ describe("Orchestrator Integration Tests", () => {
       ]);
 
       expect(result.success).toBe(true);
-      expect(result.turnAdvance.kind).toBe("callAdvanceTurn");
+      expect(result.turnAdvance.kind).toBe("alreadyAdvanced");
+      expect(result.turnAdvance).toMatchObject({
+        kind: "alreadyAdvanced",
+        nextPlayer: { playerId: "p2", name: "Fede", position: 0 },
+      });
+      expect(stateManager.get("game.turn")).toBe("p2");
       expect(stateManager.get("players.p1.position")).toBe(20);
       expect(stateManager.get("game.pending")).toBeNull();
       expect(mockSpeech.speak).toHaveBeenNthCalledWith(1, "You passed.");
       expect(mockSpeech.speak).toHaveBeenCalledTimes(1);
+      setLocale("es-AR");
+    });
+
+    it("power check win onto Kalimba Cimitarra (168→176) yields alreadyAdvanced (regression: silence after item)", async () => {
+      mockLLM = createScriptedLLM([]);
+      setLocale("en-US");
+      const raw = readFileSync(kalimbaConfigPath, "utf-8");
+      const config = JSON.parse(raw) as GameConfigInput;
+      const base = resolveInitialState(config);
+      const p1 = base.players.p1;
+      const p2 = base.players.p2;
+      if (!p1 || !p2) {
+        throw new Error("Kalimba state must include p1 and p2");
+      }
+      const initialState: GameState = {
+        ...base,
+        game: {
+          ...base.game,
+          phase: GamePhase.PLAYING,
+          turn: "p1",
+          lastRoll: 6,
+          pending: {
+            kind: "powerCheck",
+            playerId: "p1",
+            position: 168,
+            power: 1,
+            riddleCorrect: true,
+            phase: "powerCheck",
+          },
+        },
+        players: {
+          ...base.players,
+          p1: {
+            ...p1,
+            name: "F",
+            position: 168,
+            activeChoices: { 0: 1, 96: 99 },
+            hearts: 0,
+            items: [],
+          },
+          p2: {
+            ...p2,
+            name: "B",
+            position: 174,
+            hearts: 1,
+            activeChoices: { 0: 1, 96: 97 },
+          },
+        },
+      };
+
+      setupGame(initialState);
+
+      const result = await orchestrator.testExecuteActions([
+        { action: "PLAYER_ANSWERED", answer: "8" },
+      ]);
+
+      expect(result.success).toBe(true);
+      expect(result.turnAdvance.kind).toBe("alreadyAdvanced");
+      if (result.turnAdvance.kind !== "alreadyAdvanced") {
+        throw new Error("expected alreadyAdvanced");
+      }
+      expect(result.turnAdvance.nextPlayer).toMatchObject({
+        playerId: "p2",
+        name: "B",
+        position: 174,
+      });
+      expect(stateManager.get("players.p1.position")).toBe(176);
+      expect(stateManager.get("players.p1.items")).toEqual(["scimitar"]);
+      expect(stateManager.get("game.turn")).toBe("p2");
+      expect(mockSpeech.speak).toHaveBeenNthCalledWith(1, "You passed.");
       setLocale("es-AR");
     });
 
@@ -645,7 +732,7 @@ describe("Orchestrator Integration Tests", () => {
       setLocale("es-AR");
     });
 
-    it("power check win landing on skipTurn sets turnAdvance callAdvanceTurn (next player can be announced)", async () => {
+    it("power check win landing on skipTurn sets alreadyAdvanced (next player announced by app)", async () => {
       mockLLM = createScriptedLLM([
         [{ action: "NARRATE", text: "Quicksand — you skip next turn." }],
       ]);
@@ -687,9 +774,13 @@ describe("Orchestrator Integration Tests", () => {
       ]);
 
       expect(result.success).toBe(true);
-      expect(result.turnAdvance.kind).toBe("callAdvanceTurn");
+      expect(result.turnAdvance.kind).toBe("alreadyAdvanced");
+      expect(result.turnAdvance).toMatchObject({
+        kind: "alreadyAdvanced",
+        nextPlayer: { playerId: "p2", name: "Bob", position: 0 },
+      });
 
-      expect(stateManager.get("game.turn")).toBe("p1");
+      expect(stateManager.get("game.turn")).toBe("p2");
       expect(stateManager.get("players.p1.position")).toBe(11);
       expect(stateManager.get("players.p1.skipTurns")).toBe(1);
 
