@@ -612,9 +612,11 @@ describe("Orchestrator Integration Tests", () => {
         position: 174,
       });
       expect(stateManager.get("players.p1.position")).toBe(176);
+      expect(stateManager.get("players.p1.hearts")).toBe(1);
       expect(stateManager.get("players.p1.items")).toEqual(["scimitar"]);
       expect(stateManager.get("game.turn")).toBe("p2");
       expect(mockSpeech.speak).toHaveBeenNthCalledWith(1, "You passed.");
+      expect(mockSpeech.speak).toHaveBeenNthCalledWith(2, "You gain a heart.");
       setLocale("es-AR");
     });
 

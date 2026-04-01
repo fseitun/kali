@@ -227,6 +227,16 @@ function appendEncounterWinJumpHint(
   return substLlmState(L.encounterWinJumpHint, { targetSquare: String(j) });
 }
 
+function appendEncounterHeartRewardHint(
+  squareData: Record<string, unknown> | undefined,
+  L: LlmStateContextBundle,
+): string {
+  if (squareData?.heart !== true) {
+    return "";
+  }
+  return L.encounterHeartRewardHint;
+}
+
 function buildRiddleEncounterHints(
   state: Record<string, unknown>,
   pending: { position?: number; power?: number },
@@ -250,6 +260,7 @@ function buildRiddleEncounterHints(
     power: powerVal,
   });
   hints += appendEncounterWinJumpHint(squareData, L);
+  hints += appendEncounterHeartRewardHint(squareData, L);
   const hab = squareData.habitat;
   if (typeof hab === "string" && hab.trim() !== "") {
     hints += substLlmState(L.riddleHabitatNote, { hab });
@@ -311,7 +322,8 @@ function formatPowerCheckContext(
     n === 1 ? L.powerCheckHelpOneDie : substLlmState(L.powerCheckHelpManyDice, { n });
   return (
     substLlmState(L.powerCheckBlock, { playerName, rollInstruction, helpLine }) +
-    appendEncounterWinJumpHint(squareData, L)
+    appendEncounterWinJumpHint(squareData, L) +
+    appendEncounterHeartRewardHint(squareData, L)
   );
 }
 
@@ -322,7 +334,9 @@ function formatRevengeContext(
   L: LlmStateContextBundle,
 ): string {
   return (
-    substLlmState(L.revengeBlock, { playerName, power }) + appendEncounterWinJumpHint(squareData, L)
+    substLlmState(L.revengeBlock, { playerName, power }) +
+    appendEncounterWinJumpHint(squareData, L) +
+    appendEncounterHeartRewardHint(squareData, L)
   );
 }
 
