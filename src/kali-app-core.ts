@@ -2,10 +2,16 @@ import { CONFIG } from "./config";
 import { KALIMBA_EXAMPLES } from "./game-loader/examples/kalimba";
 import { GameLoader } from "./game-loader/game-loader";
 import type { GameModule } from "./game-loader/types";
-import { buildMagicDoorTurnAnnouncementIfOnDoor } from "./i18n/magic-door-turn-announcement";
+import { magicDoorHeartsPhrase } from "./i18n/magic-door-phrases";
 import { t } from "./i18n/translations";
 import { createLLMClient } from "./llm/llm-client-factory";
 import type { LLMClient } from "./llm/LLMClient";
+import {
+  getMagicDoorConfig,
+  getMagicDoorOpeningBonus,
+  minDieToOpenMagicDoor,
+  type SquareLike,
+} from "./orchestrator/board-helpers";
 import { inferDecisionPoints } from "./orchestrator/decision-point-inference";
 import { NameCollector } from "./orchestrator/name-collector";
 import { Orchestrator } from "./orchestrator/orchestrator";
@@ -28,6 +34,46 @@ import { acquireScreenWakeLock, releaseWakeLock } from "./utils/wake-lock";
 import { applySilentSuccessFallback } from "./voice/gameplay-voice-policy";
 import { MeteredSpeechService } from "./voice/metered-speech-service";
 import type { WakeWordDetector } from "@/voice-recognition/wake-word";
+
+function getMagicDoorAnnouncementContext(
+  nextPlayer: { playerId: string; name: string; position: number },
+  state: GameState | undefined,
+): {
+  door: { position: number; target: number };
+  playerSlice: Record<string, unknown> | undefined;
+} | null {
+  const squares = state?.board?.squares as Record<string, SquareLike> | undefined;
+  const door = getMagicDoorConfig(squares);
+  if (nextPlayer.position !== door?.position) {
+    return null;
+  }
+  const playerSlice = state?.players?.[nextPlayer.playerId] as Record<string, unknown> | undefined;
+  if (playerSlice?.magicDoorOpened === true) {
+    return null;
+  }
+  return { door, playerSlice };
+}
+
+function magicDoorTurnAnnouncementLine(
+  nextPlayer: { playerId: string; name: string; position: number },
+  state: GameState | undefined,
+): string | null {
+  const ctx = getMagicDoorAnnouncementContext(nextPlayer, state);
+  if (!ctx) {
+    return null;
+  }
+  const heartsRaw = ctx.playerSlice?.hearts;
+  const hearts = typeof heartsRaw === "number" && heartsRaw >= 0 ? heartsRaw : 0;
+  const doorBonus = getMagicDoorOpeningBonus(ctx.playerSlice);
+  const minDie = minDieToOpenMagicDoor(ctx.door.target, doorBonus);
+  return t("game.turnAnnouncementMagicDoor", {
+    name: nextPlayer.name,
+    position: nextPlayer.position,
+    heartsPhrase: magicDoorHeartsPhrase(hearts),
+    target: ctx.door.target,
+    minDie,
+  });
+}
 
 export class KaliAppCore {
   private wakeWordDetector: WakeWordDetector | null = null;
@@ -401,13 +447,6 @@ ${summary ? `**Summary (for NARRATE explanations):** ${summary}\n` : ""}${exampl
     };
   }
 
-  private tryMagicDoorTurnAnnouncement(
-    nextPlayer: { playerId: string; name: string; position: number },
-    state: GameState | undefined,
-  ): string | null {
-    return buildMagicDoorTurnAnnouncementIfOnDoor(nextPlayer, state);
-  }
-
   /**
    * Turn line after advance or alreadyAdvanced: normal move prompt, magic door opening prompt, or fork prompt.
    */
@@ -415,7 +454,7 @@ ${summary ? `**Summary (for NARRATE explanations):** ${summary}\n` : ""}${exampl
     nextPlayer: { playerId: string; name: string; position: number },
     pendingPrompt: string | null | undefined,
   ): string {
-    const magicDoorLine = this.tryMagicDoorTurnAnnouncement(
+    const magicDoorLine = magicDoorTurnAnnouncementLine(
       nextPlayer,
       this.stateManager?.getState() as GameState | undefined,
     );

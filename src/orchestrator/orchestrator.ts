@@ -736,7 +736,8 @@ export class Orchestrator {
       !context.skipDecisionPointEnforcement &&
       !context.justNarratedDecisionAsk &&
       !context.turnAdvancedAfterPowerCheckFail &&
-      !context.turnAdvancedAfterPowerCheckWin;
+      !context.turnAdvancedAfterPowerCheckWin &&
+      !context.turnAdvancedAfterMagicDoorOpen;
     if (shouldEnforceDecisionPoints) {
       await this.decisionPointEnforcer.enforceDecisionPoints(context);
     }
@@ -750,7 +751,9 @@ export class Orchestrator {
     shouldAdvanceTurnFromActions: boolean,
   ): TurnAdvance {
     const mechanicalNext =
-      context.turnAdvancedAfterPowerCheckWin ?? context.turnAdvancedAfterPowerCheckFail;
+      context.turnAdvancedAfterPowerCheckWin ??
+      context.turnAdvancedAfterPowerCheckFail ??
+      context.turnAdvancedAfterMagicDoorOpen;
     if (mechanicalNext) {
       return { kind: "alreadyAdvanced", nextPlayer: mechanicalNext };
     }
@@ -843,6 +846,10 @@ export class Orchestrator {
       return true;
     }
     if (action.action === "PLAYER_ROLLED") {
+      if (context.skipTrailingNarrateAfterMagicDoorAttempt) {
+        context.skipTrailingNarrateAfterMagicDoorAttempt = false;
+        return true;
+      }
       return this.handlePlayerRolledPostExecute();
     }
     return false;

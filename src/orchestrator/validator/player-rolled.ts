@@ -1,3 +1,4 @@
+import { isMagicDoorOpeningRollState } from "../board-helpers";
 import { forkChoiceBlockingValidation } from "../fork-roll-policy";
 import type { GameState, PrimitiveAction } from "../types";
 import { validateField } from "./common";
@@ -78,6 +79,9 @@ function validatePlayerRolledPhaseRestrictions(
 }
 
 function getRollLimits(state: GameState): { min: number; max: number; label: string } {
+  if (isMagicDoorOpeningRollState(state)) {
+    return { min: 1, max: 6, label: "1d6" };
+  }
   const players = state.players as Record<string, Record<string, unknown>> | undefined;
   const game = state.game as Record<string, unknown> | undefined;
   const currentTurn = game?.turn as string | undefined;

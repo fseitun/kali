@@ -1,4 +1,10 @@
 import type { BoardEffectsHandler } from "./board-effects-handler";
+import {
+  getMagicDoorConfig,
+  getMagicDoorOpeningBonus,
+  isMagicDoorOpeningRollState,
+  type SquareLike,
+} from "./board-helpers";
 import { applyRollMovementResolvingForks, simulateRollFromState } from "./board-traversal";
 import { getDecisionPointApplyState } from "./decision-helpers";
 import { getMovementDirectionForState } from "./fork-roll-policy";
@@ -18,6 +24,137 @@ import { Logger } from "@/utils/logger";
 
 function isPlayerPositionPath(path: string): boolean {
   return path.startsWith(STATE_PLAYERS_PREFIX) && path.endsWith(".position");
+}
+
+function playerDisplayName(
+  player: Record<string, unknown> | undefined,
+  fallbackId: string,
+): string {
+  if (typeof player?.name === "string" && player.name.trim() !== "") {
+    return player.name.trim();
+  }
+  return fallbackId;
+}
+
+function magicDoorOpeningSpeech(
+  success: boolean,
+  name: string,
+  roll: number,
+  bonus: number,
+  total: number,
+  target: number,
+): string {
+  const args = { name, roll, bonus, total, target };
+  return success ? t("game.magicDoorOpenSuccess", args) : t("game.magicDoorOpenFail", args);
+}
+
+async function tryExecuteMagicDoorOpeningRoll(
+  ctx: ActionExecutorContext,
+  primitive: Extract<PrimitiveAction, { action: "PLAYER_ROLLED" }>,
+  context: ExecutionContext,
+  state: GameState,
+  currentTurn: string,
+  path: string,
+): Promise<boolean> {
+  if (context.isNestedCall || !isMagicDoorOpeningRollState(state)) {
+    return false;
+  }
+  const door = getMagicDoorConfig(
+    (state.board as { squares?: Record<string, SquareLike> } | undefined)?.squares,
+  );
+  if (!door) {
+    throw new Error("Magic door opening roll but no magicDoorCheck square in board");
+  }
+  const playerRecord = state.players?.[currentTurn] as Record<string, unknown> | undefined;
+  const bonus = getMagicDoorOpeningBonus(playerRecord);
+  const total = primitive.value + bonus;
+  const success = total >= door.target;
+  const name = playerDisplayName(playerRecord, currentTurn);
+
+  ctx.stateManager.set(GAME_PATH.lastRoll, primitive.value);
+  if (success) {
+    ctx.stateManager.set(playerStatePath(currentTurn, "magicDoorOpened"), true);
+  }
+
+  const msg = magicDoorOpeningSpeech(success, name, primitive.value, bonus, total, door.target);
+  Logger.write(
+    `Magic door opening: ${path} roll ${primitive.value} + bonus ${bonus} = ${total} vs ${door.target} → ${success ? "opened" : "failed"}`,
+  );
+
+  ctx.setLastNarration(msg);
+  ctx.statusIndicator.setState("speaking");
+  await ctx.speechService.speak(msg);
+
+  const next = ctx.turnManager.advanceTurnMechanical();
+  if (next) {
+    context.turnAdvancedAfterMagicDoorOpen = next;
+  }
+  context.skipTrailingNarrateAfterMagicDoorAttempt = true;
+  return true;
+}
+
+async function executeMovementPlayerRoll(
+  ctx: ActionExecutorContext,
+  primitive: Extract<PrimitiveAction, { action: "PLAYER_ROLLED" }>,
+  context: ExecutionContext,
+  state: GameState,
+  currentTurn: string,
+  path: string,
+  currentPosition: number,
+): Promise<void> {
+  const direction = getMovementDirectionForState(state, currentTurn);
+  const movement = applyRollMovementResolvingForks(
+    state,
+    currentTurn,
+    currentPosition,
+    primitive.value,
+    direction,
+  );
+
+  if (movement.kind === "complete") {
+    Logger.write(
+      `Player rolled ${primitive.value}: ${path} ${currentPosition} → ${movement.finalPosition}`,
+    );
+    ctx.stateManager.set(path, movement.finalPosition);
+  } else {
+    Logger.write(
+      `Player rolled ${primitive.value}: ${path} ${currentPosition} → ${movement.positionAtFork} (fork; ${movement.remainingSteps} step(s) left)`,
+    );
+    ctx.stateManager.set(path, movement.positionAtFork);
+    ctx.stateManager.set(GAME_PATH.pending, {
+      kind: "completeRollMovement",
+      playerId: currentTurn,
+      remainingSteps: movement.remainingSteps,
+      direction: movement.direction,
+    } satisfies PendingCompleteRollMovement);
+  }
+
+  context.positionPathsSetByRoll?.add(path);
+  ctx.stateManager.set(GAME_PATH.lastRoll, primitive.value);
+  await ctx.boardEffectsHandler.checkAndApplyBoardMoves(path, context);
+  if (movement.kind === "complete") {
+    await ctx.boardEffectsHandler.checkAndApplySquareEffects(path, context);
+  }
+
+  const doorCfg = getMagicDoorConfig(
+    (state.board as { squares?: Record<string, SquareLike> } | undefined)?.squares,
+  );
+  if (doorCfg && movement.kind === "complete") {
+    ctx.stateManager.set(playerStatePath(currentTurn, "magicDoorOpened"), false);
+  }
+
+  ctx.checkAndApplyWinCondition(path);
+
+  if (movement.kind === "complete" && !context.isNestedCall) {
+    const finalSquare = ctx.stateManager.get(path);
+    if (typeof finalSquare === "number") {
+      context.pendingMovementRollNarration = {
+        playerId: currentTurn,
+        roll: primitive.value,
+        square: finalSquare,
+      };
+    }
+  }
 }
 
 export interface ActionExecutorContext {
@@ -232,51 +369,28 @@ export async function executePlayerRolled(
     throw new Error(`Cannot process PLAYER_ROLLED: ${path} is not a number`);
   }
 
-  const direction = getMovementDirectionForState(state as GameState, currentTurn);
-  const movement = applyRollMovementResolvingForks(
+  if (
+    await tryExecuteMagicDoorOpeningRoll(
+      ctx,
+      primitive,
+      context,
+      state as GameState,
+      currentTurn,
+      path,
+    )
+  ) {
+    return;
+  }
+
+  await executeMovementPlayerRoll(
+    ctx,
+    primitive,
+    context,
     state as GameState,
     currentTurn,
+    path,
     currentPosition,
-    primitive.value,
-    direction,
   );
-
-  if (movement.kind === "complete") {
-    Logger.write(
-      `Player rolled ${primitive.value}: ${path} ${currentPosition} → ${movement.finalPosition}`,
-    );
-    ctx.stateManager.set(path, movement.finalPosition);
-  } else {
-    Logger.write(
-      `Player rolled ${primitive.value}: ${path} ${currentPosition} → ${movement.positionAtFork} (fork; ${movement.remainingSteps} step(s) left)`,
-    );
-    ctx.stateManager.set(path, movement.positionAtFork);
-    ctx.stateManager.set(GAME_PATH.pending, {
-      kind: "completeRollMovement",
-      playerId: currentTurn,
-      remainingSteps: movement.remainingSteps,
-      direction: movement.direction,
-    } satisfies PendingCompleteRollMovement);
-  }
-
-  context.positionPathsSetByRoll?.add(path);
-  ctx.stateManager.set(GAME_PATH.lastRoll, primitive.value);
-  await ctx.boardEffectsHandler.checkAndApplyBoardMoves(path, context);
-  if (movement.kind === "complete") {
-    await ctx.boardEffectsHandler.checkAndApplySquareEffects(path, context);
-  }
-  ctx.checkAndApplyWinCondition(path);
-
-  if (movement.kind === "complete" && !context.isNestedCall) {
-    const finalSquare = ctx.stateManager.get(path);
-    if (typeof finalSquare === "number") {
-      context.pendingMovementRollNarration = {
-        playerId: currentTurn,
-        roll: primitive.value,
-        square: finalSquare,
-      };
-    }
-  }
 }
 
 function riddleOutcomeMessage(

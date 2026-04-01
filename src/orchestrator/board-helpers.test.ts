@@ -2,7 +2,9 @@ import { describe, it, expect } from "vitest";
 import {
   findSquareByEffect,
   getMagicDoorConfig,
+  getMagicDoorOpeningBonus,
   getWinPosition,
+  isMagicDoorOpeningRollState,
   minDieToOpenMagicDoor,
   scimitarDoorBonusFromItems,
 } from "./board-helpers";
@@ -73,7 +75,7 @@ describe("getMagicDoorConfig", () => {
 });
 
 describe("minDieToOpenMagicDoor", () => {
-  it("matches Kalimba rule die + hearts >= target", () => {
+  it("matches Kalimba rule die + bonus >= target", () => {
     expect(minDieToOpenMagicDoor(6, 0)).toBe(6);
     expect(minDieToOpenMagicDoor(6, 1)).toBe(5);
     expect(minDieToOpenMagicDoor(6, 2)).toBe(4);
@@ -96,5 +98,44 @@ describe("scimitarDoorBonusFromItems", () => {
     expect(scimitarDoorBonusFromItems(["torch"])).toBe(0);
     expect(scimitarDoorBonusFromItems(["scimitar"])).toBe(1);
     expect(scimitarDoorBonusFromItems(["torch", "scimitar"])).toBe(1);
+  });
+});
+
+describe("getMagicDoorOpeningBonus", () => {
+  it("sums hearts and scimitar", () => {
+    expect(getMagicDoorOpeningBonus(undefined)).toBe(0);
+    expect(getMagicDoorOpeningBonus({ hearts: 2 })).toBe(2);
+    expect(getMagicDoorOpeningBonus({ hearts: 1, items: ["scimitar"] })).toBe(2);
+    expect(getMagicDoorOpeningBonus({ hearts: 0, items: ["scimitar"] })).toBe(1);
+  });
+});
+
+describe("isMagicDoorOpeningRollState", () => {
+  const squares = { "186": { effect: "magicDoorCheck" as const, target: 6 } };
+  const base = {
+    game: { turn: "p1" },
+    players: {
+      p1: { position: 186, magicDoorOpened: false },
+    },
+    board: { squares },
+  };
+  it("is true on door square when not yet opened", () => {
+    expect(isMagicDoorOpeningRollState(base)).toBe(true);
+  });
+  it("is false when door already opened", () => {
+    expect(
+      isMagicDoorOpeningRollState({
+        ...base,
+        players: { p1: { position: 186, magicDoorOpened: true } },
+      }),
+    ).toBe(false);
+  });
+  it("is false when not on door", () => {
+    expect(
+      isMagicDoorOpeningRollState({
+        ...base,
+        players: { p1: { position: 185, magicDoorOpened: false } },
+      }),
+    ).toBe(false);
   });
 });

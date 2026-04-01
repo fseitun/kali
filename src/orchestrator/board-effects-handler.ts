@@ -1,10 +1,8 @@
 import {
   findSquareByEffect,
-  getMagicDoorConfig,
   getWinPosition,
   minDieToOpenMagicDoor,
   scimitarDoorBonusFromItems,
-  type SquareLike,
 } from "./board-helpers";
 import {
   getDirectionalRollDice,
@@ -128,6 +126,16 @@ export class BoardEffectsHandler {
     context.jumpToLeaderRelocated = { toPosition: finalPosition };
   }
 
+  /** After a successful door open, forward movement past 186 is legal—do not treat it as overshoot. */
+  private playerHasOpenedMagicDoor(path: string): boolean {
+    const m = path.match(/^players\.([^.]+)\.position$/);
+    const id = m?.[1];
+    if (!id) {
+      return false;
+    }
+    return this.stateManager.get(playerStatePath(id, "magicDoorOpened")) === true;
+  }
+
   /**
    * Kalimba: overshooting the magic door bounces back symmetrically toward start.
    *
@@ -140,6 +148,10 @@ export class BoardEffectsHandler {
     squares: Record<string, Record<string, unknown>>,
     context?: ExecutionContext,
   ): void {
+    if (this.playerHasOpenedMagicDoor(path)) {
+      return;
+    }
+
     const overshotPosition = this.stateManager.get(path) as number;
     const magicDoorFound = findSquareByEffect(squares, "magicDoorCheck");
     const magicDoorPosition = magicDoorFound?.position;
@@ -780,14 +792,14 @@ export class BoardEffectsHandler {
       typeof squareData.target === "number" && squareData.target > 0 ? squareData.target : 6;
     const heartsRaw = this.stateManager.get(playerStatePath(playerId, "hearts"));
     const hearts = typeof heartsRaw === "number" && heartsRaw >= 0 ? heartsRaw : 0;
-    const itemsRaw = this.stateManager.get(playerStatePath(playerId, "items"));
-    const scimitarBonus = scimitarDoorBonusFromItems(itemsRaw);
+    const items = this.stateManager.get(playerStatePath(playerId, "items"));
+    const scimitarBonus = scimitarDoorBonusFromItems(items);
     const minDie = minDieToOpenMagicDoor(target, hearts, scimitarBonus);
     const heartsPhrase = magicDoorHeartsPhrase(hearts);
     const nextPlayer = this.resolveNextPlayerDisplayName(playerId);
-    const landingKey =
+    const key =
       scimitarBonus > 0 ? "squares.magicDoorLandingWithScimitar" : "squares.magicDoorLanding";
-    return t(landingKey, {
+    return t(key, {
       name: playerName,
       position,
       squareName,
@@ -821,16 +833,7 @@ export class BoardEffectsHandler {
       isTeleport && portalFrom === undefined
         ? `${t("squares.landedTeleportHint")} ${t("narration.stateSquareNumber")}`
         : "";
-    let result = `${base}${portalSuffix}${teleportHint}`.trim();
-    if (applied.includes("item: scimitar")) {
-      const squares = (
-        this.stateManager.getState().board as { squares?: Record<string, SquareLike> }
-      )?.squares;
-      const door = getMagicDoorConfig(squares);
-      const target = door?.target ?? 6;
-      result = `${result} ${t("squares.scimitarDoorHint", { target })}`.trim();
-    }
-    return result;
+    return `${base}${portalSuffix}${teleportHint}`.trim();
   }
 
   async checkAndApplySquareEffects(path: string, context: ExecutionContext): Promise<void> {

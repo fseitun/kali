@@ -81,3 +81,41 @@ export function minDieToOpenMagicDoor(target: number, hearts: number, doorItemBo
   }
   return Math.min(6, diff);
 }
+
+/**
+ * Hearts plus scimitar (counts as +1 toward the door sum, same as an extra heart for min-die math).
+ */
+export function getMagicDoorOpeningBonus(player: Record<string, unknown> | undefined): number {
+  if (!player) {
+    return 0;
+  }
+  const heartsRaw = player.hearts;
+  const hearts = typeof heartsRaw === "number" && heartsRaw >= 0 ? heartsRaw : 0;
+  const items = player.items;
+  const hasScimitar = Array.isArray(items) && items.includes("scimitar");
+  return hearts + (hasScimitar ? 1 : 0);
+}
+
+/**
+ * True when the current player is on the magic door square and must roll to open (not yet opened).
+ */
+export function isMagicDoorOpeningRollState(state: {
+  game?: Record<string, unknown>;
+  players?: Record<string, Record<string, unknown>>;
+  board?: { squares?: Record<string, SquareLike> };
+}): boolean {
+  const turn = state.game?.turn as string | undefined;
+  if (!turn) {
+    return false;
+  }
+  const player = state.players?.[turn];
+  if (!player || player.magicDoorOpened === true) {
+    return false;
+  }
+  const pos = player.position;
+  if (typeof pos !== "number") {
+    return false;
+  }
+  const door = getMagicDoorConfig(state.board?.squares);
+  return door !== null && pos === door.position;
+}

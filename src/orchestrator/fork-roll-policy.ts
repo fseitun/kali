@@ -1,3 +1,4 @@
+import { isMagicDoorOpeningRollState } from "./board-helpers";
 import { distinctEndPositionsAfterRoll, type RollMovementDirection } from "./board-traversal";
 import { getDecisionPoints } from "./decision-point-inference";
 import type { DecisionPoint, GameState } from "./types";
@@ -132,6 +133,9 @@ export function forkChoiceBlockingValidation(
   roll: number,
   direction: RollMovementDirection,
 ): ValidationResult | null {
+  if (isMagicDoorOpeningRollState(state)) {
+    return null;
+  }
   const slice = getCurrentTurnPlayerSlice(state);
   if (
     !slice ||
@@ -182,6 +186,9 @@ export function forkMattersForSomeRollInRange(
  * given possible roll outcomes for their movement mode.
  */
 export function hasMovementForkBlockingPlay(state: GameState): boolean {
+  if (isMagicDoorOpeningRollState(state)) {
+    return false;
+  }
   const slice = getCurrentTurnPlayerSlice(state);
   if (!slice) {
     return false;
@@ -201,6 +208,9 @@ export function getEnforceableForkContext(state: GameState): {
   position: number;
   decisionPoint: DecisionPoint;
 } | null {
+  if (isMagicDoorOpeningRollState(state)) {
+    return null;
+  }
   const slice = getCurrentTurnPlayerSlice(state);
   if (!slice) {
     return null;

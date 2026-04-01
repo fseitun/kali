@@ -1,3 +1,4 @@
+import { getMagicDoorConfig, getMagicDoorOpeningBonus, type SquareLike } from "../board-helpers";
 import { computeNewPositionFromState } from "../board-traversal";
 import { getDecisionPointApplyState } from "../decision-helpers";
 import { getMovementDirectionForState } from "../fork-roll-policy";
@@ -65,6 +66,20 @@ function getPlayerRolledContext(
   };
 }
 
+function advanceMockGameTurn(mockState: GameState): void {
+  const game = mockState.game as Record<string, unknown>;
+  const order = game?.playerOrder as string[] | undefined;
+  const current = game?.turn as string | undefined;
+  if (!order?.length || !current) {
+    return;
+  }
+  const idx = order.indexOf(current);
+  if (idx < 0) {
+    return;
+  }
+  game.turn = order[(idx + 1) % order.length];
+}
+
 function handlePlayerRolled(
   primitive: PrimitiveAction,
   mockState: GameState,
@@ -74,12 +89,29 @@ function handlePlayerRolled(
   if (!ctx) {
     return;
   }
+  const board = mockState.board as { squares?: Record<string, SquareLike> } | undefined;
+  const door = getMagicDoorConfig(board?.squares);
+  const opened = ctx.player.magicDoorOpened === true;
+  if (ctx.position === door?.position && !opened) {
+    const bonus = getMagicDoorOpeningBonus(ctx.player);
+    const total = ctx.rollValue + bonus;
+    if (total >= door.target) {
+      ctx.player.magicDoorOpened = true;
+    }
+    (mockState.game as Record<string, unknown>).lastRoll = ctx.rollValue;
+    advanceMockGameTurn(mockState);
+    return;
+  }
+
   ctx.player.position = computeNewPositionFromState(
     mockState,
     ctx.currentTurn,
     ctx.position,
     ctx.rollValue,
   );
+  if (door) {
+    ctx.player.magicDoorOpened = false;
+  }
 }
 
 function applyRiddleAnswerToMock(

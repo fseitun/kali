@@ -55,6 +55,10 @@ export const esAR = {
     goldenFoxJump:
       "{name}, el Zorro Dorado te lleva al primer puesto. Estás en el casillero {square}.",
     rollMovementLanded: "{name}, sacaste un {roll}. Estás en el casillero {square}.",
+    magicDoorOpenSuccess:
+      "{name}, abriste la puerta mágica: el {roll} del dado más {bonus} de bonificación suman {total}, y con eso llegás a {target} o más. Cuando vuelva a tocarte, tirá el dado para avanzar.",
+    magicDoorOpenFail:
+      "{name}, no alcanzó para abrir la puerta: el {roll} del dado más {bonus} de bonificación suman {total}, y necesitás {target} o más. Le toca al siguiente jugador.",
     magicDoorBounce:
       "{name}, con la puerta mágica tenés que caer justo en el casillero {door}: te pasaste hasta la {overshot}, rebotás y volvés a la {final}.",
     forkChoiceAsk: "{name}, {prompt}",

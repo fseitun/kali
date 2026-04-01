@@ -1667,6 +1667,165 @@ describe("Orchestrator Integration Tests", () => {
       expect(mockSpeech.speak).toHaveBeenCalledWith(expectedLine);
     });
 
+    it("magic door opening on 186: die only, success sets flag and advances turn", async () => {
+      setLocale("en-US");
+      mockLLM = createScriptedLLM([]);
+
+      const initialState: GameState = {
+        game: {
+          name: "Test Game",
+          phase: GamePhase.PLAYING,
+          turn: "p1",
+          playerOrder: ["p1", "p2"],
+          winner: null,
+          lastRoll: 0,
+        },
+        players: {
+          p1: { id: "p1", name: "Alice", position: 186, hearts: 0, magicDoorOpened: false },
+          p2: { id: "p2", name: "Bob", position: 10 },
+        },
+        board: {
+          squares: {
+            "186": { name: "Magic Door", effect: "magicDoorCheck", target: 6 },
+          },
+        },
+      };
+
+      setupGame(initialState);
+
+      const result = await orchestrator.testExecuteActions([{ action: "PLAYER_ROLLED", value: 6 }]);
+
+      expect(result.success).toBe(true);
+      expect(stateManager.get("players.p1.position")).toBe(186);
+      expect(stateManager.get("players.p1.magicDoorOpened")).toBe(true);
+      expect(stateManager.get("game.turn")).toBe("p2");
+      expect(result.turnAdvance.kind).toBe("alreadyAdvanced");
+      expect(mockSpeech.speak).toHaveBeenCalledWith(
+        t("game.magicDoorOpenSuccess", {
+          name: "Alice",
+          roll: 6,
+          bonus: 0,
+          total: 6,
+          target: 6,
+        }),
+      );
+    });
+
+    it("magic door opening: fail with low roll advances turn", async () => {
+      setLocale("en-US");
+      mockLLM = createScriptedLLM([]);
+
+      const initialState: GameState = {
+        game: {
+          name: "Test Game",
+          phase: GamePhase.PLAYING,
+          turn: "p1",
+          playerOrder: ["p1", "p2"],
+          winner: null,
+          lastRoll: 0,
+        },
+        players: {
+          p1: { id: "p1", name: "Alice", position: 186, hearts: 0, magicDoorOpened: false },
+          p2: { id: "p2", name: "Bob", position: 10 },
+        },
+        board: {
+          squares: {
+            "186": { name: "Magic Door", effect: "magicDoorCheck", target: 6 },
+          },
+        },
+      };
+
+      setupGame(initialState);
+
+      const result = await orchestrator.testExecuteActions([{ action: "PLAYER_ROLLED", value: 2 }]);
+
+      expect(result.success).toBe(true);
+      expect(stateManager.get("players.p1.position")).toBe(186);
+      expect(stateManager.get("players.p1.magicDoorOpened")).toBe(false);
+      expect(stateManager.get("game.turn")).toBe("p2");
+      expect(mockSpeech.speak).toHaveBeenCalledWith(
+        t("game.magicDoorOpenFail", {
+          name: "Alice",
+          roll: 2,
+          bonus: 0,
+          total: 2,
+          target: 6,
+        }),
+      );
+    });
+
+    it("magic door opening: hearts + die reaches target", async () => {
+      setLocale("en-US");
+      mockLLM = createScriptedLLM([]);
+
+      const initialState: GameState = {
+        game: {
+          name: "Test Game",
+          phase: GamePhase.PLAYING,
+          turn: "p1",
+          playerOrder: ["p1", "p2"],
+          winner: null,
+          lastRoll: 0,
+        },
+        players: {
+          p1: { id: "p1", name: "Alice", position: 186, hearts: 3, magicDoorOpened: false },
+          p2: { id: "p2", name: "Bob", position: 10 },
+        },
+        board: {
+          squares: {
+            "186": { name: "Magic Door", effect: "magicDoorCheck", target: 6 },
+          },
+        },
+      };
+
+      setupGame(initialState);
+
+      await orchestrator.testExecuteActions([{ action: "PLAYER_ROLLED", value: 3 }]);
+
+      expect(stateManager.get("players.p1.magicDoorOpened")).toBe(true);
+      expect(mockSpeech.speak).toHaveBeenCalledWith(
+        t("game.magicDoorOpenSuccess", {
+          name: "Alice",
+          roll: 3,
+          bonus: 3,
+          total: 6,
+          target: 6,
+        }),
+      );
+    });
+
+    it("magic door: after open, movement roll leaves 186 and clears opened flag", async () => {
+      setLocale("en-US");
+      mockLLM = createScriptedLLM([]);
+
+      const initialState: GameState = {
+        game: {
+          name: "Test Game",
+          phase: GamePhase.PLAYING,
+          turn: "p1",
+          playerOrder: ["p1"],
+          winner: null,
+          lastRoll: 0,
+        },
+        players: {
+          p1: { id: "p1", name: "Alice", position: 186, hearts: 0, magicDoorOpened: true },
+        },
+        board: {
+          squares: {
+            "186": { name: "Magic Door", effect: "magicDoorCheck", target: 6, next: [187] },
+            "187": { name: "Path" },
+          },
+        },
+      };
+
+      setupGame(initialState);
+
+      await orchestrator.testExecuteActions([{ action: "PLAYER_ROLLED", value: 1 }]);
+
+      expect(stateManager.get("players.p1.position")).toBe(187);
+      expect(stateManager.get("players.p1.magicDoorOpened")).toBe(false);
+    });
+
     it("handles instrument usage in correct habitat", async () => {
       const responses: PrimitiveAction[][] = [
         [

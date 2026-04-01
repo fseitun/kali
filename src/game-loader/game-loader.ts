@@ -291,6 +291,8 @@ function buildInitialStateFromParts(config: GameConfigInput): GameState {
             oceanForestPenaltyConsumed: false,
             /** After ocean–forest penalty: retreat Nd6 forward; backward teleports and prevOnLanding hops use this flag in traversal. */
             retreatEffectsReversed: false,
+            /** Kalimba square 186: after a successful opening roll, next movement roll advances from the door. */
+            magicDoorOpened: false,
           }
         : { id, name, position: 0 };
   }

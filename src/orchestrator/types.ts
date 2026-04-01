@@ -105,10 +105,16 @@ export interface ExecutionContext {
   /** Set when power check fails and turn was advanced; app should announce next player. */
   turnAdvancedAfterPowerCheckFail?: { playerId: string; name: string; position: number };
   /**
+   * Set when magic door open attempt finished; same shape as power-check mechanical advance for app TTS.
+   */
+  turnAdvancedAfterMagicDoorOpen?: { playerId: string; name: string; position: number };
+  /**
    * Set when power-check win used Kalimba §2B full graph advance; orchestrator advanced `game.turn`
    * mechanically so the app announces the next player (same UX as `turnAdvancedAfterPowerCheckFail`).
    */
   turnAdvancedAfterPowerCheckWin?: { playerId: string; name: string; position: number };
+  /** After magic door open attempt, skip LLM movement NARRATE in the same batch (orchestrator spoke outcome). */
+  skipTrailingNarrateAfterMagicDoorAttempt?: boolean;
   /** Set when power check/revenge was handled; skip trailing NARRATE from LLM (orchestrator speaks pass/fail). */
   skipTrailingNarrateForPowerCheck?: boolean;
   /**

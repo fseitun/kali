@@ -54,6 +54,10 @@ export const enUS = {
     forkChoiceResolvedRoll: "{name}, you're set. Roll the dice.",
     goldenFoxJump: "{name}, the Golden Fox takes you to first place. You're on square {square}.",
     rollMovementLanded: "{name}, you rolled {roll}. You're on square {square}.",
+    magicDoorOpenSuccess:
+      "{name}, you opened the magic door: your die ({roll}) plus {bonus} from your bonus add up to {total}, which meets or beats {target}. When it's your turn again, roll to move forward.",
+    magicDoorOpenFail:
+      "{name}, that's not enough to open the door: die {roll} plus {bonus} bonus is {total}, and you need {target} or more. Next player's turn.",
     magicDoorBounce:
       "{name}, on the magic door you must land exactly on square {door}: you overshot to {overshot}, so you bounce back to {final}.",
     forkChoiceAsk: "{name}, {prompt}",
