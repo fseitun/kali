@@ -44,3 +44,28 @@ export function getWinPosition(squares: Record<string, SquareLike> | undefined):
   const found = findSquareByEffect(squares, "win");
   return found?.position ?? 196;
 }
+
+/**
+ * Magic door square from config (`effect: magicDoorCheck`). Used for voice copy and prompts.
+ */
+export function getMagicDoorConfig(
+  squares: Record<string, SquareLike> | undefined,
+): { position: number; target: number } | null {
+  const found = findSquareByEffect(squares, "magicDoorCheck");
+  if (!found) {
+    return null;
+  }
+  const target = typeof found.square.target === "number" ? found.square.target : 6;
+  return { position: found.position, target };
+}
+
+/**
+ * Minimum value on a single opening die such that `die + hearts >= target` (Kalimba door rule).
+ */
+export function minDieToOpenMagicDoor(target: number, hearts: number): number {
+  const diff = target - hearts;
+  if (diff <= 1) {
+    return 1;
+  }
+  return Math.min(6, diff);
+}

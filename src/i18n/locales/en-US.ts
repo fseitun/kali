@@ -20,6 +20,8 @@ export const enUS = {
     proactiveStart: "Start the game and explain the current situation.",
     turnAnnouncement:
       "{name}, it's your turn. You're at position {position}. Roll the dice and tell me what you got.",
+    turnAnnouncementMagicDoor:
+      "{name}, it's your turn. You're on square {position}, the magic door. You have {heartsPhrase}. Roll one die only to try to open the door: your die plus your hearts must add up to {target} or more; with what you have now, you need at least a {minDie} on the die. Tell me what you rolled.",
     turnHandoff: "Now it's {name}'s turn.",
     turnAnnouncementWithDecision: "{name}, it's your turn. You're at position {position}. {prompt}",
     skipTurnAnnouncement: "{name}, you're skipping this turn.",
@@ -77,6 +79,10 @@ export const enUS = {
     landedPortalNoChoice:
       " You came through the portal from square {fromSquare}. You stay here — no choice to make.",
     landedTeleportHint: " Say the square number you're on so everyone knows.",
+    magicDoorHeartsOne: "one heart",
+    magicDoorHeartsMany: "{hearts} hearts",
+    magicDoorLanding:
+      "{name}, you landed exactly on square {position} ({squareName}). Your move roll is done — you don't advance further until you open the door. The others play now — {nextPlayer} is next. When it's your turn again, I'll remind you how many hearts you have and you'll roll one die only to open: your die plus your hearts must add up to {target} or more. Right now you have {heartsPhrase}; when you try to open, you'll need at least a {minDie} on the die.",
   },
   ui: {
     startButton: "Start",

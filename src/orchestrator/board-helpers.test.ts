@@ -1,5 +1,10 @@
 import { describe, it, expect } from "vitest";
-import { findSquareByEffect, getWinPosition } from "./board-helpers";
+import {
+  findSquareByEffect,
+  getMagicDoorConfig,
+  getWinPosition,
+  minDieToOpenMagicDoor,
+} from "./board-helpers";
 
 describe("findSquareByEffect", () => {
   it("returns null when squares is undefined", () => {
@@ -42,5 +47,37 @@ describe("getWinPosition", () => {
 
   it("returns configured win position from squares", () => {
     expect(getWinPosition({ "42": { effect: "win" } })).toBe(42);
+  });
+});
+
+describe("getMagicDoorConfig", () => {
+  it("returns null when no magic door square", () => {
+    expect(getMagicDoorConfig(undefined)).toBeNull();
+    expect(getMagicDoorConfig({ "5": { effect: "skipTurn" } })).toBeNull();
+  });
+
+  it("returns position and target from magicDoorCheck", () => {
+    expect(getMagicDoorConfig({ "186": { effect: "magicDoorCheck", target: 6 } })).toEqual({
+      position: 186,
+      target: 6,
+    });
+  });
+
+  it("defaults target to 6 when missing", () => {
+    expect(getMagicDoorConfig({ "99": { effect: "magicDoorCheck" } })).toEqual({
+      position: 99,
+      target: 6,
+    });
+  });
+});
+
+describe("minDieToOpenMagicDoor", () => {
+  it("matches Kalimba rule die + hearts >= target", () => {
+    expect(minDieToOpenMagicDoor(6, 0)).toBe(6);
+    expect(minDieToOpenMagicDoor(6, 1)).toBe(5);
+    expect(minDieToOpenMagicDoor(6, 2)).toBe(4);
+    expect(minDieToOpenMagicDoor(6, 3)).toBe(3);
+    expect(minDieToOpenMagicDoor(6, 5)).toBe(1);
+    expect(minDieToOpenMagicDoor(6, 6)).toBe(1);
   });
 });

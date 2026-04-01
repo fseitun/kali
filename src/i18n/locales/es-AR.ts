@@ -20,6 +20,8 @@ export const esAR = {
     proactiveStart: "Empezamos. Te explico la situación.",
     turnAnnouncement:
       "{name}, te toca. Estás en el casillero {position}. Tira el dado y decime qué sacaste.",
+    turnAnnouncementMagicDoor:
+      "{name}, te toca. Estás en el casillero {position}, la puerta mágica. Tenés {heartsPhrase}. Tirá un dado solo para intentar abrir la puerta: el número del dado más tus corazones tiene que sumar {target} o más; con lo que tenés ahora, necesitás al menos un {minDie} en el dado. Decime qué sacaste.",
     turnHandoff: "Ahora le toca a {name}.",
     turnAnnouncementWithDecision: "{name}, te toca. Estás en el casillero {position}. {prompt}",
     skipTurnAnnouncement: "{name}, saltás este turno.",
@@ -78,6 +80,10 @@ export const esAR = {
     landedPortalNoChoice:
       " Llegaste por el portal desde el casillero {fromSquare}. Te quedás acá — no hay elección.",
     landedTeleportHint: " Decí el número de casillero donde estás para que todos sepan.",
+    magicDoorHeartsOne: "un corazón",
+    magicDoorHeartsMany: "{hearts} corazones",
+    magicDoorLanding:
+      "{name}, caíste justo en el casillero {position} ({squareName}). Tu tirada de movimiento ya contó: en la puerta no avanzás hasta abrirla. Ahora le toca a los demás — sigue {nextPlayer}. Cuando vuelva a tocarte, te recuerdo tus corazones y tirás un dado solo para abrir: el dado más tus corazones tiene que sumar {target} o más. Ahora tenés {heartsPhrase}; cuando intentes abrir, vas a necesitar sacar al menos un {minDie} en el dado.",
   },
   ui: {
     startButton: "Jugar",

@@ -1,4 +1,4 @@
-import { findSquareByEffect, getWinPosition } from "./board-helpers";
+import { findSquareByEffect, getWinPosition, minDieToOpenMagicDoor } from "./board-helpers";
 import {
   getDirectionalRollDice,
   getSquareKind,
@@ -9,6 +9,7 @@ import {
 } from "./square-types";
 import type { ExecutionContext } from "./types";
 import type { IStatusIndicator } from "@/components/status-indicator";
+import { magicDoorHeartsPhrase } from "@/i18n/magic-door-phrases";
 import { t } from "@/i18n/translations";
 import type { ISpeechService } from "@/services/speech-service";
 import type { StateManager } from "@/state-manager";
@@ -743,6 +744,49 @@ export class BoardEffectsHandler {
     });
   }
 
+  private resolveNextPlayerDisplayName(currentPlayerId: string): string {
+    const state = this.stateManager.getState() as {
+      game?: { playerOrder?: string[] };
+      players?: Record<string, { name?: string }>;
+    };
+    const order = state.game?.playerOrder;
+    if (!order?.length) {
+      return "";
+    }
+    const idx = order.indexOf(currentPlayerId);
+    if (idx < 0) {
+      return "";
+    }
+    const nextId = order[(idx + 1) % order.length];
+    const raw = state.players?.[nextId]?.name;
+    return typeof raw === "string" && raw.trim() !== "" ? raw.trim() : nextId;
+  }
+
+  private buildMagicDoorLandingSpeech(
+    playerName: string,
+    playerId: string,
+    position: number,
+    squareName: string,
+    squareData: Record<string, unknown>,
+  ): string {
+    const target =
+      typeof squareData.target === "number" && squareData.target > 0 ? squareData.target : 6;
+    const heartsRaw = this.stateManager.get(playerStatePath(playerId, "hearts"));
+    const hearts = typeof heartsRaw === "number" && heartsRaw >= 0 ? heartsRaw : 0;
+    const minDie = minDieToOpenMagicDoor(target, hearts);
+    const heartsPhrase = magicDoorHeartsPhrase(hearts);
+    const nextPlayer = this.resolveNextPlayerDisplayName(playerId);
+    return t("squares.magicDoorLanding", {
+      name: playerName,
+      position,
+      squareName,
+      nextPlayer,
+      target,
+      heartsPhrase,
+      minDie,
+    });
+  }
+
   private buildNonAnimalDeterministicSpeech(
     playerName: string,
     position: number,
@@ -877,6 +921,13 @@ export class BoardEffectsHandler {
           squareData,
           playerId,
         ),
+      );
+      return;
+    }
+
+    if (kind === "magicDoor") {
+      await this.speakDeterministicLanding(
+        this.buildMagicDoorLandingSpeech(playerName, playerId, position, squareName, squareData),
       );
       return;
     }

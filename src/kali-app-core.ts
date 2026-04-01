@@ -2,9 +2,15 @@ import { CONFIG } from "./config";
 import { KALIMBA_EXAMPLES } from "./game-loader/examples/kalimba";
 import { GameLoader } from "./game-loader/game-loader";
 import type { GameModule } from "./game-loader/types";
+import { magicDoorHeartsPhrase } from "./i18n/magic-door-phrases";
 import { t } from "./i18n/translations";
 import { createLLMClient } from "./llm/llm-client-factory";
 import type { LLMClient } from "./llm/LLMClient";
+import {
+  getMagicDoorConfig,
+  minDieToOpenMagicDoor,
+  type SquareLike,
+} from "./orchestrator/board-helpers";
 import { inferDecisionPoints } from "./orchestrator/decision-point-inference";
 import { NameCollector } from "./orchestrator/name-collector";
 import { Orchestrator } from "./orchestrator/orchestrator";
@@ -400,6 +406,54 @@ ${summary ? `**Summary (for NARRATE explanations):** ${summary}\n` : ""}${exampl
     };
   }
 
+  private tryMagicDoorTurnAnnouncement(
+    nextPlayer: { playerId: string; name: string; position: number },
+    state: GameState | undefined,
+  ): string | null {
+    const squares = state?.board?.squares as Record<string, SquareLike> | undefined;
+    const door = getMagicDoorConfig(squares);
+    if (nextPlayer.position !== door?.position) {
+      return null;
+    }
+    const heartsRaw = state?.players?.[nextPlayer.playerId]?.hearts;
+    const hearts = typeof heartsRaw === "number" && heartsRaw >= 0 ? heartsRaw : 0;
+    const minDie = minDieToOpenMagicDoor(door.target, hearts);
+    return t("game.turnAnnouncementMagicDoor", {
+      name: nextPlayer.name,
+      position: nextPlayer.position,
+      heartsPhrase: magicDoorHeartsPhrase(hearts),
+      target: door.target,
+      minDie,
+    });
+  }
+
+  /**
+   * Turn line after advance or alreadyAdvanced: normal move prompt, magic door opening prompt, or fork prompt.
+   */
+  private buildGameplayTurnAnnouncement(
+    nextPlayer: { playerId: string; name: string; position: number },
+    pendingPrompt: string | null | undefined,
+  ): string {
+    const magicDoorLine = this.tryMagicDoorTurnAnnouncement(
+      nextPlayer,
+      this.stateManager?.getState() as GameState | undefined,
+    );
+    if (magicDoorLine !== null) {
+      return magicDoorLine;
+    }
+    if (pendingPrompt) {
+      return t("game.turnAnnouncementWithDecision", {
+        name: nextPlayer.name,
+        position: nextPlayer.position,
+        prompt: pendingPrompt,
+      });
+    }
+    return t("game.turnAnnouncement", {
+      name: nextPlayer.name,
+      position: nextPlayer.position,
+    });
+  }
+
   /**
    * Speaks the current player's turn announcement when they have a pending decision.
    * Used at game start before proactive welcome to ensure one clear "your turn, which path?"
@@ -434,16 +488,7 @@ ${summary ? `**Summary (for NARRATE explanations):** ${summary}\n` : ""}${exampl
         await this.speechService.speak(t("game.skipTurnAnnouncement", { name: skipped.name }));
       }
       const pendingPrompt = this.orchestrator.getPendingDecisionPrompt();
-      const message = pendingPrompt
-        ? t("game.turnAnnouncementWithDecision", {
-            name: nextPlayer.name,
-            position: nextPlayer.position,
-            prompt: pendingPrompt,
-          })
-        : t("game.turnAnnouncement", {
-            name: nextPlayer.name,
-            position: nextPlayer.position,
-          });
+      const message = this.buildGameplayTurnAnnouncement(nextPlayer, pendingPrompt);
       Logger.info(`Turn start sanity check: ${nextPlayer.name} at ${nextPlayer.position}`);
       await this.speechService.speak(message);
       this.orchestrator.setLastNarrationForVoicePolicy(message);
@@ -468,16 +513,7 @@ ${summary ? `**Summary (for NARRATE explanations):** ${summary}\n` : ""}${exampl
       if (result.success && result.turnAdvance.kind === "alreadyAdvanced") {
         const { nextPlayer } = result.turnAdvance;
         const pendingPrompt = this.orchestrator.getPendingDecisionPrompt();
-        const msg = pendingPrompt
-          ? t("game.turnAnnouncementWithDecision", {
-              name: nextPlayer.name,
-              position: nextPlayer.position,
-              prompt: pendingPrompt,
-            })
-          : t("game.turnAnnouncement", {
-              name: nextPlayer.name,
-              position: nextPlayer.position,
-            });
+        const msg = this.buildGameplayTurnAnnouncement(nextPlayer, pendingPrompt);
         await this.speechService.speak(msg);
         this.orchestrator.setLastNarrationForVoicePolicy(msg);
       } else if (result.success && result.turnAdvance.kind === "callAdvanceTurn") {
@@ -637,16 +673,7 @@ ${summary ? `**Summary (for NARRATE explanations):** ${summary}\n` : ""}${exampl
     if (result.success && result.turnAdvance.kind === "alreadyAdvanced") {
       const { nextPlayer } = result.turnAdvance;
       const pendingPrompt = this.orchestrator.getPendingDecisionPrompt();
-      const msg = pendingPrompt
-        ? t("game.turnAnnouncementWithDecision", {
-            name: nextPlayer.name,
-            position: nextPlayer.position,
-            prompt: pendingPrompt,
-          })
-        : t("game.turnAnnouncement", {
-            name: nextPlayer.name,
-            position: nextPlayer.position,
-          });
+      const msg = this.buildGameplayTurnAnnouncement(nextPlayer, pendingPrompt);
       await this.speechService.speak(msg);
       this.orchestrator.setLastNarrationForVoicePolicy(msg);
     } else if (result.success && result.turnAdvance.kind === "callAdvanceTurn") {

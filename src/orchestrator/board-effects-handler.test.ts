@@ -546,6 +546,25 @@ describe("BoardEffectsHandler", () => {
       expect(mockSpeak).toHaveBeenCalledWith(expect.stringMatching(/square 5|Quicksand|skip/i));
     });
 
+    it("magic door landing uses dedicated copy, next player name, hearts, no nested LLM", async () => {
+      stateManager.set("board.squares", {
+        "186": { name: "Magic Door", effect: "magicDoorCheck", target: 6 },
+      });
+      stateManager.set("players.p1.position", 186);
+      stateManager.set("players.p1.hearts", 2);
+      stateManager.set("game.turn", "p1");
+
+      await boardEffectsHandler.checkAndApplySquareEffects("players.p1.position", baseContext);
+
+      expect(mockProcessTranscript).not.toHaveBeenCalled();
+      expect(mockSpeak).toHaveBeenCalledTimes(1);
+      const text = String(mockSpeak.mock.calls[0]?.[0] ?? "");
+      expect(text).toMatch(/186|magic door/i);
+      expect(text).toMatch(/Bob/);
+      expect(text).toMatch(/heart/i);
+      expect(text).toMatch(/4|die/i);
+    });
+
     it("should include square data in synthetic transcript", async () => {
       const squareData = {
         name: "Bear",

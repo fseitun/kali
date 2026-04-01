@@ -1572,16 +1572,11 @@ describe("Orchestrator Integration Tests", () => {
 
   describe("Complex Mechanics", () => {
     it("handles magic door with heart requirements", async () => {
+      setLocale("en-US");
       const responses: PrimitiveAction[][] = [
         [
           { action: "PLAYER_ROLLED", value: 2 },
           { action: "NARRATE", text: "Moving to magic door..." },
-        ],
-        [
-          {
-            action: "NARRATE",
-            text: "You need to roll 5 or higher. You have 2 hearts.",
-          },
         ],
       ];
 
@@ -1615,6 +1610,10 @@ describe("Orchestrator Integration Tests", () => {
 
       const p1Position = stateManager.get("players.p1.position");
       expect(p1Position).toBe(186);
+      const speakMock = mockSpeech.speak as ReturnType<typeof vi.fn>;
+      const spoken = speakMock.mock.calls.map((c: unknown[]) => String(c[0])).join(" ");
+      expect(spoken).toMatch(/magic door|square 186/i);
+      expect(spoken).toMatch(/heart/i);
     });
 
     it("narrates magic door bounce with rule and final square when overshooting door", async () => {
