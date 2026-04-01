@@ -232,6 +232,7 @@ function riddleOutcomeMessage(
   correct: boolean,
   dice: ReturnType<typeof getPowerCheckDiceConfig>,
   squareName: string | undefined,
+  includeHeartHint: boolean,
 ): string {
   const locale = getLocale();
   const animalScorePhrase =
@@ -245,11 +246,12 @@ function riddleOutcomeMessage(
         : gap > 1
           ? t("game.riddlePowerExtraDiceMany", { count: gap })
           : "";
-    return t("game.riddleCorrectPowerRoll", {
+    const base = t("game.riddleCorrectPowerRoll", {
       extraDicePhrase,
       diceCount: dice.ifRiddleCorrect,
       animalScorePhrase,
     });
+    return includeHeartHint ? base + t("game.riddleHeartIfWin") : base;
   }
 
   const wrongCount = dice.ifRiddleWrong;
@@ -435,10 +437,12 @@ async function speakAfterRiddleOutcome(
       ? getSquareDataAtPosition(st, pendingEncounter.position)
       : undefined;
   const squareName = typeof squareData?.name === "string" ? squareData.name : undefined;
+  const includeHeartHint = riddleResult.correct === true && squareData?.heart === true;
   const msg = riddleOutcomeMessage(
     riddleResult.correct,
     getPowerCheckDiceConfig(squareData),
     squareName,
+    includeHeartHint,
   );
   ctx.setLastNarration(msg);
   ctx.statusIndicator.setState("speaking");

@@ -771,5 +771,69 @@ describe("Orchestrator Authority - LLM Adversarial Tests", () => {
         expect.stringMatching(/Carnivorous|square 17|skip your next turn/i),
       );
     });
+
+    it("speaks applied heart after power check win on heart animal", async () => {
+      (testState.players as any).p1.hearts = 0;
+      (testState.game as any).pending = {
+        kind: "powerCheck",
+        position: 10,
+        power: 2,
+        playerId: "p1",
+        riddleCorrect: true,
+      };
+      (testState.players as any).p1.position = 10;
+      (testState.board as any).squares = {
+        "9": { next: [10], prev: [8] },
+        "10": { name: "Peacock", power: 2, heart: true, next: [11], prev: [9] },
+        "11": { next: [12], prev: [10] },
+        "12": { next: [13], prev: [11] },
+        "13": { next: [14], prev: [12] },
+        "14": { next: [15], prev: [13] },
+        "15": { next: [16], prev: [14] },
+        "16": { next: [17], prev: [15] },
+        "17": { name: "Carnivorous plants", effect: "skipTurn", next: [18], prev: [16] },
+        "18": { next: [19], prev: [17] },
+        "100": { effect: "win", next: [], prev: [99] },
+      };
+
+      mockStateManager.getState = vi.fn(() => testState);
+      mockStateManager.get = vi.fn((path: string) => {
+        const parts = path.split(".");
+        let current: unknown = testState;
+        for (const part of parts) {
+          current = (current as Record<string, unknown>)[part];
+        }
+        return current;
+      });
+      mockStateManager.set = vi.fn(async (path: string, value: unknown) => {
+        if (path === "players.p1.position") {
+          (testState.players as any).p1.position = value as number;
+        }
+        if (path === "players.p1.hearts") {
+          (testState.players as any).p1.hearts = value as number;
+        }
+        if (path === "game.pending") {
+          (testState.game as any).pending = value;
+        }
+      });
+
+      mockLLM.getActions = vi.fn(async () => []);
+
+      const actions: PrimitiveAction[] = [
+        { action: "PLAYER_ANSWERED", answer: "7" },
+        { action: "PLAYER_ROLLED", value: 2 },
+      ];
+
+      const { success } = await orchestrator.testExecuteActions(actions);
+
+      expect(success).toBe(true);
+      expect((testState.players as any).p1.hearts).toBe(1);
+      expect(mockSpeech.speak).toHaveBeenNthCalledWith(1, "You passed.");
+      expect(mockSpeech.speak).toHaveBeenNthCalledWith(2, "You gain a heart.");
+      expect(mockSpeech.speak).toHaveBeenNthCalledWith(
+        3,
+        expect.stringMatching(/Carnivorous|square 17|skip your next turn/i),
+      );
+    });
   });
 });

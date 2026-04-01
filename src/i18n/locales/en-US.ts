@@ -45,6 +45,8 @@ export const enUS = {
     riddlePowerRollManyDice: "Roll {count} dice: ",
     riddleIncorrectPowerRoll:
       "Wrong answer. {diceRollPhrase}You need to beat {animalScorePhrase} to advance.",
+    riddleHeartIfWin:
+      " If you beat the animal with your roll, you gain a magic heart for the final door.",
     forkChoiceResolvedRoll: "{name}, you're set. Roll the dice.",
     goldenFoxJump: "{name}, the Golden Fox takes you to first place. You're on square {square}.",
     rollMovementLanded: "{name}, you rolled {roll}. You're on square {square}.",

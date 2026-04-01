@@ -203,6 +203,12 @@ export class RiddlePowerCheckHandler {
 
     this.deps.stateManager.set(playerStatePath(playerId, "position"), newPosition);
     this.applyAnimalEncounterRewards(playerId, squareData);
+    if (squareData.heart === true) {
+      const heartMsg = t("squares.appliedHeart");
+      this.deps.setLastNarration(heartMsg);
+      this.deps.statusIndicator.setState("speaking");
+      await this.deps.speechService.speak(heartMsg);
+    }
     this.deps.stateManager.set(GAME_PATH.pending, pendingAfter);
     Logger.info(
       pendingAfter

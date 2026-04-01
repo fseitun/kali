@@ -45,6 +45,8 @@ export const esAR = {
     riddlePowerRollManyDice: "Tirá {count} dados: ",
     riddleIncorrectPowerRoll:
       "No acertaste. {diceRollPhrase}Necesitás superar el puntaje {animalScorePhrase} para avanzar.",
+    riddleHeartIfWin:
+      " Si superás al animal con la tirada, ganás un corazón mágico para la puerta final.",
     forkChoiceResolvedRoll: "{name}, listo. Tirá el dado.",
     goldenFoxJump:
       "{name}, el Zorro Dorado te lleva al primer puesto. Estás en el casillero {square}.",

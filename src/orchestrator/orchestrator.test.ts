@@ -307,6 +307,45 @@ describe("Orchestrator - New Action Handlers", () => {
       );
     });
 
+    it("after correct riddle on heart animal, speech includes magic-heart door hint", async () => {
+      setLocale("en-US");
+      testState.board = {
+        squares: {
+          "5": { name: "Peacock", power: 3, heart: true },
+          "100": { effect: "win" },
+        },
+      };
+      (testState.game as any).pending = {
+        position: 5,
+        power: 3,
+        playerId: "p1",
+        kind: "riddle",
+        correctOption: "Ocean",
+        riddleOptions: ["Desert", "Ocean", "Arctic", "Forest"],
+      };
+      mockStateManager.getState = vi.fn(() => testState);
+      mockStateManager.get = vi.fn((path: string) => {
+        if (path === "game.pending") {
+          return (testState.game as any).pending;
+        }
+        if (path === "game.turn") {
+          return "p1";
+        }
+        if (path === "players.p1.position") {
+          return 5;
+        }
+        return undefined;
+      });
+
+      const actions: PrimitiveAction[] = [{ action: "PLAYER_ANSWERED", answer: "Ocean" }];
+
+      await orchestrator.testExecuteActions(actions);
+
+      expect(mockSpeech.speak).toHaveBeenCalledWith(
+        expect.stringMatching(/magic heart for the final door/i),
+      );
+    });
+
     it("resolves wrong riddle choice: strict false then LLM says false", async () => {
       (testState.game as any).pending = {
         position: 5,
