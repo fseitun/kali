@@ -874,6 +874,9 @@ export class Orchestrator {
     if (context.pendingMovementRollNarration !== undefined) {
       context.pendingMovementRollNarration = undefined;
     }
+    if (context.magicDoorBounce !== undefined) {
+      context.magicDoorBounce = undefined;
+    }
   }
 
   /**

@@ -1617,6 +1617,55 @@ describe("Orchestrator Integration Tests", () => {
       expect(p1Position).toBe(186);
     });
 
+    it("narrates magic door bounce with rule and final square when overshooting door", async () => {
+      setLocale("en-US");
+      const responses: PrimitiveAction[][] = [
+        [
+          { action: "PLAYER_ROLLED", value: 4 },
+          { action: "NARRATE", text: "You are on square 188." },
+        ],
+      ];
+
+      mockLLM = createScriptedLLM(responses);
+
+      const initialState: GameState = {
+        game: {
+          name: "Test Game",
+          phase: GamePhase.PLAYING,
+          turn: "p1",
+          playerOrder: ["p1"],
+          winner: null,
+          lastRoll: 0,
+        },
+        players: {
+          p1: { id: "p1", name: "Alice", position: 184 },
+        },
+        board: {
+          squares: {
+            "186": {
+              name: "Magic Door",
+              effect: "magicDoorCheck",
+              target: 6,
+            },
+            "196": { effect: "win" },
+          },
+        },
+      };
+
+      setupGame(initialState);
+
+      await orchestrator.handleTranscript("I rolled 4");
+
+      expect(stateManager.get("players.p1.position")).toBe(184);
+      const expectedLine = t("game.magicDoorBounce", {
+        name: "Alice",
+        door: 186,
+        overshot: 188,
+        final: 184,
+      });
+      expect(mockSpeech.speak).toHaveBeenCalledWith(expectedLine);
+    });
+
     it("handles instrument usage in correct habitat", async () => {
       const responses: PrimitiveAction[][] = [
         [

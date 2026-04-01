@@ -88,7 +88,7 @@ export class BoardEffectsHandler {
       this.applyJumpToLeaderLeaderSquarePortal(path, afterJumpToLeader, squares, context);
     }
 
-    this.applyMagicDoorBounceIfApplicable(path, squares);
+    this.applyMagicDoorBounceIfApplicable(path, squares, context);
 
     const finalPosition = this.stateManager.get(path) as number;
     this.setJumpToLeaderRelocatedIfNeeded(
@@ -125,25 +125,39 @@ export class BoardEffectsHandler {
    *
    * @param path - Player position path being resolved
    * @param squares - Board squares map
+   * @param context - When present and not a nested LLM call, records bounce for post-roll narration
    */
   private applyMagicDoorBounceIfApplicable(
     path: string,
     squares: Record<string, Record<string, unknown>>,
+    context?: ExecutionContext,
   ): void {
-    const finalPosition = this.stateManager.get(path) as number;
+    const overshotPosition = this.stateManager.get(path) as number;
     const magicDoorFound = findSquareByEffect(squares, "magicDoorCheck");
     const magicDoorPosition = magicDoorFound?.position;
     const winPosition = getWinPosition(squares);
     if (
       typeof magicDoorPosition === "number" &&
-      finalPosition > magicDoorPosition &&
-      finalPosition < winPosition
+      overshotPosition > magicDoorPosition &&
+      overshotPosition < winPosition
     ) {
-      const bounceTo = magicDoorPosition - (finalPosition - magicDoorPosition);
+      const bounceTo = magicDoorPosition - (overshotPosition - magicDoorPosition);
       Logger.info(
-        `Magic door bounce: overshot ${finalPosition} (door ${magicDoorPosition}), bouncing to ${bounceTo}`,
+        `Magic door bounce: overshot ${overshotPosition} (door ${magicDoorPosition}), bouncing to ${bounceTo}`,
       );
       this.stateManager.set(path, bounceTo);
+      if (context && !context.isNestedCall) {
+        const match = path.match(/^players\.([^.]+)\.position$/);
+        const playerId = match?.[1];
+        if (playerId) {
+          context.magicDoorBounce = {
+            playerId,
+            doorPosition: magicDoorPosition,
+            overshotPosition,
+            finalPosition: bounceTo,
+          };
+        }
+      }
     }
   }
 

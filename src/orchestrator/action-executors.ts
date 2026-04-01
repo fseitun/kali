@@ -54,6 +54,40 @@ function tryGoldenFoxNarrationOverride(
   return t("game.goldenFoxJump", { name, square: jump.toPosition });
 }
 
+function tryMagicDoorBounceNarrationOverride(
+  ctx: ActionExecutorContext,
+  context: ExecutionContext,
+  primitive: Extract<PrimitiveAction, { action: "NARRATE" }>,
+): string | undefined {
+  const bounce = context.magicDoorBounce;
+  if (bounce === undefined) {
+    return undefined;
+  }
+  const text = primitive.text;
+  if (text === undefined || text.trim() === "") {
+    return undefined;
+  }
+  const state = ctx.stateManager.getState();
+  const game = state.game as Record<string, unknown> | undefined;
+  const turn = game?.turn as string | undefined;
+  if (turn !== bounce.playerId) {
+    return undefined;
+  }
+  const players = state.players as Record<string, Record<string, unknown>> | undefined;
+  const name =
+    typeof players?.[bounce.playerId]?.name === "string"
+      ? (players[bounce.playerId].name as string)
+      : "";
+  context.magicDoorBounce = undefined;
+  context.pendingMovementRollNarration = undefined;
+  return t("game.magicDoorBounce", {
+    name,
+    door: bounce.doorPosition,
+    overshot: bounce.overshotPosition,
+    final: bounce.finalPosition,
+  });
+}
+
 function tryMovementRollNarrationOverride(
   ctx: ActionExecutorContext,
   context: ExecutionContext,
@@ -81,20 +115,37 @@ function tryMovementRollNarrationOverride(
   return t("game.rollMovementLanded", { name, roll: pending.roll, square: pending.square });
 }
 
-function computeNarrateSpeech(
+function resolveDeterministicNarrationOverrides(
   ctx: ActionExecutorContext,
-  primitive: Extract<PrimitiveAction, { action: "NARRATE" }>,
   context: ExecutionContext,
-): string {
+  primitive: Extract<PrimitiveAction, { action: "NARRATE" }>,
+): string | undefined {
   const goldenFoxLine = tryGoldenFoxNarrationOverride(ctx, context);
   if (goldenFoxLine !== undefined) {
     ctx.setLastNarration(goldenFoxLine);
     return goldenFoxLine;
   }
+  const magicDoorLine = tryMagicDoorBounceNarrationOverride(ctx, context, primitive);
+  if (magicDoorLine !== undefined) {
+    ctx.setLastNarration(magicDoorLine);
+    return magicDoorLine;
+  }
   const movementRollLine = tryMovementRollNarrationOverride(ctx, context, primitive);
   if (movementRollLine !== undefined) {
     ctx.setLastNarration(movementRollLine);
     return movementRollLine;
+  }
+  return undefined;
+}
+
+function computeNarrateSpeech(
+  ctx: ActionExecutorContext,
+  primitive: Extract<PrimitiveAction, { action: "NARRATE" }>,
+  context: ExecutionContext,
+): string {
+  const overridden = resolveDeterministicNarrationOverrides(ctx, context, primitive);
+  if (overridden !== undefined) {
+    return overridden;
   }
   const state = ctx.stateManager.getState();
   const game = state.game as Record<string, unknown> | undefined;

@@ -316,6 +316,39 @@ describe("BoardEffectsHandler", () => {
       expect(context.jumpToLeaderRelocated).toEqual({ toPosition: 80 });
     });
 
+    it("should set magicDoorBounce on context when overshooting magic door", async () => {
+      stateManager.set("board.squares", {
+        "186": { name: "Magic Door", effect: "magicDoorCheck", target: 6 },
+        "196": { effect: "win" },
+      });
+      stateManager.set("players.p1.position", 188);
+      const context: ExecutionContext = {};
+
+      await boardEffectsHandler.checkAndApplyBoardMoves("players.p1.position", context);
+
+      expect(stateManager.get("players.p1.position")).toBe(184);
+      expect(context.magicDoorBounce).toEqual({
+        playerId: "p1",
+        doorPosition: 186,
+        overshotPosition: 188,
+        finalPosition: 184,
+      });
+    });
+
+    it("should not set magicDoorBounce on nested calls", async () => {
+      stateManager.set("board.squares", {
+        "186": { name: "Magic Door", effect: "magicDoorCheck", target: 6 },
+        "196": { effect: "win" },
+      });
+      stateManager.set("players.p1.position", 188);
+      const context: ExecutionContext = { isNestedCall: true };
+
+      await boardEffectsHandler.checkAndApplyBoardMoves("players.p1.position", context);
+
+      expect(stateManager.get("players.p1.position")).toBe(184);
+      expect(context.magicDoorBounce).toBeUndefined();
+    });
+
     it("should keep position when jumpToLeader but current player is already leader", async () => {
       stateManager.set("board.squares", {
         "54": { effect: "jumpToLeader", name: "Zorro dorado" },

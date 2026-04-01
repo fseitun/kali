@@ -50,6 +50,8 @@ export const enUS = {
     forkChoiceResolvedRoll: "{name}, you're set. Roll the dice.",
     goldenFoxJump: "{name}, the Golden Fox takes you to first place. You're on square {square}.",
     rollMovementLanded: "{name}, you rolled {roll}. You're on square {square}.",
+    magicDoorBounce:
+      "{name}, on the magic door you must land exactly on square {door}: you overshot to {overshot}, so you bounce back to {final}.",
     forkChoiceAsk: "{name}, {prompt}",
     helpGameplay:
       "Listen to what I just said and follow that. If you need to roll, say the number you got. If you need to pick a path, say the square number or left or right.",

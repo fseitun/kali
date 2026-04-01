@@ -51,6 +51,8 @@ export const esAR = {
     goldenFoxJump:
       "{name}, el Zorro Dorado te lleva al primer puesto. Estás en el casillero {square}.",
     rollMovementLanded: "{name}, sacaste un {roll}. Estás en el casillero {square}.",
+    magicDoorBounce:
+      "{name}, con la puerta mágica tenés que caer justo en el casillero {door}: te pasaste hasta la {overshot}, rebotás y volvés a la {final}.",
     forkChoiceAsk: "{name}, {prompt}",
     helpGameplay:
       "Escuchá lo que acabo de decir y hacé eso. Si tenés que tirar el dado, decime el número. Si tenés que elegir camino, decime el número de casillero o izquierda o derecha.",

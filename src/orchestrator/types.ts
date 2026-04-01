@@ -136,6 +136,16 @@ export interface ExecutionContext {
    */
   jumpToLeaderRelocated?: { toPosition: number };
   /**
+   * Set when movement ended past the magic door and the orchestrator bounced the token back.
+   * Consumed on the next movement `NARRATE` in the same batch for deterministic rule + position TTS.
+   */
+  magicDoorBounce?: {
+    playerId: string;
+    doorPosition: number;
+    overshotPosition: number;
+    finalPosition: number;
+  };
+  /**
    * After a completed movement PLAYER_ROLLED (non-nested), the graph-resolved landing square for the
    * next NARRATE in the same batch. Consumed in executeNarrate for deterministic position TTS; cleared
    * if the batch ends without a matching NARRATE.
