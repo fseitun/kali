@@ -1277,6 +1277,253 @@ describe("Orchestrator Integration Tests", () => {
       expect(stateManager.get("players.p1.retreatEffectsReversed")).toBe(true);
       expect(mockLLM.getCallCount()).toBe(2);
     });
+
+    it("first one-shot landing on 82 does not rebound back to 82 in same resolution wave", async () => {
+      setLocale("en-US");
+      mockLLM = createScriptedLLM([
+        [
+          { action: "PLAYER_ROLLED", value: 1 },
+          { action: "NARRATE", text: "Moving to ocean portal." },
+        ],
+      ]);
+
+      const initialState: GameState = {
+        game: {
+          name: "Kalimba Portal Test",
+          phase: GamePhase.PLAYING,
+          turn: "p1",
+          playerOrder: ["p1"],
+          winner: null,
+          lastRoll: 0,
+        },
+        players: {
+          p1: {
+            id: "p1",
+            name: "Alice",
+            position: 81,
+            oceanForestPenaltyConsumed: false,
+            retreatEffectsReversed: false,
+            activeChoices: {},
+          },
+        },
+        board: {
+          squares: {
+            "45": { next: [46], prev: [44], name: "Forest-Ocean Portal", nextOnLanding: [82] },
+            "81": { next: [82], prev: [80] },
+            "82": {
+              next: [83],
+              prev: [81],
+              name: "Ocean-Forest Portal",
+              nextOnLanding: [45],
+              oceanForestOneShotPortal: true,
+            },
+          },
+        },
+      };
+
+      setupGame(initialState);
+
+      await orchestrator.handleTranscript("I rolled 1");
+
+      expect(stateManager.get("players.p1.position")).toBe(45);
+      expect(stateManager.get("players.p1.oceanForestPenaltyConsumed")).toBe(true);
+      expect(stateManager.get("players.p1.retreatEffectsReversed")).toBe(true);
+      const portalLine = `${t("squares.landedBase", {
+        name: "Alice",
+        position: 45,
+        squareName: "Forest-Ocean Portal",
+      })}${t("squares.landedPortalNoChoice", { fromSquare: 82 })}`.trim();
+      expect(mockSpeech.speak).toHaveBeenCalledWith(portalLine);
+      setLocale("es-AR");
+    });
+  });
+
+  describe("Special Squares Regression Matrix", () => {
+    it("returnTo187 resolves final position and speaks the final landing square", async () => {
+      setLocale("en-US");
+      mockLLM = createScriptedLLM([]);
+
+      const initialState: GameState = {
+        game: {
+          name: "Test Game",
+          phase: GamePhase.PLAYING,
+          turn: "p1",
+          playerOrder: ["p1"],
+          winner: null,
+          lastRoll: 0,
+        },
+        players: {
+          p1: { id: "p1", name: "Alice", position: 189, activeChoices: {} },
+        },
+        board: {
+          squares: {
+            "190": { name: "Calavera", effect: "returnTo187" },
+            "187": { name: "Backtrack" },
+            "196": { effect: "win" },
+          },
+        },
+      };
+
+      setupGame(initialState);
+
+      const result = await orchestrator.testExecuteActions([
+        { action: "PLAYER_ROLLED", value: 1 },
+        { action: "NARRATE", text: "Alice moves from 189 to 190." },
+      ]);
+
+      expect(result.success).toBe(true);
+      expect(stateManager.get("players.p1.position")).toBe(187);
+      const speakMock = mockSpeech.speak as ReturnType<typeof vi.fn>;
+      expect(speakMock).toHaveBeenCalledTimes(1);
+      expect(String(speakMock.mock.calls[0]?.[0] ?? "")).toContain("187");
+      setLocale("es-AR");
+    });
+
+    it("checkTorch hazard skips trailing movement NARRATE and applies deterministic line", async () => {
+      setLocale("en-US");
+      mockLLM = createScriptedLLM([]);
+
+      const initialState: GameState = {
+        game: {
+          name: "Test Game",
+          phase: GamePhase.PLAYING,
+          turn: "p1",
+          playerOrder: ["p1", "p2"],
+          winner: null,
+          lastRoll: 0,
+        },
+        players: {
+          p1: { id: "p1", name: "Alice", position: 84, activeChoices: {}, items: [] },
+          p2: { id: "p2", name: "Bob", position: 0 },
+        },
+        board: {
+          squares: {
+            "85": { name: "Night falls", effect: "checkTorch" },
+            "196": { effect: "win" },
+          },
+        },
+      };
+
+      setupGame(initialState);
+
+      const result = await orchestrator.testExecuteActions([
+        { action: "PLAYER_ROLLED", value: 1 },
+        {
+          action: "NARRATE",
+          text: "Trailing movement line that must not be spoken.",
+        },
+      ]);
+
+      expect(result.success).toBe(true);
+      expect(stateManager.get("players.p1.position")).toBe(85);
+      expect(stateManager.get("players.p1.skipTurns")).toBe(1);
+      const speakMock = mockSpeech.speak as ReturnType<typeof vi.fn>;
+      expect(speakMock).toHaveBeenCalledTimes(1);
+      const torchBase = t("squares.landedBase", {
+        name: "Alice",
+        position: 85,
+        squareName: "Night falls",
+      });
+      const expectedTorchLanding = t("squares.landedWithApplied", {
+        base: torchBase,
+        applied: t("squares.appliedSkipNoTorch"),
+      }).trim();
+      expect(speakMock).toHaveBeenCalledWith(expectedTorchLanding);
+      setLocale("es-AR");
+    });
+
+    it("directional flow: retreat2d6 sets pending and PLAYER_ANSWERED resolves backward movement", async () => {
+      setLocale("en-US");
+      mockLLM = createScriptedLLM([
+        [
+          { action: "PLAYER_ROLLED", value: 1 },
+          { action: "NARRATE", text: "Landing on directional square." },
+        ],
+        [{ action: "PLAYER_ANSWERED", answer: "8" }],
+      ]);
+
+      const initialState: GameState = {
+        game: {
+          name: "Test Game",
+          phase: GamePhase.PLAYING,
+          turn: "p1",
+          playerOrder: ["p1"],
+          winner: null,
+          lastRoll: 0,
+        },
+        players: {
+          p1: { id: "p1", name: "Alice", position: 54, activeChoices: {} },
+        },
+        board: {
+          squares: {
+            "55": { name: "Jivaro Indians", effect: "retreat2d6", next: [56], prev: [54] },
+            "54": { next: [55], prev: [53] },
+            "53": { next: [54], prev: [52] },
+            "52": { next: [53], prev: [51] },
+            "51": { next: [52], prev: [50] },
+            "50": { next: [51], prev: [49] },
+            "49": { next: [50], prev: [48] },
+            "48": { next: [49], prev: [47] },
+            "47": { next: [48], prev: [46] },
+          },
+        },
+      };
+
+      setupGame(initialState);
+
+      await orchestrator.handleTranscript("I rolled 1");
+      expect(stateManager.get("game.pending")).toMatchObject({
+        kind: "directional",
+        playerId: "p1",
+        position: 55,
+        dice: 2,
+      });
+
+      await orchestrator.handleTranscript("8");
+
+      expect(stateManager.get("players.p1.position")).toBe(47);
+      expect(stateManager.get("game.pending")).toBeNull();
+      expect(stateManager.get("game.lastRoll")).toBe(8);
+      setLocale("es-AR");
+    });
+
+    it("wins when reaching win square through teleport chain (destination to win)", async () => {
+      mockLLM = createScriptedLLM([
+        [
+          { action: "PLAYER_ROLLED", value: 1 },
+          { action: "NARRATE", text: "Moving to portal." },
+        ],
+      ]);
+
+      const initialState: GameState = {
+        game: {
+          name: "Test Game",
+          phase: GamePhase.PLAYING,
+          turn: "p1",
+          playerOrder: ["p1", "p2"],
+          winner: null,
+          lastRoll: 0,
+        },
+        players: {
+          p1: { id: "p1", name: "Alice", position: 97, activeChoices: {} },
+          p2: { id: "p2", name: "Bob", position: 0 },
+        },
+        board: {
+          squares: {
+            "98": { name: "Final ladder", destination: 100 },
+            "100": { effect: "win" },
+          },
+        },
+      };
+
+      setupGame(initialState);
+
+      await orchestrator.handleTranscript("I rolled 1");
+
+      expect(stateManager.get("players.p1.position")).toBe(100);
+      expect(stateManager.get("game.winner")).toBe("p1");
+      expect(stateManager.get("game.phase")).toBe(GamePhase.FINISHED);
+    });
   });
 
   describe("Turn Management", () => {

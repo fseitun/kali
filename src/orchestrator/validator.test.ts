@@ -205,6 +205,41 @@ describe("Validator - New Primitives", () => {
       expect(result.valid).toBe(true);
       delete (mockState.players as Record<string, Record<string, unknown>>).p1.bonusDiceNextTurn;
     });
+
+    it("magic door opening uses 1d6 limits even when bonusDiceNextTurn is true", () => {
+      const stateAtMagicDoor = {
+        ...mockState,
+        game: {
+          ...mockState.game,
+          turn: "p1",
+        },
+        players: {
+          ...mockState.players,
+          p1: {
+            ...(mockState.players as Record<string, Record<string, unknown>>).p1,
+            position: 186,
+            hearts: 0,
+            bonusDiceNextTurn: true,
+            magicDoorOpened: false,
+          },
+        },
+        board: {
+          squares: {
+            "186": { name: "Magic Door", effect: "magicDoorCheck", target: 6 },
+          },
+        },
+      } as unknown as GameState;
+      const actions = [{ action: "PLAYER_ROLLED", value: 11 }];
+      const result = validateActions(
+        actions,
+        stateAtMagicDoor,
+        mockStateManager as unknown as StateManager,
+        mockValidatorContext,
+      );
+      expect(result.valid).toBe(false);
+      expect(result.errorCode).toBe("invalidDiceRoll");
+      expect(result.error).toContain("1-6");
+    });
   });
 
   describe("PLAYER_ANSWERED", () => {
@@ -1325,6 +1360,34 @@ describe("Validator - New Primitives", () => {
       expect(result.valid).toBe(false);
       expect(result.errorCode).toBe("sayRollAsAnswer");
       expect(result.error).toContain("revenge");
+    });
+
+    it("blocks PLAYER_ROLLED when pending directional roll for current player", () => {
+      const stateWithPending = {
+        ...mockState,
+        game: {
+          ...mockState.game,
+          turn: "p1",
+          pending: {
+            position: 55,
+            playerId: "p1",
+            kind: "directional",
+            dice: 2,
+          },
+        },
+      };
+
+      const actions = [{ action: "PLAYER_ROLLED", value: 4 }];
+      const result = validateActions(
+        actions,
+        stateWithPending,
+        mockStateManager as unknown as StateManager,
+        mockValidatorContext,
+      );
+
+      expect(result.valid).toBe(false);
+      expect(result.errorCode).toBe("sayRollAsAnswer");
+      expect(result.error).toContain("directional");
     });
 
     it("blocks PLAYER_ROLLED when pending is riddle phase for current player", () => {

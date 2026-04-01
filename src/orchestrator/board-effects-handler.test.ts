@@ -187,6 +187,29 @@ describe("BoardEffectsHandler", () => {
       expect(context.suppressNextOnLandingAtPosition).toBe(45);
     });
 
+    it("Kalimba ocean-forest portal suppression blocks immediate 45→82 bounce in same resolution context", async () => {
+      stateManager.set("board.squares", {
+        "45": { next: [46], prev: [44], name: "Forest-Ocean Portal", nextOnLanding: [82] },
+        "82": {
+          next: [83],
+          prev: [81],
+          name: "Ocean-Forest Portal",
+          nextOnLanding: [45],
+          oceanForestOneShotPortal: true,
+        },
+      });
+      stateManager.set("players.p1.position", 82);
+      stateManager.set("players.p1.oceanForestPenaltyConsumed", false);
+      const context: ExecutionContext = {};
+
+      await boardEffectsHandler.checkAndApplyBoardMoves("players.p1.position", context);
+      expect(stateManager.get("players.p1.position")).toBe(45);
+      expect(context.suppressNextOnLandingAtPosition).toBe(45);
+
+      await boardEffectsHandler.checkAndApplyBoardMoves("players.p1.position", context);
+      expect(stateManager.get("players.p1.position")).toBe(45);
+    });
+
     it("Kalimba ocean-forest portal (82): after penalty consumed, further landings on 82 stay", async () => {
       stateManager.set("board.squares", {
         "82": {
