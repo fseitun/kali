@@ -66,7 +66,6 @@ describe("Orchestrator - New Action Handlers", () => {
     mockLLM = {
       getActions: vi.fn(async () => []),
       setGameRules: vi.fn(),
-      validateRiddleAnswer: vi.fn(async () => ({ correct: false })),
     } as unknown as LLMClient;
 
     orchestrator = new Orchestrator(
@@ -368,7 +367,6 @@ describe("Orchestrator - New Action Handlers", () => {
         }
         return undefined;
       });
-      (mockLLM as any).validateRiddleAnswer = vi.fn(async () => ({ correct: false }));
 
       const actions: PrimitiveAction[] = [{ action: "PLAYER_ANSWERED", answer: "Desert" }];
 
@@ -654,22 +652,8 @@ describe("Orchestrator - New Action Handlers", () => {
       } as GameState);
 
       const mockLLMChain = {
-        getActions: vi.fn(async (_transcript: string) => {
-          if (_transcript.includes("animal square 21") || _transcript.includes("Camel")) {
-            return [
-              {
-                action: "ASK_RIDDLE",
-                text: "Riddle?",
-                options: ["A", "B", "C", "D"],
-                correctOption: "A",
-              },
-              { action: "NARRATE", text: "Riddle and options." },
-            ];
-          }
-          return [];
-        }),
+        getActions: vi.fn(async () => []),
         setGameRules: vi.fn(),
-        validateRiddleAnswer: vi.fn(async () => ({ correct: false })),
       } as unknown as LLMClient;
 
       const chainOrchestrator = new Orchestrator(
@@ -823,7 +807,6 @@ describe("Orchestrator - New Action Handlers", () => {
         }
         return undefined;
       });
-      (mockLLM as any).validateRiddleAnswer = vi.fn(async () => ({ correct: false }));
       mockLLM.getActions = vi.fn(async () => []) as any;
 
       await orchestrator.testExecuteActions([{ action: "PLAYER_ANSWERED", answer: "Desert" }]);

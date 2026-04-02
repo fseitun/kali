@@ -42,94 +42,546 @@
     "door": [186, 196]
   },
   "squares": {
-    "0": { "next": { "1": ["left", "short"], "15": ["right", "long"] }, "prev": [] },
-    "2": { "name": "Falcon", "power": 3 },
-    "5": { "name": "Cobra", "power": 4 },
-    "7": { "name": "Eagle", "power": 3, "powerCheckDiceIfRiddleCorrect": 3, "powerCheckDiceIfRiddleWrong": 2 },
-    "11": { "name": "Quicksand", "effect": "skipTurn" },
-    "14": { "next": [36] },
-    "15": { "prev": [0] },
-    "16": { "name": "Beetle", "power": 1 },
-    "18": { "name": "Carnivorous plants", "effect": "skipTurn" },
-    "21": { "name": "Camel", "power": 2 },
-    "26": { "name": "Coyote", "power": 2 },
-    "36": { "prev": [14, 35] },
-    "38": { "name": "Scorpion", "power": 4 },
-    "42": { "name": "Wolf", "power": 4 },
-    "45": { "name": "Forest-Ocean Portal", "nextOnLanding": [82] },
-    "54": { "name": "Golden fox", "effect": "jumpToLeader" },
-    "55": { "name": "Jivaro Indians", "effect": "retreat2d6" },
-    "59": { "name": "Boa constrictor", "power": 3 },
-    "62": { "name": "Poison frog", "power": 2 },
-    "63": { "item": "anti-wasp" },
-    "64": { "name": "Grizzly bear", "power": 4 },
-    "65": { "name": "Bats", "effect": "retreat1d6" },
-    "66": { "name": "Squirrel", "power": 1 },
-    "68": { "name": "Deer", "power": 2 },
-    "71": { "name": "Pufferfish", "effect": "retreat2d6" },
-    "72": { "name": "Tiger shark", "power": 4 },
-    "75": { "name": "Crab", "effect": "retreat3d6" },
-    "77": { "name": "Piranhas", "effect": "skipTurn" },
-    "78": { "name": "Octopus and starfish", "power": 3 },
-    "79": { "item": "torch" },
-    "82": { "name": "Ocean-Forest Portal", "nextOnLanding": [45], "oceanForestOneShotPortal": true },
-    "84": { "name": "Clownfish", "power": 1 },
-    "85": { "name": "Night falls", "effect": "checkTorch" },
-    "87": { "name": "Sea turtle", "power": 2 },
-    "92": { "name": "Killer whale", "power": 4 },
-    "93": { "nextOnLanding": [97] },
-    "95": { "name": "Meteor showers", "effect": "skipTurn" },
-    "96": { "next": { "97": ["97", "down", "penguin"], "99": ["99", "up", "narwhal"] } },
-    "97": { "name": "Penguin", "power": 2 },
-    "98": { "next": [101] },
-    "99": { "prev": [96] },
-    "100": { "name": "Narwhal", "power": 2 },
-    "101": { "next": { "102": ["102", "down"], "105": ["105", "polar bear", "up"] }, "prev": { "98": ["98", "down"], "100": ["100", "up"] }, "name": "Walrus", "power": 3 },
-    "102": { "prev": [101], "next": [103] },
-    "103": { "name": "Iceberg", "effect": "retreat1d6" },
-    "104": { "next": [106] },
-    "105": { "prev": [101], "name": "Polar bear", "power": 4 },
-    "106": { "prev": { "104": ["104", "down"], "105": ["105", "up"] }, "name": "Blue whale", "power": 5 },
-    "109": { "name": "Volcano eruption", "effect": "skipTurn" },
-    "114": { "name": "Ghost of a baboon", "power": 1 },
-    "115": { "name": "Jungle squall", "effect": "retreat3d6" },
-    "116": { "name": "Wasps", "effect": "checkAntiWasp" },
-    "118": { "name": "Ghost of a black bear", "power": 1 },
-    "119": { "name": "Lightning", "effect": "skipTurn" },
-    "120": { "name": "Baboon", "power": 2 },
-    "122": { "name": "Caiman", "power": 3 },
-    "124": { "name": "Black bear", "power": 3 },
-    "129": { "name": "Wild dogs", "power": 1 },
-    "131": { "name": "Night falls", "effect": "checkTorch" },
-    "132": { "name": "Ostrich", "power": 2, "powerCheckDiceIfRiddleCorrect": 3, "powerCheckDiceIfRiddleWrong": 2 },
-    "133": { "item": "torch" },
-    "134": { "name": "Crocodile", "power": 3 },
-    "136": { "name": "Swamp", "effect": "skipTurn" },
-    "140": { "name": "Rhinoceros", "power": 3 },
-    "141": { "nextOnLanding": [165] },
-    "143": { "name": "Whirlpool", "effect": "skipTurn" },
-    "145": { "name": "Giraffe", "power": 2, "winJumpTo": 162 },
-    "148": { "name": "Nile crocodile", "power": 3 },
-    "149": { "name": "Lion Makulu", "power": 5 },
-    "150": { "name": "Cheetah", "power": 3 },
-    "154": { "name": "African Elephant Craig", "power": 4 },
-    "156": { "name": "Silverback gorilla", "power": 4, "heart": true },
-    "159": { "name": "Hippopotamus", "power": 3 },
-    "160": { "name": "Piranhas", "effect": "skipTurn" },
-    "164": { "name": "White rhinoceros", "power": 4 },
-    "165": { "name": "Kangaroo", "power": 2 },
-    "168": { "name": "Lizard", "power": 1, "heart": true },
-    "171": { "name": "Komodo dragon", "power": 3 },
-    "174": { "name": "Night falls", "effect": "checkTorch" },
-    "176": { "item": "scimitar" },
-    "178": { "name": "Asian elephant", "power": 4 },
-    "180": { "name": "Tiger Shere Khan", "power": 5 },
-    "182": { "name": "Tamil Nadu elephant", "power": 4 },
-    "185": { "name": "Peacock", "power": 2, "heart": true },
-    "186": { "name": "Magic Door", "effect": "magicDoorCheck", "target": 6 },
-    "190": { "name": "Skull", "effect": "returnTo187" },
-    "192": { "name": "Skull", "effect": "returnTo187" },
-    "194": { "name": "Skull", "effect": "returnTo187" },
-    "196": { "next": [], "name": "Heart of Kalimba", "effect": "win" }
+    "0": {
+      "next": {
+        "1": ["left", "short"],
+        "15": ["right", "long"]
+      },
+      "prev": []
+    },
+    "2": {
+      "name": "Falcon",
+      "power": 3
+    },
+    "5": {
+      "name": "Cobra",
+      "power": 4
+    },
+    "7": {
+      "name": "Eagle",
+      "power": 3,
+      "powerCheckDiceIfRiddleCorrect": 3,
+      "powerCheckDiceIfRiddleWrong": 2
+    },
+    "11": {
+      "name": "Quicksand",
+      "effect": "skipTurn"
+    },
+    "14": {
+      "next": [36]
+    },
+    "15": {
+      "prev": [0]
+    },
+    "16": {
+      "name": "Beetle",
+      "power": 1
+    },
+    "18": {
+      "name": "Carnivorous plants",
+      "effect": "skipTurn"
+    },
+    "21": {
+      "name": "Camel",
+      "power": 2
+    },
+    "26": {
+      "name": "Coyote",
+      "power": 2
+    },
+    "36": {
+      "prev": [14, 35]
+    },
+    "38": {
+      "name": "Scorpion",
+      "power": 4
+    },
+    "42": {
+      "name": "Wolf",
+      "power": 4
+    },
+    "45": {
+      "name": "Forest-Ocean Portal",
+      "nextOnLanding": [82]
+    },
+    "54": {
+      "name": "Golden fox",
+      "effect": "jumpToLeader"
+    },
+    "55": {
+      "name": "Jivaro Indians",
+      "effect": "retreat2d6"
+    },
+    "59": {
+      "name": "Boa constrictor",
+      "power": 3
+    },
+    "62": {
+      "name": "Poison frog",
+      "power": 2
+    },
+    "63": {
+      "item": "anti-wasp"
+    },
+    "64": {
+      "name": "Grizzly bear",
+      "power": 4
+    },
+    "65": {
+      "name": "Bats",
+      "effect": "retreat1d6"
+    },
+    "66": {
+      "name": "Squirrel",
+      "power": 1
+    },
+    "68": {
+      "name": "Deer",
+      "power": 2
+    },
+    "71": {
+      "name": "Pufferfish",
+      "effect": "retreat2d6"
+    },
+    "72": {
+      "name": "Tiger shark",
+      "power": 4
+    },
+    "75": {
+      "name": "Crab",
+      "effect": "retreat3d6"
+    },
+    "77": {
+      "name": "Piranhas",
+      "effect": "skipTurn"
+    },
+    "78": {
+      "name": "Octopus and starfish",
+      "power": 3
+    },
+    "79": {
+      "item": "torch"
+    },
+    "82": {
+      "name": "Ocean-Forest Portal",
+      "nextOnLanding": [45],
+      "oceanForestOneShotPortal": true
+    },
+    "84": {
+      "name": "Clownfish",
+      "power": 1
+    },
+    "85": {
+      "name": "Night falls",
+      "effect": "checkTorch"
+    },
+    "87": {
+      "name": "Sea turtle",
+      "power": 2
+    },
+    "92": {
+      "name": "Killer whale",
+      "power": 4
+    },
+    "93": {
+      "nextOnLanding": [97]
+    },
+    "95": {
+      "name": "Meteor showers",
+      "effect": "skipTurn"
+    },
+    "96": {
+      "next": {
+        "97": ["97", "down", "penguin"],
+        "99": ["99", "up", "narwhal"]
+      }
+    },
+    "97": {
+      "name": "Penguin",
+      "power": 2
+    },
+    "98": {
+      "next": [101]
+    },
+    "99": {
+      "prev": [96]
+    },
+    "100": {
+      "name": "Narwhal",
+      "power": 2
+    },
+    "101": {
+      "next": {
+        "102": ["102", "down"],
+        "105": ["105", "polar bear", "up"]
+      },
+      "prev": {
+        "98": ["98", "down"],
+        "100": ["100", "up"]
+      },
+      "name": "Walrus",
+      "power": 3
+    },
+    "102": {
+      "prev": [101],
+      "next": [103]
+    },
+    "103": {
+      "name": "Iceberg",
+      "effect": "retreat1d6"
+    },
+    "104": {
+      "next": [106]
+    },
+    "105": {
+      "prev": [101],
+      "name": "Polar bear",
+      "power": 4
+    },
+    "106": {
+      "prev": {
+        "104": ["104", "down"],
+        "105": ["105", "up"]
+      },
+      "name": "Blue whale",
+      "power": 5
+    },
+    "109": {
+      "name": "Volcano eruption",
+      "effect": "skipTurn"
+    },
+    "114": {
+      "name": "Ghost of a baboon",
+      "power": 1
+    },
+    "115": {
+      "name": "Jungle squall",
+      "effect": "retreat3d6"
+    },
+    "116": {
+      "name": "Wasps",
+      "effect": "checkAntiWasp"
+    },
+    "118": {
+      "name": "Ghost of a black bear",
+      "power": 1
+    },
+    "119": {
+      "name": "Lightning",
+      "effect": "skipTurn"
+    },
+    "120": {
+      "name": "Baboon",
+      "power": 2
+    },
+    "122": {
+      "name": "Caiman",
+      "power": 3
+    },
+    "124": {
+      "name": "Black bear",
+      "power": 3
+    },
+    "129": {
+      "name": "Wild dogs",
+      "power": 1
+    },
+    "131": {
+      "name": "Night falls",
+      "effect": "checkTorch"
+    },
+    "132": {
+      "name": "Ostrich",
+      "power": 2,
+      "powerCheckDiceIfRiddleCorrect": 3,
+      "powerCheckDiceIfRiddleWrong": 2
+    },
+    "133": {
+      "item": "torch"
+    },
+    "134": {
+      "name": "Crocodile",
+      "power": 3
+    },
+    "136": {
+      "name": "Swamp",
+      "effect": "skipTurn"
+    },
+    "140": {
+      "name": "Rhinoceros",
+      "power": 3
+    },
+    "141": {
+      "nextOnLanding": [165]
+    },
+    "143": {
+      "name": "Whirlpool",
+      "effect": "skipTurn"
+    },
+    "145": {
+      "name": "Giraffe",
+      "power": 2,
+      "winJumpTo": 162
+    },
+    "148": {
+      "name": "Nile crocodile",
+      "power": 3
+    },
+    "149": {
+      "name": "Lion Makulu",
+      "power": 5
+    },
+    "150": {
+      "name": "Cheetah",
+      "power": 3
+    },
+    "154": {
+      "name": "African Elephant Craig",
+      "power": 4
+    },
+    "156": {
+      "name": "Silverback gorilla",
+      "power": 4,
+      "heart": true
+    },
+    "159": {
+      "name": "Hippopotamus",
+      "power": 3
+    },
+    "160": {
+      "name": "Piranhas",
+      "effect": "skipTurn"
+    },
+    "164": {
+      "name": "White rhinoceros",
+      "power": 4
+    },
+    "165": {
+      "name": "Kangaroo",
+      "power": 2
+    },
+    "168": {
+      "name": "Lizard",
+      "power": 1,
+      "heart": true
+    },
+    "171": {
+      "name": "Komodo dragon",
+      "power": 3
+    },
+    "174": {
+      "name": "Night falls",
+      "effect": "checkTorch"
+    },
+    "176": {
+      "item": "scimitar"
+    },
+    "178": {
+      "name": "Asian elephant",
+      "power": 4
+    },
+    "180": {
+      "name": "Tiger Shere Khan",
+      "power": 5
+    },
+    "182": {
+      "name": "Tamil Nadu elephant",
+      "power": 4
+    },
+    "185": {
+      "name": "Peacock",
+      "power": 2,
+      "heart": true
+    },
+    "186": {
+      "name": "Magic Door",
+      "effect": "magicDoorCheck",
+      "target": 6
+    },
+    "190": {
+      "name": "Skull",
+      "effect": "returnTo187"
+    },
+    "192": {
+      "name": "Skull",
+      "effect": "returnTo187"
+    },
+    "194": {
+      "name": "Skull",
+      "effect": "returnTo187"
+    },
+    "196": {
+      "next": [],
+      "name": "Heart of Kalimba",
+      "effect": "win"
+    }
+  },
+  "encounterQuestions": {
+    "Falcon": {
+      "es-AR": [
+        {
+          "animal": "Falcon",
+          "type": "speed",
+          "kali": "El halcón se lanza desde lo más alto del cielo…",
+          "question": "¿Qué tan rápido puede volar en picada?",
+          "options": ["Como una persona corriendo", "Como una bicicleta", "Más rápido que un auto de carrera", "Como un perro"],
+          "correctOption": "Más rápido que un auto de carrera"
+        },
+        {
+          "animal": "Falcon",
+          "type": "vision",
+          "kali": "Desde arriba, el halcón observa todo lo que pasa abajo…",
+          "question": "¿Cómo es la vista del halcón?",
+          "options": ["Muy mala", "Igual que la humana", "Muy poderosa, puede ver de lejos", "Solo ve de noche"],
+          "correctOption": "Muy poderosa, puede ver de lejos"
+        },
+        {
+          "animal": "Falcon",
+          "type": "hunting",
+          "kali": "El halcón detecta a su presa y se prepara para atacar…",
+          "question": "¿Cómo suele cazar el halcón?",
+          "options": ["Caminando lentamente", "Lanzándose en picada desde el cielo", "Nadando", "Escondiéndose bajo tierra"],
+          "correctOption": "Lanzándose en picada desde el cielo"
+        },
+        {
+          "animal": "Falcon",
+          "type": "body",
+          "kali": "El halcón extiende sus alas en el aire…",
+          "question": "¿Para qué le sirven sus alas largas y fuertes?",
+          "options": ["Para nadar", "Para volar rápido y controlar el aire", "Para cavar", "Para empujar objetos"],
+          "correctOption": "Para volar rápido y controlar el aire"
+        },
+        {
+          "animal": "Falcon",
+          "type": "comparison",
+          "kali": "Imaginá una carrera en el cielo…",
+          "question": "¿El halcón es más rápido que la mayoría de las aves?",
+          "options": ["No, es de los más lentos", "Solo de noche", "Sí, es uno de los más rápidos", "Solo cuando camina"],
+          "correctOption": "Sí, es uno de los más rápidos"
+        },
+        {
+          "animal": "Falcon",
+          "type": "behavior",
+          "kali": "El halcón gira en el aire buscando el momento perfecto…",
+          "question": "¿Por qué el halcón vuela en círculos antes de atacar?",
+          "options": ["Porque está jugando", "Para marearse", "Para observar mejor a su presa", "Porque no sabe a dónde ir"],
+          "correctOption": "Para observar mejor a su presa"
+        },
+        {
+          "animal": "Falcon",
+          "type": "habitat",
+          "kali": "El halcón se posa en lo alto de una roca…",
+          "question": "¿Dónde suele estar el halcón para vigilar mejor?",
+          "options": ["Debajo del agua", "En lugares altos", "Dentro de cuevas oscuras", "Bajo la arena"],
+          "correctOption": "En lugares altos"
+        },
+        {
+          "animal": "Falcon",
+          "type": "food",
+          "kali": "El halcón atrapa algo con sus garras…",
+          "question": "¿Qué suele comer el halcón?",
+          "options": ["Plantas", "Frutas", "Otros animales pequeños", "Piedras"],
+          "correctOption": "Otros animales pequeños"
+        },
+        {
+          "animal": "Falcon",
+          "type": "fun_fact",
+          "kali": "Este halcón tiene un récord increíble…",
+          "question": "¿El halcón es uno de los animales más rápidos del planeta?",
+          "options": ["No", "Solo en el agua", "Sí", "Solo cuando camina"],
+          "correctOption": "Sí"
+        },
+        {
+          "animal": "Falcon",
+          "type": "instinct",
+          "kali": "El halcón reacciona en un instante…",
+          "question": "¿Por qué el halcón es tan buen cazador?",
+          "options": ["Porque es grande", "Porque es lento", "Porque tiene reflejos rápidos y buena vista", "Porque se esconde todo el tiempo"],
+          "correctOption": "Porque tiene reflejos rápidos y buena vista"
+        }
+      ],
+      "en-US": [
+        {
+          "animal": "Falcon",
+          "type": "speed",
+          "kali": "The falcon dives from the highest part of the sky...",
+          "question": "How fast can a falcon fly in a dive?",
+          "options": ["Like a person running", "Like a bicycle", "Faster than a race car", "Like a dog"],
+          "correctOption": "Faster than a race car"
+        },
+        {
+          "animal": "Falcon",
+          "type": "vision",
+          "kali": "From above, the falcon watches everything happening below...",
+          "question": "How is a falcon's eyesight?",
+          "options": ["Very bad", "The same as a human", "Very powerful, it can see far away", "It only sees at night"],
+          "correctOption": "Very powerful, it can see far away"
+        },
+        {
+          "animal": "Falcon",
+          "type": "hunting",
+          "kali": "The falcon spots its prey and gets ready to attack...",
+          "question": "How does a falcon usually hunt?",
+          "options": ["By walking slowly", "By diving from the sky", "By swimming", "By hiding underground"],
+          "correctOption": "By diving from the sky"
+        },
+        {
+          "animal": "Falcon",
+          "type": "body",
+          "kali": "The falcon spreads its wings in the air...",
+          "question": "What are its long, strong wings for?",
+          "options": ["To swim", "To fly fast and control the air", "To dig", "To push objects"],
+          "correctOption": "To fly fast and control the air"
+        },
+        {
+          "animal": "Falcon",
+          "type": "comparison",
+          "kali": "Imagine a race in the sky...",
+          "question": "Is the falcon faster than most birds?",
+          "options": ["No, it is one of the slowest", "Only at night", "Yes, it is one of the fastest", "Only when it walks"],
+          "correctOption": "Yes, it is one of the fastest"
+        },
+        {
+          "animal": "Falcon",
+          "type": "behavior",
+          "kali": "The falcon circles in the air looking for the perfect moment...",
+          "question": "Why does a falcon fly in circles before attacking?",
+          "options": ["Because it is playing", "To make itself dizzy", "To observe its prey better", "Because it does not know where to go"],
+          "correctOption": "To observe its prey better"
+        },
+        {
+          "animal": "Falcon",
+          "type": "habitat",
+          "kali": "The falcon perches on top of a rock...",
+          "question": "Where does a falcon usually stay to watch better?",
+          "options": ["Underwater", "In high places", "Inside dark caves", "Under sand"],
+          "correctOption": "In high places"
+        },
+        {
+          "animal": "Falcon",
+          "type": "food",
+          "kali": "The falcon grabs something with its claws...",
+          "question": "What does a falcon usually eat?",
+          "options": ["Plants", "Fruits", "Other small animals", "Rocks"],
+          "correctOption": "Other small animals"
+        },
+        {
+          "animal": "Falcon",
+          "type": "fun_fact",
+          "kali": "This falcon has an incredible record...",
+          "question": "Is the falcon one of the fastest animals on Earth?",
+          "options": ["No", "Only in water", "Yes", "Only when it walks"],
+          "correctOption": "Yes"
+        },
+        {
+          "animal": "Falcon",
+          "type": "instinct",
+          "kali": "The falcon reacts in an instant...",
+          "question": "Why is the falcon such a good hunter?",
+          "options": ["Because it is big", "Because it is slow", "Because it has quick reflexes and sharp eyesight", "Because it hides all the time"],
+          "correctOption": "Because it has quick reflexes and sharp eyesight"
+        }
+      ]
+    }
   }
 }

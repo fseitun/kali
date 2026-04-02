@@ -60,11 +60,11 @@ export const llmStateContextEsAR: LlmStateContextBundle = {
   riddleHelpRepeatStructured:
     " Si pregunta qué hacer, NARRATE repitiendo la misma adivinanza y las cuatro opciones.",
   riddleHelpRegenerate:
-    " Si pregunta qué hacer o dice que no escuchó, DEBÉS devolver ASK_RIDDLE (text, options, correctOption, opcional correctOptionSynonyms) seguido de NARRATE con esa misma adivinanza y opciones. NO devuelvas solo un NARRATE que diga «elegí una opción» sin decir la adivinanza.",
+    " Si pregunta qué hacer o dice que no escuchó, devolvé NARRATE repitiendo la misma adivinanza y opciones desde el estado. No inventes una adivinanza nueva.",
   riddlePhaseNoStructured:
-    '⚠️ RIDDLE ({playerName}) phase=riddle.{antiLeak}{encounterHints}{narrationShape} Pedí una adivinanza con exactamente CUATRO opciones. Tiene que ser del reino animal (animales, hábitats, comportamiento, alimentación, clasificación). Devolvé ASK_RIDDLE con "text", "options" (4 strings), "correctOption" (texto exacto de la opción correcta), opcional "correctOptionSynonyms". Después NARRATE con la adivinanza y opciones. Cuando responda el usuario, PLAYER_ANSWERED con lo que dijo; el orquestador resuelve acierto/error.{helpInst} [current]',
+    "⚠️ RIDDLE ({playerName}) phase=riddle. El encuentro ya tiene adivinanza determinística en el estado.{encounterHints}{narrationShape}{antiLeak} Devolvé NARRATE para repetir la pregunta y opciones tal cual estén, o PLAYER_ANSWERED con lo que dijo el usuario. No inventes una adivinanza nueva.{helpInst} [current]",
   riddlePhaseStructuredPrefix:
-    "⚠️ RIDDLE ({playerName}) phase=riddle. El usuario debe elegir una de las cuatro opciones. PLAYER_ANSWERED con lo que dijo; el orquestador resuelve acierto/error (match estricto y después LLM).",
+    "⚠️ RIDDLE ({playerName}) phase=riddle. El usuario debe elegir una de las cuatro opciones. PLAYER_ANSWERED con lo que dijo; el orquestador resuelve acierto/error con matching estricto determinístico.",
   riddleCurrentOptions:
     " Opciones actuales: {optionsList}. PLAYER_ANSWERED con la respuesta del usuario (texto de opción o lo que dijo).",
   powerCheckBlock:
@@ -115,11 +115,11 @@ export const llmStateContextEnUS: LlmStateContextBundle = {
   riddleHelpRepeatStructured:
     " If the user asks what to do, NARRATE by repeating the same riddle and four options.",
   riddleHelpRegenerate:
-    " If the user asks what to do or says they did not hear, you MUST return ASK_RIDDLE (text, options, correctOption, optional correctOptionSynonyms) followed by NARRATE speaking that same riddle and options. Do NOT return only a NARRATE saying to pick an option without speaking the actual riddle.",
+    " If the user asks what to do or says they did not hear, return NARRATE repeating the same riddle and options from state. Do not invent a new riddle.",
   riddlePhaseNoStructured:
-    '⚠️ RIDDLE ({playerName}) phase=riddle.{antiLeak}{encounterHints}{narrationShape} Ask a riddle with exactly FOUR options. The riddle MUST be about the animal kingdom (animals, habitats, behavior, diet, classification). Return ASK_RIDDLE with "text", "options" (array of 4 strings), "correctOption" (exact text of the correct option), optionally "correctOptionSynonyms". Then NARRATE the riddle and options. When the user answers, return PLAYER_ANSWERED with what they said; the orchestrator resolves correct/incorrect.{helpInst} [current]',
+    "⚠️ RIDDLE ({playerName}) phase=riddle. The encounter already has a deterministic riddle in state.{encounterHints}{narrationShape}{antiLeak} Return NARRATE to repeat the stored question/options, or PLAYER_ANSWERED with the user response. Do not create a new riddle.{helpInst} [current]",
   riddlePhaseStructuredPrefix:
-    "⚠️ RIDDLE ({playerName}) phase=riddle. The user must choose one of the four options. Return PLAYER_ANSWERED with what the user said; the orchestrator resolves correct/incorrect (strict match then LLM).",
+    "⚠️ RIDDLE ({playerName}) phase=riddle. The user must choose one of the four options. Return PLAYER_ANSWERED with what the user said; the orchestrator resolves correct/incorrect with deterministic strict matching.",
   riddleCurrentOptions:
     " Current options: {optionsList}. Return PLAYER_ANSWERED with the user's answer (option text or what they said).",
   powerCheckBlock:

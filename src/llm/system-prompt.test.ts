@@ -29,7 +29,7 @@ describe("SYSTEM_PROMPT", () => {
 
   it("warns against NDJSON (two root objects) vs a single JSON array", () => {
     expect(SYSTEM_PROMPT).toMatch(/Wrong.*two root objects|single array/i);
-    expect(SYSTEM_PROMPT).toContain("ASK_RIDDLE");
+    expect(SYSTEM_PROMPT).toContain("PLAYER_ANSWERED");
   });
 
   it("documents tagged user-turn layout: game_state and user_command", () => {

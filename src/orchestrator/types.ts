@@ -266,7 +266,7 @@ export interface PlayerAnsweredAction {
 /**
  * Asks a structured riddle with exactly four options during an animal encounter.
  * Orchestrator stores options and correctOption (and optional synonyms); when user answers with PLAYER_ANSWERED,
- * strict match (option text + synonyms) is tried first, then LLM validation if needed.
+ * strict match (option text + synonyms) deterministically resolves the outcome.
  * The riddle MUST be about the animal kingdom (e.g. animals, habitats, behavior, diet, classification); it does not have to be this square's animal/habitat.
  */
 export interface AskRiddleAction {

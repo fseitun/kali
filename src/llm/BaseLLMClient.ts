@@ -3,13 +3,12 @@ import { formatStateContext } from "./state-context";
 import { buildSystemPrompt } from "./system-prompt";
 import type { ApiCallOptions, ApiCallResult } from "./types";
 import { CONFIG } from "@/config";
-import { buildValidateRiddleAnswerPrompt } from "@/i18n/riddle-judge-prompt";
 import type { GameState, PrimitiveAction } from "@/orchestrator/types";
 import { safeParse, parseArray, tryCoalesceNdjsonObjectArray } from "@/utils/json-parser";
 import { Logger } from "@/utils/logger";
 import { Profiler } from "@/utils/profiler";
 
-type PromptPurpose = "getActions" | "extractName" | "analyzeResponse" | "validateRiddleAnswer";
+type PromptPurpose = "getActions" | "extractName" | "analyzeResponse";
 
 export abstract class BaseLLMClient implements LLMClient {
   protected systemPrompt: string = "";
@@ -253,45 +252,6 @@ JSON:`;
     } catch (error) {
       Logger.error("analyzeResponse error:", error);
       return { isOnTopic: true };
-    }
-  }
-
-  async validateRiddleAnswer(
-    userAnswer: string,
-    options: [string, string, string, string],
-    correctOption: string,
-  ): Promise<{ correct: boolean }> {
-    try {
-      const prompt = buildValidateRiddleAnswerPrompt(userAnswer, options, correctOption);
-
-      this.logPrompt("validateRiddleAnswer", prompt);
-      const startTime = performance.now();
-      const apiResult = await this.makeApiCall(prompt, {
-        temperature: 0.2,
-        maxTokens: 20,
-        responseFormatJson: true,
-      });
-      const durationMs = performance.now() - startTime;
-
-      const content = apiResult.content;
-      if (content) {
-        this.logPromptResponse("validateRiddleAnswer", content, durationMs);
-      }
-
-      const markdownMatch = content.match(/```(?:json)?\s*\n?([\s\S]*?)\n?```/);
-      const jsonString = markdownMatch ? markdownMatch[1].trim() : content.trim();
-
-      const parseResult = safeParse(jsonString);
-      if (!parseResult.success) {
-        Logger.error("Invalid JSON in validateRiddleAnswer:", parseResult.error);
-        return { correct: false };
-      }
-
-      const parsed = parseResult.data as { correct?: boolean };
-      return { correct: parsed.correct === true };
-    } catch (error) {
-      Logger.error("validateRiddleAnswer error:", error);
-      return { correct: false };
     }
   }
 

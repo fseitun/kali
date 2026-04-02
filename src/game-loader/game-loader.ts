@@ -1,4 +1,11 @@
-import type { GameConfigInput, GameModule, HabitatDefinition, HabitatSegment } from "./types";
+import type {
+  EncounterQuestion,
+  EncounterQuestionBankByAnimal,
+  GameConfigInput,
+  GameModule,
+  HabitatDefinition,
+  HabitatSegment,
+} from "./types";
 import { getWinPosition } from "@/orchestrator/board-helpers";
 import type { BoardConfig, GameState, Player, SquareData } from "@/orchestrator/types";
 import { GamePhase } from "@/orchestrator/types";
@@ -238,6 +245,81 @@ function applyHabitatToSquares(
   return squares;
 }
 
+function assertNonEmptyString(value: unknown, errorMessage: string): void {
+  if (typeof value !== "string" || value.trim() === "") {
+    throw new Error(errorMessage);
+  }
+}
+
+function validateEncounterQuestionOptions(
+  options: unknown,
+  base: string,
+  correctOption: unknown,
+): void {
+  if (!Array.isArray(options) || options.length !== 4) {
+    throw new Error(`${base}.options must be an array with exactly 4 strings`);
+  }
+  for (let i = 0; i < options.length; i++) {
+    assertNonEmptyString(options[i], `${base}.options[${String(i)}] must be a non-empty string`);
+  }
+  assertNonEmptyString(correctOption, `${base}.correctOption must be a non-empty string`);
+  if (!options.includes(correctOption)) {
+    throw new Error(`${base}.correctOption must match one of options`);
+  }
+}
+
+function validateEncounterQuestion(
+  animal: string,
+  locale: "es-AR" | "en-US",
+  index: number,
+  question: EncounterQuestion,
+): void {
+  const base = `Invalid game config: encounterQuestions.${animal}.${locale}[${String(index)}]`;
+  assertNonEmptyString(question.animal, `${base}.animal must be a non-empty string`);
+  assertNonEmptyString(question.type, `${base}.type must be a non-empty string`);
+  assertNonEmptyString(question.kali, `${base}.kali must be a non-empty string`);
+  assertNonEmptyString(question.question, `${base}.question must be a non-empty string`);
+  validateEncounterQuestionOptions(question.options, base, question.correctOption);
+}
+
+function validateEncounterQuestionBank(
+  animal: string,
+  locale: "es-AR" | "en-US",
+  bank: EncounterQuestion[] | undefined,
+): void {
+  if (bank === undefined) {
+    return;
+  }
+  if (!Array.isArray(bank)) {
+    throw new Error(`Invalid game config: encounterQuestions.${animal}.${locale} must be an array`);
+  }
+  for (let i = 0; i < bank.length; i++) {
+    validateEncounterQuestion(animal, locale, i, bank[i]);
+  }
+}
+
+function validateEncounterQuestions(
+  encounterQuestions: Record<string, EncounterQuestionBankByAnimal> | undefined,
+): void {
+  if (encounterQuestions === undefined) {
+    return;
+  }
+  for (const [animal, localized] of Object.entries(encounterQuestions)) {
+    if (typeof animal !== "string" || animal.trim() === "") {
+      throw new Error(
+        "Invalid game config: encounterQuestions keys must be non-empty animal names",
+      );
+    }
+    if (localized == null || typeof localized !== "object" || Array.isArray(localized)) {
+      throw new Error(
+        `Invalid game config: encounterQuestions.${animal} must be an object with locale keys`,
+      );
+    }
+    validateEncounterQuestionBank(animal, "es-AR", localized["es-AR"]);
+    validateEncounterQuestionBank(animal, "en-US", localized["en-US"]);
+  }
+}
+
 /**
  * Resolves initialState from config squares and metadata.
  * Exported for integration scenario runner which loads config from file.
@@ -307,6 +389,8 @@ function buildInitialStateFromParts(config: GameConfigInput): GameState {
     pendingRoll: null,
     currentHabitat: metadata.initialHabitat ?? "Start",
     pending: null,
+    encounterQuestions: config.encounterQuestions ?? {},
+    encounterQuestionCursor: {} as Record<string, number>,
   };
 
   const state: GameState = { game, players, board };
@@ -398,6 +482,7 @@ export class GameLoader {
     if (!config.squares || Object.keys(config.squares).length === 0) {
       throw new Error("Invalid game config: squares required");
     }
+    validateEncounterQuestions(config.encounterQuestions);
 
     Logger.info("Game module validation passed");
   }

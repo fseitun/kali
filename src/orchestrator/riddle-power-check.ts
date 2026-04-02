@@ -14,7 +14,6 @@ import { GamePhase, type ExecutionContext, type GameState, type SquareData } fro
 import type { IStatusIndicator } from "@/components/status-indicator";
 import { getLocale } from "@/i18n/locale-manager";
 import { t } from "@/i18n/translations";
-import type { LLMClient } from "@/llm/LLMClient";
 import type { ISpeechService } from "@/services/speech-service";
 import type { StateManager } from "@/state-manager";
 import { GAME_PATH, playerStatePath } from "@/state-paths";
@@ -23,7 +22,6 @@ import { Logger } from "@/utils/logger";
 export interface RiddlePowerCheckDeps {
   stateManager: StateManager;
   speechService: ISpeechService;
-  llmClient: LLMClient;
   boardEffectsHandler: BoardEffectsHandler;
   turnManager: TurnManager;
   statusIndicator: IStatusIndicator;
@@ -38,7 +36,7 @@ export interface RiddlePowerCheckDeps {
 export class RiddlePowerCheckHandler {
   constructor(private deps: RiddlePowerCheckDeps) {}
 
-  /** After a riddle answer is judged (strict match or LLM), move pending to power-check. */
+  /** After a riddle answer is judged, move pending to power-check. */
   private transitionRiddleToPowerCheck(correct: boolean): void {
     const state = this.deps.stateManager.getState();
     const game = state.game as Record<string, unknown> | undefined;
@@ -147,14 +145,8 @@ export class RiddlePowerCheckHandler {
       return { correct: true };
     }
 
-    const options = pending.riddleOptions as [string, string, string, string];
-    const result = await this.deps.llmClient.validateRiddleAnswer(
-      answer,
-      options,
-      pending.correctOption,
-    );
-    this.transitionRiddleToPowerCheck(result.correct);
-    return { correct: result.correct };
+    this.transitionRiddleToPowerCheck(false);
+    return { correct: false };
   }
 
   private async handlePowerCheckWin(

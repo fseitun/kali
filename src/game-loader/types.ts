@@ -40,6 +40,26 @@ export interface StateDisplayMetadata {
 }
 
 /**
+ * Deterministic encounter question used during animal encounters.
+ */
+export interface EncounterQuestion {
+  animal: string;
+  type: string;
+  kali: string;
+  question: string;
+  options: [string, string, string, string];
+  correctOption: string;
+}
+
+/**
+ * Per-animal encounter question bank grouped by locale.
+ */
+export interface EncounterQuestionBankByAnimal {
+  "es-AR"?: EncounterQuestion[];
+  "en-US"?: EncounterQuestion[];
+}
+
+/**
  * Internal segment after normalizing `HabitatDefinition`: one index or inclusive `[lo, hi]`.
  */
 export type HabitatSegment = number | [number, number];
@@ -61,6 +81,8 @@ export interface GameConfigInput {
   soundEffects?: Record<string, string>;
   customActions?: string[];
   stateDisplay?: StateDisplayMetadata;
+  /** Deterministic encounter question bank by animal name and locale. */
+  encounterQuestions?: Record<string, EncounterQuestionBankByAnimal>;
   /**
    * When non-empty, every square `0..win` must appear exactly once across all habitats.
    * Merged onto `board.squares[n].habitat` at load (overrides any `habitat` on authored squares).

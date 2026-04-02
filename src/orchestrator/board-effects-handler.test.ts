@@ -490,7 +490,7 @@ describe("BoardEffectsHandler", () => {
       expect(mockProcessTranscript).not.toHaveBeenCalled();
     });
 
-    it("should trigger processTranscript callback for square with effects", async () => {
+    it("animal encounter speaks deterministic prompt and sets pending riddle", async () => {
       const squareData = {
         name: "Bear",
         power: 1,
@@ -501,7 +501,14 @@ describe("BoardEffectsHandler", () => {
 
       await boardEffectsHandler.checkAndApplySquareEffects("players.p1.position", baseContext);
 
-      expect(mockProcessTranscript).toHaveBeenCalledTimes(1);
+      expect(mockProcessTranscript).not.toHaveBeenCalled();
+      expect(mockSpeak).toHaveBeenCalledTimes(1);
+      expect(stateManager.get("game.pending")).toMatchObject({
+        kind: "riddle",
+        position: 10,
+        power: 1,
+        playerId: "p1",
+      });
     });
 
     it("should set isProcessingSquareEffect flag during processing", async () => {
@@ -510,9 +517,9 @@ describe("BoardEffectsHandler", () => {
       stateManager.set("players.p1.position", 5);
 
       let flagDuringProcessing = false;
-      mockProcessTranscript.mockImplementation(async () => {
+      mockSpeak.mockImplementation(async () => {
         flagDuringProcessing = boardEffectsHandler.isProcessingEffect();
-        return true;
+        return undefined;
       });
 
       await boardEffectsHandler.checkAndApplySquareEffects("players.p1.position", baseContext);
@@ -530,12 +537,12 @@ describe("BoardEffectsHandler", () => {
       expect(boardEffectsHandler.isProcessingEffect()).toBe(false);
     });
 
-    it("should clear flag even if processTranscript throws error", async () => {
+    it("should clear flag even if deterministic speak throws error", async () => {
       const squareData = { name: "Bear", power: 1 };
       stateManager.set("board.squares", { "5": squareData });
       stateManager.set("players.p1.position", 5);
 
-      mockProcessTranscript.mockRejectedValue(new Error("Test error"));
+      mockSpeak.mockRejectedValue(new Error("Test error"));
 
       await expect(
         boardEffectsHandler.checkAndApplySquareEffects("players.p1.position", baseContext),
@@ -604,7 +611,7 @@ describe("BoardEffectsHandler", () => {
       expect(text).toMatch(/at least a 4/i);
     });
 
-    it("should include square data in synthetic transcript", async () => {
+    it("stores deterministic question data in pending state", async () => {
       const squareData = {
         name: "Bear",
         power: 1,
@@ -615,14 +622,13 @@ describe("BoardEffectsHandler", () => {
 
       await boardEffectsHandler.checkAndApplySquareEffects("players.p1.position", baseContext);
 
-      expect(mockProcessTranscript).toHaveBeenCalledWith(
-        expect.stringContaining("square 8"),
-        expect.anything(),
-      );
-      expect(mockProcessTranscript).toHaveBeenCalledWith(
-        expect.stringContaining(JSON.stringify(squareData)),
-        expect.anything(),
-      );
+      expect(mockProcessTranscript).not.toHaveBeenCalled();
+      expect(stateManager.get("game.pending")).toMatchObject({
+        kind: "riddle",
+        position: 8,
+        power: 1,
+        playerId: "p1",
+      });
     });
 
     it("animal squares get narration only, no rewards on landing (orchestrator applies after power check)", async () => {
@@ -632,22 +638,16 @@ describe("BoardEffectsHandler", () => {
       stateManager.set("players.p1.position", 5);
 
       await boardEffectsHandler.checkAndApplySquareEffects("players.p1.position", baseContext);
-      expect(mockProcessTranscript).toHaveBeenCalledWith(
-        expect.stringContaining("ASK_RIDDLE"),
-        expect.anything(),
-      );
-      expect(mockProcessTranscript).toHaveBeenCalledWith(
-        expect.stringMatching(/four options|FOUR options/i),
-        expect.anything(),
-      );
+      expect(mockProcessTranscript).not.toHaveBeenCalled();
+      expect(mockSpeak).toHaveBeenCalledTimes(1);
       expect(stateManager.get("game.pending")).toMatchObject({
         kind: "riddle",
         position: 5,
         power: 3,
         playerId: "p1",
       });
-      const transcript = mockProcessTranscript.mock.calls[0]?.[0] ?? "";
-      expect(transcript).not.toContain("Orchestrator applied");
+      const spoken = String(mockSpeak.mock.calls[0]?.[0] ?? "");
+      expect(spoken).toMatch(/Options|Decime|Tell me/i);
     });
 
     it("trap squares apply skipTurn and request narration", async () => {
@@ -761,10 +761,8 @@ describe("BoardEffectsHandler", () => {
         power: 3,
         playerId: "p1",
       });
-      expect(mockProcessTranscript).toHaveBeenCalledWith(
-        expect.stringContaining("Animal encounter"),
-        expect.anything(),
-      );
+      expect(mockProcessTranscript).not.toHaveBeenCalled();
+      expect(mockSpeak).toHaveBeenCalledTimes(1);
     });
 
     it("rollDirectional squares trigger narration only (no deterministic effects)", async () => {
@@ -929,9 +927,9 @@ describe("BoardEffectsHandler", () => {
       stateManager.set("players.p1.position", 5);
 
       let statusDuringProcessing = false;
-      mockProcessTranscript.mockImplementation(async () => {
+      mockSpeak.mockImplementation(async () => {
         statusDuringProcessing = boardEffectsHandler.isProcessingEffect();
-        return true;
+        return undefined;
       });
 
       await boardEffectsHandler.checkAndApplySquareEffects("players.p1.position", {});

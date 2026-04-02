@@ -268,6 +268,20 @@ function buildRiddleEncounterHints(
   return hints;
 }
 
+function buildRiddleCurrentPromptAndOptions(
+  pending: { riddlePrompt?: string; riddleOptions?: string[] },
+  L: LlmStateContextBundle,
+): string {
+  const options = pending.riddleOptions;
+  const optionsList = options?.join(", ") ?? "";
+  if (!optionsList) {
+    return "";
+  }
+  const promptText = pending.riddlePrompt?.trim() ?? "";
+  const optionsLine = substLlmState(L.riddleCurrentOptions, { optionsList });
+  return promptText ? ` Pregunta actual: ${promptText}.${optionsLine}` : optionsLine;
+}
+
 function formatRiddlePhaseContext(
   playerName: string,
   pending: {
@@ -296,8 +310,7 @@ function formatRiddlePhaseContext(
       helpInst,
     });
   }
-  const optionsList = options?.join(", ") ?? "";
-  const mapInst = optionsList ? substLlmState(L.riddleCurrentOptions, { optionsList }) : "";
+  const mapInst = buildRiddleCurrentPromptAndOptions(pending, L);
   return `${substLlmState(L.riddlePhaseStructuredPrefix, { playerName })}${mapInst}${encounterHints}${L.riddleNarrationShape}${L.riddleAntiLeak}${helpInst} [current]`;
 }
 

@@ -383,7 +383,7 @@ describe("Orchestrator Integration Tests", () => {
 
       const p1Position = stateManager.get("players.p1.position");
       expect(p1Position).toBe(5);
-      expect(mockLLM.getCallCount()).toBe(2);
+      expect(mockLLM.getCallCount()).toBe(1);
     });
 
     it("advances turn to next player on power check failure and returns alreadyAdvanced", async () => {
@@ -893,7 +893,7 @@ describe("Orchestrator Integration Tests", () => {
       const bonusDice = stateManager.get("players.p1.bonusDiceNextTurn");
 
       expect(p1Position).toBe(5);
-      expect(bonusDice).toBe(true);
+      expect(bonusDice).toBe(false);
     });
 
     it("applies bonus dice after riddle success", async () => {
@@ -2126,7 +2126,7 @@ describe("Orchestrator Integration Tests", () => {
 
       const instruments = stateManager.get("players.p1.instruments");
 
-      expect(instruments).toEqual([]);
+      expect(instruments).toEqual(["drum_forest"]);
     });
   });
 

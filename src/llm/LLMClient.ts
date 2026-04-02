@@ -44,20 +44,6 @@ export interface LLMClient {
   ): Promise<{ isOnTopic: boolean; urgentMessage?: string }>;
 
   /**
-   * Validates whether the user's riddle answer is correct. Used when strict match (option text + synonyms) already said false.
-   * Considers synonyms and paraphrases. Language: Spanish (Argentina).
-   * @param userAnswer - What the user said (raw)
-   * @param options - The four riddle options
-   * @param correctOption - The exact text of the correct option
-   * @returns Whether the user's answer counts as correct
-   */
-  validateRiddleAnswer(
-    userAnswer: string,
-    options: [string, string, string, string],
-    correctOption: string,
-  ): Promise<{ correct: boolean }>;
-
-  /**
    * Optional callback invoked when a retry attempt is made.
    * @param attempt - Current attempt number (1-indexed)
    * @param maxAttempts - Maximum number of attempts

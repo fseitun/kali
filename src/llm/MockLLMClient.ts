@@ -86,23 +86,6 @@ export class MockLLMClient implements LLMClient {
     return { isOnTopic: true };
   }
 
-  /** When set, validateRiddleAnswer returns this instead of calling the API. Used in tests. */
-  validateRiddleAnswerResult: { correct: boolean } | null = null;
-
-  async validateRiddleAnswer(
-    userAnswer: string,
-    _options: [string, string, string, string],
-    correctOption: string,
-  ): Promise<{ correct: boolean }> {
-    Logger.info(
-      `MockLLMClient.validateRiddleAnswer: "${userAnswer}" (correctOption: ${correctOption})`,
-    );
-    if (this.validateRiddleAnswerResult !== null) {
-      return this.validateRiddleAnswerResult;
-    }
-    return { correct: false };
-  }
-
   private getResponseForScenario(): PrimitiveAction[] {
     switch (this.scenario) {
       case "happy-path":

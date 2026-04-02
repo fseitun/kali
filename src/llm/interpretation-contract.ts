@@ -20,11 +20,7 @@ function contractForPending(
     return null;
   }
   if (pending.kind === "riddle") {
-    const opts = pending.riddleOptions as unknown[] | undefined;
-    if (Array.isArray(opts) && opts.length === 4) {
-      return "interpreter_contract: PLAYER_ANSWERED only — user's riddle answer (option text, 1–4, or spoken match to an option). No PLAYER_ROLLED.";
-    }
-    return "interpreter_contract: ASK_RIDDLE + NARRATE per ⚠️ RIDDLE; then PLAYER_ANSWERED for the user's answer.";
+    return "interpreter_contract: PLAYER_ANSWERED only — user's riddle answer (option text, 1–4, or spoken match to an option). No PLAYER_ROLLED.";
   }
   const pendingTyped = pending as unknown as Pending;
   if (isPendingRollKind(pendingTyped)) {

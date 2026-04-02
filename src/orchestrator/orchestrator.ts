@@ -125,7 +125,6 @@ export class Orchestrator {
     this.riddlePowerCheckHandler = new RiddlePowerCheckHandler({
       stateManager,
       speechService,
-      llmClient,
       boardEffectsHandler: this.boardEffectsHandler,
       turnManager: this.turnManager,
       statusIndicator,
@@ -415,15 +414,6 @@ export class Orchestrator {
     }
 
     if (Array.isArray(actions) && actions.length === 0) {
-      const retryActions = await this.handleEmptyActionsWithRetry(
-        transcript,
-        context,
-        lastBotUtterance,
-        profilerKey,
-      );
-      if (retryActions && retryActions.length > 0) {
-        return await this.runValidatedActions(retryActions, context, "orchestrator");
-      }
       Logger.warn("No actions returned from LLM");
       await this.speechService.speak(t("llm.allRetriesFailed"));
       return FAILED_RESULT;
@@ -467,40 +457,6 @@ export class Orchestrator {
       await this.speechService.speak(t("errors.somethingWentWrong"));
       return FAILED_RESULT;
     }
-  }
-
-  /**
-   * When LLM returns 0 actions during square effect + riddle phase, retries once.
-   * @returns Normalized actions if retry succeeded with non-empty result, otherwise null
-   */
-  private async handleEmptyActionsWithRetry(
-    transcript: string,
-    _context: ExecutionContext,
-    lastBotUtterance: string | undefined,
-    profilerKey: string,
-  ): Promise<PrimitiveAction[] | null> {
-    const canAutoRetryRiddle =
-      this.boardEffectsHandler.isProcessingEffect() && this.isRiddlePhaseWithNoRiddleStored();
-    if (!canAutoRetryRiddle) {
-      return null;
-    }
-
-    Logger.info("Auto-unblock: retrying riddle request once (0 actions during square effect)");
-    await this.speechService.speak(t("llm.retrying"));
-    const retryState = this.stateManager.getState();
-    Profiler.start(`orchestrator.llm.retry.${profilerKey}`);
-    const retryActions = await this.llmClient.getActions(transcript, retryState, lastBotUtterance);
-    Profiler.end(`orchestrator.llm.retry.${profilerKey}`);
-    if (!Array.isArray(retryActions) || retryActions.length === 0) {
-      return null;
-    }
-
-    Logger.robot(
-      `LLM retry returned ${retryActions.length} action(s): ${retryActions.map((a) => a.action).join(", ")}`,
-    );
-    return this.coerceMovementPlayerAnsweredToPlayerRolled(
-      this.normalizeRiddleAnswerFromTranscript(retryActions, transcript),
-    );
   }
 
   /**
@@ -884,26 +840,6 @@ export class Orchestrator {
     if (context.magicDoorBounce !== undefined) {
       context.magicDoorBounce = undefined;
     }
-  }
-
-  /**
-   * True when we are in riddle phase but no full riddle is stored (ASK_RIDDLE never succeeded).
-   * Used to auto-retry once when square-effect LLM returns 0 actions.
-   */
-  private isRiddlePhaseWithNoRiddleStored(): boolean {
-    const state = this.stateManager.getState();
-    const game = state.game as Record<string, unknown> | undefined;
-    const pending = game?.pending as
-      | { kind?: string; riddleOptions?: unknown[]; correctOption?: string }
-      | null
-      | undefined;
-    if (pending?.kind !== "riddle") {
-      return false;
-    }
-    const options = pending.riddleOptions;
-    const hasStructuredRiddle =
-      Array.isArray(options) && options.length === 4 && pending.correctOption;
-    return !hasStructuredRiddle;
   }
 
   /**

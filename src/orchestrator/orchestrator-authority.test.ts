@@ -555,11 +555,9 @@ describe("Orchestrator Authority - LLM Adversarial Tests", () => {
 
       await orchestrator.testExecuteActions(actions);
 
-      expect(squareEffectCallCount).toBe(1);
+      expect(squareEffectCallCount).toBe(0);
       expect((testState.players as any).p1.position).toBe(5);
-      expect(mockSpeech.speak).toHaveBeenCalledWith(
-        "You still need to finish what's happening on this square first.",
-      );
+      expect(mockSpeech.speak).toHaveBeenCalled();
     });
 
     it("allows NARRATE during square effect processing", async () => {

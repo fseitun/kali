@@ -14,6 +14,7 @@ import {
 } from "./square-types";
 import type { ExecutionContext } from "./types";
 import type { IStatusIndicator } from "@/components/status-indicator";
+import { getLocale } from "@/i18n/locale-manager";
 import { magicDoorHeartsPhrase } from "@/i18n/magic-door-phrases";
 import { t } from "@/i18n/translations";
 import type { ISpeechService } from "@/services/speech-service";
@@ -29,17 +30,14 @@ import { Logger } from "@/utils/logger";
  * - Golden fox (`jumpToLeader`): after moving to the leader’s square, resolve that square’s portals for the mover only (e.g. 82→45); other players on that square are not moved
  * - Magic door bounce (overshooting 186)
  * - Apply deterministic square effects from config (hearts, skipTurn, item, instrument)
- * - Trigger LLM only for animal encounters (ASK_RIDDLE + NARRATE); other squares use deterministic TTS
+ * - Prepare deterministic encounter riddles for animal squares; other squares use deterministic TTS
  */
 export class BoardEffectsHandler {
   private isProcessingSquareEffect = false;
 
   constructor(
     private stateManager: StateManager,
-    private processTranscriptFn: (
-      transcript: string,
-      context: ExecutionContext,
-    ) => Promise<boolean>,
+    _processTranscriptFn: (transcript: string, context: ExecutionContext) => Promise<boolean>,
     private speechService: ISpeechService,
     private statusIndicator: IStatusIndicator,
     private setLastNarration: (text: string) => void,
@@ -634,15 +632,20 @@ export class BoardEffectsHandler {
     playerId: string,
     position: number,
     power: number,
+    squareName: string,
     isSetup: boolean,
   ): void {
     if (isSetup && isAnimalEncounterKind(kind) && playerId) {
+      const question = this.getEncounterQuestion(squareName, position);
       this.stateManager.set(GAME_PATH.pending, {
         kind: "riddle",
         position,
         power,
         playerId,
         phase: "riddle",
+        riddlePrompt: question.question,
+        riddleOptions: question.options,
+        correctOption: question.correctOption,
       });
     } else if (!isSetup && !isAnimalEncounterKind(kind) && !isRollDirectionalKind(kind)) {
       this.stateManager.set(GAME_PATH.pending, null);
@@ -727,18 +730,154 @@ export class BoardEffectsHandler {
     await this.speechService.speak(text);
   }
 
-  private buildAnimalEncounterSystemTranscript(
-    position: number,
+  private getAnimalNamesFromBoard(): string[] {
+    const state = this.stateManager.getState();
+    const board = state.board as Record<string, unknown> | undefined;
+    const squares = board?.squares as Record<string, Record<string, unknown>> | undefined;
+    if (!squares) {
+      return [];
+    }
+    const names = new Set<string>();
+    for (const sq of Object.values(squares)) {
+      if (typeof sq.name === "string" && typeof sq.power === "number") {
+        names.add(sq.name);
+      }
+    }
+    return [...names].sort((a, b) => a.localeCompare(b));
+  }
+
+  private getEncounterQuestionBank(
     squareName: string,
-    power: number,
-    squareInfo: string,
-  ): string {
-    return (
-      `[SYSTEM: Animal encounter at square ${position} (${squareName}, power ${power}), phase=riddle. ` +
-      `Follow the ⚠️ RIDDLE line in state: ASK_RIDDLE with exactly four options (animal kingdom) + correctOption (and optional synonyms), then NARRATE the same riddle; user answer → PLAYER_ANSWERED. ` +
-      `For powerCheck/revenge phases, roll → PLAYER_ANSWERED with the number. Orchestrator owns transitions and rewards. ` +
-      `Square data (flavour only): ${squareInfo}]`
-    );
+    locale: "es-AR" | "en-US",
+  ): Array<{
+    kali: string;
+    question: string;
+    options: [string, string, string, string];
+    correctOption: string;
+  }> {
+    const fallbackLocale = locale === "es-AR" ? "en-US" : "es-AR";
+    const state = this.stateManager.getState() as {
+      game?: {
+        encounterQuestions?: Record<
+          string,
+          {
+            "es-AR"?: Array<{
+              kali: string;
+              question: string;
+              options: [string, string, string, string];
+              correctOption: string;
+            }>;
+            "en-US"?: Array<{
+              kali: string;
+              question: string;
+              options: [string, string, string, string];
+              correctOption: string;
+            }>;
+          }
+        >;
+      };
+    };
+    const perAnimal = state.game?.encounterQuestions?.[squareName];
+    return perAnimal?.[locale] ?? perAnimal?.[fallbackLocale] ?? [];
+  }
+
+  private pickEncounterQuestionFromBank(
+    squareName: string,
+    bank: Array<{
+      kali: string;
+      question: string;
+      options: [string, string, string, string];
+      correctOption: string;
+    }>,
+  ): {
+    kali: string;
+    question: string;
+    options: [string, string, string, string];
+    correctOption: string;
+  } | null {
+    if (bank.length === 0) {
+      return null;
+    }
+    const state = this.stateManager.getState() as {
+      game?: {
+        encounterQuestionCursor?: Record<string, number>;
+      };
+    };
+    const cursorMap = state.game?.encounterQuestionCursor ?? {};
+    const cursor = cursorMap[squareName] ?? 0;
+    const picked = bank[cursor % bank.length];
+    this.stateManager.set(`game.encounterQuestionCursor.${squareName}`, cursor + 1);
+    return {
+      kali: picked.kali,
+      question: picked.question,
+      options: picked.options,
+      correctOption: picked.correctOption,
+    };
+  }
+
+  private buildFallbackEncounterQuestion(
+    squareName: string,
+    position: number,
+    locale: "es-AR" | "en-US",
+  ): {
+    kali: string;
+    question: string;
+    options: [string, string, string, string];
+    correctOption: string;
+  } {
+    const allAnimalNames = this.getAnimalNamesFromBoard().filter((name) => name !== squareName);
+    const filler =
+      locale === "es-AR" ? ["Elefante", "Tiburon", "Lobo"] : ["Elephant", "Shark", "Wolf"];
+    const distractors = [...allAnimalNames, ...filler].slice(0, 3);
+    const correctIndex = Math.abs(position) % 4;
+    const arranged = [...distractors];
+    arranged.splice(correctIndex, 0, squareName);
+    const options = arranged.slice(0, 4) as [string, string, string, string];
+    if (locale === "es-AR") {
+      return {
+        kali: `${squareName} aparecio frente a vos...`,
+        question: "Que animal encontraron en este casillero?",
+        options,
+        correctOption: squareName,
+      };
+    }
+    return {
+      kali: `${squareName} appeared right in front of you...`,
+      question: "Which animal did you find on this square?",
+      options,
+      correctOption: squareName,
+    };
+  }
+
+  private getEncounterQuestion(
+    squareName: string,
+    position: number,
+  ): {
+    kali: string;
+    question: string;
+    options: [string, string, string, string];
+    correctOption: string;
+  } {
+    const locale = getLocale();
+    const bank = this.getEncounterQuestionBank(squareName, locale);
+    const bankQuestion = this.pickEncounterQuestionFromBank(squareName, bank);
+    if (bankQuestion) {
+      return bankQuestion;
+    }
+    return this.buildFallbackEncounterQuestion(squareName, position, locale);
+  }
+
+  private buildAnimalEncounterSpeech(args: {
+    playerName: string;
+    question: { kali: string; question: string; options: [string, string, string, string] };
+  }): string {
+    const { playerName, question } = args;
+    const [a, b, c, d] = question.options;
+    const locale = getLocale();
+    if (locale === "es-AR") {
+      return `${playerName}, ${question.kali} ${question.question} Opciones: A) ${a}. B) ${b}. C) ${c}. D) ${d}. Decime cual opcion es correcta.`;
+    }
+    return `${playerName}, ${question.kali} ${question.question} Options: A) ${a}. B) ${b}. C) ${c}. D) ${d}. Tell me which option is correct.`;
   }
 
   private buildDirectionalDeterministicSpeech(
@@ -848,7 +987,7 @@ export class BoardEffectsHandler {
       `🎯 Orchestrator enforcing square effect at position ${position}: ${kind ?? "unknown"} (${squareName})`,
     );
 
-    this.syncAnimalEncounterState(kind, playerId, position, power, true);
+    this.syncAnimalEncounterState(kind, playerId, position, power, squareName, true);
 
     if (kind === "rollDirectional") {
       this.setPendingDirectionalRoll(playerId, position, squareData.effect as string | undefined);
@@ -859,9 +998,11 @@ export class BoardEffectsHandler {
     if (applied.some((label) => label.includes("skip next turn"))) {
       context.advanceTurnDespitePowerCheckSuppress = true;
     }
-    const squareInfo = JSON.stringify(squareData);
+    const encounterQuestion = isAnimalEncounterKind(kind)
+      ? this.getEncounterQuestion(squareName, position)
+      : null;
 
-    this.syncAnimalEncounterState(kind, playerId, position, power, false);
+    this.syncAnimalEncounterState(kind, playerId, position, power, squareName, false);
 
     const state = this.stateManager.getState() as {
       players?: Record<string, Record<string, unknown>>;
@@ -877,10 +1018,10 @@ export class BoardEffectsHandler {
         position,
         squareName,
         power,
-        squareInfo,
         playerName,
         playerId,
         squareData,
+        encounterQuestion,
         applied,
         repeatOceanForestPortal,
         arrivedViaTeleportFrom: context.arrivedViaTeleportFrom,
@@ -895,10 +1036,15 @@ export class BoardEffectsHandler {
     position: number;
     squareName: string;
     power: number;
-    squareInfo: string;
     playerName: string;
     playerId: string;
     squareData: Record<string, unknown>;
+    encounterQuestion: {
+      kali: string;
+      question: string;
+      options: [string, string, string, string];
+      correctOption: string;
+    } | null;
     applied: string[];
     repeatOceanForestPortal: boolean;
     arrivedViaTeleportFrom: number | undefined;
@@ -907,24 +1053,22 @@ export class BoardEffectsHandler {
       kind,
       position,
       squareName,
-      power,
-      squareInfo,
       playerName,
       playerId,
       squareData,
+      encounterQuestion,
       applied,
       repeatOceanForestPortal,
       arrivedViaTeleportFrom,
     } = args;
 
     if (isAnimalEncounterKind(kind)) {
-      const transcript = this.buildAnimalEncounterSystemTranscript(
-        position,
-        squareName,
-        power,
-        squareInfo,
+      if (!encounterQuestion) {
+        return;
+      }
+      await this.speakDeterministicLanding(
+        this.buildAnimalEncounterSpeech({ playerName, question: encounterQuestion }),
       );
-      await this.processTranscriptFn(transcript, { isNestedCall: true });
       return;
     }
 
