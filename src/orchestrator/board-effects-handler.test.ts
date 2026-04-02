@@ -115,6 +115,21 @@ describe("BoardEffectsHandler", () => {
       expect(stateManager.get("players.p1.position")).toBe(187);
     });
 
+    it("should not apply magic door bounce after returnTo187 teleport in the same resolution", async () => {
+      stateManager.set("board.squares", {
+        "186": { name: "Magic Door", effect: "magicDoorCheck", target: 6 },
+        "190": { effect: "returnTo187", name: "Calavera" },
+        "196": { effect: "win" },
+      });
+      stateManager.set("players.p1.position", 190);
+      const context: ExecutionContext = {};
+
+      await boardEffectsHandler.checkAndApplyBoardMoves("players.p1.position", context);
+
+      expect(stateManager.get("players.p1.position")).toBe(187);
+      expect(context.magicDoorBounce).toBeUndefined();
+    });
+
     it("should skip backward teleport when player has retreatEffectsReversed", async () => {
       stateManager.set("board.squares", {
         "82": { destination: 45 },
