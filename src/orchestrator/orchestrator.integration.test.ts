@@ -1420,6 +1420,47 @@ describe("Orchestrator Integration Tests", () => {
       setLocale("es-AR");
     });
 
+    it("roll from 187 to destination-based skull mapping keeps final landing at 187", async () => {
+      setLocale("en-US");
+      mockLLM = createScriptedLLM([]);
+
+      const initialState: GameState = {
+        game: {
+          name: "Test Game",
+          phase: GamePhase.PLAYING,
+          turn: "p1",
+          playerOrder: ["p1"],
+          winner: null,
+          lastRoll: 0,
+        },
+        players: {
+          p1: { id: "p1", name: "Alice", position: 187, activeChoices: {} },
+        },
+        board: {
+          squares: {
+            "186": { name: "Magic Door", effect: "magicDoorCheck", target: 6 },
+            "187": { name: "Backtrack" },
+            "190": { name: "Calavera", destination: 187 },
+            "196": { effect: "win" },
+          },
+        },
+      };
+
+      setupGame(initialState);
+
+      const result = await orchestrator.testExecuteActions([
+        { action: "PLAYER_ROLLED", value: 3 },
+        { action: "NARRATE", text: "Alice moves from 187 to 190." },
+      ]);
+
+      expect(result.success).toBe(true);
+      expect(stateManager.get("players.p1.position")).toBe(187);
+      const speakMock = mockSpeech.speak as ReturnType<typeof vi.fn>;
+      expect(speakMock).toHaveBeenCalledTimes(1);
+      expect(String(speakMock.mock.calls[0]?.[0] ?? "")).toContain("187");
+      setLocale("es-AR");
+    });
+
     it("checkTorch hazard skips trailing movement NARRATE and applies deterministic line", async () => {
       setLocale("en-US");
       mockLLM = createScriptedLLM([]);

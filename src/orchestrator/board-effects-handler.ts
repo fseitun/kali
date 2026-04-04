@@ -84,8 +84,7 @@ export class BoardEffectsHandler {
     this.applyTeleportIfApplicable(path, position, squareData, state, context);
 
     const afterJumpToLeader = this.stateManager.get(path) as number;
-    const returnTo187Applied = this.wasReturnTo187Applied(
-      landingSquareData,
+    const backwardTeleportApplied = this.wasBackwardTeleportApplied(
       landingPosition,
       afterJumpToLeader,
     );
@@ -99,7 +98,7 @@ export class BoardEffectsHandler {
       this.applyJumpToLeaderLeaderSquarePortal(path, afterJumpToLeader, squares, context);
     }
 
-    if (!returnTo187Applied) {
+    if (!backwardTeleportApplied) {
       this.applyMagicDoorBounceIfApplicable(path, squares, context);
     }
 
@@ -112,16 +111,8 @@ export class BoardEffectsHandler {
     );
   }
 
-  private wasReturnTo187Applied(
-    landingSquareData: Record<string, unknown> | undefined,
-    landingPosition: number,
-    currentPosition: number,
-  ): boolean {
-    return (
-      landingSquareData?.effect === "returnTo187" &&
-      typeof currentPosition === "number" &&
-      currentPosition !== landingPosition
-    );
+  private wasBackwardTeleportApplied(landingPosition: number, currentPosition: number): boolean {
+    return typeof currentPosition === "number" && currentPosition < landingPosition;
   }
 
   private shouldApplyJumpToLeaderLeaderSquarePortal(
