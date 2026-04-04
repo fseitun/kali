@@ -21,9 +21,9 @@ export const enUS = {
     turnAnnouncement:
       "{name}, it's your turn. You're at position {position}. Roll the dice and tell me what you got.",
     turnAnnouncementMagicDoor:
-      "{name}, it's your turn. You're on square {position}, the magic door. You have {heartsPhrase}. Roll one die only to try to open the door: your die plus your hearts must add up to {target} or more; with what you have now, you need at least a {minDie} on the die. Tell me what you rolled.",
+      "{name}, it's your turn. You're on square {position}, the magic door. You have {heartsPhrase}. Roll one die only to try to open it: think of it like this, needed die = {target} minus your hearts. With what you have now, you need at least a {minDie} on the die. Tell me what you rolled.",
     turnAnnouncementMagicDoorWithScimitar:
-      "{name}, it's your turn. You're on square {position}, the magic door. You have {heartsPhrase} and the scimitar, which counts as an extra point toward opening it. Roll one die only to try to open the door: your die plus your hearts plus one for the scimitar must add up to {target} or more; with what you have now, you need at least a {minDie} on the die. Tell me what you rolled.",
+      "{name}, it's your turn. You're on square {position}, the magic door. You have {heartsPhrase} and the scimitar, which counts as an extra point toward opening it. Roll one die only to try to open it: think of it like this, needed die = {target} minus your hearts minus 1 for the scimitar. With what you have now, you need at least a {minDie} on the die. Tell me what you rolled.",
     turnHandoff: "Now it's {name}'s turn.",
     turnAnnouncementWithDecision: "{name}, it's your turn. You're at position {position}. {prompt}",
     skipTurnAnnouncement: "{name}, you're skipping this turn.",
@@ -55,9 +55,9 @@ export const enUS = {
     goldenFoxJump: "{name}, the Golden Fox takes you to first place. You're on square {square}.",
     rollMovementLanded: "{name}, you rolled {roll}. You're on square {square}.",
     magicDoorOpenSuccess:
-      "{name}, you opened the magic door: your die ({roll}) plus {bonus} from your bonus add up to {total}, which meets or beats {target}. When it's your turn again, roll to move forward.",
+      "{name}, you opened the magic door: the math was needed die = {target} - {bonus}, and you rolled {roll}. That gets you to {total}, so it opens. When it's your turn again, roll to move forward.",
     magicDoorOpenFail:
-      "{name}, that's not enough to open the door: die {roll} plus {bonus} bonus is {total}, and you need {target} or more. Next player's turn.",
+      "{name}, that's not enough to open the door: the math was needed die = {target} - {bonus}, and you rolled {roll}. You reached {total}, but you need {target} or more. Next player's turn.",
     magicDoorBounce:
       "{name}, on the magic door you must land exactly on square {door}: you overshot to {overshot}, so you bounce back to {final}.",
     forkChoiceAsk: "{name}, {prompt}",
@@ -92,7 +92,7 @@ export const enUS = {
     magicDoorLandingWithScimitar:
       "{name}, you landed exactly on square {position} ({squareName}). Your move roll is done — you don't advance further until you open the door. The others play now — {nextPlayer} is next. When it's your turn again, you'll roll one die only to open: your die plus your hearts plus one for the scimitar must add up to {target} or more. Right now you have {heartsPhrase} and the scimitar; when you try to open, you'll need at least a {minDie} on the die.",
     scimitarDoorHint:
-      "The scimitar counts as an extra point when you try to open the magic door: die plus hearts plus that point must reach {target} or more.",
+      "The scimitar lowers the die you need by 1 when you try to open the magic door: think needed die = {target} - hearts - 1.",
   },
   ui: {
     startButton: "Start",
