@@ -626,6 +626,32 @@ describe("BoardEffectsHandler", () => {
       expect(text).toMatch(/at least a 4/i);
     });
 
+    it("magic door landing copy reflects cumulative hearts threshold", async () => {
+      stateManager.set("board.squares", {
+        "186": { name: "Magic Door", effect: "magicDoorCheck", target: 6 },
+      });
+      stateManager.set("players.p1.position", 186);
+      stateManager.set("game.turn", "p1");
+      stateManager.set("players.p1.items", []);
+
+      const cases = [
+        { hearts: 0, expectedMinDie: 6 },
+        { hearts: 1, expectedMinDie: 5 },
+        { hearts: 3, expectedMinDie: 3 },
+      ];
+
+      for (const { hearts, expectedMinDie } of cases) {
+        mockSpeak.mockClear();
+        stateManager.set("players.p1.hearts", hearts);
+
+        await boardEffectsHandler.checkAndApplySquareEffects("players.p1.position", baseContext);
+
+        const text = String(mockSpeak.mock.calls[0]?.[0] ?? "");
+        expect(text).toMatch(/heart/i);
+        expect(text).toMatch(new RegExp(`at least a ${expectedMinDie}`, "i"));
+      }
+    });
+
     it("stores deterministic question data in pending state", async () => {
       const squareData = {
         name: "Bear",
@@ -663,6 +689,27 @@ describe("BoardEffectsHandler", () => {
       });
       const spoken = String(mockSpeak.mock.calls[0]?.[0] ?? "");
       expect(spoken).toMatch(/Options|Decime|Tell me/i);
+    });
+
+    it("Peacock heart square (no power) applies heart immediately and skips encounter pending", async () => {
+      stateManager.set("board.squares", {
+        "185": { name: "Peacock", heart: true },
+      });
+      stateManager.set("players.p1.position", 185);
+      stateManager.set("players.p1.hearts", 0);
+      stateManager.set("game.pending", {
+        kind: "riddle",
+        position: 180,
+        power: 5,
+        playerId: "p1",
+      });
+
+      await boardEffectsHandler.checkAndApplySquareEffects("players.p1.position", baseContext);
+
+      expect(stateManager.get("players.p1.hearts")).toBe(1);
+      expect(stateManager.get("game.pending")).toBeNull();
+      expect(mockProcessTranscript).not.toHaveBeenCalled();
+      expect(mockSpeak).toHaveBeenCalledWith(expect.stringMatching(/Peacock|heart/i));
     });
 
     it("trap squares apply skipTurn and request narration", async () => {

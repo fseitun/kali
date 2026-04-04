@@ -101,7 +101,7 @@ Casillero 176| Cimitarra \- 1 vida
 Casillero 178 | Elefante Asiático \- 4pts  
 Casillero 180| Tigre “Shere Khan” \- 5pts  
 Casillero 182| Elefante de “Tamil Nadu” \- 4pts  
-Casillero 185| Pavo real \- 1 vida
+Casillero 185| Pavo real \- 1 vida (corazón inmediato; sin acertijo ni combate)
 
 **Casillero 186| “Puerta” al camino de la Anaconda**
 
@@ -234,6 +234,8 @@ Casilleros con corazones:
 - 176 (Cimitarra)
 
 - 185 (Pavo real)
+
+📍 En esta versión, el casillero 185 se resuelve como casillero de corazón (efecto inmediato), no como encuentro animal.
 
 📍 La Cimitarra actúa como un corazón especial, pero con la misma función: cuenta como un punto mágico adicional.
 

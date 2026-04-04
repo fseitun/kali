@@ -42,379 +42,95 @@
     "door": [186, 196]
   },
   "squares": {
-    "0": {
-      "next": {
-        "1": ["left", "short"],
-        "15": ["right", "long"]
-      },
-      "prev": []
-    },
-    "2": {
-      "name": "Falcon",
-      "power": 3
-    },
-    "5": {
-      "name": "Cobra",
-      "power": 4
-    },
-    "7": {
-      "name": "Eagle",
-      "power": 3,
-      "powerCheckDiceIfRiddleCorrect": 3,
-      "powerCheckDiceIfRiddleWrong": 2
-    },
-    "11": {
-      "name": "Quicksand",
-      "effect": "skipTurn"
-    },
-    "14": {
-      "next": [36]
-    },
-    "15": {
-      "prev": [0]
-    },
-    "16": {
-      "name": "Beetle",
-      "power": 1
-    },
-    "18": {
-      "name": "Carnivorous plants",
-      "effect": "skipTurn"
-    },
-    "21": {
-      "name": "Camel",
-      "power": 2
-    },
-    "26": {
-      "name": "Coyote",
-      "power": 2
-    },
-    "36": {
-      "prev": [14, 35]
-    },
-    "38": {
-      "name": "Scorpion",
-      "power": 4
-    },
-    "42": {
-      "name": "Wolf",
-      "power": 4
-    },
-    "45": {
-      "name": "Forest-Ocean Portal",
-      "nextOnLanding": [82]
-    },
-    "54": {
-      "name": "Golden fox",
-      "effect": "jumpToLeader"
-    },
-    "55": {
-      "name": "Jivaro Indians",
-      "effect": "retreat2d6"
-    },
-    "59": {
-      "name": "Boa constrictor",
-      "power": 3
-    },
-    "62": {
-      "name": "Poison frog",
-      "power": 2
-    },
-    "63": {
-      "item": "anti-wasp"
-    },
-    "64": {
-      "name": "Grizzly bear",
-      "power": 4
-    },
-    "65": {
-      "name": "Bats",
-      "effect": "retreat1d6"
-    },
-    "66": {
-      "name": "Squirrel",
-      "power": 1
-    },
-    "68": {
-      "name": "Deer",
-      "power": 2
-    },
-    "71": {
-      "name": "Pufferfish",
-      "effect": "retreat2d6"
-    },
-    "72": {
-      "name": "Tiger shark",
-      "power": 4
-    },
-    "75": {
-      "name": "Crab",
-      "effect": "retreat3d6"
-    },
-    "77": {
-      "name": "Piranhas",
-      "effect": "skipTurn"
-    },
-    "78": {
-      "name": "Octopus and starfish",
-      "power": 3
-    },
-    "79": {
-      "item": "torch"
-    },
-    "82": {
-      "name": "Ocean-Forest Portal",
-      "nextOnLanding": [45],
-      "oceanForestOneShotPortal": true
-    },
-    "84": {
-      "name": "Clownfish",
-      "power": 1
-    },
-    "85": {
-      "name": "Night falls",
-      "effect": "checkTorch"
-    },
-    "87": {
-      "name": "Sea turtle",
-      "power": 2
-    },
-    "92": {
-      "name": "Killer whale",
-      "power": 4
-    },
-    "93": {
-      "nextOnLanding": [97]
-    },
-    "95": {
-      "name": "Meteor showers",
-      "effect": "skipTurn"
-    },
-    "96": {
-      "next": {
-        "97": ["97", "down", "penguin"],
-        "99": ["99", "up", "narwhal"]
-      }
-    },
-    "97": {
-      "name": "Penguin",
-      "power": 2
-    },
-    "98": {
-      "next": [101]
-    },
-    "99": {
-      "prev": [96]
-    },
-    "100": {
-      "name": "Narwhal",
-      "power": 2
-    },
-    "101": {
-      "next": {
-        "102": ["102", "down"],
-        "105": ["105", "polar bear", "up"]
-      },
-      "prev": {
-        "98": ["98", "down"],
-        "100": ["100", "up"]
-      },
-      "name": "Walrus",
-      "power": 3
-    },
-    "102": {
-      "prev": [101],
-      "next": [103]
-    },
-    "103": {
-      "name": "Iceberg",
-      "effect": "retreat1d6"
-    },
-    "104": {
-      "next": [106]
-    },
-    "105": {
-      "prev": [101],
-      "name": "Polar bear",
-      "power": 4
-    },
-    "106": {
-      "prev": {
-        "104": ["104", "down"],
-        "105": ["105", "up"]
-      },
-      "name": "Blue whale",
-      "power": 5
-    },
-    "109": {
-      "name": "Volcano eruption",
-      "effect": "skipTurn"
-    },
-    "114": {
-      "name": "Ghost of a baboon",
-      "power": 1
-    },
-    "115": {
-      "name": "Jungle squall",
-      "effect": "retreat3d6"
-    },
-    "116": {
-      "name": "Wasps",
-      "effect": "checkAntiWasp"
-    },
-    "118": {
-      "name": "Ghost of a black bear",
-      "power": 1
-    },
-    "119": {
-      "name": "Lightning",
-      "effect": "skipTurn"
-    },
-    "120": {
-      "name": "Baboon",
-      "power": 2
-    },
-    "122": {
-      "name": "Caiman",
-      "power": 3
-    },
-    "124": {
-      "name": "Black bear",
-      "power": 3
-    },
-    "129": {
-      "name": "Wild dogs",
-      "power": 1
-    },
-    "131": {
-      "name": "Night falls",
-      "effect": "checkTorch"
-    },
-    "132": {
-      "name": "Ostrich",
-      "power": 2,
-      "powerCheckDiceIfRiddleCorrect": 3,
-      "powerCheckDiceIfRiddleWrong": 2
-    },
-    "133": {
-      "item": "torch"
-    },
-    "134": {
-      "name": "Crocodile",
-      "power": 3
-    },
-    "136": {
-      "name": "Swamp",
-      "effect": "skipTurn"
-    },
-    "140": {
-      "name": "Rhinoceros",
-      "power": 3
-    },
-    "141": {
-      "nextOnLanding": [165]
-    },
-    "143": {
-      "name": "Whirlpool",
-      "effect": "skipTurn"
-    },
-    "145": {
-      "name": "Giraffe",
-      "power": 2,
-      "winJumpTo": 162
-    },
-    "148": {
-      "name": "Nile crocodile",
-      "power": 3
-    },
-    "149": {
-      "name": "Lion Makulu",
-      "power": 5
-    },
-    "150": {
-      "name": "Cheetah",
-      "power": 3
-    },
-    "154": {
-      "name": "African Elephant Craig",
-      "power": 4
-    },
-    "156": {
-      "name": "Silverback gorilla",
-      "power": 4,
-      "heart": true
-    },
-    "159": {
-      "name": "Hippopotamus",
-      "power": 3
-    },
-    "160": {
-      "name": "Piranhas",
-      "effect": "skipTurn"
-    },
-    "164": {
-      "name": "White rhinoceros",
-      "power": 4
-    },
-    "165": {
-      "name": "Kangaroo",
-      "power": 2
-    },
-    "168": {
-      "name": "Lizard",
-      "power": 1,
-      "heart": true
-    },
-    "171": {
-      "name": "Komodo dragon",
-      "power": 3
-    },
-    "174": {
-      "name": "Night falls",
-      "effect": "checkTorch"
-    },
-    "176": {
-      "item": "scimitar"
-    },
-    "178": {
-      "name": "Asian elephant",
-      "power": 4
-    },
-    "180": {
-      "name": "Tiger Shere Khan",
-      "power": 5
-    },
-    "182": {
-      "name": "Tamil Nadu elephant",
-      "power": 4
-    },
-    "185": {
-      "name": "Peacock",
-      "power": 2,
-      "heart": true
-    },
-    "186": {
-      "name": "Magic Door",
-      "effect": "magicDoorCheck",
-      "target": 6
-    },
-    "190": {
-      "name": "Skull",
-      "effect": "returnTo187"
-    },
-    "192": {
-      "name": "Skull",
-      "effect": "returnTo187"
-    },
-    "194": {
-      "name": "Skull",
-      "effect": "returnTo187"
-    },
-    "196": {
-      "next": [],
-      "name": "Heart of Kalimba",
-      "effect": "win"
-    }
+    "0": { "next": { "1": ["left", "short"], "15": ["right", "long"] }, "prev": [] },
+    "2": { "name": "Falcon", "power": 3 },
+    "5": { "name": "Cobra", "power": 4 },
+    "7": { "name": "Eagle", "power": 3, "powerCheckDiceIfRiddleCorrect": 3, "powerCheckDiceIfRiddleWrong": 2 },
+    "11": { "name": "Quicksand", "effect": "skipTurn" },
+    "14": { "next": [36] },
+    "15": { "prev": [0] },
+    "16": { "name": "Beetle", "power": 1 },
+    "18": { "name": "Carnivorous plants", "effect": "skipTurn" },
+    "21": { "name": "Camel", "power": 2 },
+    "26": { "name": "Coyote", "power": 2 },
+    "36": { "prev": [14, 35] },
+    "38": { "name": "Scorpion", "power": 4 },
+    "42": { "name": "Wolf", "power": 4 },
+    "45": { "name": "Forest-Ocean Portal", "nextOnLanding": [82] },
+    "54": { "name": "Golden fox", "effect": "jumpToLeader" },
+    "55": { "name": "Jivaro Indians", "effect": "retreat2d6" },
+    "59": { "name": "Boa constrictor", "power": 3 },
+    "62": { "name": "Poison frog", "power": 2 },
+    "63": { "item": "anti-wasp" },
+    "64": { "name": "Grizzly bear", "power": 4 },
+    "65": { "name": "Bats", "effect": "retreat1d6" },
+    "66": { "name": "Squirrel", "power": 1 },
+    "68": { "name": "Deer", "power": 2 },
+    "71": { "name": "Pufferfish", "effect": "retreat2d6" },
+    "72": { "name": "Tiger shark", "power": 4 },
+    "75": { "name": "Crab", "effect": "retreat3d6" },
+    "77": { "name": "Piranhas", "effect": "skipTurn" },
+    "78": { "name": "Octopus and starfish", "power": 3 },
+    "79": { "item": "torch" },
+    "82": { "name": "Ocean-Forest Portal", "nextOnLanding": [45], "oceanForestOneShotPortal": true },
+    "84": { "name": "Clownfish", "power": 1 },
+    "85": { "name": "Night falls", "effect": "checkTorch" },
+    "87": { "name": "Sea turtle", "power": 2 },
+    "92": { "name": "Killer whale", "power": 4 },
+    "93": { "nextOnLanding": [97] },
+    "95": { "name": "Meteor showers", "effect": "skipTurn" },
+    "96": { "next": { "97": ["97", "down", "penguin"], "99": ["99", "up", "narwhal"] } },
+    "97": { "name": "Penguin", "power": 2 },
+    "98": { "next": [101] },
+    "99": { "prev": [96] },
+    "100": { "name": "Narwhal", "power": 2 },
+    "101": { "next": { "102": ["102", "down"], "105": ["105", "polar bear", "up"] }, "prev": { "98": ["98", "down"], "100": ["100", "up"] }, "name": "Walrus", "power": 3 },
+    "102": { "prev": [101], "next": [103] },
+    "103": { "name": "Iceberg", "effect": "retreat1d6" },
+    "104": { "next": [106] },
+    "105": { "prev": [101], "name": "Polar bear", "power": 4 },
+    "106": { "prev": { "104": ["104", "down"], "105": ["105", "up"] }, "name": "Blue whale", "power": 5 },
+    "109": { "name": "Volcano eruption", "effect": "skipTurn" },
+    "114": { "name": "Ghost of a baboon", "power": 1 },
+    "115": { "name": "Jungle squall", "effect": "retreat3d6" },
+    "116": { "name": "Wasps", "effect": "checkAntiWasp" },
+    "118": { "name": "Ghost of a black bear", "power": 1 },
+    "119": { "name": "Lightning", "effect": "skipTurn" },
+    "120": { "name": "Baboon", "power": 2 },
+    "122": { "name": "Caiman", "power": 3 },
+    "124": { "name": "Black bear", "power": 3 },
+    "129": { "name": "Wild dogs", "power": 1 },
+    "131": { "name": "Night falls", "effect": "checkTorch" },
+    "132": { "name": "Ostrich", "power": 2, "powerCheckDiceIfRiddleCorrect": 3, "powerCheckDiceIfRiddleWrong": 2 },
+    "133": { "item": "torch" },
+    "134": { "name": "Crocodile", "power": 3 },
+    "136": { "name": "Swamp", "effect": "skipTurn" },
+    "140": { "name": "Rhinoceros", "power": 3 },
+    "141": { "nextOnLanding": [165] },
+    "143": { "name": "Whirlpool", "effect": "skipTurn" },
+    "145": { "name": "Giraffe", "power": 2, "winJumpTo": 162 },
+    "148": { "name": "Nile crocodile", "power": 3 },
+    "149": { "name": "Lion Makulu", "power": 5 },
+    "150": { "name": "Cheetah", "power": 3 },
+    "154": { "name": "African Elephant Craig", "power": 4 },
+    "156": { "name": "Silverback gorilla", "power": 4, "heart": true },
+    "159": { "name": "Hippopotamus", "power": 3 },
+    "160": { "name": "Piranhas", "effect": "skipTurn" },
+    "164": { "name": "White rhinoceros", "power": 4 },
+    "165": { "name": "Kangaroo", "power": 2 },
+    "168": { "name": "Lizard", "power": 1, "heart": true },
+    "171": { "name": "Komodo dragon", "power": 3 },
+    "174": { "name": "Night falls", "effect": "checkTorch" },
+    "176": { "item": "scimitar" },
+    "178": { "name": "Asian elephant", "power": 4 },
+    "180": { "name": "Tiger Shere Khan", "power": 5 },
+    "182": { "name": "Tamil Nadu elephant", "power": 4 },
+    "185": { "name": "Peacock", "heart": true },
+    "186": { "name": "Magic Door", "effect": "magicDoorCheck", "target": 6 },
+    "190": { "name": "Skull", "effect": "returnTo187" },
+    "192": { "name": "Skull", "effect": "returnTo187" },
+    "194": { "name": "Skull", "effect": "returnTo187" },
+    "196": { "next": [], "name": "Heart of Kalimba", "effect": "win" }
   },
   "encounterQuestions": {
     "Falcon": {
