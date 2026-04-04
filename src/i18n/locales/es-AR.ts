@@ -89,9 +89,9 @@ export const esAR = {
     magicDoorHeartsOne: "un corazón",
     magicDoorHeartsMany: "{hearts} corazones",
     magicDoorLanding:
-      "{name}, caíste justo en el casillero {position} ({squareName}). Tu tirada de movimiento ya contó: en la puerta no avanzás hasta abrirla. Ahora le toca a los demás — sigue {nextPlayer}. Cuando vuelva a tocarte, te recuerdo tus corazones y tirás un dado solo para abrir: el dado más tus corazones tiene que sumar {target} o más. Ahora tenés {heartsPhrase}; cuando intentes abrir, vas a necesitar sacar al menos un {minDie} en el dado.",
+      "{name}, caíste justo en la Puerta Mágica, casillero {position}. Muy bien. Ahora te quedás ahí: en tu próximo turno vas a tirar para intentar abrirla. Para abrir la puerta necesitás llegar a {target} entre el dado y tus ayudas. Si tenés corazones, cada corazón le baja 1 punto a la puerta y cambia el número que necesitás. Ahora tenés {heartsPhrase}: cuando intentes abrir, vas a necesitar sacar al menos un {minDie} en el dado.",
     magicDoorLandingWithScimitar:
-      "{name}, caíste justo en el casillero {position} ({squareName}). Tu tirada de movimiento ya contó: en la puerta no avanzás hasta abrirla. Ahora le toca a los demás — sigue {nextPlayer}. Cuando vuelva a tocarte, tirás un dado solo para abrir: el dado más tus corazones más un punto por la cimitarra tiene que sumar {target} o más. Ahora tenés {heartsPhrase} y la cimitarra; cuando intentes abrir, vas a necesitar sacar al menos un {minDie} en el dado.",
+      "{name}, caíste justo en la Puerta Mágica, casillero {position}. Muy bien. Ahora te quedás ahí: en tu próximo turno vas a tirar para intentar abrirla. Para abrir la puerta necesitás llegar a {target} entre el dado y tus ayudas. Si tenés corazones, cada corazón le baja 1 punto a la puerta y cambia el número que necesitás; además, la cimitarra suma 1 punto más. Ahora tenés {heartsPhrase} y la cimitarra: cuando intentes abrir, vas a necesitar sacar al menos un {minDie} en el dado.",
     scimitarDoorHint:
       "La cimitarra suma un punto más cuando intentes abrir la puerta mágica: el dado más tus corazones más ese punto tienen que sumar {target} o más.",
   },

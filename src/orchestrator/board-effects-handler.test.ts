@@ -591,7 +591,8 @@ describe("BoardEffectsHandler", () => {
       expect(mockSpeak).toHaveBeenCalledWith(expect.stringMatching(/square 5|Quicksand|skip/i));
     });
 
-    it("magic door landing uses dedicated copy, next player name, hearts, no nested LLM", async () => {
+    it("magic door landing uses clearer es-AR copy with player name and threshold guidance", async () => {
+      setLocale("es-AR");
       stateManager.set("board.squares", {
         "186": { name: "Magic Door", effect: "magicDoorCheck", target: 6 },
       });
@@ -604,13 +605,18 @@ describe("BoardEffectsHandler", () => {
       expect(mockProcessTranscript).not.toHaveBeenCalled();
       expect(mockSpeak).toHaveBeenCalledTimes(1);
       const text = String(mockSpeak.mock.calls[0]?.[0] ?? "");
-      expect(text).toMatch(/186|magic door/i);
-      expect(text).toMatch(/Bob/);
-      expect(text).toMatch(/heart/i);
-      expect(text).toMatch(/4|die/i);
+      expect(text).toMatch(/Alice, caíste justo en la Puerta Mágica, casillero 186/i);
+      expect(text).toMatch(/en tu próximo turno vas a tirar para intentar abrirla/i);
+      expect(text).toMatch(/necesitás llegar a 6 entre el dado y tus ayudas/i);
+      expect(text).toMatch(
+        /si tenés corazones, cada corazón le baja 1 punto a la puerta y cambia el número que necesitás/i,
+      );
+      expect(text).toMatch(/ahora tenés 2 corazones/i);
+      expect(text).toMatch(/al menos un 4 en el dado/i);
     });
 
-    it("magic door landing with scimitar uses lower min die in copy", async () => {
+    it("magic door landing with scimitar mentions hearts plus scimitar bonus", async () => {
+      setLocale("es-AR");
       stateManager.set("board.squares", {
         "186": { name: "Magic Door", effect: "magicDoorCheck", target: 6 },
       });
@@ -622,11 +628,14 @@ describe("BoardEffectsHandler", () => {
       await boardEffectsHandler.checkAndApplySquareEffects("players.p1.position", baseContext);
 
       const text = String(mockSpeak.mock.calls[0]?.[0] ?? "");
-      expect(text).toMatch(/scimitar/i);
-      expect(text).toMatch(/at least a 4/i);
+      expect(text).toMatch(/cada corazón le baja 1 punto/i);
+      expect(text).toMatch(/la cimitarra suma 1 punto más/i);
+      expect(text).toMatch(/ahora tenés un corazón y la cimitarra/i);
+      expect(text).toMatch(/al menos un 4 en el dado/i);
     });
 
-    it("magic door landing copy reflects cumulative hearts threshold", async () => {
+    it("magic door landing copy reflects cumulative hearts threshold in es-AR", async () => {
+      setLocale("es-AR");
       stateManager.set("board.squares", {
         "186": { name: "Magic Door", effect: "magicDoorCheck", target: 6 },
       });
@@ -647,8 +656,8 @@ describe("BoardEffectsHandler", () => {
         await boardEffectsHandler.checkAndApplySquareEffects("players.p1.position", baseContext);
 
         const text = String(mockSpeak.mock.calls[0]?.[0] ?? "");
-        expect(text).toMatch(/heart/i);
-        expect(text).toMatch(new RegExp(`at least a ${expectedMinDie}`, "i"));
+        expect(text).toMatch(/corazón/i);
+        expect(text).toMatch(new RegExp(`al menos un ${expectedMinDie} en el dado`, "i"));
       }
     });
 

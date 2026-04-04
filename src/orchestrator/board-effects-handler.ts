@@ -935,29 +935,10 @@ export class BoardEffectsHandler {
     });
   }
 
-  private resolveNextPlayerDisplayName(currentPlayerId: string): string {
-    const state = this.stateManager.getState() as {
-      game?: { playerOrder?: string[] };
-      players?: Record<string, { name?: string }>;
-    };
-    const order = state.game?.playerOrder;
-    if (!order?.length) {
-      return "";
-    }
-    const idx = order.indexOf(currentPlayerId);
-    if (idx < 0) {
-      return "";
-    }
-    const nextId = order[(idx + 1) % order.length];
-    const raw = state.players?.[nextId]?.name;
-    return typeof raw === "string" && raw.trim() !== "" ? raw.trim() : nextId;
-  }
-
   private buildMagicDoorLandingSpeech(
     playerName: string,
     playerId: string,
     position: number,
-    squareName: string,
     squareData: Record<string, unknown>,
   ): string {
     const target =
@@ -968,14 +949,11 @@ export class BoardEffectsHandler {
     const scimitarBonus = scimitarDoorBonusFromItems(items);
     const minDie = minDieToOpenMagicDoor(target, hearts, scimitarBonus);
     const heartsPhrase = magicDoorHeartsPhrase(hearts);
-    const nextPlayer = this.resolveNextPlayerDisplayName(playerId);
     const key =
       scimitarBonus > 0 ? "squares.magicDoorLandingWithScimitar" : "squares.magicDoorLanding";
     return t(key, {
       name: playerName,
       position,
-      squareName,
-      nextPlayer,
       target,
       heartsPhrase,
       minDie,
@@ -1127,7 +1105,7 @@ export class BoardEffectsHandler {
 
     if (kind === "magicDoor") {
       await this.speakDeterministicLanding(
-        this.buildMagicDoorLandingSpeech(playerName, playerId, position, squareName, squareData),
+        this.buildMagicDoorLandingSpeech(playerName, playerId, position, squareData),
       );
       return;
     }
