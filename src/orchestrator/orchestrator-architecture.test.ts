@@ -16,7 +16,7 @@ import { StateManager } from "@/state-manager";
  *
  * CRITICAL: These tests enforce architectural boundaries that must never be violated.
  */
-describe("Orchestrator Architecture - Authority Model", () => {
+describe("Product scenario: Game orchestrator Architecture Authority Model", () => {
   let orchestrator: Orchestrator;
   let stateManager: StateManager;
   let mockLLM: LLMClient;
@@ -68,8 +68,8 @@ describe("Orchestrator Architecture - Authority Model", () => {
     orchestrator = new Orchestrator(mockLLM, stateManager, mockSpeech, mockIndicator, initialState);
   });
 
-  describe("1. Orchestrator Authority - Player Setup", () => {
-    it("setupPlayers() creates players with correct structure", () => {
+  describe("Product scenario: 1. game orchestrator Authority Player Setup", () => {
+    it("Expected outcome: Setup Players creates players with correct structure", () => {
       const playerNames = ["Alice", "Bob", "Charlie"];
 
       orchestrator.setupPlayers(playerNames);
@@ -89,7 +89,7 @@ describe("Orchestrator Architecture - Authority Model", () => {
       expect(players.p3.position).toBe(0);
     });
 
-    it("setupPlayers() sets game.turn to first player", () => {
+    it("Expected outcome: Setup Players sets game turn to first player", () => {
       const playerNames = ["Alice", "Bob"];
 
       orchestrator.setupPlayers(playerNames);
@@ -100,7 +100,7 @@ describe("Orchestrator Architecture - Authority Model", () => {
       expect(game.turn).toBe("p1");
     });
 
-    it("setupPlayers() creates playerOrder correctly", () => {
+    it("Expected outcome: Setup Players creates player Order correctly", () => {
       const playerNames = ["Alice", "Bob", "Charlie"];
 
       orchestrator.setupPlayers(playerNames);
@@ -112,7 +112,7 @@ describe("Orchestrator Architecture - Authority Model", () => {
       expect(playerOrder).toEqual(["p1", "p2", "p3"]);
     });
 
-    it("setupPlayers() preserves player template fields", () => {
+    it("Expected outcome: Setup Players preserves player template fields", () => {
       const playerNames = ["Alice"];
 
       orchestrator.setupPlayers(playerNames);
@@ -125,8 +125,8 @@ describe("Orchestrator Architecture - Authority Model", () => {
     });
   });
 
-  describe("2. Orchestrator Authority - Phase Transitions", () => {
-    it("transitionPhase() changes phase correctly", () => {
+  describe("Product scenario: 2 game orchestrator Authority Phase Transitions", () => {
+    it("Expected outcome: Transition Phase changes phase correctly", () => {
       orchestrator.transitionPhase(GamePhase.PLAYING);
 
       const state = stateManager.getState();
@@ -135,7 +135,7 @@ describe("Orchestrator Architecture - Authority Model", () => {
       expect(game.phase).toBe(GamePhase.PLAYING);
     });
 
-    it("transitionPhase() can transition through all phases", () => {
+    it("Expected outcome: Transition Phase can transition through all phases", () => {
       orchestrator.transitionPhase(GamePhase.SETUP);
       let state = stateManager.getState();
       let game = state.game as Record<string, unknown>;
@@ -153,14 +153,14 @@ describe("Orchestrator Architecture - Authority Model", () => {
     });
   });
 
-  describe("3. Orchestrator Authority - Turn Advancement", () => {
+  describe("Product scenario: 3 game orchestrator Authority Turn Advancement", () => {
     beforeEach(() => {
       // Setup players for turn tests
       orchestrator.setupPlayers(["Alice", "Bob", "Charlie"]);
       orchestrator.transitionPhase(GamePhase.PLAYING);
     });
 
-    it("advanceTurn() advances to next player", async () => {
+    it("Expected outcome: Advance Turn advances to next player", async () => {
       const state = stateManager.getState();
       const game = state.game as Record<string, unknown>;
       expect(game.turn).toBe("p1"); // Alice starts
@@ -176,7 +176,7 @@ describe("Orchestrator Architecture - Authority Model", () => {
       expect(newGame.turn).toBe("p2");
     });
 
-    it("advanceTurn() wraps around from last to first player", async () => {
+    it("Expected outcome: Advance Turn wraps around from last to first player", async () => {
       // Manually set to last player
       stateManager.set("game.turn", "p3");
 
@@ -191,7 +191,7 @@ describe("Orchestrator Architecture - Authority Model", () => {
       expect(game.turn).toBe("p1");
     });
 
-    it("advanceTurn() returns null when game has winner", async () => {
+    it("Expected outcome: Advance Turn returns null when game has winner", async () => {
       stateManager.set("game.winner", "p1");
 
       const nextPlayer = await orchestrator.advanceTurn();
@@ -204,7 +204,7 @@ describe("Orchestrator Architecture - Authority Model", () => {
       expect(game.turn).toBe("p1"); // Still p1
     });
 
-    it("advanceTurn() returns null when not in PLAYING phase", async () => {
+    it("Expected outcome: Advance Turn returns null when not in PLAYING phase", async () => {
       orchestrator.transitionPhase(GamePhase.SETUP);
 
       const nextPlayer = await orchestrator.advanceTurn();
@@ -216,7 +216,7 @@ describe("Orchestrator Architecture - Authority Model", () => {
       expect(game.turn).toBe("p1"); // Turn not advanced
     });
 
-    it("advanceTurn() blocks when square effect is processing", async () => {
+    it("Expected outcome: Advance Turn blocks when square effect is processing", async () => {
       // Add a square effect to trigger processing
       stateManager.set("board.squares", {
         "5": { name: "Test Enemy", power: 1 },
@@ -230,7 +230,7 @@ describe("Orchestrator Architecture - Authority Model", () => {
       expect(nextPlayer).not.toBeNull();
     });
 
-    it("advanceTurn() blocks when pending decisions exist", async () => {
+    it("Expected outcome: Advance Turn blocks when pending decisions exist", async () => {
       stateManager.set("board.squares", {
         "0": { next: [1, 15], prev: [] },
       });
@@ -246,7 +246,7 @@ describe("Orchestrator Architecture - Authority Model", () => {
       expect(game.turn).toBe("p1"); // Turn not advanced
     });
 
-    it("advanceTurn() allows advancement when decision is resolved", async () => {
+    it("Expected outcome: Advance Turn allows advancement when decision is resolved", async () => {
       stateManager.set("board.squares", {
         "0": { next: [1, 15], prev: [] },
       });
@@ -264,18 +264,18 @@ describe("Orchestrator Architecture - Authority Model", () => {
     });
   });
 
-  describe("4. Orchestrator Authority - Pending Decisions", () => {
+  describe("Product scenario: 4 game orchestrator Authority Pending Decisions", () => {
     beforeEach(() => {
       orchestrator.setupPlayers(["Alice", "Bob"]);
       orchestrator.transitionPhase(GamePhase.PLAYING);
     });
 
-    it("hasPendingDecisions() returns false when no decision points", () => {
+    it("Expected outcome: Has Pending Decisions returns false when no decision points", () => {
       const hasPending = orchestrator.hasPendingDecisions();
       expect(hasPending).toBe(false);
     });
 
-    it("hasPendingDecisions() returns false when player not at decision point", () => {
+    it("Expected outcome: Has Pending Decisions returns false when player not at decision point", () => {
       stateManager.set("board.squares", {
         "10": { next: [11, 12], prev: [9] },
       });
@@ -285,7 +285,7 @@ describe("Orchestrator Architecture - Authority Model", () => {
       expect(hasPending).toBe(false);
     });
 
-    it("hasPendingDecisions() returns true when player at decision point with null choice", () => {
+    it("Expected outcome: Has Pending Decisions returns true when player at decision point with null choice", () => {
       stateManager.set("board.squares", {
         "0": { next: [1, 15], prev: [] },
       });
@@ -296,7 +296,7 @@ describe("Orchestrator Architecture - Authority Model", () => {
       expect(hasPending).toBe(true);
     });
 
-    it("hasPendingDecisions() returns false when decision is resolved", () => {
+    it("Expected outcome: Has Pending Decisions returns false when decision is resolved", () => {
       stateManager.set("board.squares", {
         "0": { next: [1, 15], prev: [] },
       });
@@ -308,8 +308,8 @@ describe("Orchestrator Architecture - Authority Model", () => {
     });
   });
 
-  describe("5. Integration - Full Flows", () => {
-    it("full flow: setupPlayers → transitionPhase → advanceTurn", async () => {
+  describe("Product scenario: 5 Integration Full Flows", () => {
+    it("Expected outcome: Full flow setup Players to transition Phase to advance Turn", async () => {
       // 1. Setup players
       orchestrator.setupPlayers(["Alice", "Bob"]);
 
@@ -342,7 +342,7 @@ describe("Orchestrator Architecture - Authority Model", () => {
       expect(game.turn).toBe("p2");
     });
 
-    it("turn advancement respects game completion", async () => {
+    it("Expected outcome: Turn advancement respects game completion", async () => {
       orchestrator.setupPlayers(["Alice", "Bob"]);
       orchestrator.transitionPhase(GamePhase.PLAYING);
 
@@ -358,7 +358,7 @@ describe("Orchestrator Architecture - Authority Model", () => {
       expect(nextPlayer).toBeNull();
     });
 
-    it("turn advancement respects phase transitions", async () => {
+    it("Expected outcome: Turn advancement respects phase transitions", async () => {
       orchestrator.setupPlayers(["Alice", "Bob"]);
       orchestrator.transitionPhase(GamePhase.PLAYING);
 
@@ -375,8 +375,8 @@ describe("Orchestrator Architecture - Authority Model", () => {
     });
   });
 
-  describe("6. Architecture Enforcement - State Mutations", () => {
-    it("only orchestrator methods mutate state during player setup", () => {
+  describe("Product scenario: 6 Architecture Enforcement State Mutations", () => {
+    it("Expected outcome: Only orchestrator methods mutate state during player setup", () => {
       const initialPhase = stateManager.get("game.phase");
       const initialTurn = stateManager.get("game.turn");
 
@@ -396,7 +396,7 @@ describe("Orchestrator Architecture - Authority Model", () => {
       expect(game.playerOrder).toEqual(["p1", "p2"]);
     });
 
-    it("orchestrator controls turn even with multiple advances", async () => {
+    it("Expected outcome: Orchestrator controls turn even with multiple advances", async () => {
       orchestrator.setupPlayers(["Alice", "Bob", "Charlie"]);
       orchestrator.transitionPhase(GamePhase.PLAYING);
 

@@ -28,7 +28,7 @@ vi.mock("../utils/logger", () => ({
   },
 }));
 
-describe("SpeechService", () => {
+describe("Product scenario: Speech Service", () => {
   let speechService: SpeechService;
   let mockSpeechSynthesis: any;
   let mockAudioContext: any;
@@ -71,8 +71,8 @@ describe("SpeechService", () => {
     vi.restoreAllMocks();
   });
 
-  describe("prime", () => {
-    it("should prime speech synthesis", () => {
+  describe("Product scenario: Prime", () => {
+    it("Expected outcome: Should prime speech synthesis", () => {
       globalThis.SpeechSynthesisUtterance = class {
         onend = null;
         onerror = null;
@@ -87,7 +87,7 @@ describe("SpeechService", () => {
       expect(utterance.onerror).toBeNull();
     });
 
-    it("should not prime if speechSynthesis not available", () => {
+    it("Expected outcome: Should not prime if speech Synthesis not available", () => {
       globalThis.window = {} as unknown as Window & typeof globalThis;
 
       speechService.prime();
@@ -96,7 +96,7 @@ describe("SpeechService", () => {
       expect(true).toBe(true);
     });
 
-    it("should not prime if already primed", () => {
+    it("Expected outcome: Should not prime if already primed", () => {
       globalThis.SpeechSynthesisUtterance = class {
         onend = null;
         onerror = null;
@@ -109,7 +109,7 @@ describe("SpeechService", () => {
     });
   });
 
-  describe("speak", () => {
+  describe("Product scenario: Speak", () => {
     beforeEach(() => {
       globalThis.SpeechSynthesisUtterance = class {
         onend = null;
@@ -121,7 +121,7 @@ describe("SpeechService", () => {
       } as unknown as typeof SpeechSynthesisUtterance;
     });
 
-    it("should speak text successfully", async () => {
+    it("Expected outcome: Should speak text successfully", async () => {
       globalThis.SpeechSynthesisUtterance = class {
         onend = null;
         onerror = null;
@@ -149,7 +149,7 @@ describe("SpeechService", () => {
       expect(utterance.lang).toBe("en-US");
     });
 
-    it("should handle speech synthesis not available", async () => {
+    it("Expected outcome: Should handle speech synthesis not available", async () => {
       globalThis.window = {} as unknown as Window & typeof globalThis;
 
       await speechService.speak("Hello world");
@@ -158,7 +158,7 @@ describe("SpeechService", () => {
       expect(true).toBe(true);
     });
 
-    it("should handle speech synthesis error", async () => {
+    it("Expected outcome: Should handle speech synthesis error", async () => {
       globalThis.SpeechSynthesisUtterance = class {
         onend = null;
         onerror = null;
@@ -184,7 +184,7 @@ describe("SpeechService", () => {
       expect(true).toBe(true);
     });
 
-    it("should handle interrupted speech", async () => {
+    it("Expected outcome: Should handle interrupted speech", async () => {
       globalThis.SpeechSynthesisUtterance = class {
         onend = null;
         onerror = null;
@@ -212,7 +212,7 @@ describe("SpeechService", () => {
       expect(true).toBe(true);
     });
 
-    it("should prime if not already primed", async () => {
+    it("Expected outcome: Should prime if not already primed", async () => {
       globalThis.SpeechSynthesisUtterance = class {
         onend = null;
         onerror = null;
@@ -236,8 +236,8 @@ describe("SpeechService", () => {
     });
   });
 
-  describe("loadSound", () => {
-    it("should load sound successfully", async () => {
+  describe("Product scenario: Load Sound", () => {
+    it("Expected outcome: Should load sound successfully", async () => {
       const mockArrayBuffer = new ArrayBuffer(1024);
       const mockAudioBuffer = { duration: 1.0 };
 
@@ -253,7 +253,7 @@ describe("SpeechService", () => {
       expect(mockAudioContext.decodeAudioData).toHaveBeenCalledWith(mockArrayBuffer);
     });
 
-    it("should handle load sound failure", async () => {
+    it("Expected outcome: Should handle load sound failure", async () => {
       mockFetch.mockRejectedValueOnce(new Error("Network error"));
 
       await speechService.loadSound("test-sound", "http://example.com/sound.mp3");
@@ -262,7 +262,7 @@ describe("SpeechService", () => {
       expect(true).toBe(true);
     });
 
-    it("should handle decode audio data failure", async () => {
+    it("Expected outcome: Should handle decode audio data failure", async () => {
       const mockArrayBuffer = new ArrayBuffer(1024);
 
       mockFetch.mockResolvedValueOnce({
@@ -277,7 +277,7 @@ describe("SpeechService", () => {
       expect(true).toBe(true);
     });
 
-    it("should create AudioContext if not exists", async () => {
+    it("Expected outcome: Should create Audio Context if not exists", async () => {
       const mockArrayBuffer = new ArrayBuffer(1024);
       const mockAudioBuffer = { duration: 1.0 };
 
@@ -296,7 +296,7 @@ describe("SpeechService", () => {
     });
   });
 
-  describe("playSound", () => {
+  describe("Product scenario: Play Sound", () => {
     beforeEach(() => {
       const mockSource = {
         buffer: null,
@@ -307,7 +307,7 @@ describe("SpeechService", () => {
       mockAudioContext.createBufferSource.mockReturnValue(mockSource);
     });
 
-    it("should play loaded sound", () => {
+    it("Expected outcome: Should play loaded sound", () => {
       const mockBuffer = { duration: 1.0 };
 
       // Manually add sound to the service's internal map
@@ -318,14 +318,14 @@ describe("SpeechService", () => {
       expect(mockAudioContext.createBufferSource).toHaveBeenCalled();
     });
 
-    it("should handle missing sound gracefully", () => {
+    it("Expected outcome: Should handle missing sound gracefully", () => {
       speechService.playSound("nonexistent-sound");
 
       // Should not throw
       expect(true).toBe(true);
     });
 
-    it("should create AudioContext if not exists", () => {
+    it("Expected outcome: Should create Audio Context if not exists", () => {
       const mockBuffer = { duration: 1.0 };
       const mockSource = {
         buffer: null,
@@ -344,7 +344,7 @@ describe("SpeechService", () => {
       expect(mockAudioContext.createBufferSource).toHaveBeenCalled();
     });
 
-    it("should handle play sound failure", () => {
+    it("Expected outcome: Should handle play sound failure", () => {
       const mockBuffer = { duration: 1.0 };
       const mockSource = {
         buffer: null,

@@ -69,20 +69,20 @@ function baseState(player: { retreatEffectsReversed?: boolean }): GameState {
   } as unknown as GameState;
 }
 
-describe("getMovementDirectionForState", () => {
-  it("returns backward for directional pending when retreatEffectsReversed is false", () => {
+describe("Product scenario: Get Movement Direction For State", () => {
+  it("Expected outcome: Returns backward for directional pending when retreat Effects Reversed is false", () => {
     const state = baseState({ retreatEffectsReversed: false });
     expect(getMovementDirectionForState(state, "p1")).toBe("backward");
   });
 
-  it("returns forward for directional pending when retreatEffectsReversed is true", () => {
+  it("Expected outcome: Returns forward for directional pending when retreat Effects Reversed is true", () => {
     const state = baseState({ retreatEffectsReversed: true });
     expect(getMovementDirectionForState(state, "p1")).toBe("forward");
   });
 });
 
-describe("getEnforceableForkContext (no enforceable fork while encounter pending)", () => {
-  it("returns null when riddle is pending for current player on a fork square (invariant: no DECISION+riddle collision)", () => {
+describe("Product scenario: Get Enforceable Fork Context (no enforceable fork while encounter pending)", () => {
+  it("Expected outcome: Returns null when riddle is pending for current player on a fork square (invariant no DECISION+riddle collision)", () => {
     const state = stateAtWalrusFork101({
       kind: "riddle",
       playerId: "p1",
@@ -95,7 +95,7 @@ describe("getEnforceableForkContext (no enforceable fork while encounter pending
     expect(getPendingForkPromptIfAny(state)).toBeNull();
   });
 
-  it("still returns fork context when pending is completeRollMovement at the fork", () => {
+  it("Expected outcome: Still returns fork context when pending is complete Roll Movement at the fork", () => {
     const state = stateAtWalrusFork101({
       kind: "completeRollMovement",
       playerId: "p1",

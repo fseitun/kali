@@ -3,12 +3,12 @@ import { applySilentSuccessFallback } from "./gameplay-voice-policy";
 import { setLocale } from "@/i18n/translations";
 import { GamePhase, type GameState, type VoiceOutcomeHints } from "@/orchestrator/types";
 
-describe("applySilentSuccessFallback", () => {
+describe("Product scenario: Apply Silent Success Fallback", () => {
   beforeEach(() => {
     setLocale("en-US");
   });
 
-  it("speaks fork fallback when hint is set", async () => {
+  it("Expected outcome: Speaks fork fallback when hint is set", async () => {
     const speak = vi.fn().mockResolvedValue(undefined);
     const setLastNarration = vi.fn();
     const state: GameState = {
@@ -37,7 +37,7 @@ describe("applySilentSuccessFallback", () => {
     expect(setLastNarration).toHaveBeenCalledWith(speak.mock.calls[0][0]);
   });
 
-  it("returns false when hints are empty", async () => {
+  it("Expected outcome: Returns false when hints are empty", async () => {
     const speak = vi.fn();
     const state = {
       game: {
@@ -61,7 +61,7 @@ describe("applySilentSuccessFallback", () => {
     expect(speak).not.toHaveBeenCalled();
   });
 
-  it("returns false when hints object has no recognized flags", async () => {
+  it("Expected outcome: Returns false when hints object has no recognized flags", async () => {
     const speak = vi.fn();
     const state = {
       game: {
@@ -85,7 +85,7 @@ describe("applySilentSuccessFallback", () => {
     expect(speak).not.toHaveBeenCalled();
   });
 
-  it("uses turn id when player name is empty", async () => {
+  it("Expected outcome: Uses turn id when player name is empty", async () => {
     const speak = vi.fn().mockResolvedValue(undefined);
     const setLastNarration = vi.fn();
     const state = {
@@ -109,7 +109,7 @@ describe("applySilentSuccessFallback", () => {
     expect(speak).toHaveBeenCalledWith("p1, you're set. Roll the dice.");
   });
 
-  it("uses empty name when game.turn is missing", async () => {
+  it("Expected outcome: Uses empty name when game turn is missing", async () => {
     const speak = vi.fn().mockResolvedValue(undefined);
     const state = {
       game: {

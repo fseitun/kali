@@ -7,7 +7,7 @@ import { setLocale } from "@/i18n/translations";
 import type { ISpeechService } from "@/services/speech-service";
 import { StateManager } from "@/state-manager";
 
-describe("DecisionPointEnforcer", () => {
+describe("Product scenario: Decision Point Enforcer", () => {
   let decisionPointEnforcer: DecisionPointEnforcer;
   let stateManager: StateManager;
   let mockSpeak: ReturnType<typeof vi.fn>;
@@ -46,16 +46,16 @@ describe("DecisionPointEnforcer", () => {
     );
   });
 
-  describe("enforceDecisionPoints()", () => {
+  describe("Product scenario: Enforce Decision Points", () => {
     const baseContext: ExecutionContext = {};
 
-    it("should do nothing when no decision points exist", async () => {
+    it("Expected outcome: Should do nothing when no decision points exist", async () => {
       await decisionPointEnforcer.enforceDecisionPoints(baseContext);
 
       expect(mockSpeak).not.toHaveBeenCalled();
     });
 
-    it("should do nothing when no current turn set", async () => {
+    it("Expected outcome: Should do nothing when no current turn set", async () => {
       stateManager.set("game.turn", null);
       stateManager.set("board.squares", {
         "5": { next: [6, 7], prev: [4] },
@@ -66,7 +66,7 @@ describe("DecisionPointEnforcer", () => {
       expect(mockSpeak).not.toHaveBeenCalled();
     });
 
-    it("should do nothing when current player not at decision point", async () => {
+    it("Expected outcome: Should do nothing when current player not at decision point", async () => {
       stateManager.set("board.squares", {
         "10": { next: [11, 12], prev: [9] },
       });
@@ -77,7 +77,7 @@ describe("DecisionPointEnforcer", () => {
       expect(mockSpeak).not.toHaveBeenCalled();
     });
 
-    it("should do nothing when decision already filled", async () => {
+    it("Expected outcome: Should do nothing when decision already filled", async () => {
       stateManager.set("board.squares", {
         "5": { next: [6, 7], prev: [4] },
       });
@@ -89,7 +89,7 @@ describe("DecisionPointEnforcer", () => {
       expect(mockSpeak).not.toHaveBeenCalled();
     });
 
-    it("should speak fork prompt when decision pending", async () => {
+    it("Expected outcome: Should speak fork prompt when decision pending", async () => {
       stateManager.set("board.squares", {
         "5": { next: [6, 7], prev: [4] },
       });
@@ -106,7 +106,7 @@ describe("DecisionPointEnforcer", () => {
       expect(mockSetState).toHaveBeenCalledWith("speaking");
     });
 
-    it("does not enforce fork when powerCheck is pending for current player (roll first)", async () => {
+    it("Expected outcome: Does not enforce fork when power Check is pending for current player (roll first)", async () => {
       stateManager.set("board.squares", {
         "5": { next: [6, 7], prev: [4] },
       });
@@ -126,7 +126,7 @@ describe("DecisionPointEnforcer", () => {
       expect(mockSpeak).not.toHaveBeenCalled();
     });
 
-    it("does not enforce fork when revenge is pending for current player", async () => {
+    it("Expected outcome: Does not enforce fork when revenge is pending for current player", async () => {
       stateManager.set("board.squares", {
         "5": { next: [6, 7], prev: [4] },
       });
@@ -145,7 +145,7 @@ describe("DecisionPointEnforcer", () => {
       expect(mockSpeak).not.toHaveBeenCalled();
     });
 
-    it("should handle multiple decision points (only enforce current position)", async () => {
+    it("Expected outcome: Should handle multiple decision points (only enforce current position)", async () => {
       stateManager.set("board.squares", {
         "3": { next: [4, 5], prev: [2] },
         "5": { next: [6, 7], prev: [4] },
@@ -160,7 +160,7 @@ describe("DecisionPointEnforcer", () => {
       expect(mockSpeak.mock.calls[0][0] as string).toMatch(/6|7/);
     });
 
-    it("should handle missing player gracefully", async () => {
+    it("Expected outcome: Should handle missing player gracefully", async () => {
       stateManager.set("game.turn", "p99");
       stateManager.set("board.squares", {
         "5": { next: [6, 7], prev: [4] },
@@ -171,7 +171,7 @@ describe("DecisionPointEnforcer", () => {
       expect(mockSpeak).not.toHaveBeenCalled();
     });
 
-    it("should handle player without position field", async () => {
+    it("Expected outcome: Should handle player without position field", async () => {
       stateManager.set("board.squares", {
         "5": { next: [6, 7], prev: [4] },
       });
@@ -184,7 +184,7 @@ describe("DecisionPointEnforcer", () => {
       expect(mockSpeak).not.toHaveBeenCalled();
     });
 
-    it("should handle errors gracefully", async () => {
+    it("Expected outcome: Should handle errors gracefully", async () => {
       stateManager.set("board.squares", {
         "5": { next: [6, 7], prev: [4] },
       });

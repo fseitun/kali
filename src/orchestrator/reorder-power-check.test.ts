@@ -3,9 +3,9 @@ import { isPowerCheckNumericAnswer, reorderPowerCheckBeforeRoll } from "./reorde
 import type { GameState, PrimitiveAction } from "./types";
 import { GamePhase } from "./types";
 
-describe("reorder-power-check", () => {
-  describe("isPowerCheckNumericAnswer", () => {
-    it("returns true for numeric strings 1-12", () => {
+describe("Product scenario: Reorder power check", () => {
+  describe("Product scenario: Is Power Check Numeric Answer", () => {
+    it("Expected outcome: Returns true for numeric strings 1 12", () => {
       expect(isPowerCheckNumericAnswer("1")).toBe(true);
       expect(isPowerCheckNumericAnswer("7")).toBe(true);
       expect(isPowerCheckNumericAnswer("12")).toBe(true);
@@ -14,7 +14,7 @@ describe("reorder-power-check", () => {
       expect(isPowerCheckNumericAnswer("siete")).toBe(false);
     });
 
-    it("returns false for out-of-range or non-numeric", () => {
+    it("Expected outcome: Returns false for out of range or non numeric", () => {
       expect(isPowerCheckNumericAnswer("0")).toBe(false);
       expect(isPowerCheckNumericAnswer("13")).toBe(false);
       expect(isPowerCheckNumericAnswer("")).toBe(false);
@@ -22,7 +22,7 @@ describe("reorder-power-check", () => {
     });
   });
 
-  describe("reorderPowerCheckBeforeRoll", () => {
+  describe("Product scenario: Reorder Power Check Before Roll", () => {
     const stateWithPowerCheck: GameState = {
       game: {
         name: "Kalimba",
@@ -46,7 +46,7 @@ describe("reorder-power-check", () => {
       board: { squares: { "100": { effect: "win" } } },
     };
 
-    it("moves PLAYER_ANSWERED (numeric) before PLAYER_ROLLED when state has powerCheck", () => {
+    it("Expected outcome: Moves PLAYER ANSWERED (numeric) before PLAYER ROLLED when state has power Check", () => {
       const actions: PrimitiveAction[] = [
         { action: "PLAYER_ROLLED", value: 2 },
         { action: "PLAYER_ANSWERED", answer: "7" },
@@ -57,7 +57,7 @@ describe("reorder-power-check", () => {
       expect(reordered[1]).toEqual({ action: "PLAYER_ROLLED", value: 2 });
     });
 
-    it("does not reorder when state has no pending", () => {
+    it("Expected outcome: Does not reorder when state has no pending", () => {
       const stateNoPending = {
         ...stateWithPowerCheck,
         game: { ...stateWithPowerCheck.game, pending: null },
@@ -70,7 +70,7 @@ describe("reorder-power-check", () => {
       expect(reordered).toEqual(actions);
     });
 
-    it("does not reorder when pending kind is riddle", () => {
+    it("Expected outcome: Does not reorder when pending kind is riddle", () => {
       const pending = (stateWithPowerCheck.game as Record<string, unknown>).pending as Record<
         string,
         unknown
@@ -90,19 +90,19 @@ describe("reorder-power-check", () => {
       expect(reordered).toEqual(actions);
     });
 
-    it("does not reorder when batch has only PLAYER_ROLLED", () => {
+    it("Expected outcome: Does not reorder when batch has only PLAYER ROLLED", () => {
       const actions: PrimitiveAction[] = [{ action: "PLAYER_ROLLED", value: 2 }];
       const reordered = reorderPowerCheckBeforeRoll(actions, stateWithPowerCheck);
       expect(reordered).toEqual(actions);
     });
 
-    it("does not reorder when batch has only PLAYER_ANSWERED", () => {
+    it("Expected outcome: Does not reorder when batch has only PLAYER ANSWERED", () => {
       const actions: PrimitiveAction[] = [{ action: "PLAYER_ANSWERED", answer: "7" }];
       const reordered = reorderPowerCheckBeforeRoll(actions, stateWithPowerCheck);
       expect(reordered).toEqual(actions);
     });
 
-    it("does not reorder when PLAYER_ANSWERED is non-numeric (e.g. fork choice)", () => {
+    it("Expected outcome: Does not reorder when PLAYER ANSWERED is non numeric (e g fork choice)", () => {
       const actions: PrimitiveAction[] = [
         { action: "PLAYER_ROLLED", value: 2 },
         { action: "PLAYER_ANSWERED", answer: "A" },
@@ -111,7 +111,7 @@ describe("reorder-power-check", () => {
       expect(reordered).toEqual(actions);
     });
 
-    it("preserves order when PLAYER_ANSWERED already comes before PLAYER_ROLLED", () => {
+    it("Expected outcome: Preserves order when PLAYER ANSWERED already comes before PLAYER ROLLED", () => {
       const actions: PrimitiveAction[] = [
         { action: "PLAYER_ANSWERED", answer: "7" },
         { action: "PLAYER_ROLLED", value: 2 },
@@ -120,7 +120,7 @@ describe("reorder-power-check", () => {
       expect(reordered).toEqual(actions);
     });
 
-    it("works with revenge phase", () => {
+    it("Expected outcome: Works with revenge phase", () => {
       const pending = (stateWithPowerCheck.game as Record<string, unknown>).pending as Record<
         string,
         unknown

@@ -12,7 +12,7 @@ vi.mock("../config", () => ({
   },
 }));
 
-describe("OllamaClient", () => {
+describe("Product scenario: Ollama Client", () => {
   let client: OllamaClient;
   let mockFetch: ReturnType<typeof vi.fn>;
 
@@ -26,8 +26,8 @@ describe("OllamaClient", () => {
     vi.restoreAllMocks();
   });
 
-  describe("makeApiCall", () => {
-    it("should make successful API call", async () => {
+  describe("Product scenario: Make Api Call", () => {
+    it("Expected outcome: Should make successful API call", async () => {
       const mockResponse = {
         message: {
           content: "Test response from Ollama",
@@ -66,7 +66,7 @@ describe("OllamaClient", () => {
       expect(result).toEqual({ content: "Test response from Ollama" });
     });
 
-    it("should use default temperature and maxTokens", async () => {
+    it("Expected outcome: Should use default temperature and max Tokens", async () => {
       const mockResponse = {
         message: {
           content: "Default response",
@@ -96,7 +96,7 @@ describe("OllamaClient", () => {
       );
     });
 
-    it("should handle API error responses", async () => {
+    it("Expected outcome: Should handle API error responses", async () => {
       mockFetch.mockResolvedValueOnce({
         ok: false,
         status: 500,
@@ -108,13 +108,13 @@ describe("OllamaClient", () => {
       );
     });
 
-    it("should handle network errors", async () => {
+    it("Expected outcome: Should handle network errors", async () => {
       mockFetch.mockRejectedValueOnce(new Error("Connection refused"));
 
       await expect(client.makeApiCall("Test prompt", {})).rejects.toThrow("Connection refused");
     });
 
-    it("should handle empty response content", async () => {
+    it("Expected outcome: Should handle empty response content", async () => {
       const mockResponse = {
         message: {
           content: "",
@@ -131,7 +131,7 @@ describe("OllamaClient", () => {
       expect(result).toEqual({ content: "" });
     });
 
-    it("should handle missing message", async () => {
+    it("Expected outcome: Should handle missing message", async () => {
       const mockResponse = {};
 
       mockFetch.mockResolvedValueOnce({
@@ -144,7 +144,7 @@ describe("OllamaClient", () => {
       expect(result).toEqual({ content: "" });
     });
 
-    it("should handle missing content in message", async () => {
+    it("Expected outcome: Should handle missing content in message", async () => {
       const mockResponse = {
         message: {},
       };
@@ -159,7 +159,7 @@ describe("OllamaClient", () => {
       expect(result).toEqual({ content: "" });
     });
 
-    it("should handle custom temperature and maxTokens", async () => {
+    it("Expected outcome: Should handle custom temperature and max Tokens", async () => {
       const mockResponse = {
         message: {
           content: "Custom response",
@@ -192,13 +192,13 @@ describe("OllamaClient", () => {
       );
     });
 
-    it("should handle timeout errors", async () => {
+    it("Expected outcome: Should handle timeout errors", async () => {
       mockFetch.mockRejectedValueOnce(new Error("Request timeout"));
 
       await expect(client.makeApiCall("Test prompt", {})).rejects.toThrow("Request timeout");
     });
 
-    it("should handle JSON parsing errors", async () => {
+    it("Expected outcome: Should handle JSON parsing errors", async () => {
       mockFetch.mockResolvedValueOnce({
         ok: true,
         json: () => Promise.reject(new Error("Invalid JSON")),
@@ -207,7 +207,7 @@ describe("OllamaClient", () => {
       await expect(client.makeApiCall("Test prompt", {})).rejects.toThrow("Invalid JSON");
     });
 
-    it("should handle server unavailable", async () => {
+    it("Expected outcome: Should handle server unavailable", async () => {
       mockFetch.mockResolvedValueOnce({
         ok: false,
         status: 503,
@@ -219,7 +219,7 @@ describe("OllamaClient", () => {
       );
     });
 
-    it("should handle model not found", async () => {
+    it("Expected outcome: Should handle model not found", async () => {
       mockFetch.mockResolvedValueOnce({
         ok: false,
         status: 404,

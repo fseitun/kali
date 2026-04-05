@@ -9,24 +9,24 @@ import {
   scimitarDoorBonusFromItems,
 } from "./board-helpers";
 
-describe("findSquareByEffect", () => {
-  it("returns null when squares is undefined", () => {
+describe("Product scenario: Find Square By Effect", () => {
+  it("Expected outcome: Returns null when squares is undefined", () => {
     expect(findSquareByEffect(undefined, "win")).toBeNull();
   });
 
-  it("returns null when squares is empty", () => {
+  it("Expected outcome: Returns null when squares is empty", () => {
     expect(findSquareByEffect({}, "win")).toBeNull();
   });
 
-  it("returns null when no square matches the effect", () => {
+  it("Expected outcome: Returns null when no square matches the effect", () => {
     expect(findSquareByEffect({ "5": { effect: "portal" } }, "win")).toBeNull();
   });
 
-  it("returns null when position key is not a number", () => {
+  it("Expected outcome: Returns null when position key is not a number", () => {
     expect(findSquareByEffect({ abc: { effect: "win" } }, "win")).toBeNull();
   });
 
-  it("returns first matching square by object iteration order", () => {
+  it("Expected outcome: Returns first matching square by object iteration order", () => {
     const squares = {
       "10": { effect: "win" },
       "196": { effect: "win" },
@@ -35,38 +35,38 @@ describe("findSquareByEffect", () => {
     expect(found).toEqual({ position: 10, square: { effect: "win" } });
   });
 
-  it("finds magicDoorCheck and includes square data", () => {
+  it("Expected outcome: Finds magic Door Check and includes square data", () => {
     const sq = { effect: "magicDoorCheck", target: 6 };
     const found = findSquareByEffect({ "186": sq }, "magicDoorCheck");
     expect(found).toEqual({ position: 186, square: sq });
   });
 });
 
-describe("getWinPosition", () => {
-  it("returns 196 when there is no win square", () => {
+describe("Product scenario: Get Win Position", () => {
+  it("Expected outcome: Returns 196 when there is no win square", () => {
     expect(getWinPosition(undefined)).toBe(196);
     expect(getWinPosition({ "0": { next: [1] } })).toBe(196);
   });
 
-  it("returns configured win position from squares", () => {
+  it("Expected outcome: Returns configured win position from squares", () => {
     expect(getWinPosition({ "42": { effect: "win" } })).toBe(42);
   });
 });
 
-describe("getMagicDoorConfig", () => {
-  it("returns null when no magic door square", () => {
+describe("Product scenario: Get Magic Door Config", () => {
+  it("Expected outcome: Returns null when no magic door square", () => {
     expect(getMagicDoorConfig(undefined)).toBeNull();
     expect(getMagicDoorConfig({ "5": { effect: "skipTurn" } })).toBeNull();
   });
 
-  it("returns position and target from magicDoorCheck", () => {
+  it("Expected outcome: Returns position and target from magic Door Check", () => {
     expect(getMagicDoorConfig({ "186": { effect: "magicDoorCheck", target: 6 } })).toEqual({
       position: 186,
       target: 6,
     });
   });
 
-  it("defaults target to 6 when missing", () => {
+  it("Expected outcome: Defaults target to 6 when missing", () => {
     expect(getMagicDoorConfig({ "99": { effect: "magicDoorCheck" } })).toEqual({
       position: 99,
       target: 6,
@@ -74,8 +74,8 @@ describe("getMagicDoorConfig", () => {
   });
 });
 
-describe("minDieToOpenMagicDoor", () => {
-  it("matches Kalimba rule die + bonus >= target", () => {
+describe("Product scenario: Min Die To Open Magic Door", () => {
+  it("Expected outcome: Matches Kalimba rule die + bonus >= target", () => {
     expect(minDieToOpenMagicDoor(6, 0)).toBe(6);
     expect(minDieToOpenMagicDoor(6, 1)).toBe(5);
     expect(minDieToOpenMagicDoor(6, 2)).toBe(4);
@@ -84,15 +84,15 @@ describe("minDieToOpenMagicDoor", () => {
     expect(minDieToOpenMagicDoor(6, 6)).toBe(1);
   });
 
-  it("treats scimitar bonus like an extra heart for the door threshold", () => {
+  it("Expected outcome: Treats scimitar bonus like an extra heart for the door threshold", () => {
     expect(minDieToOpenMagicDoor(6, 0, 1)).toBe(5);
     expect(minDieToOpenMagicDoor(6, 1, 1)).toBe(4);
     expect(minDieToOpenMagicDoor(6, 5, 1)).toBe(1);
   });
 });
 
-describe("scimitarDoorBonusFromItems", () => {
-  it("returns 1 only when scimitar is in items", () => {
+describe("Product scenario: Scimitar Door Bonus From Items", () => {
+  it("Expected outcome: Returns 1 only when scimitar is in items", () => {
     expect(scimitarDoorBonusFromItems(undefined)).toBe(0);
     expect(scimitarDoorBonusFromItems([])).toBe(0);
     expect(scimitarDoorBonusFromItems(["torch"])).toBe(0);
@@ -101,8 +101,8 @@ describe("scimitarDoorBonusFromItems", () => {
   });
 });
 
-describe("getMagicDoorOpeningBonus", () => {
-  it("sums hearts and scimitar", () => {
+describe("Product scenario: Get Magic Door Opening Bonus", () => {
+  it("Expected outcome: Sums hearts and scimitar", () => {
     expect(getMagicDoorOpeningBonus(undefined)).toBe(0);
     expect(getMagicDoorOpeningBonus({ hearts: 2 })).toBe(2);
     expect(getMagicDoorOpeningBonus({ hearts: 1, items: ["scimitar"] })).toBe(2);
@@ -110,7 +110,7 @@ describe("getMagicDoorOpeningBonus", () => {
   });
 });
 
-describe("isMagicDoorOpeningRollState", () => {
+describe("Product scenario: Is Magic Door Opening Roll State", () => {
   const squares = { "186": { effect: "magicDoorCheck" as const, target: 6 } };
   const base = {
     game: { turn: "p1" },
@@ -119,10 +119,10 @@ describe("isMagicDoorOpeningRollState", () => {
     },
     board: { squares },
   };
-  it("is true on door square when not yet opened", () => {
+  it("Expected outcome: Is true on door square when not yet opened", () => {
     expect(isMagicDoorOpeningRollState(base)).toBe(true);
   });
-  it("is false when door already opened", () => {
+  it("Expected outcome: Is false when door already opened", () => {
     expect(
       isMagicDoorOpeningRollState({
         ...base,
@@ -130,7 +130,7 @@ describe("isMagicDoorOpeningRollState", () => {
       }),
     ).toBe(false);
   });
-  it("is false when not on door", () => {
+  it("Expected outcome: Is false when not on door", () => {
     expect(
       isMagicDoorOpeningRollState({
         ...base,

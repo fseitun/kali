@@ -9,7 +9,7 @@ import type { LLMClient } from "@/llm/LLMClient";
 import type { SpeechService } from "@/services/speech-service";
 import type { StateManager } from "@/state-manager";
 
-describe("Orchestrator Authority - LLM Adversarial Tests", () => {
+describe("Product scenario: Game orchestrator Authority interpreter Adversarial Tests", () => {
   let orchestrator: Orchestrator;
   let mockLLM: LLMClient;
   let mockStateManager: StateManager;
@@ -109,8 +109,8 @@ describe("Orchestrator Authority - LLM Adversarial Tests", () => {
     );
   });
 
-  describe("LLM Tries to Cheat - Validation Blocks", () => {
-    it("blocks LLM from modifying wrong player data", async () => {
+  describe("Product scenario: Interpreter Tries to Cheat Validation Blocks", () => {
+    it("Expected outcome: Blocks interpreter from modifying wrong player data", async () => {
       mockLLM.getActions = vi.fn(async () => [
         { action: "SET_STATE", path: "players.p2.hearts", value: 999 },
       ]) as any;
@@ -121,7 +121,7 @@ describe("Orchestrator Authority - LLM Adversarial Tests", () => {
       expect(mockStateManager.set).not.toHaveBeenCalledWith("players.p2.hearts", 999);
     });
 
-    it("blocks LLM from changing game.turn directly", async () => {
+    it("Expected outcome: Blocks interpreter from changing game turn directly", async () => {
       mockLLM.getActions = vi.fn(async () => [
         { action: "SET_STATE", path: "game.turn", value: "p2" },
       ]) as any;
@@ -132,7 +132,7 @@ describe("Orchestrator Authority - LLM Adversarial Tests", () => {
       expect(mockStateManager.set).not.toHaveBeenCalledWith("game.turn", "p2");
     });
 
-    it("blocks LLM from using non-existent paths", async () => {
+    it("Expected outcome: Blocks interpreter from using non existent paths", async () => {
       mockLLM.getActions = vi.fn(async () => [
         {
           action: "SET_STATE",
@@ -146,7 +146,7 @@ describe("Orchestrator Authority - LLM Adversarial Tests", () => {
       expect(mockSpeech.speak).toHaveBeenCalledWith("That move isn't allowed right now.");
     });
 
-    it("blocks LLM from returning malformed actions", async () => {
+    it("Expected outcome: Blocks interpreter from returning malformed actions", async () => {
       mockLLM.getActions = vi.fn(async () => [{ action: "NARRATE" } as unknown as PrimitiveAction]);
 
       await orchestrator.handleTranscript("say something");
@@ -154,7 +154,7 @@ describe("Orchestrator Authority - LLM Adversarial Tests", () => {
       expect(mockSpeech.speak).toHaveBeenCalledWith("I couldn't process that.");
     });
 
-    it("blocks LLM from returning non-array response", async () => {
+    it("Expected outcome: Blocks interpreter from returning non array response", async () => {
       mockLLM.getActions = vi.fn(async () => {
         return {
           action: "NARRATE",
@@ -167,7 +167,7 @@ describe("Orchestrator Authority - LLM Adversarial Tests", () => {
       expect(mockSpeech.speak).toHaveBeenCalledWith("I couldn't process that.");
     });
 
-    it("blocks invalid action types from LLM", async () => {
+    it("Expected outcome: Blocks invalid action types from interpreter", async () => {
       mockLLM.getActions = vi.fn(async () => [
         {
           action: "HACK_THE_GAME",
@@ -181,8 +181,8 @@ describe("Orchestrator Authority - LLM Adversarial Tests", () => {
     });
   });
 
-  describe("LLM Cannot Skip Orchestrator Logic", () => {
-    it("SET_STATE for position is authoritative: suppresses auto destination/nextOnLanding on that square", async () => {
+  describe("Product scenario: Interpreter Cannot Skip game orchestrator Logic", () => {
+    it("Expected outcome: SET STATE for position is authoritative suppresses auto destination/next On Landing on that square", async () => {
       let currentPosition = 10;
       mockStateManager.get = vi.fn((path: string) => {
         if (path === "players.p1.position") {
@@ -205,7 +205,7 @@ describe("Orchestrator Authority - LLM Adversarial Tests", () => {
       expect(currentPosition).toBe(15);
     });
 
-    it("SET_STATE to Kalimba Forest-Ocean portal (45) stays on 45 (no instant 45→82)", async () => {
+    it("Expected outcome: SET STATE to Kalimba Forest Ocean portal (45) stays on 45 (no instant 45 to 82)", async () => {
       (testState.board as any).squares["45"] = {
         name: "Forest-Ocean Portal",
         nextOnLanding: [82],
@@ -235,7 +235,7 @@ describe("Orchestrator Authority - LLM Adversarial Tests", () => {
       expect(currentPosition).toBe(45);
     });
 
-    it("orchestrator triggers square effects even if LLM uses SET_STATE", async () => {
+    it("Expected outcome: Orchestrator triggers square effects even if interpreter uses SET STATE", async () => {
       (testState.players as any).p1.position = 15;
 
       mockStateManager.get = vi.fn((path: string) => {
@@ -264,7 +264,7 @@ describe("Orchestrator Authority - LLM Adversarial Tests", () => {
       expect(spoken).toMatch(/square 20|Dragon|skip/i);
     });
 
-    it("LLM cannot bypass decision points", async () => {
+    it("Expected outcome: Interpreter cannot bypass decision points", async () => {
       (testState.board as any).squares["10"] = {
         next: [11, 12],
         prev: [9],
@@ -284,7 +284,7 @@ describe("Orchestrator Authority - LLM Adversarial Tests", () => {
       expect(mockStateManager.set).not.toHaveBeenCalledWith("players.p1.position", 15);
     });
 
-    it("orchestrator applies board moves after PLAYER_ROLLED", async () => {
+    it("Expected outcome: Orchestrator applies board moves after player rolls", async () => {
       let currentPosition = 10;
       mockStateManager.get = vi.fn((path: string) => {
         if (path === "players.p1.position") {
@@ -305,7 +305,7 @@ describe("Orchestrator Authority - LLM Adversarial Tests", () => {
       expect(currentPosition).toBe(30);
     });
 
-    it("SET_STATE for position after PLAYER_ROLLED in same batch is ignored (position from roll wins)", async () => {
+    it("Expected outcome: SET STATE for position after PLAYER ROLLED in same batch is ignored (position from roll wins)", async () => {
       const squares: Record<string, { next?: number[]; prev?: number[] }> = {};
       for (let i = 0; i <= 40; i++) {
         squares[String(i)] = {
@@ -346,8 +346,8 @@ describe("Orchestrator Authority - LLM Adversarial Tests", () => {
     });
   });
 
-  describe("State Consistency - Validation Matches Execution", () => {
-    it("validates sequential state changes correctly", async () => {
+  describe("Product scenario: State Consistency Validation Matches Execution", () => {
+    it("Expected outcome: Validates sequential state changes correctly", async () => {
       (testState.board as any).squares["10"] = {
         next: [11, 12],
         prev: [9],
@@ -382,7 +382,7 @@ describe("Orchestrator Authority - LLM Adversarial Tests", () => {
       expect(mockStateManager.set).toHaveBeenCalledWith("players.p1.position", 15);
     });
 
-    it("stateful validation simulates state changes", async () => {
+    it("Expected outcome: Stateful validation simulates state changes", async () => {
       (testState.players as any).p1.hearts = 0;
 
       const actions: PrimitiveAction[] = [
@@ -397,7 +397,7 @@ describe("Orchestrator Authority - LLM Adversarial Tests", () => {
       expect(mockStateManager.set).toHaveBeenCalledWith("players.p1.hearts", 3);
     });
 
-    it("execution applies changes in same order as validation", async () => {
+    it("Expected outcome: Execution applies changes in same order as validation", async () => {
       const setCallOrder: string[] = [];
       mockStateManager.set = vi.fn(async (path: string) => {
         setCallOrder.push(path);
@@ -415,8 +415,8 @@ describe("Orchestrator Authority - LLM Adversarial Tests", () => {
     });
   });
 
-  describe("Malicious Action Sequences", () => {
-    it("allows large action arrays (performance test)", async () => {
+  describe("Product scenario: Malicious Action Sequences", () => {
+    it("Expected outcome: Allows large action arrays (performance test)", async () => {
       const actions: PrimitiveAction[] = Array(100)
         .fill(null)
         .map((_, i) => ({
@@ -434,7 +434,7 @@ describe("Orchestrator Authority - LLM Adversarial Tests", () => {
       ).toBeGreaterThanOrEqual(100);
     });
 
-    it("catches validation errors in deeply nested action sequences", async () => {
+    it("Expected outcome: Catches validation errors in deeply nested action sequences", async () => {
       const actions: PrimitiveAction[] = [
         { action: "SET_STATE", path: "players.p1.hearts", value: 1 },
         { action: "SET_STATE", path: "players.p1.hearts", value: 2 },
@@ -450,7 +450,7 @@ describe("Orchestrator Authority - LLM Adversarial Tests", () => {
       expect(mockStateManager.set).not.toHaveBeenCalledWith("players.p2.hearts", 3);
     });
 
-    it("fails on first invalid action in alternating sequence", async () => {
+    it("Expected outcome: Fails on first invalid action in alternating sequence", async () => {
       const actions: PrimitiveAction[] = [
         { action: "NARRATE", text: "Valid 1" },
         { action: "SET_STATE", path: "players.p2.position", value: 99 },
@@ -464,7 +464,7 @@ describe("Orchestrator Authority - LLM Adversarial Tests", () => {
       expect(mockSpeech.speak).toHaveBeenCalledWith("It's not your turn to change that.");
     });
 
-    it("rejects actions with invalid primitive structure", async () => {
+    it("Expected outcome: Rejects actions with invalid primitive structure", async () => {
       const actions = [{ wrongField: "NARRATE", msg: "Hi" }] as unknown as PrimitiveAction[];
 
       mockLLM.getActions = vi.fn(async () => actions);
@@ -475,8 +475,8 @@ describe("Orchestrator Authority - LLM Adversarial Tests", () => {
     });
   });
 
-  describe("Orchestrator Does Not Manage Turn Flow", () => {
-    it("executes actions without advancing turn (controller job)", async () => {
+  describe("Product scenario: Game orchestrator Does Not Manage Turn Flow", () => {
+    it("Expected outcome: Executes actions without advancing turn (controller job)", async () => {
       (testState.game as any).playerOrder = ["p1", "p2"];
 
       const actions: PrimitiveAction[] = [{ action: "PLAYER_ROLLED", value: 3 }];
@@ -487,7 +487,7 @@ describe("Orchestrator Authority - LLM Adversarial Tests", () => {
       expect(mockStateManager.set).not.toHaveBeenCalledWith("game.turn", "p2");
     });
 
-    it("does not check decision points for turn advancement", async () => {
+    it("Expected outcome: Does not check decision points for turn advancement", async () => {
       (testState.board as any).squares["10"] = {
         next: [11, 12],
         prev: [9],
@@ -503,7 +503,7 @@ describe("Orchestrator Authority - LLM Adversarial Tests", () => {
       expect(mockStateManager.set).not.toHaveBeenCalledWith("game.turn", "p2");
     });
 
-    it("does not check game winner for turn advancement", async () => {
+    it("Expected outcome: Does not check game winner for turn advancement", async () => {
       (testState.game as any).winner = "p1";
 
       const actions: PrimitiveAction[] = [{ action: "NARRATE", text: "Done" }];
@@ -515,8 +515,8 @@ describe("Orchestrator Authority - LLM Adversarial Tests", () => {
     });
   });
 
-  describe("Square Effect Context - PLAYER_ROLLED Blocking", () => {
-    it("blocks PLAYER_ROLLED during square effect processing", async () => {
+  describe("Product scenario: Square Effect Context PLAYER ROLLED Blocking", () => {
+    it("Expected outcome: Blocks PLAYER ROLLED during square effect processing", async () => {
       (testState.board as any).squares = {
         "5": {
           name: "Cobra",
@@ -560,7 +560,7 @@ describe("Orchestrator Authority - LLM Adversarial Tests", () => {
       expect(mockSpeech.speak).toHaveBeenCalled();
     });
 
-    it("allows NARRATE during square effect processing", async () => {
+    it("Expected outcome: Allows NARRATE during square effect processing", async () => {
       (testState.board as any).squares = {
         "10": {
           name: "Trap",
@@ -595,7 +595,7 @@ describe("Orchestrator Authority - LLM Adversarial Tests", () => {
       );
     });
 
-    it("animal squares: orchestrator does not apply rewards on landing; defers to after riddle", async () => {
+    it("Expected outcome: Animal squares orchestrator does not apply rewards on landing; defers to after riddle", async () => {
       (testState.board as any).squares = {
         "8": {
           name: "Wolf",
@@ -644,8 +644,8 @@ describe("Orchestrator Authority - LLM Adversarial Tests", () => {
     });
   });
 
-  describe("Defense in Depth - Validation and Execution", () => {
-    it("validation catches turn violation first", async () => {
+  describe("Product scenario: Defense in Depth Validation and Execution", () => {
+    it("Expected outcome: Validation catches turn violation first", async () => {
       const actions: PrimitiveAction[] = [
         { action: "SET_STATE", path: "players.p2.hearts", value: 10 },
       ];
@@ -656,7 +656,7 @@ describe("Orchestrator Authority - LLM Adversarial Tests", () => {
       expect(mockStateManager.set).not.toHaveBeenCalledWith("players.p2.hearts", 10);
     });
 
-    it("execution has secondary turn ownership check", async () => {
+    it("Expected outcome: Execution has secondary turn ownership check", async () => {
       mockStateManager.pathExists = () => true;
 
       const actions = [
@@ -670,7 +670,7 @@ describe("Orchestrator Authority - LLM Adversarial Tests", () => {
       expect(mockSpeech.speak).toHaveBeenCalled();
     });
 
-    it("orchestrator validates before and enforces during execution", async () => {
+    it("Expected outcome: Orchestrator validates before and enforces during execution", async () => {
       (testState.board as any).squares["10"] = {
         next: [11, 12],
         prev: [9],
@@ -687,7 +687,7 @@ describe("Orchestrator Authority - LLM Adversarial Tests", () => {
       expect(success).toBe(false);
     });
 
-    it("does not double-inject decision point when LLM returns NARRATE from nested flow", async () => {
+    it("Expected outcome: Does not double inject decision point when interpreter returns NARRATE from nested flow", async () => {
       (testState.players as any).p1.position = 0;
       (testState.players as any).p1.activeChoices = {};
       (testState.board as any).squares["0"] = {
@@ -711,8 +711,8 @@ describe("Orchestrator Authority - LLM Adversarial Tests", () => {
     });
   });
 
-  describe("Power check before square effect - narration order", () => {
-    it("speaks powerCheckPass before square-effect narration when batch has PLAYER_ANSWERED then PLAYER_ROLLED", async () => {
+  describe("Product scenario: Power check before square effect narration order", () => {
+    it("Expected outcome: Speaks power Check Pass before square effect narration when batch has PLAYER ANSWERED then PLAYER ROLLED", async () => {
       (testState.game as any).pending = {
         kind: "powerCheck",
         position: 10,
@@ -770,7 +770,7 @@ describe("Orchestrator Authority - LLM Adversarial Tests", () => {
       );
     });
 
-    it("speaks applied heart after power check win on heart animal", async () => {
+    it("Expected outcome: Speaks applied heart after power check win on heart animal", async () => {
       (testState.players as any).p1.hearts = 0;
       (testState.game as any).pending = {
         kind: "powerCheck",

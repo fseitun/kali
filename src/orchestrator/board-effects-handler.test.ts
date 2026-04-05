@@ -7,7 +7,7 @@ import { setLocale } from "@/i18n/translations";
 import type { ISpeechService } from "@/services/speech-service";
 import { StateManager } from "@/state-manager";
 
-describe("BoardEffectsHandler", () => {
+describe("Product scenario: Board Effects Handler", () => {
   let boardEffectsHandler: BoardEffectsHandler;
   let stateManager: StateManager;
   let mockProcessTranscript: ReturnType<typeof vi.fn>;
@@ -52,8 +52,8 @@ describe("BoardEffectsHandler", () => {
     );
   });
 
-  describe("checkAndApplyBoardMoves()", () => {
-    it("should do nothing for non-position paths", async () => {
+  describe("Product scenario: Check And Apply Board Moves", () => {
+    it("Expected outcome: Should do nothing for non position paths", async () => {
       stateManager.set("board.squares", { "5": { destination: 12 } });
       stateManager.set("players.p1.hearts", 3);
 
@@ -63,7 +63,7 @@ describe("BoardEffectsHandler", () => {
       expect(stateManager.get("players.p1.hearts")).toBe(3);
     });
 
-    it("should do nothing for non-player paths", async () => {
+    it("Expected outcome: Should do nothing for non player paths", async () => {
       stateManager.set("board.squares", { "5": { destination: 12 } });
       stateManager.set("game.lastRoll", 5);
 
@@ -72,7 +72,7 @@ describe("BoardEffectsHandler", () => {
       expect(stateManager.get("game.lastRoll")).toBe(5);
     });
 
-    it("should do nothing when no board.squares config exists", async () => {
+    it("Expected outcome: Should do nothing when no board squares config exists", async () => {
       stateManager.set("board", {});
       stateManager.set("players.p1.position", 5);
 
@@ -82,7 +82,7 @@ describe("BoardEffectsHandler", () => {
       expect(stateManager.get("players.p1.position")).toBe(5);
     });
 
-    it("should apply ladder (portal forward)", async () => {
+    it("Expected outcome: Should apply ladder (portal forward)", async () => {
       stateManager.set("board.squares", {
         "5": { destination: 15 },
       });
@@ -93,7 +93,7 @@ describe("BoardEffectsHandler", () => {
       expect(stateManager.get("players.p1.position")).toBe(15);
     });
 
-    it("should apply snake (portal backward)", async () => {
+    it("Expected outcome: Should apply snake (portal backward)", async () => {
       stateManager.set("board.squares", {
         "15": { destination: 5 },
       });
@@ -104,7 +104,7 @@ describe("BoardEffectsHandler", () => {
       expect(stateManager.get("players.p1.position")).toBe(5);
     });
 
-    it("should apply returnTo187", async () => {
+    it("Expected outcome: Should apply return To187", async () => {
       stateManager.set("board.squares", {
         "190": { effect: "returnTo187", name: "Calavera" },
       });
@@ -115,7 +115,7 @@ describe("BoardEffectsHandler", () => {
       expect(stateManager.get("players.p1.position")).toBe(187);
     });
 
-    it("should not apply magic door bounce after returnTo187 teleport in the same resolution", async () => {
+    it("Expected outcome: Should not apply magic door bounce after return To187 teleport in the same resolution", async () => {
       stateManager.set("board.squares", {
         "186": { name: "Magic Door", effect: "magicDoorCheck", target: 6 },
         "190": { effect: "returnTo187", name: "Calavera" },
@@ -130,7 +130,7 @@ describe("BoardEffectsHandler", () => {
       expect(context.magicDoorBounce).toBeUndefined();
     });
 
-    it("should not apply magic door bounce after destination-based backward teleport to 187", async () => {
+    it("Expected outcome: Should not apply magic door bounce after destination based backward teleport to 187", async () => {
       stateManager.set("board.squares", {
         "186": { name: "Magic Door", effect: "magicDoorCheck", target: 6 },
         "190": { destination: 187, name: "Calavera" },
@@ -145,7 +145,7 @@ describe("BoardEffectsHandler", () => {
       expect(context.magicDoorBounce).toBeUndefined();
     });
 
-    it("should skip backward teleport when player has retreatEffectsReversed", async () => {
+    it("Expected outcome: Should skip backward teleport when player has retreat Effects Reversed", async () => {
       stateManager.set("board.squares", {
         "82": { destination: 45 },
       });
@@ -158,7 +158,7 @@ describe("BoardEffectsHandler", () => {
       expect(stateManager.get("players.p1.position")).toBe(82);
     });
 
-    it("should apply forward teleport even when retreatEffectsReversed", async () => {
+    it("Expected outcome: Should apply forward teleport even when retreat Effects Reversed", async () => {
       stateManager.set("board.squares", {
         "45": { destination: 82 },
       });
@@ -170,7 +170,7 @@ describe("BoardEffectsHandler", () => {
       expect(stateManager.get("players.p1.position")).toBe(82);
     });
 
-    it("should not skip backward teleport when retreatEffectsReversed is false", async () => {
+    it("Expected outcome: Should not skip backward teleport when retreat Effects Reversed is false", async () => {
       stateManager.set("board.squares", {
         "82": { destination: 45 },
       });
@@ -182,7 +182,7 @@ describe("BoardEffectsHandler", () => {
       expect(stateManager.get("players.p1.position")).toBe(45);
     });
 
-    it("should apply portal teleport when square has nextOnLanding (e.g. Forest-Ocean portal 45→82)", async () => {
+    it("Expected outcome: Should apply portal teleport when square has next On Landing (e g Forest Ocean portal 45 to 82)", async () => {
       stateManager.set("board.squares", {
         "45": { next: [46], prev: [44], name: "Forest-Ocean Portal", nextOnLanding: [82] },
         "82": { next: [83], prev: [81], name: "Ocean-Forest Portal", nextOnLanding: [45] },
@@ -194,7 +194,7 @@ describe("BoardEffectsHandler", () => {
       expect(stateManager.get("players.p1.position")).toBe(82);
     });
 
-    it("Kalimba ocean-forest portal (82): first landing slides to 45, sets flags, suppresses 45→82 chain", async () => {
+    it("Expected outcome: Kalimba ocean forest portal (82) first landing slides to 45, sets flags, suppresses 45 to 82 chain", async () => {
       stateManager.set("board.squares", {
         "45": { next: [46], prev: [44], name: "Forest-Ocean Portal", nextOnLanding: [82] },
         "82": {
@@ -217,7 +217,7 @@ describe("BoardEffectsHandler", () => {
       expect(context.suppressNextOnLandingAtPosition).toBe(45);
     });
 
-    it("Kalimba ocean-forest portal suppression blocks immediate 45→82 bounce in same resolution context", async () => {
+    it("Expected outcome: Kalimba ocean forest portal suppression blocks immediate 45 to 82 bounce in same resolution context", async () => {
       stateManager.set("board.squares", {
         "45": { next: [46], prev: [44], name: "Forest-Ocean Portal", nextOnLanding: [82] },
         "82": {
@@ -240,7 +240,7 @@ describe("BoardEffectsHandler", () => {
       expect(stateManager.get("players.p1.position")).toBe(45);
     });
 
-    it("Kalimba ocean-forest portal (82): after penalty consumed, further landings on 82 stay", async () => {
+    it("Expected outcome: Kalimba ocean forest portal (82) after penalty consumed, further landings on 82 stay", async () => {
       stateManager.set("board.squares", {
         "82": {
           next: [83],
@@ -258,7 +258,7 @@ describe("BoardEffectsHandler", () => {
       expect(stateManager.get("players.p1.position")).toBe(82);
     });
 
-    it("Kalimba ocean-forest portal (82): retreatEffectsReversed skips slide but still consumes penalty + retreat flip", async () => {
+    it("Expected outcome: Kalimba ocean forest portal (82) retreat Effects Reversed skips slide but still consumes penalty + retreat flip", async () => {
       stateManager.set("board.squares", {
         "82": {
           next: [83],
@@ -279,7 +279,7 @@ describe("BoardEffectsHandler", () => {
       expect(stateManager.get("players.p1.retreatEffectsReversed")).toBe(true);
     });
 
-    it("should set arrivedViaTeleportFrom when applying ladder and context is passed", async () => {
+    it("Expected outcome: Should set arrived Via Teleport From when applying ladder and context is passed", async () => {
       stateManager.set("board.squares", {
         "45": { next: [46], prev: [44], name: "Forest-Ocean Portal", nextOnLanding: [82] },
         "82": { next: [83], prev: [81], name: "Ocean-Forest Portal", nextOnLanding: [45] },
@@ -293,7 +293,7 @@ describe("BoardEffectsHandler", () => {
       expect(context.arrivedViaTeleportFrom).toBe(45);
     });
 
-    it("should do nothing when square has no teleport", async () => {
+    it("Expected outcome: Should do nothing when square has no teleport", async () => {
       stateManager.set("board.squares", {
         "5": { next: [6], prev: [4] },
         "10": { destination: 20 },
@@ -305,7 +305,7 @@ describe("BoardEffectsHandler", () => {
       expect(stateManager.get("players.p1.position")).toBe(5);
     });
 
-    it("should do nothing when destination equals current position", async () => {
+    it("Expected outcome: Should do nothing when destination equals current position", async () => {
       stateManager.set("board.squares", {
         "5": { destination: 5 },
       });
@@ -316,7 +316,7 @@ describe("BoardEffectsHandler", () => {
       expect(stateManager.get("players.p1.position")).toBe(5);
     });
 
-    it("should handle position value that is not a number", async () => {
+    it("Expected outcome: Should handle position value that is not a number", async () => {
       stateManager.set("board.squares", { "5": { destination: 15 } });
       stateManager.set("players.p1.position", "invalid" as unknown as number);
 
@@ -325,7 +325,7 @@ describe("BoardEffectsHandler", () => {
       expect(stateManager.get("players.p1.position")).toBe("invalid");
     });
 
-    it("should apply jumpToLeader (goldenFox) - move to leader position", async () => {
+    it("Expected outcome: Should apply jump To Leader (golden Fox) move to leader position", async () => {
       stateManager.set("board.squares", {
         "54": { effect: "jumpToLeader", name: "Zorro dorado" },
       });
@@ -338,7 +338,7 @@ describe("BoardEffectsHandler", () => {
       expect(stateManager.get("players.p1.position")).toBe(80);
     });
 
-    it("should prefer jumpToLeader over nextOnLanding on the same square (misauthored config)", async () => {
+    it("Expected outcome: Should prefer jump To Leader over next On Landing on the same square (misauthored config)", async () => {
       stateManager.set("board.squares", {
         "54": {
           effect: "jumpToLeader",
@@ -355,7 +355,7 @@ describe("BoardEffectsHandler", () => {
       expect(stateManager.get("players.p1.position")).toBe(80);
     });
 
-    it("should set jumpToLeaderRelocated on context when fox moves the player", async () => {
+    it("Expected outcome: Should set jump To Leader Relocated on context when fox moves the player", async () => {
       stateManager.set("board.squares", {
         "54": { effect: "jumpToLeader", name: "Zorro dorado" },
       });
@@ -369,7 +369,7 @@ describe("BoardEffectsHandler", () => {
       expect(context.jumpToLeaderRelocated).toEqual({ toPosition: 80 });
     });
 
-    it("should set magicDoorBounce on context when overshooting magic door", async () => {
+    it("Expected outcome: Should set magic Door Bounce on context when overshooting magic door", async () => {
       stateManager.set("board.squares", {
         "186": { name: "Magic Door", effect: "magicDoorCheck", target: 6 },
         "196": { effect: "win" },
@@ -388,7 +388,7 @@ describe("BoardEffectsHandler", () => {
       });
     });
 
-    it("should not set magicDoorBounce on nested calls", async () => {
+    it("Expected outcome: Should not set magic Door Bounce on nested calls", async () => {
       stateManager.set("board.squares", {
         "186": { name: "Magic Door", effect: "magicDoorCheck", target: 6 },
         "196": { effect: "win" },
@@ -402,7 +402,7 @@ describe("BoardEffectsHandler", () => {
       expect(context.magicDoorBounce).toBeUndefined();
     });
 
-    it("should keep position when jumpToLeader but current player is already leader", async () => {
+    it("Expected outcome: Should keep position when jump To Leader but current player is already leader", async () => {
       stateManager.set("board.squares", {
         "54": { effect: "jumpToLeader", name: "Zorro dorado" },
       });
@@ -415,7 +415,7 @@ describe("BoardEffectsHandler", () => {
       expect(stateManager.get("players.p1.position")).toBe(54);
     });
 
-    it("should move jumper through square 82 portal (82→45) and leave other players on 82", async () => {
+    it("Expected outcome: Should move jumper through square 82 portal (82 to 45) and leave other players on 82", async () => {
       stateManager.set("board.squares", {
         "45": { name: "Forest-Ocean Portal", nextOnLanding: [82] },
         "54": { effect: "jumpToLeader", name: "Zorro dorado" },
@@ -437,7 +437,7 @@ describe("BoardEffectsHandler", () => {
       expect(stateManager.get("players.p1.retreatEffectsReversed")).toBe(true);
     });
 
-    it("should leave every occupant on 82 when jumpToLeader resolves ocean portal (multi-player)", async () => {
+    it("Expected outcome: Should leave every occupant on 82 when jump To Leader resolves ocean portal (multi player)", async () => {
       stateManager.set("board.squares", {
         "45": { name: "Forest-Ocean Portal", nextOnLanding: [82] },
         "54": { effect: "jumpToLeader", name: "Zorro dorado" },
@@ -460,10 +460,10 @@ describe("BoardEffectsHandler", () => {
     });
   });
 
-  describe("checkAndApplySquareEffects()", () => {
+  describe("Product scenario: Check And Apply Square Effects", () => {
     const baseContext: ExecutionContext = {};
 
-    it("should do nothing for non-position paths", async () => {
+    it("Expected outcome: Should do nothing for non position paths", async () => {
       stateManager.set("board.squares", {
         "5": { name: "Bear", power: 1 },
       });
@@ -473,7 +473,7 @@ describe("BoardEffectsHandler", () => {
       expect(mockProcessTranscript).not.toHaveBeenCalled();
     });
 
-    it("should do nothing for non-player paths", async () => {
+    it("Expected outcome: Should do nothing for non player paths", async () => {
       stateManager.set("board.squares", {
         "5": { name: "Bear", power: 1 },
       });
@@ -483,7 +483,7 @@ describe("BoardEffectsHandler", () => {
       expect(mockProcessTranscript).not.toHaveBeenCalled();
     });
 
-    it("should do nothing when no board.squares config exists", async () => {
+    it("Expected outcome: Should do nothing when no board squares config exists", async () => {
       stateManager.set("players.p1.position", 5);
 
       await boardEffectsHandler.checkAndApplySquareEffects("players.p1.position", baseContext);
@@ -491,7 +491,7 @@ describe("BoardEffectsHandler", () => {
       expect(mockProcessTranscript).not.toHaveBeenCalled();
     });
 
-    it("should do nothing when square has no effect data", async () => {
+    it("Expected outcome: Should do nothing when square has no effect data", async () => {
       stateManager.set("board.squares", {});
       stateManager.set("players.p1.position", 5);
 
@@ -500,7 +500,7 @@ describe("BoardEffectsHandler", () => {
       expect(mockProcessTranscript).not.toHaveBeenCalled();
     });
 
-    it("should do nothing when square has empty effect data", async () => {
+    it("Expected outcome: Should do nothing when square has empty effect data", async () => {
       stateManager.set("board.squares", { "5": {} });
       stateManager.set("players.p1.position", 5);
 
@@ -509,7 +509,7 @@ describe("BoardEffectsHandler", () => {
       expect(mockProcessTranscript).not.toHaveBeenCalled();
     });
 
-    it("should do nothing for hydrated topology-only squares", async () => {
+    it("Expected outcome: Should do nothing for hydrated topology only squares", async () => {
       stateManager.set("board.squares", {
         "5": { next: [6], prev: [4] },
       });
@@ -520,7 +520,7 @@ describe("BoardEffectsHandler", () => {
       expect(mockProcessTranscript).not.toHaveBeenCalled();
     });
 
-    it("animal encounter speaks deterministic prompt and sets pending riddle", async () => {
+    it("Expected outcome: Animal encounter speaks deterministic prompt and sets pending riddle", async () => {
       const squareData = {
         name: "Bear",
         power: 1,
@@ -541,7 +541,7 @@ describe("BoardEffectsHandler", () => {
       });
     });
 
-    it("should set isProcessingSquareEffect flag during processing", async () => {
+    it("Expected outcome: Should set is Processing Square Effect flag during processing", async () => {
       const squareData = { name: "Bear", power: 1 };
       stateManager.set("board.squares", { "5": squareData });
       stateManager.set("players.p1.position", 5);
@@ -557,7 +557,7 @@ describe("BoardEffectsHandler", () => {
       expect(flagDuringProcessing).toBe(true);
     });
 
-    it("should clear flag after processing completes", async () => {
+    it("Expected outcome: Should clear flag after processing completes", async () => {
       const squareData = { name: "Bear", power: 1 };
       stateManager.set("board.squares", { "5": squareData });
       stateManager.set("players.p1.position", 5);
@@ -567,7 +567,7 @@ describe("BoardEffectsHandler", () => {
       expect(boardEffectsHandler.isProcessingEffect()).toBe(false);
     });
 
-    it("should clear flag even if deterministic speak throws error", async () => {
+    it("Expected outcome: Should clear flag even if deterministic speak throws error", async () => {
       const squareData = { name: "Bear", power: 1 };
       stateManager.set("board.squares", { "5": squareData });
       stateManager.set("players.p1.position", 5);
@@ -581,7 +581,7 @@ describe("BoardEffectsHandler", () => {
       expect(boardEffectsHandler.isProcessingEffect()).toBe(false);
     });
 
-    it("should clear flag even if deterministic speak throws error", async () => {
+    it("Expected outcome: Should clear flag even if deterministic speak throws error", async () => {
       const squareData = { name: "Quicksand", effect: "skipTurn" };
       stateManager.set("board.squares", { "5": squareData });
       stateManager.set("players.p1.position", 5);
@@ -595,7 +595,7 @@ describe("BoardEffectsHandler", () => {
       expect(boardEffectsHandler.isProcessingEffect()).toBe(false);
     });
 
-    it("deterministic squares do not call processTranscript (nested LLM)", async () => {
+    it("Expected outcome: Deterministic squares do not call process Transcript (nested interpreter)", async () => {
       const squareData = { name: "Quicksand", effect: "skipTurn" };
       stateManager.set("board.squares", { "5": squareData });
       stateManager.set("players.p1.position", 5);
@@ -606,7 +606,7 @@ describe("BoardEffectsHandler", () => {
       expect(mockSpeak).toHaveBeenCalledWith(expect.stringMatching(/square 5|Quicksand|skip/i));
     });
 
-    it("magic door landing uses clearer es-AR copy with player name and threshold guidance", async () => {
+    it("Expected outcome: Magic door landing uses clearer es AR copy with player name and threshold guidance", async () => {
       setLocale("es-AR");
       stateManager.set("board.squares", {
         "186": { name: "Magic Door", effect: "magicDoorCheck", target: 6 },
@@ -630,7 +630,7 @@ describe("BoardEffectsHandler", () => {
       expect(text).toMatch(/al menos un 4 en el dado/i);
     });
 
-    it("magic door landing with scimitar mentions hearts plus scimitar bonus", async () => {
+    it("Expected outcome: Magic door landing with scimitar mentions hearts plus scimitar bonus", async () => {
       setLocale("es-AR");
       stateManager.set("board.squares", {
         "186": { name: "Magic Door", effect: "magicDoorCheck", target: 6 },
@@ -649,7 +649,7 @@ describe("BoardEffectsHandler", () => {
       expect(text).toMatch(/al menos un 4 en el dado/i);
     });
 
-    it("magic door landing copy reflects cumulative hearts threshold in es-AR", async () => {
+    it("Expected outcome: Magic door landing copy reflects cumulative hearts threshold in es AR", async () => {
       setLocale("es-AR");
       stateManager.set("board.squares", {
         "186": { name: "Magic Door", effect: "magicDoorCheck", target: 6 },
@@ -676,7 +676,7 @@ describe("BoardEffectsHandler", () => {
       }
     });
 
-    it("stores deterministic question data in pending state", async () => {
+    it("Expected outcome: Stores deterministic question data in pending state", async () => {
       const squareData = {
         name: "Bear",
         power: 1,
@@ -696,7 +696,7 @@ describe("BoardEffectsHandler", () => {
       });
     });
 
-    it("animal squares get narration only, no rewards on landing (orchestrator applies after power check)", async () => {
+    it("Expected outcome: Animal squares get narration only, no rewards on landing (orchestrator applies after power check)", async () => {
       stateManager.set("board.squares", {
         "5": { name: "Halcón", power: 3 },
       });
@@ -715,7 +715,7 @@ describe("BoardEffectsHandler", () => {
       expect(spoken).toMatch(/Options|Decime|Tell me/i);
     });
 
-    it("Peacock heart square (no power) applies heart immediately and skips encounter pending", async () => {
+    it("Expected outcome: Peacock heart square (no power) applies heart immediately and skips encounter pending", async () => {
       stateManager.set("board.squares", {
         "185": { name: "Peacock", heart: true },
       });
@@ -736,7 +736,7 @@ describe("BoardEffectsHandler", () => {
       expect(mockSpeak).toHaveBeenCalledWith(expect.stringMatching(/Peacock|heart/i));
     });
 
-    it("trap squares apply skipTurn and request narration", async () => {
+    it("Expected outcome: Trap squares apply skip Turn and request narration", async () => {
       stateManager.set("board.squares", {
         "10": { name: "Quicksand", effect: "skipTurn" },
       });
@@ -752,7 +752,7 @@ describe("BoardEffectsHandler", () => {
       );
     });
 
-    it("clears pendingAnimalEncounter when applying hazard (non-animal) square effect", async () => {
+    it("Expected outcome: Clears pending Animal Encounter when applying hazard (non animal) square effect", async () => {
       stateManager.set("board.squares", {
         "18": { name: "Plantas carnívoras", effect: "skipTurn" },
       });
@@ -771,7 +771,7 @@ describe("BoardEffectsHandler", () => {
       expect(stateManager.get("players.p1.skipTurns")).toBe(1);
     });
 
-    it("should apply skipTurn effect from square config", async () => {
+    it("Expected outcome: Should apply skip Turn effect from square config", async () => {
       stateManager.set("board.squares", {
         "11": {
           name: "Arenas movedizas",
@@ -786,7 +786,7 @@ describe("BoardEffectsHandler", () => {
       expect(stateManager.get("players.p1.skipTurns")).toBe(1);
     });
 
-    it("protectionItem and heart squares add item immediately", async () => {
+    it("Expected outcome: Protection Item and heart squares add item immediately", async () => {
       stateManager.set("board.squares", {
         "63": { item: "anti-wasp" },
       });
@@ -798,7 +798,7 @@ describe("BoardEffectsHandler", () => {
       expect(stateManager.get("players.p1.items")).toEqual(["anti-wasp"]);
     });
 
-    it("heart square (Cimitarra) adds scimitar item immediately", async () => {
+    it("Expected outcome: Heart square (Cimitarra) adds scimitar item immediately", async () => {
       stateManager.set("board.squares", {
         "176": { item: "scimitar" },
       });
@@ -810,7 +810,7 @@ describe("BoardEffectsHandler", () => {
       expect(stateManager.get("players.p1.items")).toEqual(["scimitar"]);
     });
 
-    it("scimitar pickup speech includes magic door hint with configured target", async () => {
+    it("Expected outcome: Scimitar pickup speech includes magic door hint with configured target", async () => {
       stateManager.set("board.squares", {
         "176": { item: "scimitar" },
         "186": { name: "Magic Door", effect: "magicDoorCheck", target: 6 },
@@ -825,7 +825,7 @@ describe("BoardEffectsHandler", () => {
       expect(text).toMatch(/6/);
     });
 
-    it("Eagle (animal + extra power dice) sets pending encounter; no rewards on landing", async () => {
+    it("Expected outcome: Eagle (animal + extra power dice) sets pending encounter; no rewards on landing", async () => {
       stateManager.set("board.squares", {
         "7": {
           name: "Eagle",
@@ -851,7 +851,7 @@ describe("BoardEffectsHandler", () => {
       expect(mockSpeak).toHaveBeenCalledTimes(1);
     });
 
-    it("rollDirectional squares trigger narration only (no deterministic effects)", async () => {
+    it("Expected outcome: Roll Directional squares trigger narration only (no deterministic effects)", async () => {
       stateManager.set("board.squares", {
         "55": {
           name: "Jivaro Indians",
@@ -876,7 +876,7 @@ describe("BoardEffectsHandler", () => {
       );
     });
 
-    it("repeat visit to ocean-forest one-shot portal uses short transcript when penalty already consumed", async () => {
+    it("Expected outcome: Repeat visit to ocean forest one shot portal uses short transcript when penalty already consumed", async () => {
       stateManager.set("board.squares", {
         "82": {
           next: [83],
@@ -897,7 +897,7 @@ describe("BoardEffectsHandler", () => {
       );
     });
 
-    it("portal at 82 when arrived from 45: no choice, stay, narrate briefly only", async () => {
+    it("Expected outcome: Portal at 82 when arrived from 45 no choice, stay, narrate briefly only", async () => {
       stateManager.set("board.squares", {
         "45": { next: [46], prev: [44], name: "Forest-Ocean Portal", nextOnLanding: [82] },
         "82": {
@@ -918,7 +918,7 @@ describe("BoardEffectsHandler", () => {
       expect(mockSpeak).toHaveBeenCalledWith(expect.stringMatching(/45|portal|stay|Alice/i));
     });
 
-    it("checkTorch hazard applies skipTurn when player has no torch", async () => {
+    it("Expected outcome: Check Torch hazard applies skip Turn when player has no torch", async () => {
       stateManager.set("board.squares", {
         "85": { name: "Night falls", effect: "checkTorch" },
       });
@@ -933,7 +933,7 @@ describe("BoardEffectsHandler", () => {
       expect(mockSpeak).toHaveBeenCalledWith(expect.stringMatching(/skip your next turn|torch/i));
     });
 
-    it("checkTorch hazard consumes torch and does not apply skipTurn when player has torch", async () => {
+    it("Expected outcome: Check Torch hazard consumes torch and does not apply skip Turn when player has torch", async () => {
       stateManager.set("board.squares", {
         "85": { name: "Night falls", effect: "checkTorch" },
       });
@@ -949,7 +949,7 @@ describe("BoardEffectsHandler", () => {
       expect(mockSpeak).toHaveBeenCalledWith(expect.stringMatching(/torch|skip/i));
     });
 
-    it("checkAntiWasp hazard applies skipTurn when player has no anti-wasp", async () => {
+    it("Expected outcome: Check Anti Wasp hazard applies skip Turn when player has no anti wasp", async () => {
       stateManager.set("board.squares", {
         "116": { name: "Wasps", effect: "checkAntiWasp" },
       });
@@ -964,7 +964,7 @@ describe("BoardEffectsHandler", () => {
       expect(mockSpeak).toHaveBeenCalledWith(expect.stringMatching(/anti-wasp|skip/i));
     });
 
-    it("checkAntiWasp hazard consumes anti-wasp and does not apply skipTurn when player has it", async () => {
+    it("Expected outcome: Check Anti Wasp hazard consumes anti wasp and does not apply skip Turn when player has it", async () => {
       stateManager.set("board.squares", {
         "116": { name: "Wasps", effect: "checkAntiWasp" },
       });
@@ -980,7 +980,7 @@ describe("BoardEffectsHandler", () => {
       expect(mockSpeak).toHaveBeenCalledWith(expect.stringMatching(/anti-wasp|suit|skip/i));
     });
 
-    it("torch protectionItem square adds torch item immediately", async () => {
+    it("Expected outcome: Torch protection Item square adds torch item immediately", async () => {
       stateManager.set("board.squares", {
         "79": { item: "torch" },
       });
@@ -992,7 +992,7 @@ describe("BoardEffectsHandler", () => {
       expect(stateManager.get("players.p1.items")).toEqual(["torch"]);
     });
 
-    it("should handle position value that is not a number", async () => {
+    it("Expected outcome: Should handle position value that is not a number", async () => {
       stateManager.set("board.squares", { "5": { name: "Bear", power: 1 } });
       stateManager.set("players.p1.position", "invalid" as unknown as number);
 
@@ -1002,12 +1002,12 @@ describe("BoardEffectsHandler", () => {
     });
   });
 
-  describe("isProcessingEffect()", () => {
-    it("should return false initially", () => {
+  describe("Product scenario: Is Processing Effect", () => {
+    it("Expected outcome: Should return false initially", () => {
       expect(boardEffectsHandler.isProcessingEffect()).toBe(false);
     });
 
-    it("should return true during effect processing", async () => {
+    it("Expected outcome: Should return true during effect processing", async () => {
       const squareData = { name: "Bear", power: 1 };
       stateManager.set("board.squares", { "5": squareData });
       stateManager.set("players.p1.position", 5);
@@ -1023,7 +1023,7 @@ describe("BoardEffectsHandler", () => {
       expect(statusDuringProcessing).toBe(true);
     });
 
-    it("should return false after processing completes", async () => {
+    it("Expected outcome: Should return false after processing completes", async () => {
       const squareData = { name: "Bear", power: 1 };
       stateManager.set("board.squares", { "5": squareData });
       stateManager.set("players.p1.position", 5);

@@ -22,7 +22,7 @@ const kalimbaConfigPath = join(orchestratorTestDir, "../../public/games/kalimba/
  * LLM CANNOT: change game.turn, game.phase, game.winner (orchestrator authority)
  * Win detection: Orchestrator detects win conditions and calls transitionPhase(FINISHED)
  */
-describe("Orchestrator Integration Tests", () => {
+describe("Product scenario: Game orchestrator Integration Tests", () => {
   let orchestrator: Orchestrator;
   let stateManager: StateManager;
   let mockLLM: MockLLMClient;
@@ -55,8 +55,8 @@ describe("Orchestrator Integration Tests", () => {
     createMockServices();
   });
 
-  describe("VoiceOutcomeHints", () => {
-    it("sets forkChoiceResolvedWithoutNarrate when only PLAYER_ANSWERED resolves fork", async () => {
+  describe("Product scenario: Voice Outcome Hints", () => {
+    it("Expected outcome: Sets fork Choice Resolved Without Narrate when only PLAYER ANSWERED resolves fork", async () => {
       mockLLM = createScriptedLLM([]);
 
       const initialState: GameState = {
@@ -90,7 +90,7 @@ describe("Orchestrator Integration Tests", () => {
       expect(result.voiceOutcomeHints?.forkChoiceResolvedWithoutNarrate).toBe(true);
     });
 
-    it("does not set fork hint when NARRATE is in the batch", async () => {
+    it("Expected outcome: Does not set fork hint when NARRATE is in the batch", async () => {
       mockLLM = createScriptedLLM([]);
 
       const initialState: GameState = {
@@ -126,8 +126,8 @@ describe("Orchestrator Integration Tests", () => {
     });
   });
 
-  describe("Board Mechanics", () => {
-    it("auto-applies ladders after position changes", async () => {
+  describe("Product scenario: Board Mechanics", () => {
+    it("Expected outcome: Auto applies ladders after position changes", async () => {
       const responses: PrimitiveAction[][] = [
         [
           { action: "PLAYER_ROLLED", value: 2 },
@@ -166,7 +166,7 @@ describe("Orchestrator Integration Tests", () => {
       expect(p1Position).toBe(14);
     });
 
-    it("auto-applies snakes after position changes", async () => {
+    it("Expected outcome: Auto applies snakes after position changes", async () => {
       const responses: PrimitiveAction[][] = [
         [
           { action: "PLAYER_ROLLED", value: 2 },
@@ -205,7 +205,7 @@ describe("Orchestrator Integration Tests", () => {
       expect(p1Position).toBe(7);
     });
 
-    it("handles board moves after position changes", async () => {
+    it("Expected outcome: Handles board moves after position changes", async () => {
       const responses: PrimitiveAction[][] = [
         [
           { action: "PLAYER_ROLLED", value: 3 },
@@ -243,7 +243,7 @@ describe("Orchestrator Integration Tests", () => {
       expect(p1Position).toBe(14);
     });
 
-    it("Golden Fox (jumpToLeader): NARRATE speaks final leader square, not dice landing", async () => {
+    it("Expected outcome: Golden Fox (jump To Leader) NARRATE speaks final leader square, not dice landing", async () => {
       setLocale("en-US");
       mockLLM = createScriptedLLM([]);
 
@@ -286,7 +286,7 @@ describe("Orchestrator Integration Tests", () => {
       expect(spoken).toMatch(/Golden Fox|first place/i);
     });
 
-    it("hazard square (checkAntiWasp): skips trailing movement NARRATE after nested encounter line", async () => {
+    it("Expected outcome: Hazard square (check Anti Wasp) skips trailing movement NARRATE after nested encounter line", async () => {
       setLocale("en-US");
       mockLLM = createScriptedLLM([[{ action: "NARRATE", text: "Nested wasp narration." }]]);
 
@@ -339,8 +339,8 @@ describe("Orchestrator Integration Tests", () => {
     });
   });
 
-  describe("Animal Encounters", () => {
-    it("handles animal encounter with power check failure", async () => {
+  describe("Product scenario: Animal Encounters", () => {
+    it("Expected outcome: Handles animal encounter with power check failure", async () => {
       const responses: PrimitiveAction[][] = [
         [
           { action: "PLAYER_ROLLED", value: 2 },
@@ -386,7 +386,7 @@ describe("Orchestrator Integration Tests", () => {
       expect(mockLLM.getCallCount()).toBe(1);
     });
 
-    it("advances turn to next player on power check failure and returns alreadyAdvanced", async () => {
+    it("Expected outcome: Advances turn to next player on power check failure and returns already Advanced", async () => {
       const initialState: GameState = {
         game: {
           name: "Test Game",
@@ -439,7 +439,7 @@ describe("Orchestrator Integration Tests", () => {
       expect(pending.kind).toBe("revenge");
     });
 
-    it("power check win advances turn when power die completed graph movement (Kalimba §2B)", async () => {
+    it("Expected outcome: Power check win advances turn when power die completed graph movement (Kalimba §2B)", async () => {
       mockLLM = createScriptedLLM([]);
       setLocale("en-US");
       const initialState: GameState = {
@@ -497,7 +497,7 @@ describe("Orchestrator Integration Tests", () => {
       setLocale("es-AR");
     });
 
-    it("beetle-like power check win (1d6 after wrong riddle) does not prompt second movement die (regression)", async () => {
+    it("Expected outcome: Beetle like power check win (1d6 after wrong riddle) does not prompt second movement die (regression)", async () => {
       mockLLM = createScriptedLLM([]);
       setLocale("en-US");
       const initialState: GameState = {
@@ -548,7 +548,7 @@ describe("Orchestrator Integration Tests", () => {
       setLocale("es-AR");
     });
 
-    it("power check win onto Kalimba Cimitarra (168→176) yields alreadyAdvanced (regression: silence after item)", async () => {
+    it("Expected outcome: Power check win onto Kalimba Cimitarra (168 to 176) yields already Advanced (regression silence after item)", async () => {
       mockLLM = createScriptedLLM([]);
       setLocale("en-US");
       const raw = readFileSync(kalimbaConfigPath, "utf-8");
@@ -620,7 +620,7 @@ describe("Orchestrator Integration Tests", () => {
       setLocale("es-AR");
     });
 
-    it("after power check win through snake to no-choice portal speaks afterEncounterRollPrompt (ADR 0003)", async () => {
+    it("Expected outcome: After power check win through snake to no choice portal speaks after Encounter Roll Prompt (ADR 0003)", async () => {
       mockLLM = createScriptedLLM([
         [{ action: "NARRATE", text: "You arrived at the forest-ocean portal." }],
       ]);
@@ -686,7 +686,7 @@ describe("Orchestrator Integration Tests", () => {
       setLocale("es-AR");
     });
 
-    it("revenge win with winJumpTo when token stays on jump square skips afterEncounterRollPrompt (Giraffe → 162)", async () => {
+    it("Expected outcome: Revenge win with win Jump To when token stays on jump square skips after Encounter Roll Prompt (Giraffe to 162)", async () => {
       mockLLM = createScriptedLLM([]);
       setLocale("en-US");
       const initialState: GameState = {
@@ -734,7 +734,7 @@ describe("Orchestrator Integration Tests", () => {
       setLocale("es-AR");
     });
 
-    it("power check win landing on skipTurn sets alreadyAdvanced (next player announced by app)", async () => {
+    it("Expected outcome: Power check win landing on skip Turn sets already Advanced (next player announced by app)", async () => {
       mockLLM = createScriptedLLM([
         [{ action: "NARRATE", text: "Quicksand — you skip next turn." }],
       ]);
@@ -789,7 +789,7 @@ describe("Orchestrator Integration Tests", () => {
       setLocale("es-AR");
     });
 
-    it("does not nest LLM for fork enforcement when initial power-check loss advances turn to a player at fork", async () => {
+    it("Expected outcome: Does not nest interpreter for fork enforcement when initial power check loss advances turn to a player at fork", async () => {
       mockLLM = createScriptedLLM([
         [{ action: "NARRATE", text: "Should not run — nested fork enforcement" }],
       ]);
@@ -838,7 +838,7 @@ describe("Orchestrator Integration Tests", () => {
       expect(mockLLM.getCallCount()).toBe(0);
     });
 
-    it("handles animal encounter triggering square effect", async () => {
+    it("Expected outcome: Handles animal encounter triggering square effect", async () => {
       const responses: PrimitiveAction[][] = [
         [
           { action: "PLAYER_ROLLED", value: 2 },
@@ -896,7 +896,7 @@ describe("Orchestrator Integration Tests", () => {
       expect(bonusDice).toBe(false);
     });
 
-    it("applies bonus dice after riddle success", async () => {
+    it("Expected outcome: Applies bonus dice after riddle success", async () => {
       const responses: PrimitiveAction[][] = [
         [
           { action: "PLAYER_ROLLED", value: 11 },
@@ -941,8 +941,8 @@ describe("Orchestrator Integration Tests", () => {
     });
   });
 
-  describe("Decision Points", () => {
-    it("blocks movement until path choice is made", async () => {
+  describe("Product scenario: Decision Points", () => {
+    it("Expected outcome: Blocks movement until path choice is made", async () => {
       const responses: PrimitiveAction[][] = [
         [{ action: "NARRATE", text: "Please choose a path first." }],
         [{ action: "NARRATE", text: "Choose path A (short) or B (long)?" }],
@@ -979,7 +979,7 @@ describe("Orchestrator Integration Tests", () => {
       expect(p1Position).toBe(0);
     });
 
-    it("allows movement after decision is set", async () => {
+    it("Expected outcome: Allows movement after decision is set", async () => {
       const responses: PrimitiveAction[][] = [
         [
           { action: "PLAYER_ANSWERED", answer: "1" },
@@ -1026,7 +1026,7 @@ describe("Orchestrator Integration Tests", () => {
       expect(p1Position).toBe(3);
     });
 
-    it("uses Path B (activeChoices) when choice 15 and rolling from 0", async () => {
+    it("Expected outcome: Uses Path B (active Choices) when choice 15 and rolling from 0", async () => {
       const responses: PrimitiveAction[][] = [
         [
           { action: "PLAYER_ROLLED", value: 4 },
@@ -1071,7 +1071,7 @@ describe("Orchestrator Integration Tests", () => {
       expect(p2Position).toBe(18); // 0→15→16→17→18 (4 steps)
     });
 
-    it("rejects PLAYER_ANSWERED for path choice when current player has no pending decision", async () => {
+    it("Expected outcome: Rejects PLAYER ANSWERED for path choice when current player has no pending decision", async () => {
       // Simulates bug: LLM returns PLAYER_ANSWERED "B" for fico when it's p1's turn and p1 already chose
       const initialState: GameState = {
         game: {
@@ -1109,8 +1109,8 @@ describe("Orchestrator Integration Tests", () => {
     });
   });
 
-  describe("Portal and Teleportation", () => {
-    it("teleports forward via board.moves and processes square effect", async () => {
+  describe("Product scenario: Portal and Teleportation", () => {
+    it("Expected outcome: Teleports forward via board moves and processes square effect", async () => {
       const responses: PrimitiveAction[][] = [
         [
           { action: "PLAYER_ROLLED", value: 1 },
@@ -1157,7 +1157,7 @@ describe("Orchestrator Integration Tests", () => {
       expect(mockLLM.getCallCount()).toBe(1);
     });
 
-    it("teleports backward without Kalimba one-shot flags (no penalty fields)", async () => {
+    it("Expected outcome: Teleports backward without Kalimba one shot flags (no penalty fields)", async () => {
       const responses: PrimitiveAction[][] = [
         [
           { action: "PLAYER_ROLLED", value: 2 },
@@ -1207,7 +1207,7 @@ describe("Orchestrator Integration Tests", () => {
       expect(mockLLM.getCallCount()).toBe(1);
     });
 
-    it("second roll onto ocean portal 82 stays on 82 and uses repeat narration after one-shot penalty", async () => {
+    it("Expected outcome: Second roll onto ocean portal 82 stays on 82 and uses repeat narration after one shot penalty", async () => {
       const portalSquares = {
         "44": { next: [45], prev: [43] },
         "45": { next: [46], prev: [44], name: "Forest-Ocean Portal", nextOnLanding: [82] },
@@ -1278,7 +1278,7 @@ describe("Orchestrator Integration Tests", () => {
       expect(mockLLM.getCallCount()).toBe(2);
     });
 
-    it("first one-shot landing on 82 does not rebound back to 82 in same resolution wave", async () => {
+    it("Expected outcome: First one shot landing on 82 does not rebound back to 82 in same resolution wave", async () => {
       setLocale("en-US");
       mockLLM = createScriptedLLM([
         [
@@ -1338,8 +1338,8 @@ describe("Orchestrator Integration Tests", () => {
     });
   });
 
-  describe("Special Squares Regression Matrix", () => {
-    it("returnTo187 resolves final position and speaks the final landing square", async () => {
+  describe("Product scenario: Special Squares Regression Matrix", () => {
+    it("Expected outcome: Return To187 resolves final position and speaks the final landing square", async () => {
       setLocale("en-US");
       mockLLM = createScriptedLLM([]);
 
@@ -1379,7 +1379,7 @@ describe("Orchestrator Integration Tests", () => {
       setLocale("es-AR");
     });
 
-    it("roll from 187 to skull keeps final landing at 187 when magic door is closed", async () => {
+    it("Expected outcome: Roll from 187 to skull keeps final landing at 187 when magic door is closed", async () => {
       setLocale("en-US");
       mockLLM = createScriptedLLM([]);
 
@@ -1420,7 +1420,7 @@ describe("Orchestrator Integration Tests", () => {
       setLocale("es-AR");
     });
 
-    it("roll from 187 to destination-based skull mapping keeps final landing at 187", async () => {
+    it("Expected outcome: Roll from 187 to destination based skull mapping keeps final landing at 187", async () => {
       setLocale("en-US");
       mockLLM = createScriptedLLM([]);
 
@@ -1461,7 +1461,7 @@ describe("Orchestrator Integration Tests", () => {
       setLocale("es-AR");
     });
 
-    it("checkTorch hazard skips trailing movement NARRATE and applies deterministic line", async () => {
+    it("Expected outcome: Check Torch hazard skips trailing movement NARRATE and applies deterministic line", async () => {
       setLocale("en-US");
       mockLLM = createScriptedLLM([]);
 
@@ -1514,7 +1514,7 @@ describe("Orchestrator Integration Tests", () => {
       setLocale("es-AR");
     });
 
-    it("directional flow: retreat2d6 sets pending and PLAYER_ANSWERED resolves backward movement", async () => {
+    it("Expected outcome: Directional flow retreat2d6 sets pending and PLAYER ANSWERED resolves backward movement", async () => {
       setLocale("en-US");
       mockLLM = createScriptedLLM([
         [
@@ -1569,7 +1569,7 @@ describe("Orchestrator Integration Tests", () => {
       setLocale("es-AR");
     });
 
-    it("wins when reaching win square through teleport chain (destination to win)", async () => {
+    it("Expected outcome: Wins when reaching win square through teleport chain (destination to win)", async () => {
       mockLLM = createScriptedLLM([
         [
           { action: "PLAYER_ROLLED", value: 1 },
@@ -1608,8 +1608,8 @@ describe("Orchestrator Integration Tests", () => {
     });
   });
 
-  describe("Turn Management", () => {
-    it("advances turns after complete action sequence", async () => {
+  describe("Product scenario: Turn Management", () => {
+    it("Expected outcome: Advances turns after complete action sequence", async () => {
       const responses: PrimitiveAction[][] = [
         [
           { action: "PLAYER_ROLLED", value: 2 },
@@ -1652,7 +1652,7 @@ describe("Orchestrator Integration Tests", () => {
       expect(turnAfter).toBe("p2");
     });
 
-    it("sets skipTurns for hazard squares", async () => {
+    it("Expected outcome: Sets skip Turns for hazard squares", async () => {
       const responses: PrimitiveAction[][] = [
         [
           { action: "PLAYER_ROLLED", value: 2 },
@@ -1699,7 +1699,7 @@ describe("Orchestrator Integration Tests", () => {
       expect(result?.playerId).toBe("p2");
     });
 
-    it("stops turn advancement when game finishes", async () => {
+    it("Expected outcome: Stops turn advancement when game finishes", async () => {
       const responses: PrimitiveAction[][] = [
         [
           { action: "PLAYER_ROLLED", value: 2 },
@@ -1742,8 +1742,8 @@ describe("Orchestrator Integration Tests", () => {
     });
   });
 
-  describe("Win Conditions", () => {
-    it("StateManager set game.phase after game.winner persists", () => {
+  describe("Product scenario: Win Conditions", () => {
+    it("Expected outcome: State Manager set game phase after game winner persists", () => {
       const initialState: GameState = {
         game: {
           name: "Test",
@@ -1764,7 +1764,7 @@ describe("Orchestrator Integration Tests", () => {
       expect(sm.get("game.phase")).toBe(GamePhase.FINISHED);
     });
 
-    it("StateManager replicates win flow: position then winner then phase", () => {
+    it("Expected outcome: State Manager replicates win flow position then winner then phase", () => {
       const initialState: GameState = {
         game: {
           name: "Test",
@@ -1790,7 +1790,7 @@ describe("Orchestrator Integration Tests", () => {
       expect(sm.get("game.phase")).toBe(GamePhase.FINISHED);
     });
 
-    it("detects winner via testExecuteActions (bypasses LLM)", async () => {
+    it("Expected outcome: Detects winner via test Execute Actions (bypasses interpreter)", async () => {
       const initialState: GameState = {
         game: {
           name: "Test Game",
@@ -1819,7 +1819,7 @@ describe("Orchestrator Integration Tests", () => {
       expect(stateManager.get("game.winner")).toBe("p1");
     });
 
-    it("detects winner when reaching win position", async () => {
+    it("Expected outcome: Detects winner when reaching win position", async () => {
       const responses: PrimitiveAction[][] = [
         [
           { action: "PLAYER_ROLLED", value: 2 },
@@ -1861,7 +1861,7 @@ describe("Orchestrator Integration Tests", () => {
       expect(winner).toBe("p1");
     });
 
-    it("sets phase to FINISHED on win", async () => {
+    it("Expected outcome: Sets phase to FINISHED on win", async () => {
       const responses: PrimitiveAction[][] = [
         [
           { action: "PLAYER_ROLLED", value: 5 },
@@ -1901,8 +1901,8 @@ describe("Orchestrator Integration Tests", () => {
     });
   });
 
-  describe("Complex Mechanics", () => {
-    it("handles magic door with heart requirements", async () => {
+  describe("Product scenario: Complex Mechanics", () => {
+    it("Expected outcome: Handles magic door with heart requirements", async () => {
       setLocale("en-US");
       const responses: PrimitiveAction[][] = [
         [
@@ -1947,7 +1947,7 @@ describe("Orchestrator Integration Tests", () => {
       expect(spoken).toMatch(/heart/i);
     });
 
-    it("narrates magic door bounce with rule and final square when overshooting door", async () => {
+    it("Expected outcome: Narrates magic door bounce with rule and final square when overshooting door", async () => {
       setLocale("en-US");
       const responses: PrimitiveAction[][] = [
         [
@@ -1996,7 +1996,7 @@ describe("Orchestrator Integration Tests", () => {
       expect(mockSpeech.speak).toHaveBeenCalledWith(expectedLine);
     });
 
-    it("magic door opening on 186: die only, success sets flag and advances turn", async () => {
+    it("Expected outcome: Magic door opening on 186 die only, success sets flag and advances turn", async () => {
       setLocale("en-US");
       mockLLM = createScriptedLLM([]);
 
@@ -2040,7 +2040,7 @@ describe("Orchestrator Integration Tests", () => {
       );
     });
 
-    it("magic door opening: fail with low roll advances turn", async () => {
+    it("Expected outcome: Magic door opening fail with low roll advances turn", async () => {
       setLocale("en-US");
       mockLLM = createScriptedLLM([]);
 
@@ -2083,7 +2083,7 @@ describe("Orchestrator Integration Tests", () => {
       );
     });
 
-    it("magic door opening: hearts + die reaches target", async () => {
+    it("Expected outcome: Magic door opening hearts + die reaches target", async () => {
       setLocale("en-US");
       mockLLM = createScriptedLLM([]);
 
@@ -2123,7 +2123,7 @@ describe("Orchestrator Integration Tests", () => {
       );
     });
 
-    it("magic door: after open, movement roll leaves 186 and clears opened flag", async () => {
+    it("Expected outcome: Magic door after open, movement roll leaves 186 and clears opened flag", async () => {
       setLocale("en-US");
       mockLLM = createScriptedLLM([]);
 
@@ -2155,7 +2155,7 @@ describe("Orchestrator Integration Tests", () => {
       expect(stateManager.get("players.p1.magicDoorOpened")).toBe(false);
     });
 
-    it("handles instrument usage in correct habitat", async () => {
+    it("Expected outcome: Handles instrument usage in correct habitat", async () => {
       const responses: PrimitiveAction[][] = [
         [
           { action: "PLAYER_ROLLED", value: 2 },
@@ -2212,8 +2212,8 @@ describe("Orchestrator Integration Tests", () => {
     });
   });
 
-  describe("Coerce PLAYER_ANSWERED → PLAYER_ROLLED for movement", () => {
-    it("rewrites a mis-tagged dice-only answer when a movement roll is legal", async () => {
+  describe("Product scenario: Coerce PLAYER ANSWERED to PLAYER ROLLED for movement", () => {
+    it("Expected outcome: Rewrites a mis tagged dice only answer when a movement roll is legal", async () => {
       mockLLM = createScriptedLLM([[{ action: "PLAYER_ANSWERED", answer: "2" }]]);
 
       const initialState: GameState = {
@@ -2247,7 +2247,7 @@ describe("Orchestrator Integration Tests", () => {
       expect(stateManager.get("game.lastRoll")).toBe(2);
     });
 
-    it("does not coerce when a fork choice is still pending (PLAYER_ROLLED invalid)", async () => {
+    it("Expected outcome: Does not coerce when a fork choice is still pending (PLAYER ROLLED invalid)", async () => {
       mockLLM = createScriptedLLM([[{ action: "PLAYER_ANSWERED", answer: "3" }]]);
 
       const initialState: GameState = {
@@ -2276,7 +2276,7 @@ describe("Orchestrator Integration Tests", () => {
       expect(stateManager.get("players.p1.position")).toBe(0);
     });
 
-    it("does not coerce numeric PLAYER_ANSWERED to movement roll during pending riddle", async () => {
+    it("Expected outcome: Does not coerce numeric PLAYER ANSWERED to movement roll during pending riddle", async () => {
       mockLLM = createScriptedLLM([[{ action: "PLAYER_ANSWERED", answer: "1" }]]);
 
       const initialState: GameState = {
@@ -2314,7 +2314,7 @@ describe("Orchestrator Integration Tests", () => {
       expect(pendingAfter.kind).toBe("powerCheck");
     });
 
-    it("speaks answerRiddleFirst when LLM returns PLAYER_ROLLED during pending riddle", async () => {
+    it("Expected outcome: Speaks answer Riddle First when interpreter returns PLAYER ROLLED during pending riddle", async () => {
       setLocale("en-US");
       mockLLM = createScriptedLLM([[{ action: "PLAYER_ROLLED", value: 4 }]]);
 
@@ -2352,7 +2352,7 @@ describe("Orchestrator Integration Tests", () => {
       setLocale("es-AR");
     });
 
-    it("speaks sayEncounterRollAsAnswer when LLM returns PLAYER_ROLLED during power check", async () => {
+    it("Expected outcome: Speaks say Encounter Roll As Answer when interpreter returns PLAYER ROLLED during power check", async () => {
       setLocale("en-US");
       mockLLM = createScriptedLLM([[{ action: "PLAYER_ROLLED", value: 4 }]]);
 

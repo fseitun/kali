@@ -7,9 +7,9 @@ vi.mock("../i18n/translations", () => ({
   getNicknames: () => ["the Great", "the Wise", "the Brave", "the Kind", "the Swift"],
 }));
 
-describe("name-helper", () => {
-  describe("validateName", () => {
-    it("should accept valid names", () => {
+describe("Product scenario: Name helper", () => {
+  describe("Product scenario: Validate Name", () => {
+    it("Expected outcome: Should accept valid names", () => {
       expect(validateName("Alice")).toEqual({ valid: true, cleaned: "Alice" });
       expect(validateName("Bob Smith")).toEqual({
         valid: true,
@@ -25,7 +25,7 @@ describe("name-helper", () => {
       });
     });
 
-    it("should reject empty or invalid inputs", () => {
+    it("Expected outcome: Should reject empty or invalid inputs", () => {
       expect(validateName("")).toEqual({ valid: false, cleaned: "" });
       expect(validateName("   ")).toEqual({ valid: false, cleaned: "" });
       expect(validateName(null as any)).toEqual({ valid: false, cleaned: "" });
@@ -36,21 +36,21 @@ describe("name-helper", () => {
       expect(validateName(123 as any)).toEqual({ valid: false, cleaned: "" });
     });
 
-    it("should trim whitespace", () => {
+    it("Expected outcome: Should trim whitespace", () => {
       expect(validateName("  Alice  ")).toEqual({
         valid: true,
         cleaned: "Alice",
       });
     });
 
-    it("should truncate long names", () => {
+    it("Expected outcome: Should truncate long names", () => {
       const longName = "A".repeat(25);
       const result = validateName(longName);
       expect(result.valid).toBe(true);
       expect(result.cleaned).toBe("A".repeat(20));
     });
 
-    it("should reject inappropriate words", () => {
+    it("Expected outcome: Should reject inappropriate words", () => {
       expect(validateName("fuck")).toEqual({ valid: false, cleaned: "" });
       expect(validateName("shit")).toEqual({ valid: false, cleaned: "" });
       expect(validateName("damn")).toEqual({ valid: false, cleaned: "" });
@@ -60,7 +60,7 @@ describe("name-helper", () => {
       expect(validateName("Shithead")).toEqual({ valid: false, cleaned: "" });
     });
 
-    it("should remove special characters", () => {
+    it("Expected outcome: Should remove special characters", () => {
       expect(validateName("Alice@#$%")).toEqual({
         valid: true,
         cleaned: "Alice",
@@ -72,7 +72,7 @@ describe("name-helper", () => {
       });
     });
 
-    it("should preserve allowed special characters", () => {
+    it("Expected outcome: Should preserve allowed special characters", () => {
       expect(validateName("O'Connor")).toEqual({
         valid: true,
         cleaned: "O'Connor",
@@ -87,70 +87,70 @@ describe("name-helper", () => {
       });
     });
 
-    it("should reject names with only special characters", () => {
+    it("Expected outcome: Should reject names with only special characters", () => {
       expect(validateName("@#$%")).toEqual({ valid: false, cleaned: "" });
       expect(validateName("!!!")).toEqual({ valid: false, cleaned: "" });
     });
   });
 
-  describe("areNamesSimilar", () => {
-    it("should detect similar names", () => {
+  describe("Product scenario: Are Names Similar", () => {
+    it("Expected outcome: Should detect similar names", () => {
       expect(areNamesSimilar("Alice", "Alicia")).toBe(true);
       expect(areNamesSimilar("Bob", "Bobby")).toBe(true);
       expect(areNamesSimilar("Charlie", "Charley")).toBe(true);
       expect(areNamesSimilar("David", "Dave")).toBe(true);
     });
 
-    it("should not detect dissimilar names", () => {
+    it("Expected outcome: Should not detect dissimilar names", () => {
       expect(areNamesSimilar("Alice", "Bob")).toBe(false);
       expect(areNamesSimilar("Charlie", "David")).toBe(false);
       expect(areNamesSimilar("Eve", "Frank")).toBe(false);
       expect(areNamesSimilar("fede", "pepe")).toBe(false);
     });
 
-    it("should handle identical names", () => {
+    it("Expected outcome: Should handle identical names", () => {
       expect(areNamesSimilar("Alice", "Alice")).toBe(true);
       expect(areNamesSimilar("Bob", "Bob")).toBe(true);
     });
 
-    it("should not treat different single-letter names as similar", () => {
+    it("Expected outcome: Should not treat different single letter names as similar", () => {
       expect(areNamesSimilar("a", "b")).toBe(false);
       expect(areNamesSimilar("x", "y")).toBe(false);
     });
 
-    it("should treat identical single-letter names as similar", () => {
+    it("Expected outcome: Should treat identical single letter names as similar", () => {
       expect(areNamesSimilar("a", "a")).toBe(true);
     });
 
-    it("should handle empty names", () => {
+    it("Expected outcome: Should handle empty names", () => {
       expect(areNamesSimilar("", "Alice")).toBe(false);
       expect(areNamesSimilar("Alice", "")).toBe(false);
       expect(areNamesSimilar("", "")).toBe(true); // Empty strings are identical
     });
 
-    it("should be case insensitive", () => {
+    it("Expected outcome: Should be case insensitive", () => {
       expect(areNamesSimilar("Alice", "alice")).toBe(true);
       expect(areNamesSimilar("BOB", "bob")).toBe(true);
     });
   });
 
-  describe("findNameConflicts", () => {
-    it("should find no conflicts in unique names", () => {
+  describe("Product scenario: Find Name Conflicts", () => {
+    it("Expected outcome: Should find no conflicts in unique names", () => {
       const names = ["Alice", "Bob", "Charlie"];
       expect(findNameConflicts(names)).toEqual([]);
     });
 
-    it("should find exact duplicates", () => {
+    it("Expected outcome: Should find exact duplicates", () => {
       const names = ["Alice", "Bob", "Alice"];
       expect(findNameConflicts(names)).toEqual([0, 2]); // Returns indices with conflicts
     });
 
-    it("should find similar names", () => {
+    it("Expected outcome: Should find similar names", () => {
       const names = ["Alice", "Alicia", "Bob"];
       expect(findNameConflicts(names)).toEqual([0, 1]); // Returns indices with conflicts
     });
 
-    it("should handle multiple conflicts", () => {
+    it("Expected outcome: Should handle multiple conflicts", () => {
       const names = ["Alice", "Alicia", "Bob", "Bobby", "Alice"];
       const conflicts = findNameConflicts(names);
       expect(conflicts).toHaveLength(5); // Alice(0), Alicia(1), Bob(2), Bobby(3), Alice(4)
@@ -161,22 +161,22 @@ describe("name-helper", () => {
       expect(conflicts).toContain(4); // Alice(4) conflicts with Alice(0)
     });
 
-    it("should handle empty array", () => {
+    it("Expected outcome: Should handle empty array", () => {
       expect(findNameConflicts([])).toEqual([]);
     });
 
-    it("should handle single name", () => {
+    it("Expected outcome: Should handle single name", () => {
       expect(findNameConflicts(["Alice"])).toEqual([]);
     });
   });
 
-  describe("generateNickname", () => {
-    it("should generate nickname for valid name", () => {
+  describe("Product scenario: Generate Nickname", () => {
+    it("Expected outcome: Should generate nickname for valid name", () => {
       const nickname = generateNickname("Alice", []);
       expect(nickname).toMatch(/^Alice the (Great|Wise|Brave|Kind|Swift)$/);
     });
 
-    it("should generate different nicknames for different names", () => {
+    it("Expected outcome: Should generate different nicknames for different names", () => {
       const nick1 = generateNickname("Alice", []);
       const nick2 = generateNickname("Bob", []);
 
@@ -187,13 +187,13 @@ describe("name-helper", () => {
       expect(nick2).toMatch(/^Bob the/);
     });
 
-    it("should generate consistent nickname for same name with same used list", () => {
+    it("Expected outcome: Should generate consistent nickname for same name with same used list", () => {
       // Since it's random, we can't test exact consistency, but we can test structure
       const nickname = generateNickname("Alice", []);
       expect(nickname).toMatch(/^Alice the (Great|Wise|Brave|Kind|Swift)$/);
     });
 
-    it("should handle empty nicknames array", () => {
+    it("Expected outcome: Should handle empty nicknames array", () => {
       // When no nicknames available, should fall back to numbering
       const nickname = generateNickname("Alice", [
         "Alice the Great",
@@ -205,7 +205,7 @@ describe("name-helper", () => {
       expect(nickname).toMatch(/^Alice \d+$/); // Should be Alice followed by a number
     });
 
-    it("should handle single nickname", () => {
+    it("Expected outcome: Should handle single nickname", () => {
       const nickname = generateNickname("Alice", [
         "Alice the Great",
         "Alice the Wise",
@@ -215,12 +215,12 @@ describe("name-helper", () => {
       expect(nickname).toBe("Alice the Swift");
     });
 
-    it("should handle empty name", () => {
+    it("Expected outcome: Should handle empty name", () => {
       const nickname = generateNickname("", []);
       expect(nickname).toMatch(/^ the (Great|Wise|Brave|Kind|Swift)$/);
     });
 
-    it("should avoid used nicknames", () => {
+    it("Expected outcome: Should avoid used nicknames", () => {
       const used = ["Alice the Great", "Alice the Wise"];
       const nickname = generateNickname("Alice", used);
       expect(nickname).toMatch(/^Alice the (Brave|Kind|Swift)$/);

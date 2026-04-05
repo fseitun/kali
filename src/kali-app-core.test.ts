@@ -1,9 +1,9 @@
 import { describe, it, expect } from "vitest";
 import { KaliAppCore } from "./kali-app-core";
 
-describe("KaliAppCore Architecture - Pure Coordination", () => {
-  describe("State Mutation Boundaries", () => {
-    it("StateManager.set() is never called directly from app layer for game state", () => {
+describe("Product scenario: Kali App Core Architecture Pure Coordination", () => {
+  describe("Product scenario: State Mutation Boundaries", () => {
+    it("Expected outcome: State Manager set is never called directly from app layer for game state", () => {
       const code = KaliAppCore.toString();
 
       const hasGameStateSetCall =
@@ -19,7 +19,7 @@ describe("KaliAppCore Architecture - Pure Coordination", () => {
       expect(hasStateDisplaySet).toBe(true);
     });
 
-    it("always delegates player setup to orchestrator.setupPlayers()", () => {
+    it("Expected outcome: Always delegates player setup to orchestrator.setup Players", () => {
       const code = KaliAppCore.toString();
 
       const hasOrchestratorSetupPlayers = code.includes("orchestrator.setupPlayers(");
@@ -30,7 +30,7 @@ describe("KaliAppCore Architecture - Pure Coordination", () => {
       expect(hasDirectStateManagerSetForPlayers).toBe(false);
     });
 
-    it("always delegates phase transitions to orchestrator.transitionPhase()", () => {
+    it("Expected outcome: Always delegates phase transitions to orchestrator transition Phase", () => {
       const code = KaliAppCore.toString();
 
       const hasOrchestratorTransitionPhase = code.includes("orchestrator.transitionPhase(");
@@ -40,7 +40,7 @@ describe("KaliAppCore Architecture - Pure Coordination", () => {
       expect(hasDirectPhaseSet).toBe(false);
     });
 
-    it("always delegates turn advancement to orchestrator.advanceTurn()", () => {
+    it("Expected outcome: Always delegates turn advancement to orchestrator advance Turn", () => {
       const code = KaliAppCore.toString();
 
       const hasOrchestratorAdvanceTurn = code.includes("orchestrator.advanceTurn(");
@@ -51,8 +51,8 @@ describe("KaliAppCore Architecture - Pure Coordination", () => {
     });
   });
 
-  describe("Coordination Flow", () => {
-    it("coordinates initialization: orchestrator -> wakeword -> name collection", () => {
+  describe("Product scenario: Coordination Flow", () => {
+    it("Expected outcome: Coordinates initialization orchestrator to wakeword to name collection", () => {
       const code = KaliAppCore.toString();
 
       const hasInitializeOrchestrator = code.includes("initializeOrchestrator");
@@ -64,7 +64,7 @@ describe("KaliAppCore Architecture - Pure Coordination", () => {
       expect(hasRunNameCollection).toBe(true);
     });
 
-    it("coordinates turn flow: handleTranscript -> orchestrator -> checkAndAdvanceTurn", () => {
+    it("Expected outcome: Coordinates turn flow handle Transcript to orchestrator to check And Advance Turn", () => {
       const code = KaliAppCore.toString();
 
       const hasHandleTranscript = code.includes("handleTranscript");
@@ -76,7 +76,7 @@ describe("KaliAppCore Architecture - Pure Coordination", () => {
       expect(callsOrchestratorHandleTranscript).toBe(true);
     });
 
-    it("resets speech meter per gameplay turn and applies silent-success voice policy", () => {
+    it("Expected outcome: Resets speech meter per gameplay turn and applies silent success voice policy", () => {
       const code = KaliAppCore.toString();
 
       expect(code).toContain("beginGameplayTurn");
@@ -84,7 +84,7 @@ describe("KaliAppCore Architecture - Pure Coordination", () => {
       expect(code).toContain("applySilentSuccessFallback");
     });
 
-    it("only announces turn changes, does not compute them", () => {
+    it("Expected outcome: Only announces turn changes, does not compute them", () => {
       const code = KaliAppCore.toString();
 
       const hasAdvanceTurnCall = code.includes("orchestrator.advanceTurn()");
@@ -96,8 +96,8 @@ describe("KaliAppCore Architecture - Pure Coordination", () => {
     });
   });
 
-  describe("No Game Logic", () => {
-    it("does not implement game mechanics", () => {
+  describe("Product scenario: No Game Logic", () => {
+    it("Expected outcome: Does not implement game mechanics", () => {
       const code = KaliAppCore.toString();
 
       const hasNoPositionCalculation = !code.match(/position\s*[+\-*/]=\s*\d+/g);
@@ -109,7 +109,7 @@ describe("KaliAppCore Architecture - Pure Coordination", () => {
       expect(hasNoSquareEffectLogic).toBe(true);
     });
 
-    it("does not calculate positions or effects", () => {
+    it("Expected outcome: Does not calculate positions or effects", () => {
       const code = KaliAppCore.toString();
 
       const hasNoDiceRollLogic = !code.match(/Math\.random\(\)\s*\*\s*\d+/g);
@@ -119,7 +119,7 @@ describe("KaliAppCore Architecture - Pure Coordination", () => {
       expect(hasNoWinConditionLogic).toBe(true);
     });
 
-    it("does not determine turn order or advancement logic", () => {
+    it("Expected outcome: Does not determine turn order or advancement logic", () => {
       const code = KaliAppCore.toString();
 
       const hasNoTurnCalculation =
@@ -129,7 +129,7 @@ describe("KaliAppCore Architecture - Pure Coordination", () => {
       expect(hasNoTurnCalculation).toBe(true);
     });
 
-    it("does not manage phase transitions logic", () => {
+    it("Expected outcome: Does not manage phase transitions logic", () => {
       const code = KaliAppCore.toString();
 
       const hasNoPhaseConditions =
@@ -141,8 +141,8 @@ describe("KaliAppCore Architecture - Pure Coordination", () => {
     });
   });
 
-  describe("Integration - Name Collection Flow", () => {
-    it("name collection returns data, orchestrator applies it", () => {
+  describe("Product scenario: Integration Name Collection Flow", () => {
+    it("Expected outcome: Name collection returns data, orchestrator applies it", () => {
       const code = KaliAppCore.toString();
 
       const pattern = /(?:const\s+)?playerNames\s*=\s*await\s+nameCollector\.collectNames/;
@@ -156,7 +156,7 @@ describe("KaliAppCore Architecture - Pure Coordination", () => {
       expect(hasOrchestratorSetup).toBe(true);
     });
 
-    it("transitions to PLAYING phase via orchestrator after name collection", () => {
+    it("Expected outcome: Transitions to PLAYING phase via orchestrator after name collection", () => {
       const code = KaliAppCore.toString();
 
       const hasCollectNames = code.includes("collectNames");
@@ -170,8 +170,8 @@ describe("KaliAppCore Architecture - Pure Coordination", () => {
     });
   });
 
-  describe("Architectural Patterns", () => {
-    it('follows "Collect → Return → Orchestrator Applies" pattern', () => {
+  describe("Product scenario: Architectural Patterns", () => {
+    it('Expected outcome: Follows "Collect to Return to game orchestrator Applies" pattern', () => {
       const code = KaliAppCore.toString();
 
       const followsPattern =
@@ -182,7 +182,7 @@ describe("KaliAppCore Architecture - Pure Coordination", () => {
       expect(followsPattern).toBe(true);
     });
 
-    it("delegates all state mutations to orchestrator", () => {
+    it("Expected outcome: Delegates all state mutations to orchestrator", () => {
       const code = KaliAppCore.toString();
 
       const allDelegated =
@@ -194,7 +194,7 @@ describe("KaliAppCore Architecture - Pure Coordination", () => {
       expect(allDelegated).toBe(true);
     });
 
-    it("app layer is pure coordination (no business logic)", () => {
+    it("Expected outcome: App layer is pure coordination (no business logic)", () => {
       const code = KaliAppCore.toString();
 
       const isPureCoordination =

@@ -21,8 +21,8 @@ function makeSquares(upTo: number): Record<string, SquareData> {
   return sq;
 }
 
-describe("computeNewPositionFromState", () => {
-  it("moves forward on normal dice roll even when retreatEffectsReversed is true", () => {
+describe("Product scenario: Compute New Position From State", () => {
+  it("Expected outcome: Moves forward on normal dice roll even when retreat Effects Reversed is true", () => {
     const squares = makeSquares(20);
     const state: GameState = {
       game: {
@@ -50,7 +50,7 @@ describe("computeNewPositionFromState", () => {
     expect(result).toBe(8);
   });
 
-  it("moves forward on normal dice roll when retreatEffectsReversed is false", () => {
+  it("Expected outcome: Moves forward on normal dice roll when retreat Effects Reversed is false", () => {
     const squares = makeSquares(20);
     const state: GameState = {
       game: {
@@ -77,7 +77,7 @@ describe("computeNewPositionFromState", () => {
     expect(result).toBe(8);
   });
 
-  it("ignores prevOnLanding on forward roll when retreatEffectsReversed (stay on landed square)", () => {
+  it("Expected outcome: Ignores prev On Landing on forward roll when retreat Effects Reversed (stay on landed square)", () => {
     const squares = makeSquares(25);
     squares["10"] = {
       next: [11],
@@ -111,7 +111,7 @@ describe("computeNewPositionFromState", () => {
     expect(result).toBe(10);
   });
 
-  it("still applies nextOnLanding when retreatEffectsReversed and square has both nextOnLanding and prevOnLanding", () => {
+  it("Expected outcome: Still applies next On Landing when retreat Effects Reversed and square has both next On Landing and prev On Landing", () => {
     const squares = makeSquares(25);
     squares["10"] = {
       next: [11],
@@ -144,7 +144,7 @@ describe("computeNewPositionFromState", () => {
     expect(result).toBe(20);
   });
 
-  it("uses nextOnLanding (forward) with retreatEffectsReversed when no conflicting prevOnLanding behavior", () => {
+  it("Expected outcome: Uses next On Landing (forward) with retreat Effects Reversed when no conflicting prev On Landing behavior", () => {
     const squares = makeSquares(100);
     squares["4"] = {
       next: [5],
@@ -178,7 +178,7 @@ describe("computeNewPositionFromState", () => {
     expect(result).toBe(14);
   });
 
-  it("moves backward when direction is backward", () => {
+  it("Expected outcome: Moves backward when direction is backward", () => {
     const squares = makeSquares(20);
     const state: GameState = {
       game: {
@@ -205,7 +205,7 @@ describe("computeNewPositionFromState", () => {
     expect(result).toBe(7);
   });
 
-  it("stays at 0 when backward roll would go below start", () => {
+  it("Expected outcome: Stays at 0 when backward roll would go below start", () => {
     const squares = makeSquares(20);
     const state: GameState = {
       game: {
@@ -232,7 +232,7 @@ describe("computeNewPositionFromState", () => {
     expect(result).toBe(0);
   });
 
-  it("uses prevOnLanding when moving backward and landing on square with it", () => {
+  it("Expected outcome: Uses prev On Landing when moving backward and landing on square with it", () => {
     const squares = makeSquares(25);
     squares["10"] = {
       next: [11],
@@ -265,7 +265,7 @@ describe("computeNewPositionFromState", () => {
     expect(result).toBe(3);
   });
 
-  it("does not apply nextOnLanding on Kalimba ocean–forest one-shot portal (82); board effects teleport", () => {
+  it("Expected outcome: Does not apply next On Landing on Kalimba ocean forest one shot portal (82); board effects teleport", () => {
     const squares: Record<
       string,
       {
@@ -328,7 +328,7 @@ function kalimbaArcticForkSquares(): Record<string, SquareData> {
   return squares;
 }
 
-describe("applyRollMovementResolvingForks", () => {
+describe("Product scenario: Apply Roll Movement Resolving Forks", () => {
   const baseGame = {
     name: "Kalimba",
     phase: "PLAYING" as const,
@@ -337,7 +337,7 @@ describe("applyRollMovementResolvingForks", () => {
     playerOrder: ["p1"],
   };
 
-  it("pauses on fork 101 when roll 3 from 97 without activeChoices", () => {
+  it("Expected outcome: Pauses on fork 101 when roll 3 from 97 without active Choices", () => {
     const state = {
       game: baseGame,
       players: {
@@ -354,7 +354,7 @@ describe("applyRollMovementResolvingForks", () => {
     });
   });
 
-  it("lands in one shot when activeChoices fix the fork before rolling", () => {
+  it("Expected outcome: Lands in one shot when active Choices fix the fork before rolling", () => {
     const state = {
       game: baseGame,
       players: {
@@ -367,7 +367,7 @@ describe("applyRollMovementResolvingForks", () => {
     expect(r).toEqual({ kind: "complete", finalPosition: 105 });
   });
 
-  it("uses single-end fast path when roll cannot reach a divergent fork (roll 1 from 97)", () => {
+  it("Expected outcome: Uses single end fast path when roll cannot reach a divergent fork (roll 1 from 97)", () => {
     const state = {
       game: baseGame,
       players: {
@@ -383,8 +383,8 @@ describe("applyRollMovementResolvingForks", () => {
   });
 });
 
-describe("applyRollMovementResolvingForks (Kalimba config from disk)", () => {
-  it("roll 6 from 97 pauses at fork 101 with 4 steps remaining (penguin power-check movement)", () => {
+describe("Product scenario: Apply Roll Movement Resolving Forks (Kalimba config from disk)", () => {
+  it("Expected outcome: Roll 6 from 97 pauses at fork 101 with 4 steps remaining (penguin power check movement)", () => {
     const raw = readFileSync(kalimbaConfigPath, "utf-8");
     const config = JSON.parse(raw) as GameConfigInput;
     const base = resolveInitialState(config);

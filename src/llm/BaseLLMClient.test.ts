@@ -28,7 +28,7 @@ class TestLLMClient extends BaseLLMClient {
   }
 }
 
-describe("LLM - Pure JSON Parsing", () => {
+describe("Product scenario: Interpreter Pure JSON Parsing", () => {
   let client: TestLLMClient;
   let mockState: GameState;
 
@@ -54,8 +54,8 @@ describe("LLM - Pure JSON Parsing", () => {
     };
   });
 
-  describe("extractActions", () => {
-    it("parses valid JSON array", () => {
+  describe("Product scenario: Extract Actions", () => {
+    it("Expected outcome: Parses valid JSON array", () => {
       const json = '[{"action":"NARRATE","text":"Hello"}]';
       const actions = client.testExtractActions(json);
 
@@ -63,14 +63,14 @@ describe("LLM - Pure JSON Parsing", () => {
       expect(actions[0]).toEqual({ action: "NARRATE", text: "Hello" });
     });
 
-    it("handles empty array", () => {
+    it("Expected outcome: Handles empty array", () => {
       const json = "[]";
       const actions = client.testExtractActions(json);
 
       expect(actions).toHaveLength(0);
     });
 
-    it("parses multiple actions", () => {
+    it("Expected outcome: Parses multiple actions", () => {
       const json = '[{"action":"PLAYER_ROLLED","value":5},{"action":"NARRATE","text":"Moved!"}]';
       const actions = client.testExtractActions(json);
 
@@ -79,7 +79,7 @@ describe("LLM - Pure JSON Parsing", () => {
       expect(actions[1]).toEqual({ action: "NARRATE", text: "Moved!" });
     });
 
-    it("coerces PLAYER_ANSWERED numeric answer to string", () => {
+    it("Expected outcome: Coerces PLAYER ANSWERED numeric answer to string", () => {
       const json = '[{"action":"PLAYER_ANSWERED","answer":8}]';
       const actions = client.testExtractActions(json);
 
@@ -87,25 +87,25 @@ describe("LLM - Pure JSON Parsing", () => {
       expect(actions[0]).toEqual({ action: "PLAYER_ANSWERED", answer: "8" });
     });
 
-    it("rejects markdown-wrapped JSON", () => {
+    it("Expected outcome: Rejects markdown wrapped JSON", () => {
       const markdown = '```json\n[{"action":"NARRATE","text":"Hi"}]\n```';
 
       expect(() => client.testExtractActions(markdown)).toThrow("Invalid JSON");
     });
 
-    it("rejects malformed JSON", () => {
+    it("Expected outcome: Rejects malformed JSON", () => {
       const invalid = '[{"action":"NARRATE","text":"Hi}]';
 
       expect(() => client.testExtractActions(invalid)).toThrow("Invalid JSON");
     });
 
-    it("rejects non-array response", () => {
+    it("Expected outcome: Rejects non array response", () => {
       const notArray = '{"action":"NARRATE","text":"Hi"}';
 
       expect(() => client.testExtractActions(notArray)).toThrow("Expected array, got object");
     });
 
-    it("coalesces two newline-separated root objects into an action array", () => {
+    it("Expected outcome: Coalesces two newline separated root objects into an action array", () => {
       const ndjson =
         '{"action":"ASK_RIDDLE","text":"q","options":["a","b","c","d"],"correctOption":"a"}\n{"action":"NARRATE","text":"Asked."}';
       const actions = client.testExtractActions(ndjson);
@@ -115,7 +115,7 @@ describe("LLM - Pure JSON Parsing", () => {
       expect(actions[1]).toEqual({ action: "NARRATE", text: "Asked." });
     });
 
-    it("coalesces NDJSON when first NARRATE text contains escaped newline", () => {
+    it("Expected outcome: Coalesces NDJSON when first NARRATE text contains escaped newline", () => {
       const ndjson = '{"action":"NARRATE","text":"a\\nb"}\n{"action":"PLAYER_ROLLED","value":4}';
       const actions = client.testExtractActions(ndjson);
 
@@ -125,8 +125,8 @@ describe("LLM - Pure JSON Parsing", () => {
     });
   });
 
-  describe("getActions with retry", () => {
-    it("returns actions on first successful parse", async () => {
+  describe("Product scenario: Get Actions with retry", () => {
+    it("Expected outcome: Returns actions on first successful parse", async () => {
       client.responseQueue = ['[{"action":"NARRATE","text":"Hi"}]'];
 
       const actions = await client.getActions("test", mockState);
@@ -135,7 +135,7 @@ describe("LLM - Pure JSON Parsing", () => {
       expect(actions).toHaveLength(1);
     });
 
-    it("retries once on parse error", async () => {
+    it("Expected outcome: Retries once on parse error", async () => {
       client.responseQueue = ["invalid json{", '[{"action":"NARRATE","text":"Retry success"}]'];
 
       const actions = await client.getActions("test", mockState);
@@ -145,7 +145,7 @@ describe("LLM - Pure JSON Parsing", () => {
       expect(actions[0]).toEqual({ action: "NARRATE", text: "Retry success" });
     });
 
-    it("returns empty array after retry failure", async () => {
+    it("Expected outcome: Returns empty array after retry failure", async () => {
       client.responseQueue = ["invalid json{", "still invalid{"];
 
       const actions = await client.getActions("test", mockState);
@@ -154,7 +154,7 @@ describe("LLM - Pure JSON Parsing", () => {
       expect(actions).toHaveLength(0);
     });
 
-    it("handles empty response from LLM", async () => {
+    it("Expected outcome: Handles empty response from interpreter", async () => {
       client.responseQueue = ["[]"];
 
       const actions = await client.getActions("test", mockState);
@@ -163,7 +163,7 @@ describe("LLM - Pure JSON Parsing", () => {
       expect(actions).toHaveLength(0);
     });
 
-    it("delays before retry for transient errors (429)", async () => {
+    it("Expected outcome: Delays before retry for transient errors (429)", async () => {
       vi.useFakeTimers();
       client.throwOnFirstCall = new Error(
         'DeepInfra API error: 429 Too Many Requests\n{"error":{"message":"Model busy, retry later"}}',
@@ -180,7 +180,7 @@ describe("LLM - Pure JSON Parsing", () => {
       vi.useRealTimers();
     });
 
-    it("no delay before retry for non-transient errors", async () => {
+    it("Expected outcome: No delay before retry for non transient errors", async () => {
       vi.useFakeTimers();
       client.throwOnFirstCall = new Error("Invalid JSON: Unexpected token");
       client.responseQueue = ['[{"action":"NARRATE","text":"Retry ok"}]'];
@@ -198,8 +198,8 @@ describe("LLM - Pure JSON Parsing", () => {
     });
   });
 
-  describe("LLM Client is Pure Interface - No Game Logic", () => {
-    it("extractActions parses JSON and normalizes PLAYER_ANSWERED numeric answer only", () => {
+  describe("Product scenario: Interpreter Client is Pure Interface No Game Logic", () => {
+    it("Expected outcome: Extract Actions parses JSON and normalizes PLAYER ANSWERED numeric answer only", () => {
       const invalidAction = '[{"action":"INVALID_TYPE","data":"something"}]';
       const actions = client.testExtractActions(invalidAction);
 
@@ -207,7 +207,7 @@ describe("LLM - Pure JSON Parsing", () => {
       expect(actions[0]).toEqual({ action: "INVALID_TYPE", data: "something" });
     });
 
-    it("extractActions accepts malformed action structure", () => {
+    it("Expected outcome: Extract Actions accepts malformed action structure", () => {
       const weirdAction = '[{"notAnAction":true,"randomStuff":123}]';
       const actions = client.testExtractActions(weirdAction);
 
@@ -215,7 +215,7 @@ describe("LLM - Pure JSON Parsing", () => {
       expect(actions[0]).toEqual({ notAnAction: true, randomStuff: 123 });
     });
 
-    it("getActions passes state context without interpreting it", async () => {
+    it("Expected outcome: Get Actions passes state context without interpreting it", async () => {
       (mockState.game as Record<string, unknown>).phase = "FINISHED";
       (mockState.game as Record<string, unknown>).winner = "p1";
 
@@ -227,7 +227,7 @@ describe("LLM - Pure JSON Parsing", () => {
       expect(client.callCount).toBe(1);
     });
 
-    it("getActions includes lastBotUtterance in prompt when provided", async () => {
+    it("Expected outcome: Get Actions includes last Bot Utterance in prompt when provided", async () => {
       client.responseQueue = ['[{"action":"PLAYER_ROLLED","value":3}]'];
 
       await client.getActions("sí", mockState, "¿Tiraste un 3, Federico?");
@@ -240,7 +240,7 @@ describe("LLM - Pure JSON Parsing", () => {
       expect(client.lastPrompt).toContain("</user_command>");
     });
 
-    it("getActions omits lastBotUtterance line when not provided", async () => {
+    it("Expected outcome: Get Actions omits last Bot Utterance line when not provided", async () => {
       client.responseQueue = ['[{"action":"NARRATE","text":"Hi"}]'];
 
       await client.getActions("hello", mockState);
@@ -251,7 +251,7 @@ describe("LLM - Pure JSON Parsing", () => {
       expect(client.lastPrompt).toContain("hello");
     });
 
-    it("retry logic uses same state (no mutation)", async () => {
+    it("Expected outcome: Retry logic uses same state (no mutation)", async () => {
       const originalState = { ...mockState };
 
       client.responseQueue = ["invalid", '[{"action":"NARRATE","text":"Retry"}]'];
@@ -261,7 +261,7 @@ describe("LLM - Pure JSON Parsing", () => {
       expect(mockState).toEqual(originalState);
     });
 
-    it("deduplication is string-based only, no logic", async () => {
+    it("Expected outcome: Deduplication is string based only, no logic", async () => {
       client.responseQueue = [
         '[{"action":"NARRATE","text":"First"}]',
         '[{"action":"NARRATE","text":"Second"}]',
@@ -273,7 +273,7 @@ describe("LLM - Pure JSON Parsing", () => {
       expect(client.callCount).toBe(1);
     });
 
-    it("does not validate turn ownership (orchestrator job)", async () => {
+    it("Expected outcome: Does not validate turn ownership (orchestrator job)", async () => {
       (mockState.game as Record<string, unknown>).turn = "p1";
 
       client.responseQueue = ['[{"action":"SET_STATE","path":"players.p2.position","value":99}]'];
@@ -288,7 +288,7 @@ describe("LLM - Pure JSON Parsing", () => {
       });
     });
 
-    it("does not validate paths (orchestrator job)", async () => {
+    it("Expected outcome: Does not validate paths (orchestrator job)", async () => {
       client.responseQueue = ['[{"action":"SET_STATE","path":"nonexistent.path","value":1}]'];
 
       const actions = await client.getActions("invalid path", mockState);
@@ -301,7 +301,7 @@ describe("LLM - Pure JSON Parsing", () => {
       });
     });
 
-    it("does not validate action field types (orchestrator job)", async () => {
+    it("Expected outcome: Does not validate action field types (orchestrator job)", async () => {
       client.responseQueue = ['[{"action":"PLAYER_ROLLED","value":"not a number"}]'];
 
       const actions = await client.getActions("invalid type", mockState);
@@ -313,7 +313,7 @@ describe("LLM - Pure JSON Parsing", () => {
       });
     });
 
-    it("does not validate required fields (orchestrator job)", async () => {
+    it("Expected outcome: Does not validate required fields (orchestrator job)", async () => {
       client.responseQueue = ['[{"action":"NARRATE"}]'];
 
       const actions = await client.getActions("missing field", mockState);
@@ -322,7 +322,7 @@ describe("LLM - Pure JSON Parsing", () => {
       expect(actions[0]).toEqual({ action: "NARRATE" });
     });
 
-    it("propagates parsing errors for orchestrator to handle", async () => {
+    it("Expected outcome: Propagates parsing errors for orchestrator to handle", async () => {
       client.responseQueue = ["not valid json at all", "still not valid json"];
 
       const actions = await client.getActions("bad json", mockState);
@@ -332,8 +332,8 @@ describe("LLM - Pure JSON Parsing", () => {
     });
   });
 
-  describe("LLM Response Format Handling", () => {
-    it("successfully parses all valid primitive action types", () => {
+  describe("Product scenario: Interpreter Response Format Handling", () => {
+    it("Expected outcome: Successfully parses all valid primitive action types", () => {
       const json = `[
         {"action":"NARRATE","text":"Hi"},
         {"action":"SET_STATE","path":"game.phase","value":"PLAYING"},
@@ -352,7 +352,7 @@ describe("LLM - Pure JSON Parsing", () => {
       expect(actions[4].action).toBe("RESET_GAME");
     });
 
-    it("parses actions with optional fields", () => {
+    it("Expected outcome: Parses actions with optional fields", () => {
       const json = '[{"action":"NARRATE","text":"Hi","soundEffect":"chime.mp3"}]';
       const actions = client.testExtractActions(json);
 
@@ -364,7 +364,7 @@ describe("LLM - Pure JSON Parsing", () => {
       });
     });
 
-    it("parses actions with complex value types", () => {
+    it("Expected outcome: Parses actions with complex value types", () => {
       const json =
         '[{"action":"SET_STATE","path":"players.p1.inventory","value":{"gold":100,"items":["sword","shield"]}}]';
       const actions = client.testExtractActions(json);
@@ -377,19 +377,19 @@ describe("LLM - Pure JSON Parsing", () => {
       });
     });
 
-    it("rejects markdown code blocks (must be pure JSON)", () => {
+    it("Expected outcome: Rejects markdown code blocks (must be pure JSON)", () => {
       const markdown = '```json\n[{"action":"NARRATE","text":"Hi"}]\n```';
 
       expect(() => client.testExtractActions(markdown)).toThrow("Invalid JSON");
     });
 
-    it("rejects explanatory text before JSON", () => {
+    it("Expected outcome: Rejects explanatory text before JSON", () => {
       const withText = 'Here are the actions:\n[{"action":"NARRATE","text":"Hi"}]';
 
       expect(() => client.testExtractActions(withText)).toThrow("Invalid JSON");
     });
 
-    it("rejects explanatory text after JSON", () => {
+    it("Expected outcome: Rejects explanatory text after JSON", () => {
       const withText = '[{"action":"NARRATE","text":"Hi"}]\nThose are the actions';
 
       expect(() => client.testExtractActions(withText)).toThrow("Invalid JSON");

@@ -4,7 +4,7 @@ import { GamePhase, type ExecutionContext, type GameState } from "./types";
 import { setLocale } from "@/i18n/translations";
 import { StateManager } from "@/state-manager";
 
-describe("tryFastPathTranscript", () => {
+describe("Product scenario: Try Fast Path Transcript", () => {
   let state: GameState;
   const topContext: ExecutionContext = {};
   const nestedContext: ExecutionContext = { isNestedCall: true };
@@ -34,30 +34,30 @@ describe("tryFastPathTranscript", () => {
     state = sm.getState() as GameState;
   });
 
-  it("returns null for nested calls", () => {
+  it("Expected outcome: Returns null for nested calls", () => {
     expect(
       tryFastPathTranscript(state, "5", nestedContext, { isProcessingEffect: false }),
     ).toBeNull();
   });
 
-  it("returns NARRATE for help phrase", () => {
+  it("Expected outcome: Returns NARRATE for help phrase", () => {
     const actions = tryFastPathTranscript(state, "help", topContext, {
       isProcessingEffect: false,
     });
     expect(actions).toEqual([{ action: "NARRATE", text: expect.any(String) }]);
   });
 
-  it("returns PLAYER_ROLLED for plain digit when valid", () => {
+  it("Expected outcome: Returns PLAYER ROLLED for plain digit when valid", () => {
     const actions = tryFastPathTranscript(state, "4", topContext, { isProcessingEffect: false });
     expect(actions).toEqual([{ action: "PLAYER_ROLLED", value: 4 }]);
   });
 
-  it("returns null during square effect processing for movement roll", () => {
+  it("Expected outcome: Returns null during square effect processing for movement roll", () => {
     const actions = tryFastPathTranscript(state, "4", topContext, { isProcessingEffect: true });
     expect(actions).toBeNull();
   });
 
-  it("returns PLAYER_ANSWERED for revenge roll in range", () => {
+  it("Expected outcome: Returns PLAYER ANSWERED for revenge roll in range", () => {
     (state.game as Record<string, unknown>).pending = {
       kind: "revenge",
       playerId: "p1",
@@ -68,7 +68,7 @@ describe("tryFastPathTranscript", () => {
     expect(actions).toEqual([{ action: "PLAYER_ANSWERED", answer: "4" }]);
   });
 
-  it("maps riddle transcript to option when structured riddle pending", () => {
+  it("Expected outcome: Maps riddle transcript to option when structured riddle pending", () => {
     (state.game as Record<string, unknown>).pending = {
       kind: "riddle",
       playerId: "p1",

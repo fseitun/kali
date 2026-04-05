@@ -21,7 +21,7 @@ vi.mock("../utils/logger", () => ({
   },
 }));
 
-describe("GameLoader", () => {
+describe("Product scenario: Game Loader", () => {
   let gameLoader: GameLoader;
   let mockFetch: ReturnType<typeof vi.fn>;
 
@@ -36,8 +36,8 @@ describe("GameLoader", () => {
     vi.restoreAllMocks();
   });
 
-  describe("loadGame", () => {
-    it("should load valid game module", async () => {
+  describe("Product scenario: Load Game", () => {
+    it("Expected outcome: Should load valid game module", async () => {
       const mockConfig = {
         metadata: {
           id: "test-game",
@@ -66,7 +66,7 @@ describe("GameLoader", () => {
       expect(result.initialState.board?.squares).toBeDefined();
     });
 
-    it("should throw error for failed fetch", async () => {
+    it("Expected outcome: Should throw error for failed fetch", async () => {
       mockFetch.mockResolvedValueOnce({
         ok: false,
         statusText: "Not Found",
@@ -77,13 +77,13 @@ describe("GameLoader", () => {
       );
     });
 
-    it("should throw error for network failure", async () => {
+    it("Expected outcome: Should throw error for network failure", async () => {
       mockFetch.mockRejectedValueOnce(new Error("Network error"));
 
       await expect(gameLoader.loadGame("test-game")).rejects.toThrow("Network error");
     });
 
-    it("should validate game module metadata", async () => {
+    it("Expected outcome: Should validate game module metadata", async () => {
       const invalidModule = {
         metadata: { objective: "Test objective" },
         squares: { "0": { next: [1], prev: [] } },
@@ -99,7 +99,7 @@ describe("GameLoader", () => {
       );
     });
 
-    it("should validate metadata objective", async () => {
+    it("Expected outcome: Should validate metadata objective", async () => {
       const invalidModule = {
         metadata: {
           id: "test-game",
@@ -120,7 +120,7 @@ describe("GameLoader", () => {
       );
     });
 
-    it("should validate game config has squares", async () => {
+    it("Expected outcome: Should validate game config has squares", async () => {
       const invalidModule = {
         metadata: {
           id: "test-game",
@@ -141,7 +141,7 @@ describe("GameLoader", () => {
       );
     });
 
-    it("should validate metadata id and name", async () => {
+    it("Expected outcome: Should validate metadata id and name", async () => {
       const invalidModule = {
         metadata: { objective: "Test objective" },
         squares: { "0": { next: [1], prev: [] } },
@@ -158,8 +158,8 @@ describe("GameLoader", () => {
     });
   });
 
-  describe("loadSoundEffects", () => {
-    it("should load all sound effects successfully", async () => {
+  describe("Product scenario: Load Sound Effects", () => {
+    it("Expected outcome: Should load all sound effects successfully", async () => {
       const gameModule: GameModule = {
         metadata: {
           id: "test-game",
@@ -195,7 +195,7 @@ describe("GameLoader", () => {
       expect(mockSpeechService.loadSound).toHaveBeenCalledWith("dice_roll", "/sounds/dice.mp3");
     });
 
-    it("should handle missing sound effects", async () => {
+    it("Expected outcome: Should handle missing sound effects", async () => {
       const gameModule: GameModule = {
         metadata: {
           id: "test-game",
@@ -221,7 +221,7 @@ describe("GameLoader", () => {
       expect(mockSpeechService.loadSound).not.toHaveBeenCalled();
     });
 
-    it("should handle sound loading failures gracefully", async () => {
+    it("Expected outcome: Should handle sound loading failures gracefully", async () => {
       const gameModule: GameModule = {
         metadata: {
           id: "test-game",
@@ -258,7 +258,7 @@ describe("GameLoader", () => {
       expect(mockSpeechService.loadSound).toHaveBeenCalledTimes(2);
     });
 
-    it("should handle empty sound effects object", async () => {
+    it("Expected outcome: Should handle empty sound effects object", async () => {
       const gameModule: GameModule = {
         metadata: {
           id: "test-game",
@@ -287,15 +287,15 @@ describe("GameLoader", () => {
   });
 });
 
-describe("expandHabitatConfig", () => {
-  it("expands inclusive ranges and single indices", () => {
+describe("Product scenario: Expand Habitat Config", () => {
+  it("Expected outcome: Expands inclusive ranges and single indices", () => {
     const m = expandHabitatConfig({ alpha: [0, 1], beta: 2 }, 2);
     expect(m[0]).toBe("alpha");
     expect(m[1]).toBe("alpha");
     expect(m[2]).toBe("beta");
   });
 
-  it("accepts several ranges as flat lo,hi pairs", () => {
+  it("Expected outcome: Accepts several ranges as flat lo,hi pairs", () => {
     const m = expandHabitatConfig({ mix: [0, 1, 2, 4] }, 4);
     expect(m[0]).toBe("mix");
     expect(m[1]).toBe("mix");
@@ -304,26 +304,26 @@ describe("expandHabitatConfig", () => {
     expect(m[4]).toBe("mix");
   });
 
-  it("throws when two habitats claim the same square", () => {
+  it("Expected outcome: Throws when two habitats claim the same square", () => {
     expect(() => expandHabitatConfig({ a: [0, 1], b: 1 }, 2)).toThrow(/assigned to both/);
   });
 
-  it("throws when squares are missing from the map", () => {
+  it("Expected outcome: Throws when squares are missing from the map", () => {
     expect(() => expandHabitatConfig({ only: [0, 0] }, 2)).toThrow(/missing squares/);
   });
 
-  it("rejects nested arrays (no segment-list wrapper)", () => {
+  it("Expected outcome: Rejects nested arrays (no segment list wrapper)", () => {
     const nested = { bad: [[0, 1]] } as unknown as Record<string, HabitatDefinition>;
     expect(() => expandHabitatConfig(nested, 2)).toThrow(/must not use nested arrays/);
   });
 
-  it("throws on odd-length flat numeric list (length > 1)", () => {
+  it("Expected outcome: Throws on odd length flat numeric list (length > 1)", () => {
     expect(() => expandHabitatConfig({ bad: [0, 1, 2] }, 4)).toThrow(/even length/);
   });
 });
 
-describe("resolveInitialState sparse next/prev", () => {
-  it("fills omitted square keys with {} for linear-only indices", () => {
+describe("Product scenario: Resolve Initial State sparse next/prev", () => {
+  it("Expected outcome: Fills omitted square keys with {} for linear only indices", () => {
     const state = resolveInitialState({
       metadata: {
         id: "t",
@@ -342,7 +342,7 @@ describe("resolveInitialState sparse next/prev", () => {
     expect(state.board?.squares?.["3"]?.effect).toBe("win");
   });
 
-  it("allows middle squares with no next/prev when 0 and win are explicit", () => {
+  it("Expected outcome: Allows middle squares with no next/prev when 0 and win are explicit", () => {
     const state = resolveInitialState({
       metadata: {
         id: "t",
@@ -360,7 +360,7 @@ describe("resolveInitialState sparse next/prev", () => {
     expect(state.board?.squares?.["1"]).toEqual({});
   });
 
-  it("rejects win square without explicit next", () => {
+  it("Expected outcome: Rejects win square without explicit next", () => {
     expect(() =>
       resolveInitialState({
         metadata: {
@@ -379,8 +379,8 @@ describe("resolveInitialState sparse next/prev", () => {
   });
 });
 
-describe("resolveInitialState with config.habitat", () => {
-  it("merges expanded habitat onto each square", () => {
+describe("Product scenario: Resolve Initial State with config habitat", () => {
+  it("Expected outcome: Merges expanded habitat onto each square", () => {
     const state = resolveInitialState({
       metadata: {
         id: "t",

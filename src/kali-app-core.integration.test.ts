@@ -67,7 +67,7 @@ vi.mock("./config", async (importOriginal) => {
   };
 });
 
-describe("KaliAppCore Integration - Runtime Flows", () => {
+describe("Product scenario: Kali App Core Integration Runtime Flows", () => {
   let mockUIService: IUIService;
   let mockSpeechService: ISpeechService;
   let mockIndicator: StatusIndicator;
@@ -108,8 +108,8 @@ describe("KaliAppCore Integration - Runtime Flows", () => {
     } as unknown as ISpeechService;
   });
 
-  describe("initialize - saved game path (phase PLAYING)", () => {
-    it("skips name collection when phase is PLAYING", async () => {
+  describe("Product scenario: Initialize saved game path (phase PLAYING)", () => {
+    it("Expected outcome: Skips name collection when phase is PLAYING", async () => {
       phaseOverride.value = GamePhase.PLAYING;
 
       const core = new KaliAppCore(mockUIService, mockSpeechService, { skipWakeWord: true });
@@ -121,8 +121,8 @@ describe("KaliAppCore Integration - Runtime Flows", () => {
     });
   });
 
-  describe("initialize - setup path (phase SETUP)", () => {
-    it("enters name collection when phase is SETUP and accepts transcript input", async () => {
+  describe("Product scenario: Initialize setup path (phase SETUP)", () => {
+    it("Expected outcome: Enters name collection when phase is SETUP and accepts transcript input", async () => {
       phaseOverride.value = GamePhase.SETUP;
 
       const core = new KaliAppCore(mockUIService, mockSpeechService, { skipWakeWord: true });
@@ -149,8 +149,8 @@ describe("KaliAppCore Integration - Runtime Flows", () => {
     });
   });
 
-  describe("handleTranscription → handleTranscript → checkAndAdvanceTurn", () => {
-    it("submits transcript and advances turn when actions succeed", async () => {
+  describe("Product scenario: Handle Transcription to handle Transcript to check And Advance Turn", () => {
+    it("Expected outcome: Submits transcript and advances turn when actions succeed", async () => {
       phaseOverride.value = GamePhase.PLAYING;
 
       const core = new KaliAppCore(mockUIService, mockSpeechService, { skipWakeWord: true });
@@ -163,8 +163,8 @@ describe("KaliAppCore Integration - Runtime Flows", () => {
     });
   });
 
-  describe("testExecuteActions", () => {
-    it("executes actions and advances turn when turnAdvance is callAdvanceTurn", async () => {
+  describe("Product scenario: Test Execute Actions", () => {
+    it("Expected outcome: Executes actions and advances turn when turn Advance is call Advance Turn", async () => {
       phaseOverride.value = GamePhase.PLAYING;
 
       const core = new KaliAppCore(mockUIService, mockSpeechService, { skipWakeWord: true });
@@ -182,8 +182,8 @@ describe("KaliAppCore Integration - Runtime Flows", () => {
     });
   });
 
-  describe("dispose", () => {
-    it("resets state and shows button", async () => {
+  describe("Product scenario: Dispose", () => {
+    it("Expected outcome: Resets state and shows button", async () => {
       phaseOverride.value = GamePhase.PLAYING;
 
       const core = new KaliAppCore(mockUIService, mockSpeechService, { skipWakeWord: true });

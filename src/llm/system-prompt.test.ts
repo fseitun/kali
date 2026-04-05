@@ -2,13 +2,13 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { formatStateContext, SYSTEM_PROMPT } from "./system-prompt";
 import * as localeManager from "@/i18n/locale-manager";
 
-describe("SYSTEM_PROMPT", () => {
-  it("slim base prompt has a reasonable size bound (well under historical ~2.5k+ bloated prompts)", () => {
+describe("Product scenario: SYSTEM PROMPT", () => {
+  it("Expected outcome: Slim base prompt has a reasonable size bound (well under historical ~2 5k+ bloated prompts)", () => {
     expect(SYSTEM_PROMPT.length).toBeGreaterThanOrEqual(1100);
     expect(SYSTEM_PROMPT.length).toBeLessThanOrEqual(4700);
   });
 
-  it("includes guidance rule: when user asks what to do, NARRATE only and do not emit primitives", () => {
+  it("Expected outcome: Includes guidance rule when user asks what to do, NARRATE only and do not emit primitives", () => {
     expect(SYSTEM_PROMPT).toMatch(/Guidance|what do I do|help/);
     expect(SYSTEM_PROMPT).toContain("NARRATE only");
     expect(SYSTEM_PROMPT).toContain("do not emit PLAYER_ROLLED");
@@ -16,30 +16,30 @@ describe("SYSTEM_PROMPT", () => {
     expect(SYSTEM_PROMPT).toContain("SET_STATE");
   });
 
-  it("distinguishes movement dice from POWER CHECK / REVENGE rolls in conventions", () => {
+  it("Expected outcome: Distinguishes movement dice from POWER CHECK / REVENGE rolls in conventions", () => {
     expect(SYSTEM_PROMPT).toContain("⚠️ POWER CHECK");
     expect(SYSTEM_PROMPT).toContain("⚠️ REVENGE");
     expect(SYSTEM_PROMPT).toMatch(/1d6, 2d6, 3d6/);
   });
 
-  it("tells the model not to guess final square after movement PLAYER_ROLLED", () => {
+  it("Expected outcome: Tells the model not to guess final square after movement PLAYER ROLLED", () => {
     expect(SYSTEM_PROMPT).toMatch(/Movement PLAYER_ROLLED \+ NARRATE/);
     expect(SYSTEM_PROMPT).toMatch(/authoritative landing/);
   });
 
-  it("warns against NDJSON (two root objects) vs a single JSON array", () => {
+  it("Expected outcome: Warns against NDJSON (two root objects) vs a single JSON array", () => {
     expect(SYSTEM_PROMPT).toMatch(/Wrong.*two root objects|single array/i);
     expect(SYSTEM_PROMPT).toContain("PLAYER_ANSWERED");
   });
 
-  it("documents tagged user-turn layout: game_state and user_command", () => {
+  it("Expected outcome: Documents tagged user turn layout game state and user command", () => {
     expect(SYSTEM_PROMPT).toContain("<game_state>");
     expect(SYSTEM_PROMPT).toContain("<user_command>");
     expect(SYSTEM_PROMPT).toMatch(/Ground decisions in <game_state>/);
   });
 });
 
-describe("formatStateContext (es-AR)", () => {
+describe("Product scenario: Format State Context (es AR)", () => {
   beforeEach(() => {
     vi.spyOn(localeManager, "getLocale").mockReturnValue("es-AR");
   });
@@ -47,7 +47,7 @@ describe("formatStateContext (es-AR)", () => {
     vi.restoreAllMocks();
   });
 
-  it("only shows DECISION for current turn player", () => {
+  it("Expected outcome: Only shows DECISION for current turn player", () => {
     const state = {
       game: { turn: "p1", phase: "PLAYING" },
       players: {
@@ -63,7 +63,7 @@ describe("formatStateContext (es-AR)", () => {
     expect(result).not.toContain("DECISION (Bob)");
   });
 
-  it("shows DECISION for current turn player when they have pending path choice", () => {
+  it("Expected outcome: Shows DECISION for current turn player when they have pending path choice", () => {
     const state = {
       game: { turn: "p1", phase: "PLAYING" },
       players: {
@@ -83,7 +83,7 @@ describe("formatStateContext (es-AR)", () => {
     expect(result).not.toContain("DECISION (Bob)");
   });
 
-  it("omits DECISION while powerCheck is pending at a fork (roll first)", () => {
+  it("Expected outcome: Omits DECISION while power Check is pending at a fork (roll first)", () => {
     const state = {
       game: {
         turn: "p1",
@@ -117,7 +117,7 @@ describe("formatStateContext (es-AR)", () => {
     expect(result).not.toContain("DECISION (Alice)");
   });
 
-  it("includes branch hints when decision point has choiceKeywords", () => {
+  it("Expected outcome: Includes branch hints when decision point has choice Keywords", () => {
     const state = {
       game: { turn: "p1", phase: "PLAYING" },
       players: {
@@ -138,7 +138,7 @@ describe("formatStateContext (es-AR)", () => {
     expect(result).toContain("uno de: 1, 15");
   });
 
-  it("shows DECISION for p2 when it is p2's turn and they have pending path choice", () => {
+  it("Expected outcome: Shows DECISION for p2 when it is p2's turn and they have pending path choice", () => {
     const state = {
       game: { turn: "p2", phase: "PLAYING" },
       players: {
@@ -155,7 +155,7 @@ describe("formatStateContext (es-AR)", () => {
     expect(result).not.toContain("DECISION (Alice)");
   });
 
-  it("shows POWER CHECK hint when pending powerCheck for current player", () => {
+  it("Expected outcome: Shows POWER CHECK hint when pending power Check for current player", () => {
     const state = {
       game: {
         turn: "p1",
@@ -188,7 +188,7 @@ describe("formatStateContext (es-AR)", () => {
     expect(result).not.toContain("confirm the roll");
   });
 
-  it("omits DECISION when powerCheck is pending for current player even at a fork square", () => {
+  it("Expected outcome: Omits DECISION when power Check is pending for current player even at a fork square", () => {
     const state = {
       game: {
         turn: "p1",
@@ -218,7 +218,7 @@ describe("formatStateContext (es-AR)", () => {
     expect(result).toContain("POWER CHECK (F)");
   });
 
-  it("omits DECISION when revenge is pending for current player at a fork square", () => {
+  it("Expected outcome: Omits DECISION when revenge is pending for current player at a fork square", () => {
     const state = {
       game: {
         turn: "p1",
@@ -246,7 +246,7 @@ describe("formatStateContext (es-AR)", () => {
     expect(result).toContain("REVENGE (F)");
   });
 
-  it("POWER CHECK after correct riddle uses 2d6 (2–12) wording", () => {
+  it("Expected outcome: POWER CHECK after correct riddle uses 2d6 (2 12) wording", () => {
     const state = {
       game: {
         turn: "p1",
@@ -272,7 +272,7 @@ describe("formatStateContext (es-AR)", () => {
     expect(result).not.toContain("del dado (1–6)");
   });
 
-  it("RIDDLE phase includes power-check dice, habitat hint, and narration shape", () => {
+  it("Expected outcome: RIDDLE phase includes power check dice, habitat hint, and narration shape", () => {
     const state = {
       game: {
         turn: "p1",
@@ -314,7 +314,7 @@ describe("formatStateContext (es-AR)", () => {
     expect(result).toContain("superar al animal");
   });
 
-  it("RIDDLE phase with stored options still includes encounter hints and anti-leak", () => {
+  it("Expected outcome: RIDDLE phase with stored options still includes encounter hints and anti leak", () => {
     const state = {
       game: {
         turn: "p1",
@@ -353,7 +353,7 @@ describe("formatStateContext (es-AR)", () => {
     expect(result).toContain("NO incluyas la respuesta correcta");
   });
 
-  it("POWER CHECK on Águila (3d6) after correct riddle uses 3–18 wording", () => {
+  it("Expected outcome: POWER CHECK on Águila (3d6) after correct riddle uses 3 18 wording", () => {
     const state = {
       game: {
         turn: "p1",
@@ -389,7 +389,7 @@ describe("formatStateContext (es-AR)", () => {
     expect(result).not.toContain("del dado (1–6)");
   });
 
-  it("shows REVENGE hint with anti-pattern when pending kind=revenge", () => {
+  it("Expected outcome: Shows REVENGE hint with anti pattern when pending kind=revenge", () => {
     const state = {
       game: {
         turn: "p1",
@@ -419,7 +419,7 @@ describe("formatStateContext (es-AR)", () => {
     expect(result).toContain("necesita 4 o más");
   });
 
-  it("orders players by game.playerOrder when present", () => {
+  it("Expected outcome: Orders players by game player Order when present", () => {
     const state = {
       game: { turn: "p1", phase: "PLAYING", playerOrder: ["p2", "p1"] },
       players: {
@@ -437,7 +437,7 @@ describe("formatStateContext (es-AR)", () => {
     expect(afterPlayers).not.toMatch(/Players: p1:.*\|.*p2:/);
   });
 
-  it("without forLog truncates nested objects to {...}", () => {
+  it("Expected outcome: Without for Log truncates nested objects to { }", () => {
     const state = {
       game: {
         turn: "p2",
@@ -456,7 +456,7 @@ describe("formatStateContext (es-AR)", () => {
     expect(result).toContain("activeChoices={...}");
   });
 
-  it("with forLog: true expands pending and activeChoices", () => {
+  it("Expected outcome: With for Log true expands pending and active Choices", () => {
     const state = {
       game: {
         turn: "p2",
@@ -480,7 +480,7 @@ describe("formatStateContext (es-AR)", () => {
   });
 });
 
-describe("formatStateContext (en-US)", () => {
+describe("Product scenario: Format State Context (en US)", () => {
   beforeEach(() => {
     vi.spyOn(localeManager, "getLocale").mockReturnValue("en-US");
   });
@@ -488,7 +488,7 @@ describe("formatStateContext (en-US)", () => {
     vi.restoreAllMocks();
   });
 
-  it("uses English decision and branch-hint wording", () => {
+  it("Expected outcome: Uses English decision and branch hint wording", () => {
     const state = {
       game: { turn: "p1", phase: "PLAYING" },
       players: {
@@ -508,7 +508,7 @@ describe("formatStateContext (en-US)", () => {
     expect(result).toContain("target 1:");
   });
 
-  it("uses English power-check roll instructions for 1d6", () => {
+  it("Expected outcome: Uses English power check roll instructions for 1d6", () => {
     const state = {
       game: {
         turn: "p1",

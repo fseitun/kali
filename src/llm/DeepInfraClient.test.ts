@@ -14,7 +14,7 @@ vi.mock("../config", () => ({
   },
 }));
 
-describe("DeepInfraClient", () => {
+describe("Product scenario: Deep Infra Client", () => {
   let client: DeepInfraClient;
   let mockFetch: ReturnType<typeof vi.fn>;
   let mockState: GameState;
@@ -46,8 +46,8 @@ describe("DeepInfraClient", () => {
     vi.restoreAllMocks();
   });
 
-  describe("extractActions - markdown stripping", () => {
-    it("parses markdown-wrapped JSON from getActions", async () => {
+  describe("Product scenario: Extract Actions markdown stripping", () => {
+    it("Expected outcome: Parses markdown wrapped JSON from get Actions", async () => {
       const markdownResponse = '```json\n[{"action":"NARRATE","text":"Hi from DeepInfra"}]\n```';
       mockFetch.mockResolvedValueOnce({
         ok: true,
@@ -63,7 +63,7 @@ describe("DeepInfraClient", () => {
       expect(actions[0]).toEqual({ action: "NARRATE", text: "Hi from DeepInfra" });
     });
 
-    it("parses pure JSON when no markdown present", async () => {
+    it("Expected outcome: Parses pure JSON when no markdown present", async () => {
       const pureJson = '[{"action":"NARRATE","text":"Pure JSON works too"}]';
       mockFetch.mockResolvedValueOnce({
         ok: true,
@@ -80,8 +80,8 @@ describe("DeepInfraClient", () => {
     });
   });
 
-  describe("makeApiCall - cache-friendly messages", () => {
-    it("sends system + user messages when contextParts is provided", async () => {
+  describe("Product scenario: Make Api Call cache friendly messages", () => {
+    it("Expected outcome: Sends system + user messages when context Parts is provided", async () => {
       mockFetch.mockResolvedValueOnce({
         ok: true,
         json: () =>

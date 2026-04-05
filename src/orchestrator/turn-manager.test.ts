@@ -4,7 +4,7 @@ import { GamePhase } from "./types";
 import type { GameState } from "./types";
 import { StateManager } from "@/state-manager";
 
-describe("TurnManager", () => {
+describe("Product scenario: Turn Manager", () => {
   let turnManager: TurnManager;
   let stateManager: StateManager;
 
@@ -33,13 +33,13 @@ describe("TurnManager", () => {
     turnManager = new TurnManager(stateManager);
   });
 
-  describe("hasPendingDecisions()", () => {
-    it("should return false when no decision points exist", () => {
+  describe("Product scenario: Has Pending Decisions", () => {
+    it("Expected outcome: Should return false when no decision points exist", () => {
       const result = turnManager.hasPendingDecisions();
       expect(result).toBe(false);
     });
 
-    it("should return false when player not at decision point position", () => {
+    it("Expected outcome: Should return false when player not at decision point position", () => {
       stateManager.set("board.squares", {
         "10": { next: [11, 12], prev: [9] },
       });
@@ -49,7 +49,7 @@ describe("TurnManager", () => {
       expect(result).toBe(false);
     });
 
-    it("should return true when player at decision point with null field", () => {
+    it("Expected outcome: Should return true when player at decision point with null field", () => {
       stateManager.set("board.squares", {
         "5": { next: [6, 7], prev: [4] },
       });
@@ -60,7 +60,7 @@ describe("TurnManager", () => {
       expect(result).toBe(true);
     });
 
-    it("should return true when player at decision point with undefined field", () => {
+    it("Expected outcome: Should return true when player at decision point with undefined field", () => {
       stateManager.set("board.squares", {
         "5": { next: [6, 7], prev: [4] },
       });
@@ -70,7 +70,7 @@ describe("TurnManager", () => {
       expect(result).toBe(true);
     });
 
-    it("should return false when decision point field is filled", () => {
+    it("Expected outcome: Should return false when decision point field is filled", () => {
       stateManager.set("board.squares", {
         "5": { next: [6, 7], prev: [4] },
       });
@@ -81,7 +81,7 @@ describe("TurnManager", () => {
       expect(result).toBe(false);
     });
 
-    it("should return false when no current turn set", () => {
+    it("Expected outcome: Should return false when no current turn set", () => {
       stateManager.set("game.turn", null);
       stateManager.set("board.squares", {
         "5": { next: [6, 7], prev: [4] },
@@ -91,7 +91,7 @@ describe("TurnManager", () => {
       expect(result).toBe(false);
     });
 
-    it("should handle malformed state gracefully", () => {
+    it("Expected outcome: Should handle malformed state gracefully", () => {
       // No players object
       stateManager.setState({
         game: { phase: GamePhase.PLAYING, turn: "p1" },
@@ -102,8 +102,8 @@ describe("TurnManager", () => {
     });
   });
 
-  describe("advanceTurn()", () => {
-    it("should advance to next player successfully", async () => {
+  describe("Product scenario: Advance Turn", () => {
+    it("Expected outcome: Should advance to next player successfully", async () => {
       const result = await turnManager.advanceTurn(false);
 
       expect(result).toEqual({
@@ -118,7 +118,7 @@ describe("TurnManager", () => {
       expect((state.game as Record<string, unknown>).turn).toBe("p2");
     });
 
-    it("should wrap around from last to first player", async () => {
+    it("Expected outcome: Should wrap around from last to first player", async () => {
       stateManager.set("game.turn", "p3");
 
       const result = await turnManager.advanceTurn(false);
@@ -132,7 +132,7 @@ describe("TurnManager", () => {
       expect((stateManager.getState().game as Record<string, unknown>).turn).toBe("p1");
     });
 
-    it("should return null when game has winner", async () => {
+    it("Expected outcome: Should return null when game has winner", async () => {
       stateManager.set("game.winner", "p1");
 
       const result = await turnManager.advanceTurn(false);
@@ -142,7 +142,7 @@ describe("TurnManager", () => {
       expect((stateManager.getState().game as Record<string, unknown>).turn).toBe("p1");
     });
 
-    it("should return null when not in PLAYING phase", async () => {
+    it("Expected outcome: Should return null when not in PLAYING phase", async () => {
       stateManager.set("game.phase", GamePhase.SETUP);
 
       const result = await turnManager.advanceTurn(false);
@@ -150,7 +150,7 @@ describe("TurnManager", () => {
       expect(result).toBeNull();
     });
 
-    it("should return null when phase is FINISHED", async () => {
+    it("Expected outcome: Should return null when phase is FINISHED", async () => {
       stateManager.set("game.phase", GamePhase.FINISHED);
 
       const result = await turnManager.advanceTurn(false);
@@ -158,7 +158,7 @@ describe("TurnManager", () => {
       expect(result).toBeNull();
     });
 
-    it("should return null when no current turn set", async () => {
+    it("Expected outcome: Should return null when no current turn set", async () => {
       stateManager.set("game.turn", null);
 
       const result = await turnManager.advanceTurn(false);
@@ -166,7 +166,7 @@ describe("TurnManager", () => {
       expect(result).toBeNull();
     });
 
-    it("should return null when no player order exists", async () => {
+    it("Expected outcome: Should return null when no player order exists", async () => {
       stateManager.set("game.playerOrder", []);
 
       const result = await turnManager.advanceTurn(false);
@@ -174,7 +174,7 @@ describe("TurnManager", () => {
       expect(result).toBeNull();
     });
 
-    it("should block when square effect is processing", async () => {
+    it("Expected outcome: Should block when square effect is processing", async () => {
       const result = await turnManager.advanceTurn(true); // isProcessingSquareEffect = true
 
       expect(result).toBeNull();
@@ -182,7 +182,7 @@ describe("TurnManager", () => {
       expect((stateManager.getState().game as Record<string, unknown>).turn).toBe("p1");
     });
 
-    it("should block when current player has pending directional roll", async () => {
+    it("Expected outcome: Should block when current player has pending directional roll", async () => {
       stateManager.set("game.pending", {
         kind: "directional",
         playerId: "p1",
@@ -196,7 +196,7 @@ describe("TurnManager", () => {
       expect((stateManager.getState().game as Record<string, unknown>).turn).toBe("p1");
     });
 
-    it("should block when current player has pending decisions", async () => {
+    it("Expected outcome: Should block when current player has pending decisions", async () => {
       stateManager.set("board.squares", {
         "0": { next: [1, 15], prev: [] },
       });
@@ -210,7 +210,7 @@ describe("TurnManager", () => {
       expect((stateManager.getState().game as Record<string, unknown>).turn).toBe("p1");
     });
 
-    it("should allow advancement when decision is resolved", async () => {
+    it("Expected outcome: Should allow advancement when decision is resolved", async () => {
       stateManager.set("board.squares", {
         "0": { next: [1, 15], prev: [] },
       });
@@ -223,7 +223,7 @@ describe("TurnManager", () => {
       expect(result?.playerId).toBe("p2");
     });
 
-    it("should return correct player data (id, name, position)", async () => {
+    it("Expected outcome: Should return correct player data (id, name, position)", async () => {
       const result = await turnManager.advanceTurn(false);
 
       expect(result).toHaveProperty("playerId");
@@ -234,7 +234,7 @@ describe("TurnManager", () => {
       expect(result?.position).toBe(5);
     });
 
-    it("should handle missing player gracefully", async () => {
+    it("Expected outcome: Should handle missing player gracefully", async () => {
       // Set turn to non-existent player
       stateManager.set("game.playerOrder", ["p1", "p99"]);
       stateManager.set("game.turn", "p1");
@@ -245,7 +245,7 @@ describe("TurnManager", () => {
       expect(result?.playerId).toBe("p99");
     });
 
-    it("should skip next player when they have skipTurns and return skippedPlayers", async () => {
+    it("Expected outcome: Should skip next player when they have skip Turns and return skipped Players", async () => {
       stateManager.set("players.p2.skipTurns", 1);
 
       const result = await turnManager.advanceTurn(false);
@@ -256,7 +256,7 @@ describe("TurnManager", () => {
       expect(stateManager.get("players.p2.skipTurns")).toBe(0);
     });
 
-    it("should recursively skip multiple players with skipTurns", async () => {
+    it("Expected outcome: Should recursively skip multiple players with skip Turns", async () => {
       stateManager.set("players.p2.skipTurns", 1);
       stateManager.set("players.p3.skipTurns", 1);
 
@@ -273,26 +273,26 @@ describe("TurnManager", () => {
     });
   });
 
-  describe("assertPlayerTurnOwnership()", () => {
-    it("should allow mutation when path matches current player", async () => {
+  describe("Product scenario: Assert Player Turn Ownership", () => {
+    it("Expected outcome: Should allow mutation when path matches current player", async () => {
       await expect(
         turnManager.assertPlayerTurnOwnership("players.p1.position"),
       ).resolves.not.toThrow();
     });
 
-    it("should throw error when path targets different player", async () => {
+    it("Expected outcome: Should throw error when path targets different player", async () => {
       await expect(turnManager.assertPlayerTurnOwnership("players.p2.position")).rejects.toThrow(
         /Turn ownership violation/,
       );
     });
 
-    it("should allow non-player paths", async () => {
+    it("Expected outcome: Should allow non player paths", async () => {
       await expect(turnManager.assertPlayerTurnOwnership("game.lastRoll")).resolves.not.toThrow();
 
       await expect(turnManager.assertPlayerTurnOwnership("board.squares")).resolves.not.toThrow();
     });
 
-    it("should handle malformed paths gracefully", async () => {
+    it("Expected outcome: Should handle malformed paths gracefully", async () => {
       // Path too short
       await expect(turnManager.assertPlayerTurnOwnership("players")).resolves.not.toThrow();
 
@@ -300,7 +300,7 @@ describe("TurnManager", () => {
       await expect(turnManager.assertPlayerTurnOwnership("")).resolves.not.toThrow();
     });
 
-    it("should allow when no current turn set", async () => {
+    it("Expected outcome: Should allow when no current turn set", async () => {
       stateManager.set("game.turn", null);
 
       await expect(
@@ -308,7 +308,7 @@ describe("TurnManager", () => {
       ).resolves.not.toThrow();
     });
 
-    it("should include player IDs in error message", async () => {
+    it("Expected outcome: Should include player IDs in error message", async () => {
       await expect(async () => {
         await turnManager.assertPlayerTurnOwnership("players.p3.position");
       }).rejects.toThrow(

@@ -10,8 +10,8 @@ import {
 const _dir = dirname(fileURLToPath(import.meta.url));
 const kalimbaConfigPath = join(_dir, "../../public/games/kalimba/config.json");
 
-describe("kalimba encounter phrases", () => {
-  it("maps every Kalimba square with power (es-AR and en-US)", () => {
+describe("Product scenario: Kalimba encounter phrases", () => {
+  it("Expected outcome: Maps every Kalimba square with power (es AR and en US)", () => {
     const raw = readFileSync(kalimbaConfigPath, "utf-8");
     const config = JSON.parse(raw) as {
       squares?: Record<string, { name?: string; power?: number }>;

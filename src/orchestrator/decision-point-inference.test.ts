@@ -2,14 +2,14 @@ import { describe, expect, it } from "vitest";
 import { inferDecisionPoints } from "./decision-point-inference";
 import type { BoardConfig } from "./types";
 
-describe("inferDecisionPoints", () => {
-  it("returns empty array when board has no squares", () => {
+describe("Product scenario: Infer Decision Points", () => {
+  it("Expected outcome: Returns empty array when board has no squares", () => {
     expect(inferDecisionPoints(undefined)).toEqual([]);
     expect(inferDecisionPoints({})).toEqual([]);
     expect(inferDecisionPoints({ squares: {} })).toEqual([]);
   });
 
-  it("returns empty when no forks (next.length <= 1)", () => {
+  it("Expected outcome: Returns empty when no forks (next length <= 1)", () => {
     const board: BoardConfig = {
       squares: {
         "0": { next: [1] },
@@ -19,7 +19,7 @@ describe("inferDecisionPoints", () => {
     expect(inferDecisionPoints(board)).toEqual([]);
   });
 
-  it("infers fork at position 0 with izquierda/derecha prompt", () => {
+  it("Expected outcome: Infers fork at position 0 with izquierda/derecha prompt", () => {
     const board: BoardConfig = {
       squares: {
         "0": { next: [1, 15] },
@@ -34,7 +34,7 @@ describe("inferDecisionPoints", () => {
     });
   });
 
-  it("infers numeric fork prompt for non-zero positions", () => {
+  it("Expected outcome: Infers numeric fork prompt for non zero positions", () => {
     const board: BoardConfig = {
       squares: {
         "96": { next: [97, 99] },
@@ -49,7 +49,7 @@ describe("inferDecisionPoints", () => {
     });
   });
 
-  it("sorts next options so prompt and positionOptions order are deterministic", () => {
+  it("Expected outcome: Sorts next options so prompt and position Options order are deterministic", () => {
     const board: BoardConfig = {
       squares: {
         "96": { next: [99, 97] },
@@ -61,7 +61,7 @@ describe("inferDecisionPoints", () => {
     expect(result[0].positionOptions).toEqual({ "97": 97, "99": 99 });
   });
 
-  it("infers multiple forks sorted by position", () => {
+  it("Expected outcome: Infers multiple forks sorted by position", () => {
     const board: BoardConfig = {
       squares: {
         "101": { name: "Morsa", next: [102, 105] },
@@ -76,7 +76,7 @@ describe("inferDecisionPoints", () => {
     expect(result[2].position).toBe(101);
   });
 
-  it("infers choiceKeywords from object next with implicit target numbers", () => {
+  it("Expected outcome: Infers choice Keywords from object next with implicit target numbers", () => {
     const board: BoardConfig = {
       squares: {
         "0": {

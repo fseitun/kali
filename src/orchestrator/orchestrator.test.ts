@@ -10,7 +10,7 @@ import type { LLMClient } from "@/llm/LLMClient";
 import type { SpeechService } from "@/services/speech-service";
 import { StateManager } from "@/state-manager";
 
-describe("Orchestrator - New Action Handlers", () => {
+describe("Product scenario: Game orchestrator New Action Handlers", () => {
   let orchestrator: Orchestrator;
   let mockLLM: LLMClient;
   let mockStateManager: StateManager;
@@ -77,8 +77,8 @@ describe("Orchestrator - New Action Handlers", () => {
     );
   });
 
-  describe("PLAYER_ROLLED", () => {
-    it("infers playerId from game.turn", async () => {
+  describe("Product scenario: Player rolls", () => {
+    it("Expected outcome: Infers player Id from game turn", async () => {
       const actions: PrimitiveAction[] = [{ action: "PLAYER_ROLLED", value: 3 }];
 
       await orchestrator.testExecuteActions(actions);
@@ -87,7 +87,7 @@ describe("Orchestrator - New Action Handlers", () => {
       expect(mockStateManager.set).toHaveBeenCalledWith("game.lastRoll", 3);
     });
 
-    it("calculates new position correctly", async () => {
+    it("Expected outcome: Calculates new position correctly", async () => {
       const actions: PrimitiveAction[] = [{ action: "PLAYER_ROLLED", value: 5 }];
 
       await orchestrator.testExecuteActions(actions);
@@ -96,8 +96,8 @@ describe("Orchestrator - New Action Handlers", () => {
     });
   });
 
-  describe("PLAYER_ANSWERED", () => {
-    it("stores answer in game.lastAnswer", async () => {
+  describe("Product scenario: Player answers", () => {
+    it("Expected outcome: Stores answer in game last Answer", async () => {
       const actions: PrimitiveAction[] = [{ action: "PLAYER_ANSWERED", answer: "A" }];
 
       await orchestrator.testExecuteActions(actions);
@@ -105,7 +105,7 @@ describe("Orchestrator - New Action Handlers", () => {
       expect(mockStateManager.set).toHaveBeenCalledWith("game.lastAnswer", "A");
     });
 
-    it("handles multi-word answers", async () => {
+    it("Expected outcome: Handles multi word answers", async () => {
       const actions: PrimitiveAction[] = [
         { action: "PLAYER_ANSWERED", answer: "fight the dragon" },
       ];
@@ -115,7 +115,7 @@ describe("Orchestrator - New Action Handlers", () => {
       expect(mockStateManager.set).toHaveBeenCalledWith("game.lastAnswer", "fight the dragon");
     });
 
-    it("auto-applies answer to pending fork decision point", async () => {
+    it("Expected outcome: Auto applies answer to pending fork decision point", async () => {
       (testState.players as any).p1.position = 0;
       (testState.players as any).p1.activeChoices = {};
       (testState.board as any).squares = {
@@ -140,7 +140,7 @@ describe("Orchestrator - New Action Handlers", () => {
       expect(mockStateManager.set).toHaveBeenCalledWith("players.p1.activeChoices.0", 1);
     });
 
-    it("auto-applies position 15 to fork at 0 via positionOptions", async () => {
+    it("Expected outcome: Auto applies position 15 to fork at 0 via position Options", async () => {
       (testState.players as any).p1.position = 0;
       (testState.players as any).p1.activeChoices = {};
       (testState.board as any).squares = {
@@ -156,7 +156,7 @@ describe("Orchestrator - New Action Handlers", () => {
       expect(mockStateManager.set).toHaveBeenCalledWith("players.p1.activeChoices.0", 15);
     });
 
-    it("auto-applies choiceKeywords phrase (e.g. derecha) to fork at 0", async () => {
+    it("Expected outcome: Auto applies choice Keywords phrase (e.g. derecha) to fork at 0", async () => {
       (testState.players as any).p1.position = 0;
       (testState.players as any).p1.activeChoices = {};
       (testState.board as any).squares = {
@@ -175,7 +175,7 @@ describe("Orchestrator - New Action Handlers", () => {
       expect(mockStateManager.set).toHaveBeenCalledWith("players.p1.activeChoices.0", 15);
     });
 
-    it("PLAYER_ANSWERED path choice at position 0 does not advance turn", async () => {
+    it("Expected outcome: PLAYER ANSWERED path choice at position 0 does not advance turn", async () => {
       (testState.players as any).p1.position = 0;
       (testState.players as any).p1.activeChoices = {};
       (testState.board as any).squares = {
@@ -197,7 +197,7 @@ describe("Orchestrator - New Action Handlers", () => {
       expect(result.turnAdvance.kind).toBe("none");
     });
 
-    it("PLAYER_ANSWERED + NARRATE at fork 0 does not advance turn", async () => {
+    it("Expected outcome: PLAYER ANSWERED + NARRATE at fork 0 does not advance turn", async () => {
       (testState.players as any).p1.position = 0;
       (testState.players as any).p1.activeChoices = {};
       (testState.board as any).squares = {
@@ -223,8 +223,8 @@ describe("Orchestrator - New Action Handlers", () => {
     });
   });
 
-  describe("ASK_RIDDLE", () => {
-    it("stores riddle text, options, correctOption and optional synonyms in pendingAnimalEncounter", async () => {
+  describe("Product scenario: Game asks a riddle", () => {
+    it("Expected outcome: Stores riddle text, options, correct Option and optional synonyms in pending Animal Encounter", async () => {
       (testState.game as any).pending = {
         position: 5,
         power: 3,
@@ -269,8 +269,8 @@ describe("Orchestrator - New Action Handlers", () => {
     });
   });
 
-  describe("PLAYER_ANSWERED riddle phase", () => {
-    it("resolves correct riddle choice (strict match) and transitions to powerCheck", async () => {
+  describe("Product scenario: Player answers riddle phase", () => {
+    it("Expected outcome: Resolves correct riddle choice (strict match) and transitions to power Check", async () => {
       (testState.game as any).pending = {
         position: 5,
         power: 3,
@@ -306,7 +306,7 @@ describe("Orchestrator - New Action Handlers", () => {
       );
     });
 
-    it("after correct riddle on heart animal, speech includes magic-heart door hint", async () => {
+    it("Expected outcome: After correct riddle on heart animal, speech includes magic heart door hint", async () => {
       setLocale("en-US");
       testState.board = {
         squares: {
@@ -345,7 +345,7 @@ describe("Orchestrator - New Action Handlers", () => {
       );
     });
 
-    it("resolves wrong riddle choice: strict false then LLM says false", async () => {
+    it("Expected outcome: Resolves wrong riddle choice strict false then interpreter says false", async () => {
       (testState.game as any).pending = {
         position: 5,
         power: 3,
@@ -381,7 +381,7 @@ describe("Orchestrator - New Action Handlers", () => {
       );
     });
 
-    it("resolves option text (miércoles) and marks riddleCorrect true via strict match", async () => {
+    it("Expected outcome: Resolves option text (miércoles) and marks riddle Correct true via strict match", async () => {
       (testState.game as any).pending = {
         position: 5,
         power: 3,
@@ -417,7 +417,7 @@ describe("Orchestrator - New Action Handlers", () => {
       );
     });
 
-    it("prefers transcript over LLM answer: user said 'la hormiga', LLM returned wrong option → riddleCorrect true", async () => {
+    it("Expected outcome: Prefers transcript over interpreter answer user said 'la hormiga', interpreter returned wrong option to riddle Correct true", async () => {
       (testState.game as any).pending = {
         position: 5,
         power: 3,
@@ -456,8 +456,8 @@ describe("Orchestrator - New Action Handlers", () => {
     });
   });
 
-  describe("Board Mechanics - Orchestrator Control", () => {
-    it("auto-applies ladder after position change", async () => {
+  describe("Product scenario: Board Mechanics game orchestrator Control", () => {
+    it("Expected outcome: Auto applies ladder after position change", async () => {
       testState.board = {
         squares: {
           "10": { destination: 25 },
@@ -486,7 +486,7 @@ describe("Orchestrator - New Action Handlers", () => {
       expect(testState.players.p1.position).toBe(25);
     });
 
-    it("auto-applies snake after position change", async () => {
+    it("Expected outcome: Auto applies snake after position change", async () => {
       testState.board = {
         squares: {
           "15": { destination: 5 },
@@ -515,7 +515,7 @@ describe("Orchestrator - New Action Handlers", () => {
       expect(testState.players.p1.position).toBe(5);
     });
 
-    it("applies board moves after PLAYER_ROLLED", async () => {
+    it("Expected outcome: Applies board moves after player rolls", async () => {
       testState.board = {
         squares: {
           "10": { destination: 25 },
@@ -544,7 +544,7 @@ describe("Orchestrator - New Action Handlers", () => {
       expect((testState.players as any).p1.position).toBe(25);
     });
 
-    it("LLM cannot bypass board moves (orchestrator always applies)", async () => {
+    it("Expected outcome: Interpreter cannot bypass board moves (orchestrator always applies)", async () => {
       testState.board = {
         squares: {
           "10": { destination: 25 },
@@ -574,8 +574,8 @@ describe("Orchestrator - New Action Handlers", () => {
     });
   });
 
-  describe("Square Effects - Orchestrator Triggers", () => {
-    it("applies skipTurn square with deterministic TTS (no LLM for non-animal special squares)", async () => {
+  describe("Product scenario: Square Effects game orchestrator Triggers", () => {
+    it("Expected outcome: Applies skip Turn square with deterministic TTS (no interpreter for non animal special squares)", async () => {
       testState.board = {
         squares: {
           "20": {
@@ -616,8 +616,8 @@ describe("Orchestrator - New Action Handlers", () => {
     });
   });
 
-  describe("Power-check chaining", () => {
-    it("power win from 16 with roll 5 lands on 21 (Camel), sets pending encounter, turn does not advance", async () => {
+  describe("Product scenario: Power check chaining", () => {
+    it("Expected outcome: Power win from 16 with roll 5 lands on 21 (Camel), sets pending encounter, turn does not advance", async () => {
       const stateManager = new StateManager();
       stateManager.init({
         game: {
@@ -675,8 +675,8 @@ describe("Orchestrator - New Action Handlers", () => {
     });
   });
 
-  describe("handleTranscript - Return Value and Separation of Concerns", () => {
-    it("returns success true when transcript processed successfully", async () => {
+  describe("Product scenario: Handle Transcript Return Value and Separation of Concerns", () => {
+    it("Expected outcome: Returns success true when transcript processed successfully", async () => {
       mockLLM.getActions = vi.fn(async () => [{ action: "NARRATE", text: "Hello" }]);
 
       const { success } = await orchestrator.handleTranscript("test command");
@@ -684,7 +684,7 @@ describe("Orchestrator - New Action Handlers", () => {
       expect(success).toBe(true);
     });
 
-    it("returns success false when transcript processing fails", async () => {
+    it("Expected outcome: Returns success false when transcript processing fails", async () => {
       mockLLM.getActions = vi.fn(async () => {
         throw new Error("LLM error");
       });
@@ -694,7 +694,7 @@ describe("Orchestrator - New Action Handlers", () => {
       expect(success).toBe(false);
     });
 
-    it("returns success false when validation fails", async () => {
+    it("Expected outcome: Returns success false when validation fails", async () => {
       mockLLM.getActions = vi.fn(async () => [
         { action: "SET_STATE", path: "players.p2.position", value: 99 },
       ]);
@@ -704,7 +704,7 @@ describe("Orchestrator - New Action Handlers", () => {
       expect(success).toBe(false);
     });
 
-    it("does not advance turn (no longer its responsibility)", async () => {
+    it("Expected outcome: Does not advance turn (no longer its responsibility)", async () => {
       (testState.game as any).turn = "p1";
       (testState.game as any).playerOrder = ["p1", "p2"];
 
@@ -715,7 +715,7 @@ describe("Orchestrator - New Action Handlers", () => {
       expect(mockStateManager.set).not.toHaveBeenCalledWith("game.turn", "p2");
     });
 
-    it("testExecuteActions does not advance turn", async () => {
+    it("Expected outcome: Test Execute Actions does not advance turn", async () => {
       (testState.game as any).turn = "p1";
       (testState.game as any).playerOrder = ["p1", "p2"];
 
@@ -726,7 +726,7 @@ describe("Orchestrator - New Action Handlers", () => {
       expect(mockStateManager.set).not.toHaveBeenCalledWith("game.turn", "p2");
     });
 
-    it("NARRATE-only returns turnAdvance none (State Query fix)", async () => {
+    it("Expected outcome: NARRATE only returns turn Advance none (State Query fix)", async () => {
       mockLLM.getActions = vi.fn(async () => [
         { action: "NARRATE", text: "Fico is ahead at position 45" },
       ]);
@@ -737,7 +737,7 @@ describe("Orchestrator - New Action Handlers", () => {
       expect(result.turnAdvance.kind).toBe("none");
     });
 
-    it("PLAYER_ROLLED plus NARRATE returns turnAdvance callAdvanceTurn", async () => {
+    it("Expected outcome: PLAYER ROLLED plus NARRATE returns turn Advance call Advance Turn", async () => {
       mockLLM.getActions = vi.fn(async () => [
         { action: "PLAYER_ROLLED", value: 4 },
         { action: "NARRATE", text: "Moving 4 spaces!" },
@@ -749,7 +749,7 @@ describe("Orchestrator - New Action Handlers", () => {
       expect(result.turnAdvance.kind).toBe("callAdvanceTurn");
     });
 
-    it("passes last NARRATE as lastBotUtterance when user confirms (roll clarification)", async () => {
+    it("Expected outcome: Passes last NARRATE as last Bot Utterance when user confirms (roll clarification)", async () => {
       const confirmationQuestion = "¿Tiraste un 3, Federico?";
       mockLLM.getActions = vi.fn(
         async (transcript: string, _state: GameState, lastBot?: string) => {
@@ -780,7 +780,7 @@ describe("Orchestrator - New Action Handlers", () => {
       );
     });
 
-    it("passes riddleIncorrect as lastBotUtterance after wrong riddle answer", async () => {
+    it("Expected outcome: Passes riddle Incorrect as last Bot Utterance after wrong riddle answer", async () => {
       setLocale("es-AR");
       (testState.board as any).squares = {
         "5": { name: "Cobra", power: 4 },
@@ -826,12 +826,12 @@ describe("Orchestrator - New Action Handlers", () => {
     });
   });
 
-  describe("Processing Lock - Concurrency Protection", () => {
-    it("isLocked returns false when idle", () => {
+  describe("Product scenario: Processing Lock Concurrency Protection", () => {
+    it("Expected outcome: Is Locked returns false when idle", () => {
       expect(orchestrator.isLocked()).toBe(false);
     });
 
-    it("isLocked returns true while processing", async () => {
+    it("Expected outcome: Is Locked returns true while processing", async () => {
       mockLLM.getActions = vi.fn(async () => {
         expect(orchestrator.isLocked()).toBe(true);
         return [];
@@ -840,7 +840,7 @@ describe("Orchestrator - New Action Handlers", () => {
       await orchestrator.handleTranscript("test");
     });
 
-    it("rejects concurrent handleTranscript calls", async () => {
+    it("Expected outcome: Rejects concurrent handle Transcript calls", async () => {
       let firstCallResolved = false;
       mockLLM.getActions = vi.fn(async () => {
         await new Promise((resolve) => setTimeout(resolve, 50));
@@ -857,7 +857,7 @@ describe("Orchestrator - New Action Handlers", () => {
       expect(mockLLM.getActions).toHaveBeenCalledTimes(1);
     });
 
-    it("rejects concurrent testExecuteActions calls", async () => {
+    it("Expected outcome: Rejects concurrent test Execute Actions calls", async () => {
       let callCount = 0;
 
       mockSpeech.speak = vi.fn(async () => {
@@ -878,7 +878,7 @@ describe("Orchestrator - New Action Handlers", () => {
       expect(results[1]).toEqual({ success: false, turnAdvance: { kind: "none" } });
     });
 
-    it("releases lock after successful execution", async () => {
+    it("Expected outcome: Releases lock after successful execution", async () => {
       mockLLM.getActions = vi.fn(async () => []);
 
       await orchestrator.handleTranscript("test");
@@ -886,7 +886,7 @@ describe("Orchestrator - New Action Handlers", () => {
       expect(orchestrator.isLocked()).toBe(false);
     });
 
-    it("releases lock after failed execution", async () => {
+    it("Expected outcome: Releases lock after failed execution", async () => {
       mockLLM.getActions = vi.fn(async () => {
         throw new Error("LLM error");
       });
@@ -896,7 +896,7 @@ describe("Orchestrator - New Action Handlers", () => {
       expect(orchestrator.isLocked()).toBe(false);
     });
 
-    it("releases lock after exception", async () => {
+    it("Expected outcome: Releases lock after exception", async () => {
       mockStateManager.set = vi.fn(async () => {
         throw new Error("State error");
       });
@@ -911,7 +911,7 @@ describe("Orchestrator - New Action Handlers", () => {
     });
   });
 
-  describe("Decision-point ask undupe", () => {
+  describe("Product scenario: Decision point ask undupe", () => {
     // Inferred prompt for fork at 0 with next [1, 15] from decision-point-inference
     const decisionPrompt = "¿Querés ir por la izquierda o por la derecha?";
     const longNarrate =
@@ -933,7 +933,7 @@ describe("Orchestrator - New Action Handlers", () => {
       });
     });
 
-    it("does not call enforceDecisionPoints after NARRATE that covers decision (only one LLM call)", async () => {
+    it("Expected outcome: Does not call enforce Decision Points after NARRATE that covers decision (only one interpreter call)", async () => {
       mockLLM.getActions = vi.fn().mockResolvedValue([{ action: "NARRATE", text: longNarrate }]);
 
       await orchestrator.handleTranscript("que tengo que hacer");
@@ -943,7 +943,7 @@ describe("Orchestrator - New Action Handlers", () => {
       expect(mockSpeech.speak).toHaveBeenCalledWith(longNarrate);
     });
 
-    it("speaks only once when batch has covering NARRATE then exact prompt NARRATE", async () => {
+    it("Expected outcome: Speaks only once when batch has covering NARRATE then exact prompt NARRATE", async () => {
       const actions: PrimitiveAction[] = [
         { action: "NARRATE", text: longNarrate },
         { action: "NARRATE", text: decisionPrompt },
@@ -956,7 +956,7 @@ describe("Orchestrator - New Action Handlers", () => {
     });
   });
 
-  describe("RESET_GAME", () => {
+  describe("Product scenario: Game reset", () => {
     beforeEach(() => {
       testState.players = {
         p1: { id: "p1", name: "Alice", position: 50, hearts: 3 },
@@ -974,7 +974,7 @@ describe("Orchestrator - New Action Handlers", () => {
       });
     });
 
-    it("resets with keepPlayerNames true", async () => {
+    it("Expected outcome: Resets with keep Player Names true", async () => {
       const actions: PrimitiveAction[] = [{ action: "RESET_GAME", keepPlayerNames: true }];
 
       await orchestrator.testExecuteActions(actions);
@@ -984,7 +984,7 @@ describe("Orchestrator - New Action Handlers", () => {
       expect(mockStateManager.set).toHaveBeenCalledWith("players.p2.name", "Bob");
     });
 
-    it("resets with keepPlayerNames false", async () => {
+    it("Expected outcome: Resets with keep Player Names false", async () => {
       const actions: PrimitiveAction[] = [{ action: "RESET_GAME", keepPlayerNames: false }];
 
       await orchestrator.testExecuteActions(actions);

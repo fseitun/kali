@@ -14,7 +14,7 @@ vi.mock("../config", () => ({
   },
 }));
 
-describe("GeminiClient", () => {
+describe("Product scenario: Gemini Client", () => {
   let client: GeminiClient;
   let mockFetch: ReturnType<typeof vi.fn>;
 
@@ -28,8 +28,8 @@ describe("GeminiClient", () => {
     vi.restoreAllMocks();
   });
 
-  describe("makeApiCall", () => {
-    it("should make successful API call", async () => {
+  describe("Product scenario: Make Api Call", () => {
+    it("Expected outcome: Should make successful API call", async () => {
       const mockResponse = {
         candidates: [
           {
@@ -83,7 +83,7 @@ describe("GeminiClient", () => {
       expect(result).toEqual({ content: "Test response from Gemini" });
     });
 
-    it("should use default temperature and maxTokens", async () => {
+    it("Expected outcome: Should use default temperature and max Tokens", async () => {
       const mockResponse = {
         candidates: [
           {
@@ -127,7 +127,7 @@ describe("GeminiClient", () => {
       );
     });
 
-    it("should handle API error responses", async () => {
+    it("Expected outcome: Should handle API error responses", async () => {
       mockFetch.mockResolvedValueOnce({
         ok: false,
         status: 400,
@@ -140,13 +140,13 @@ describe("GeminiClient", () => {
       );
     });
 
-    it("should handle network errors", async () => {
+    it("Expected outcome: Should handle network errors", async () => {
       mockFetch.mockRejectedValueOnce(new Error("Network error"));
 
       await expect(client.makeApiCall("Test prompt", {})).rejects.toThrow("Network error");
     });
 
-    it("should handle empty response content", async () => {
+    it("Expected outcome: Should handle empty response content", async () => {
       const mockResponse = {
         candidates: [
           {
@@ -171,7 +171,7 @@ describe("GeminiClient", () => {
       expect(result).toEqual({ content: "" });
     });
 
-    it("should handle missing candidates", async () => {
+    it("Expected outcome: Should handle missing candidates", async () => {
       const mockResponse = {};
 
       mockFetch.mockResolvedValueOnce({
@@ -184,7 +184,7 @@ describe("GeminiClient", () => {
       expect(result).toEqual({ content: "" });
     });
 
-    it("should handle missing content in candidates", async () => {
+    it("Expected outcome: Should handle missing content in candidates", async () => {
       const mockResponse = {
         candidates: [{}],
       };
@@ -199,7 +199,7 @@ describe("GeminiClient", () => {
       expect(result).toEqual({ content: "" });
     });
 
-    it("should handle missing parts in content", async () => {
+    it("Expected outcome: Should handle missing parts in content", async () => {
       const mockResponse = {
         candidates: [
           {
@@ -218,7 +218,7 @@ describe("GeminiClient", () => {
       expect(result).toEqual({ content: "" });
     });
 
-    it("should handle missing text in parts", async () => {
+    it("Expected outcome: Should handle missing text in parts", async () => {
       const mockResponse = {
         candidates: [
           {
@@ -239,7 +239,7 @@ describe("GeminiClient", () => {
       expect(result).toEqual({ content: "" });
     });
 
-    it("should handle multiple candidates and use first one", async () => {
+    it("Expected outcome: Should handle multiple candidates and use first one", async () => {
       const mockResponse = {
         candidates: [
           {
@@ -273,7 +273,7 @@ describe("GeminiClient", () => {
       expect(result).toEqual({ content: "First response" });
     });
 
-    it("should handle custom temperature and maxTokens", async () => {
+    it("Expected outcome: Should handle custom temperature and max Tokens", async () => {
       const mockResponse = {
         candidates: [
           {

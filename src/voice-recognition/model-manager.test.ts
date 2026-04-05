@@ -25,7 +25,7 @@ vi.mock("../utils/logger", () => ({
   },
 }));
 
-describe("ModelManager", () => {
+describe("Product scenario: Model Manager", () => {
   let modelManager: ModelManager;
   let mockCaches: any;
   let mockFetch: ReturnType<typeof vi.fn>;
@@ -61,8 +61,8 @@ describe("ModelManager", () => {
     vi.restoreAllMocks();
   });
 
-  describe("getInstance", () => {
-    it("should return singleton instance", () => {
+  describe("Product scenario: Get Instance", () => {
+    it("Expected outcome: Should return singleton instance", () => {
       const instance1 = ModelManager.getInstance();
       const instance2 = ModelManager.getInstance();
 
@@ -70,8 +70,8 @@ describe("ModelManager", () => {
     });
   });
 
-  describe("getModel", () => {
-    it("should return cached model if available", async () => {
+  describe("Product scenario: Get Model", () => {
+    it("Expected outcome: Should return cached model if available", async () => {
       const mockBlob = new Blob(["mock data"]);
       const mockResponse = {
         headers: {
@@ -89,7 +89,7 @@ describe("ModelManager", () => {
       expect(mockFetch).not.toHaveBeenCalled(); // Should not download
     });
 
-    it("should download model if not cached", async () => {
+    it("Expected outcome: Should download model if not cached", async () => {
       mockCaches.match.mockResolvedValueOnce(null);
 
       const mockResponse = {
@@ -118,7 +118,7 @@ describe("ModelManager", () => {
       expect(result).toBe("blob:mock-url");
     });
 
-    it("should download model if version mismatch", async () => {
+    it("Expected outcome: Should download model if version mismatch", async () => {
       const mockBlob = new Blob(["mock data"]);
       const mockResponse = {
         headers: {
@@ -157,7 +157,7 @@ describe("ModelManager", () => {
       expect(result).toBe("blob:mock-url");
     });
 
-    it("should handle cache retrieval error", async () => {
+    it("Expected outcome: Should handle cache retrieval error", async () => {
       mockCaches.match.mockRejectedValueOnce(new Error("Cache error"));
 
       const mockResponse = {
@@ -185,7 +185,7 @@ describe("ModelManager", () => {
       expect(result).toBe("blob:mock-url");
     });
 
-    it("should handle download failure", async () => {
+    it("Expected outcome: Should handle download failure", async () => {
       mockCaches.match.mockResolvedValueOnce(null);
       mockFetch.mockResolvedValueOnce({
         ok: false,
@@ -195,14 +195,14 @@ describe("ModelManager", () => {
       await expect(modelManager.getModel()).rejects.toThrow("Failed to download model: Not Found");
     });
 
-    it("should handle network error during download", async () => {
+    it("Expected outcome: Should handle network error during download", async () => {
       mockCaches.match.mockResolvedValueOnce(null);
       mockFetch.mockRejectedValueOnce(new Error("Network error"));
 
       await expect(modelManager.getModel()).rejects.toThrow("Network error");
     });
 
-    it("should handle missing content length", async () => {
+    it("Expected outcome: Should handle missing content length", async () => {
       mockCaches.match.mockResolvedValueOnce(null);
 
       const mockResponse = {
@@ -230,7 +230,7 @@ describe("ModelManager", () => {
       expect(result).toBe("blob:mock-url");
     });
 
-    it("should handle unreadable response body", async () => {
+    it("Expected outcome: Should handle unreadable response body", async () => {
       mockCaches.match.mockResolvedValueOnce(null);
 
       const mockResponse = {
@@ -246,7 +246,7 @@ describe("ModelManager", () => {
       await expect(modelManager.getModel()).rejects.toThrow("Response body is not readable");
     });
 
-    it("should call progress callback during download", async () => {
+    it("Expected outcome: Should call progress callback during download", async () => {
       mockCaches.match.mockResolvedValueOnce(null);
 
       const progressCallback = vi.fn();
@@ -276,7 +276,7 @@ describe("ModelManager", () => {
       expect(progressCallback).toHaveBeenCalledWith(50); // 3/6 * 100 = 50%
     });
 
-    it("should handle blob creation error", async () => {
+    it("Expected outcome: Should handle blob creation error", async () => {
       mockCaches.match.mockResolvedValueOnce(null);
 
       const mockResponse = {

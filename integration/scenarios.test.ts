@@ -17,14 +17,14 @@ const SCENARIOS_DIR = path.join(__dirname, "scenarios");
  * TDD: Add a new JSON file under integration/scenarios/ to add regression coverage.
  * Run: npm run test:integration
  */
-describe("Integration scenarios", () => {
+describe("Product scenario: Integration scenarios", () => {
   const scenarioFiles = fs.readdirSync(SCENARIOS_DIR).filter((f) => f.endsWith(".json"));
 
   for (const file of scenarioFiles) {
     const scenarioPath = path.join(SCENARIOS_DIR, file);
     const scenario: Scenario = JSON.parse(fs.readFileSync(scenarioPath, "utf-8")) as Scenario;
 
-    it(`runs scenario: ${file}`, async () => {
+    it(`Expected outcome: Runs scenario ${file}`, async () => {
       await expect(runScenario(scenario)).resolves.not.toThrow();
     });
   }

@@ -7,7 +7,7 @@ import type { StateManager } from "@/state-manager";
 
 type MockStateManager = Pick<StateManager, "pathExists" | "getByPath">;
 
-describe("Validator - New Primitives", () => {
+describe("Product scenario: Rule validation New Primitives", () => {
   let mockState: GameState;
   let mockStateManager: MockStateManager;
   let mockValidatorContext: {
@@ -67,8 +67,8 @@ describe("Validator - New Primitives", () => {
     mockValidatorContext = { isProcessingEffect: false };
   });
 
-  describe("PLAYER_ROLLED", () => {
-    it("validates with positive value", () => {
+  describe("Product scenario: Player rolls", () => {
+    it("Expected outcome: Validates with positive value", () => {
       const actions = [{ action: "PLAYER_ROLLED", value: 5 }];
       const result = validateActions(
         actions,
@@ -79,7 +79,7 @@ describe("Validator - New Primitives", () => {
       expect(result.valid).toBe(true);
     });
 
-    it("rejects zero value", () => {
+    it("Expected outcome: Rejects zero value", () => {
       const actions = [{ action: "PLAYER_ROLLED", value: 0 }];
       const result = validateActions(
         actions,
@@ -92,7 +92,7 @@ describe("Validator - New Primitives", () => {
       expect(result.error).toContain("positive value");
     });
 
-    it("rejects negative value", () => {
+    it("Expected outcome: Rejects negative value", () => {
       const actions = [{ action: "PLAYER_ROLLED", value: -3 }];
       const result = validateActions(
         actions,
@@ -104,7 +104,7 @@ describe("Validator - New Primitives", () => {
       expect(result.error).toContain("positive value");
     });
 
-    it("rejects missing value field", () => {
+    it("Expected outcome: Rejects missing value field", () => {
       const actions = [{ action: "PLAYER_ROLLED" }];
       const result = validateActions(
         actions,
@@ -116,7 +116,7 @@ describe("Validator - New Primitives", () => {
       expect(result.error).toContain("missing");
     });
 
-    it("rejects non-number value", () => {
+    it("Expected outcome: Rejects non number value", () => {
       const actions = [{ action: "PLAYER_ROLLED", value: "five" }];
       const result = validateActions(
         actions,
@@ -128,7 +128,7 @@ describe("Validator - New Primitives", () => {
       expect(result.error).toContain("type");
     });
 
-    it("rejects value 77 (impossible roll, 1d6)", () => {
+    it("Expected outcome: Rejects value 77 (impossible roll, 1d6)", () => {
       const actions = [{ action: "PLAYER_ROLLED", value: 77 }];
       const result = validateActions(
         actions,
@@ -141,7 +141,7 @@ describe("Validator - New Primitives", () => {
       expect(result.error).toContain("1-6");
     });
 
-    it("rejects value > 6 when 1d6", () => {
+    it("Expected outcome: Rejects value > 6 when 1d6", () => {
       const actions = [{ action: "PLAYER_ROLLED", value: 7 }];
       const result = validateActions(
         actions,
@@ -153,7 +153,7 @@ describe("Validator - New Primitives", () => {
       expect(result.errorCode).toBe("invalidDiceRoll");
     });
 
-    it("rejects value > 12 when 2d6", () => {
+    it("Expected outcome: Rejects value > 12 when 2d6", () => {
       (mockState.players as Record<string, Record<string, unknown>>).p1.bonusDiceNextTurn = true;
       const actions = [{ action: "PLAYER_ROLLED", value: 13 }];
       const result = validateActions(
@@ -168,7 +168,7 @@ describe("Validator - New Primitives", () => {
       delete (mockState.players as Record<string, Record<string, unknown>>).p1.bonusDiceNextTurn;
     });
 
-    it("rejects value 1 when 2d6 (min is 2)", () => {
+    it("Expected outcome: Rejects value 1 when 2d6 (min is 2)", () => {
       (mockState.players as Record<string, Record<string, unknown>>).p1.bonusDiceNextTurn = true;
       const actions = [{ action: "PLAYER_ROLLED", value: 1 }];
       const result = validateActions(
@@ -182,7 +182,7 @@ describe("Validator - New Primitives", () => {
       delete (mockState.players as Record<string, Record<string, unknown>>).p1.bonusDiceNextTurn;
     });
 
-    it("accepts value 6 with 1d6", () => {
+    it("Expected outcome: Accepts value 6 with 1d6", () => {
       const actions = [{ action: "PLAYER_ROLLED", value: 6 }];
       const result = validateActions(
         actions,
@@ -193,7 +193,7 @@ describe("Validator - New Primitives", () => {
       expect(result.valid).toBe(true);
     });
 
-    it("accepts value 12 with 2d6 (bonusDiceNextTurn)", () => {
+    it("Expected outcome: Accepts value 12 with 2d6 (bonus Dice Next Turn)", () => {
       (mockState.players as Record<string, Record<string, unknown>>).p1.bonusDiceNextTurn = true;
       const actions = [{ action: "PLAYER_ROLLED", value: 12 }];
       const result = validateActions(
@@ -206,7 +206,7 @@ describe("Validator - New Primitives", () => {
       delete (mockState.players as Record<string, Record<string, unknown>>).p1.bonusDiceNextTurn;
     });
 
-    it("magic door opening uses 1d6 limits even when bonusDiceNextTurn is true", () => {
+    it("Expected outcome: Magic door opening uses 1d6 limits even when bonus Dice Next Turn is true", () => {
       const stateAtMagicDoor = {
         ...mockState,
         game: {
@@ -242,8 +242,8 @@ describe("Validator - New Primitives", () => {
     });
   });
 
-  describe("PLAYER_ANSWERED", () => {
-    it("validates with non-empty answer", () => {
+  describe("Product scenario: Player answers", () => {
+    it("Expected outcome: Validates with non empty answer", () => {
       const actions = [{ action: "PLAYER_ANSWERED", answer: "A" }];
       const result = validateActions(
         actions,
@@ -254,7 +254,7 @@ describe("Validator - New Primitives", () => {
       expect(result.valid).toBe(true);
     });
 
-    it("rejects empty answer", () => {
+    it("Expected outcome: Rejects empty answer", () => {
       const actions = [{ action: "PLAYER_ANSWERED", answer: "" }];
       const result = validateActions(
         actions,
@@ -267,7 +267,7 @@ describe("Validator - New Primitives", () => {
       expect(result.error).toContain("non-empty");
     });
 
-    it("rejects missing answer field", () => {
+    it("Expected outcome: Rejects missing answer field", () => {
       const actions = [{ action: "PLAYER_ANSWERED" }];
       const result = validateActions(
         actions,
@@ -279,7 +279,7 @@ describe("Validator - New Primitives", () => {
       expect(result.error).toContain("missing");
     });
 
-    it("rejects path choice A/B when current player has no pending path choice", () => {
+    it("Expected outcome: Rejects path choice A/B when current player has no pending path choice", () => {
       (mockState.players as Record<string, Record<string, unknown>>).p1.position = 0;
       ((mockState.players as Record<string, Record<string, unknown>>).p1.activeChoices as Record<
         string,
@@ -308,7 +308,7 @@ describe("Validator - New Primitives", () => {
       expect(result.error).toContain("no pending path choice");
     });
 
-    it("allows path choice when current player has pending path choice at position 0", () => {
+    it("Expected outcome: Allows path choice when current player has pending path choice at position 0", () => {
       (mockState.players as Record<string, Record<string, unknown>>).p1.position = 0;
       ((mockState.players as Record<string, Record<string, unknown>>).p1.activeChoices as Record<
         string,
@@ -329,8 +329,8 @@ describe("Validator - New Primitives", () => {
     });
   });
 
-  describe("ASK_RIDDLE", () => {
-    it("accepts valid ASK_RIDDLE with four options and correctOption", () => {
+  describe("Product scenario: Game asks a riddle", () => {
+    it("Expected outcome: Accepts valid ASK RIDDLE with four options and correct Option", () => {
       const stateWithRiddle = {
         ...mockState,
         game: {
@@ -360,7 +360,7 @@ describe("Validator - New Primitives", () => {
       expect(result.valid).toBe(true);
     });
 
-    it("accepts ASK_RIDDLE with optional correctOptionSynonyms", () => {
+    it("Expected outcome: Accepts ASK RIDDLE with optional correct Option Synonyms", () => {
       const stateWithRiddle = {
         ...mockState,
         game: {
@@ -386,7 +386,7 @@ describe("Validator - New Primitives", () => {
       expect(result.valid).toBe(true);
     });
 
-    it("rejects ASK_RIDDLE with wrong options length", () => {
+    it("Expected outcome: Rejects ASK RIDDLE with wrong options length", () => {
       const stateWithRiddle = {
         ...mockState,
         game: {
@@ -412,7 +412,7 @@ describe("Validator - New Primitives", () => {
       expect(result.error).toContain("options");
     });
 
-    it("rejects ASK_RIDDLE with missing or empty correctOption", () => {
+    it("Expected outcome: Rejects ASK RIDDLE with missing or empty correct Option", () => {
       const stateWithRiddle = {
         ...mockState,
         game: {
@@ -439,8 +439,8 @@ describe("Validator - New Primitives", () => {
     });
   });
 
-  describe("PLAYER_ANSWERED during riddle phase", () => {
-    it("allows any non-empty answer when pending riddle has correctOption", () => {
+  describe("Product scenario: PLAYER ANSWERED during riddle phase", () => {
+    it("Expected outcome: Allows any non empty answer when pending riddle has correct Option", () => {
       const stateWithRiddle = {
         ...mockState,
         game: {
@@ -465,7 +465,7 @@ describe("Validator - New Primitives", () => {
       expect(result.valid).toBe(true);
     });
 
-    it("allows paraphrase/synonym (orchestrator will validate)", () => {
+    it("Expected outcome: Allows paraphrase/synonym (orchestrator will validate)", () => {
       const stateWithRiddle = {
         ...mockState,
         game: {
@@ -490,7 +490,7 @@ describe("Validator - New Primitives", () => {
       expect(result.valid).toBe(true);
     });
 
-    it("rejects empty answer during riddle phase", () => {
+    it("Expected outcome: Rejects empty answer during riddle phase", () => {
       const stateWithRiddle = {
         ...mockState,
         game: {
@@ -516,7 +516,7 @@ describe("Validator - New Primitives", () => {
       expect(result.errorCode).toBe("invalidAnswer");
     });
 
-    it("allows option text (e.g. miércoles) when it matches one of riddleOptions", () => {
+    it("Expected outcome: Allows option text (e g miércoles) when it matches one of riddle Options", () => {
       const stateWithRiddle = {
         ...mockState,
         game: {
@@ -542,8 +542,8 @@ describe("Validator - New Primitives", () => {
     });
   });
 
-  describe("PLAYER_ANSWERED during powerCheck phase", () => {
-    it("rejects numeric answer 1 when powerCheck with 2d6 (riddleCorrect true)", () => {
+  describe("Product scenario: PLAYER ANSWERED during power Check phase", () => {
+    it("Expected outcome: Rejects numeric answer 1 when power Check with 2d6 (riddle Correct true)", () => {
       const stateWithPowerCheck = {
         ...mockState,
         game: {
@@ -580,7 +580,7 @@ describe("Validator - New Primitives", () => {
       expect(result.error).toMatch(/2-12|2d6/);
     });
 
-    it("allows numeric answer 1 when powerCheck with 1d6 (riddleCorrect false)", () => {
+    it("Expected outcome: Allows numeric answer 1 when power Check with 1d6 (riddle Correct false)", () => {
       const stateWithPowerCheck = {
         ...mockState,
         game: {
@@ -615,7 +615,7 @@ describe("Validator - New Primitives", () => {
       expect(result.valid).toBe(true);
     });
 
-    it("allows fork destination 105 during 1d6 powerCheck at Walrus fork (Kalimba 101)", () => {
+    it("Expected outcome: Allows fork destination 105 during 1d6 power Check at Walrus fork (Kalimba 101)", () => {
       const stateWalrusFork = {
         ...mockState,
         game: {
@@ -660,7 +660,7 @@ describe("Validator - New Primitives", () => {
       expect(result.valid).toBe(true);
     });
 
-    it("rejects numeric answer 2 when powerCheck on Águila with 3d6 (riddleCorrect true)", () => {
+    it("Expected outcome: Rejects numeric answer 2 when power Check on Águila with 3d6 (riddle Correct true)", () => {
       const stateWithPowerCheck = {
         ...mockState,
         game: {
@@ -703,7 +703,7 @@ describe("Validator - New Primitives", () => {
       expect(result.error).toMatch(/3-18|3d6/);
     });
 
-    it("allows numeric answer 15 when powerCheck on Águila with 3d6 (riddleCorrect true)", () => {
+    it("Expected outcome: Allows numeric answer 15 when power Check on Águila with 3d6 (riddle Correct true)", () => {
       const stateWithPowerCheck = {
         ...mockState,
         game: {
@@ -744,7 +744,7 @@ describe("Validator - New Primitives", () => {
       expect(result.valid).toBe(true);
     });
 
-    it("rejects numeric answer 1 when powerCheck on Águila with 2d6 after wrong riddle", () => {
+    it("Expected outcome: Rejects numeric answer 1 when power Check on Águila with 2d6 after wrong riddle", () => {
       const stateWithPowerCheck = {
         ...mockState,
         game: {
@@ -786,7 +786,7 @@ describe("Validator - New Primitives", () => {
       expect(result.error).toMatch(/2-12|2d6/);
     });
 
-    it("allows numeric answer 7 when pending is powerCheck with 2d6 (riddleCorrect true)", () => {
+    it("Expected outcome: Allows numeric answer 7 when pending is power Check with 2d6 (riddle Correct true)", () => {
       const stateWithPowerCheck = {
         ...mockState,
         game: {
@@ -820,7 +820,7 @@ describe("Validator - New Primitives", () => {
       expect(result.valid).toBe(true);
     });
 
-    it("rejects numeric answer 7 when revenge (1d6 only)", () => {
+    it("Expected outcome: Rejects numeric answer 7 when revenge (1d6 only)", () => {
       const stateWithRevenge = {
         ...mockState,
         game: {
@@ -855,7 +855,7 @@ describe("Validator - New Primitives", () => {
       expect(result.error).toMatch(/1-6|1d6/);
     });
 
-    it("allows numeric answer during revenge phase for current player", () => {
+    it("Expected outcome: Allows numeric answer during revenge phase for current player", () => {
       const stateWithRevenge = {
         ...mockState,
         game: {
@@ -888,8 +888,8 @@ describe("Validator - New Primitives", () => {
     });
   });
 
-  describe("Old Primitives Rejection", () => {
-    it("rejects ADD_STATE", () => {
+  describe("Product scenario: Old Primitives Rejection", () => {
+    it("Expected outcome: Rejects ADD STATE", () => {
       const actions = [{ action: "ADD_STATE", path: "players.p1.position", value: 5 }];
       const result = validateActions(
         actions,
@@ -902,7 +902,7 @@ describe("Validator - New Primitives", () => {
       expect(result.error).toContain("invalid action type");
     });
 
-    it("rejects SUBTRACT_STATE", () => {
+    it("Expected outcome: Rejects SUBTRACT STATE", () => {
       const actions = [{ action: "SUBTRACT_STATE", path: "players.p1.hearts", value: 1 }];
       const result = validateActions(
         actions,
@@ -914,7 +914,7 @@ describe("Validator - New Primitives", () => {
       expect(result.error).toContain("invalid action type");
     });
 
-    it("rejects READ_STATE", () => {
+    it("Expected outcome: Rejects READ STATE", () => {
       const actions = [{ action: "READ_STATE", path: "game.turn" }];
       const result = validateActions(
         actions,
@@ -926,7 +926,7 @@ describe("Validator - New Primitives", () => {
       expect(result.error).toContain("invalid action type");
     });
 
-    it("rejects ROLL_DICE", () => {
+    it("Expected outcome: Rejects ROLL DICE", () => {
       const actions = [{ action: "ROLL_DICE", die: "d6" }];
       const result = validateActions(
         actions,
@@ -939,8 +939,8 @@ describe("Validator - New Primitives", () => {
     });
   });
 
-  describe("SET_STATE", () => {
-    it("validates path and value", () => {
+  describe("Product scenario: State update", () => {
+    it("Expected outcome: Validates path and value", () => {
       const actions = [{ action: "SET_STATE", path: "players.p1.hearts", value: 5 }];
       const result = validateActions(
         actions,
@@ -951,7 +951,7 @@ describe("Validator - New Primitives", () => {
       expect(result.valid).toBe(true);
     });
 
-    it("rejects wrong player turn", () => {
+    it("Expected outcome: Rejects wrong player turn", () => {
       const actions = [{ action: "SET_STATE", path: "players.p2.position", value: 1 }];
       const result = validateActions(
         actions,
@@ -964,7 +964,7 @@ describe("Validator - New Primitives", () => {
       expect(result.error).toContain("Cannot modify players.p2 when it's p1's turn");
     });
 
-    it("validates game-level paths (except phase, winner, turn)", () => {
+    it("Expected outcome: Validates game level paths (except phase, winner, turn)", () => {
       const actions = [{ action: "SET_STATE", path: "game.lastRoll", value: 5 }];
       const result = validateActions(
         actions,
@@ -976,8 +976,8 @@ describe("Validator - New Primitives", () => {
     });
   });
 
-  describe("Turn Ownership - Orchestrator Authority", () => {
-    it("blocks LLM from modifying p2 data when p1 turn", () => {
+  describe("Product scenario: Turn Ownership game orchestrator Authority", () => {
+    it("Expected outcome: Blocks interpreter from modifying p2 data when p1 turn", () => {
       const actions = [{ action: "SET_STATE", path: "players.p2.hearts", value: 10 }];
       const result = validateActions(
         actions,
@@ -989,7 +989,7 @@ describe("Validator - New Primitives", () => {
       expect(result.error).toContain("Cannot modify players.p2 when it's p1's turn");
     });
 
-    it("allows current player to modify their own data", () => {
+    it("Expected outcome: Allows current player to modify their own data", () => {
       const actions = [{ action: "SET_STATE", path: "players.p1.hearts", value: 3 }];
       const result = validateActions(
         actions,
@@ -1000,7 +1000,7 @@ describe("Validator - New Primitives", () => {
       expect(result.valid).toBe(true);
     });
 
-    it("blocks game.turn changes outside SETUP phase", () => {
+    it("Expected outcome: Blocks game turn changes outside SETUP phase", () => {
       const actions = [{ action: "SET_STATE", path: "game.turn", value: "p2" }];
       const result = validateActions(
         actions,
@@ -1014,7 +1014,7 @@ describe("Validator - New Primitives", () => {
       expect(result.error).toContain("orchestrator automatically advances turns");
     });
 
-    it("allows game.turn changes during SETUP phase", () => {
+    it("Expected outcome: Allows game turn changes during SETUP phase", () => {
       (mockState.game as any).phase = "SETUP";
       const actions = [{ action: "SET_STATE", path: "game.turn", value: "p1" }];
       const result = validateActions(
@@ -1026,7 +1026,7 @@ describe("Validator - New Primitives", () => {
       expect(result.valid).toBe(true);
     });
 
-    it("blocks game.phase changes", () => {
+    it("Expected outcome: Blocks game phase changes", () => {
       const actions = [{ action: "SET_STATE", path: "game.phase", value: "FINISHED" }];
       const result = validateActions(
         actions,
@@ -1040,7 +1040,7 @@ describe("Validator - New Primitives", () => {
       expect(result.error).toContain("orchestrator manages phase transitions");
     });
 
-    it("blocks game.winner changes", () => {
+    it("Expected outcome: Blocks game winner changes", () => {
       const actions = [{ action: "SET_STATE", path: "game.winner", value: "p1" }];
       const result = validateActions(
         actions,
@@ -1054,7 +1054,7 @@ describe("Validator - New Primitives", () => {
       expect(result.error).toContain("orchestrator detects and sets winners");
     });
 
-    it("catches turn violations in multi-action sequences", () => {
+    it("Expected outcome: Catches turn violations in multi action sequences", () => {
       const actions = [
         { action: "SET_STATE", path: "players.p1.hearts", value: 1 },
         { action: "SET_STATE", path: "players.p2.hearts", value: 2 },
@@ -1071,7 +1071,7 @@ describe("Validator - New Primitives", () => {
       expect(result.error).toContain("Cannot modify players.p2 when it's p1's turn");
     });
 
-    it("validates nested player paths for turn ownership", () => {
+    it("Expected outcome: Validates nested player paths for turn ownership", () => {
       (mockState.players as Record<string, unknown>).p1 = {
         ...((mockState.players as Record<string, unknown>).p1 as object),
         inventory: { gold: 10 },
@@ -1093,7 +1093,7 @@ describe("Validator - New Primitives", () => {
     });
   });
 
-  describe("Decision Points - Orchestrator Enforcement", () => {
+  describe("Product scenario: Decision Points game orchestrator Enforcement", () => {
     beforeEach(() => {
       (mockState as Record<string, unknown>).board = {
         squares: { "5": { next: [6, 7], prev: [4] } },
@@ -1102,7 +1102,7 @@ describe("Validator - New Primitives", () => {
       (mockState.players as Record<string, Record<string, unknown>>).p1.activeChoices = {};
     });
 
-    it("blocks position changes when decision pending", () => {
+    it("Expected outcome: Blocks position changes when decision pending", () => {
       const actions = [{ action: "SET_STATE", path: "players.p1.position", value: 10 }];
       const result = validateActions(
         actions,
@@ -1116,7 +1116,7 @@ describe("Validator - New Primitives", () => {
       expect(result.error).toContain("direction at fork");
     });
 
-    it("allows position SET_STATE at fork when allowBypassPositionDecisionGate", () => {
+    it("Expected outcome: Allows position SET STATE at fork when allow Bypass Position Decision Gate", () => {
       const actions = [{ action: "SET_STATE", path: "players.p1.position", value: 10 }];
       const result = validateActions(
         actions,
@@ -1127,7 +1127,7 @@ describe("Validator - New Primitives", () => {
       expect(result.valid).toBe(true);
     });
 
-    it("allows position changes after decision is made", () => {
+    it("Expected outcome: Allows position changes after decision is made", () => {
       ((mockState.players as Record<string, Record<string, unknown>>).p1.activeChoices as Record<
         string,
         number
@@ -1142,7 +1142,7 @@ describe("Validator - New Primitives", () => {
       expect(result.valid).toBe(true);
     });
 
-    it("allows sequential decision then move (stateful validation)", () => {
+    it("Expected outcome: Allows sequential decision then move (stateful validation)", () => {
       const actions = [
         { action: "SET_STATE", path: "players.p1.activeChoices", value: { 5: 6 } },
         { action: "SET_STATE", path: "players.p1.position", value: 10 },
@@ -1156,7 +1156,7 @@ describe("Validator - New Primitives", () => {
       expect(result.valid).toBe(true);
     });
 
-    it("allows moves when no decision point at position", () => {
+    it("Expected outcome: Allows moves when no decision point at position", () => {
       (mockState.players as Record<string, Record<string, unknown>>).p1.position = 3;
       const actions = [{ action: "SET_STATE", path: "players.p1.position", value: 7 }];
       const result = validateActions(
@@ -1168,7 +1168,7 @@ describe("Validator - New Primitives", () => {
       expect(result.valid).toBe(true);
     });
 
-    it("allows moves when no decision points exist", () => {
+    it("Expected outcome: Allows moves when no decision points exist", () => {
       (mockState as Record<string, unknown>).board = { squares: {} };
       const actions = [{ action: "SET_STATE", path: "players.p1.position", value: 10 }];
       const result = validateActions(
@@ -1181,8 +1181,8 @@ describe("Validator - New Primitives", () => {
     });
   });
 
-  describe("Path Validation", () => {
-    it("rejects non-existent paths", () => {
+  describe("Product scenario: Path Validation", () => {
+    it("Expected outcome: Rejects non existent paths", () => {
       const actions = [{ action: "SET_STATE", path: "players.p1.nonExistent", value: 123 }];
       const result = validateActions(
         actions,
@@ -1195,7 +1195,7 @@ describe("Validator - New Primitives", () => {
       expect(result.error).toContain("non-existent path");
     });
 
-    it("validates deeply nested existing paths", () => {
+    it("Expected outcome: Validates deeply nested existing paths", () => {
       (mockState.players as Record<string, Record<string, unknown>>).p1.inventory = {
         items: { sword: { damage: 10 } },
       };
@@ -1209,7 +1209,7 @@ describe("Validator - New Primitives", () => {
       expect(result.valid).toBe(true);
     });
 
-    it("uses StateManager.pathExists correctly", () => {
+    it("Expected outcome: Uses State Manager path Exists correctly", () => {
       mockStateManager.pathExists = () => false;
       const actions = [{ action: "SET_STATE", path: "players.p1.position", value: 10 }];
       const result = validateActions(
@@ -1222,8 +1222,8 @@ describe("Validator - New Primitives", () => {
     });
   });
 
-  describe("Context-Aware Validation - Square Effect Processing", () => {
-    it("blocks PLAYER_ROLLED when orchestrator is processing square effect", () => {
+  describe("Product scenario: Context Aware Validation Square Effect Processing", () => {
+    it("Expected outcome: Blocks PLAYER ROLLED when orchestrator is processing square effect", () => {
       const actions = [{ action: "PLAYER_ROLLED", value: 4 }];
       const result = validateActions(
         actions,
@@ -1238,7 +1238,7 @@ describe("Validator - New Primitives", () => {
       expect(result.error).toContain("must be resolved first");
     });
 
-    it("allows PLAYER_ROLLED when orchestrator is not processing square effect", () => {
+    it("Expected outcome: Allows PLAYER ROLLED when orchestrator is not processing square effect", () => {
       const actions = [{ action: "PLAYER_ROLLED", value: 4 }];
       const result = validateActions(
         actions,
@@ -1250,7 +1250,7 @@ describe("Validator - New Primitives", () => {
       expect(result.valid).toBe(true);
     });
 
-    it("blocks PLAYER_ROLLED when pending powerCheck for current player", () => {
+    it("Expected outcome: Blocks PLAYER ROLLED when pending power Check for current player", () => {
       const stateWithPending = {
         ...mockState,
         game: {
@@ -1279,7 +1279,7 @@ describe("Validator - New Primitives", () => {
       expect(result.error).toContain("powerCheck");
     });
 
-    it("blocks PLAYER_ROLLED when pending completeRollMovement for current player", () => {
+    it("Expected outcome: Blocks PLAYER ROLLED when pending complete Roll Movement for current player", () => {
       const stateWithPending = {
         ...mockState,
         game: {
@@ -1307,7 +1307,7 @@ describe("Validator - New Primitives", () => {
       expect(result.error).toContain("fork branch");
     });
 
-    it("allows PLAYER_ROLLED when pending is for different player", () => {
+    it("Expected outcome: Allows PLAYER ROLLED when pending is for different player", () => {
       const stateWithPending = {
         ...mockState,
         game: {
@@ -1334,7 +1334,7 @@ describe("Validator - New Primitives", () => {
       expect(result.valid).toBe(true);
     });
 
-    it("blocks PLAYER_ROLLED when pending phase revenge for current player", () => {
+    it("Expected outcome: Blocks PLAYER ROLLED when pending phase revenge for current player", () => {
       const stateWithPending = {
         ...mockState,
         game: {
@@ -1362,7 +1362,7 @@ describe("Validator - New Primitives", () => {
       expect(result.error).toContain("revenge");
     });
 
-    it("blocks PLAYER_ROLLED when pending directional roll for current player", () => {
+    it("Expected outcome: Blocks PLAYER ROLLED when pending directional roll for current player", () => {
       const stateWithPending = {
         ...mockState,
         game: {
@@ -1390,7 +1390,7 @@ describe("Validator - New Primitives", () => {
       expect(result.error).toContain("directional");
     });
 
-    it("blocks PLAYER_ROLLED when pending is riddle phase for current player", () => {
+    it("Expected outcome: Blocks PLAYER ROLLED when pending is riddle phase for current player", () => {
       const stateWithPending = {
         ...mockState,
         game: {
@@ -1417,7 +1417,7 @@ describe("Validator - New Primitives", () => {
       expect(result.errorCode).toBe("answerRiddleFirst");
     });
 
-    it("allows NARRATE during square effect processing", () => {
+    it("Expected outcome: Allows NARRATE during square effect processing", () => {
       const actions = [{ action: "NARRATE", text: "You encounter an animal!" }];
       const result = validateActions(
         actions,
@@ -1429,7 +1429,7 @@ describe("Validator - New Primitives", () => {
       expect(result.valid).toBe(true);
     });
 
-    it("allows SET_STATE for activeChoices during square effect processing", () => {
+    it("Expected outcome: Allows SET STATE for active Choices during square effect processing", () => {
       (mockState.players as Record<string, Record<string, unknown>>).p1.activeChoices = {};
 
       const actions = [{ action: "SET_STATE", path: "players.p1.activeChoices", value: { 0: 1 } }];
@@ -1443,7 +1443,7 @@ describe("Validator - New Primitives", () => {
       expect(result.valid).toBe(true);
     });
 
-    it("rejects SET_STATE for points during square effect (points removed from game)", () => {
+    it("Expected outcome: Rejects SET STATE for points during square effect (points removed from game)", () => {
       const actions = [{ action: "SET_STATE", path: "players.p1.points", value: 3 }];
       const result = validateActions(
         actions,
@@ -1456,7 +1456,7 @@ describe("Validator - New Primitives", () => {
       expect(result.errorCode).toBe("resolveSquareEffectFirst");
     });
 
-    it("rejects SET_STATE for skipTurns during square effect processing", () => {
+    it("Expected outcome: Rejects SET STATE for skip Turns during square effect processing", () => {
       const actions = [{ action: "SET_STATE", path: "players.p1.skipTurns", value: 1 }];
       const result = validateActions(
         actions,
@@ -1471,8 +1471,8 @@ describe("Validator - New Primitives", () => {
     });
   });
 
-  describe("Edge Cases", () => {
-    it("accepts empty action array", () => {
+  describe("Product scenario: Edge Cases", () => {
+    it("Expected outcome: Accepts empty action array", () => {
       const actions: unknown[] = [];
       const result = validateActions(
         actions,
@@ -1483,7 +1483,7 @@ describe("Validator - New Primitives", () => {
       expect(result.valid).toBe(true);
     });
 
-    it("rejects null action in array", () => {
+    it("Expected outcome: Rejects null action in array", () => {
       const actions = [null];
       const result = validateActions(
         actions,
@@ -1495,7 +1495,7 @@ describe("Validator - New Primitives", () => {
       expect(result.error).toContain("not an object");
     });
 
-    it("rejects undefined action in array", () => {
+    it("Expected outcome: Rejects undefined action in array", () => {
       const actions = [undefined];
       const result = validateActions(
         actions,
@@ -1507,7 +1507,7 @@ describe("Validator - New Primitives", () => {
       expect(result.error).toContain("not an object");
     });
 
-    it("accepts actions with extra unknown fields (extensibility)", () => {
+    it("Expected outcome: Accepts actions with extra unknown fields (extensibility)", () => {
       const actions = [
         {
           action: "NARRATE",
@@ -1525,7 +1525,7 @@ describe("Validator - New Primitives", () => {
       expect(result.valid).toBe(true);
     });
 
-    it("fails on first invalid action in mixed sequence", () => {
+    it("Expected outcome: Fails on first invalid action in mixed sequence", () => {
       const actions = [
         { action: "NARRATE", text: "First" },
         { action: "INVALID_ACTION" },
@@ -1542,7 +1542,7 @@ describe("Validator - New Primitives", () => {
       expect(result.error).toContain("INVALID_ACTION");
     });
 
-    it("rejects non-array input", () => {
+    it("Expected outcome: Rejects non array input", () => {
       const actions = { action: "NARRATE", text: "Not an array" };
       const result = validateActions(
         actions as unknown as unknown[],

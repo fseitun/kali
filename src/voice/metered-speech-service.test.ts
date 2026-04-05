@@ -2,8 +2,8 @@ import { describe, it, expect, vi } from "vitest";
 import { MeteredSpeechService } from "./metered-speech-service";
 import type { ISpeechService } from "@/services/speech-service";
 
-describe("MeteredSpeechService", () => {
-  it("increments count only on speak, not playSound", async () => {
+describe("Product scenario: Metered Speech Service", () => {
+  it("Expected outcome: Increments count only on speak, not play Sound", async () => {
     const inner: ISpeechService = {
       prime: vi.fn(),
       speak: vi.fn().mockResolvedValue(undefined),
@@ -20,7 +20,7 @@ describe("MeteredSpeechService", () => {
     expect(inner.speak).toHaveBeenCalledWith("hi");
   });
 
-  it("beginGameplayTurn resets the counter", async () => {
+  it("Expected outcome: Begin Gameplay Turn resets the counter", async () => {
     const inner: ISpeechService = {
       prime: vi.fn(),
       speak: vi.fn().mockResolvedValue(undefined),

@@ -4,7 +4,7 @@ import type { GameMetadata } from "@/game-loader/types";
 import type { LLMClient } from "@/llm/LLMClient";
 import type { SpeechService } from "@/services/speech-service";
 
-describe("NameCollector - State Isolation (Rule #4)", () => {
+describe("Product scenario: Name Collector State Isolation (Rule #4)", () => {
   let mockSpeechService: SpeechService;
   let mockLLMClient: LLMClient;
   let mockEnableDirectTranscription: () => void;
@@ -32,8 +32,8 @@ describe("NameCollector - State Isolation (Rule #4)", () => {
     };
   });
 
-  describe("Constructor and Dependencies", () => {
-    it("has no stateManager dependency", () => {
+  describe("Product scenario: Constructor and Dependencies", () => {
+    it("Expected outcome: Has no state Manager dependency", () => {
       const nameCollector = new NameCollector(
         mockSpeechService,
         "Test Game",
@@ -52,7 +52,7 @@ describe("NameCollector - State Isolation (Rule #4)", () => {
       expect(nameCollector).toBeDefined();
     });
 
-    it("accepts only presentation layer dependencies", () => {
+    it("Expected outcome: Accepts only presentation layer dependencies", () => {
       const nameCollector = new NameCollector(
         mockSpeechService,
         "Test Game",
@@ -67,8 +67,8 @@ describe("NameCollector - State Isolation (Rule #4)", () => {
     });
   });
 
-  describe("collectNames() Return Type", () => {
-    it("returns pure data without state mutations", async () => {
+  describe("Product scenario: Collect Names Return Type", () => {
+    it("Expected outcome: Returns pure data without state mutations", async () => {
       const code = NameCollector.toString();
 
       const hasNoSetCalls = !code.includes("stateManager.set");
@@ -79,8 +79,8 @@ describe("NameCollector - State Isolation (Rule #4)", () => {
     });
   });
 
-  describe("State Mutation Prevention", () => {
-    it("does not mutate game state directly", () => {
+  describe("Product scenario: State Mutation Prevention", () => {
+    it("Expected outcome: Does not mutate game state directly", () => {
       const code = NameCollector.toString();
 
       const hasNoStateManagerImport = !code.match(/import.*StateManager.*from/g);
@@ -93,7 +93,7 @@ describe("NameCollector - State Isolation (Rule #4)", () => {
       expect(hasNoGameStateMutation).toBe(true);
     });
 
-    it("does not create player objects or IDs", () => {
+    it("Expected outcome: Does not create player objects or IDs", () => {
       const code = NameCollector.toString();
 
       const hasNoPlayerIdCreation = !code.match(/id:\s*['"`]p\d+['"`]/g);
@@ -103,7 +103,7 @@ describe("NameCollector - State Isolation (Rule #4)", () => {
       expect(hasNoPlayerObjectCreation).toBe(true);
     });
 
-    it("does not set game.turn or game.playerOrder", () => {
+    it("Expected outcome: Does not set game turn or game player Order", () => {
       const code = NameCollector.toString();
 
       const hasNoTurnAssignment = !code.includes("game.turn");
@@ -114,8 +114,8 @@ describe("NameCollector - State Isolation (Rule #4)", () => {
     });
   });
 
-  describe("Architectural Pattern Documentation", () => {
-    it('follows "Collect → Return → Orchestrator Applies" pattern', () => {
+  describe("Product scenario: Architectural Pattern Documentation", () => {
+    it('Expected outcome: Follows "Collect to Return to game orchestrator Applies" pattern', () => {
       const code = NameCollector.toString();
 
       const returnsArray = code.includes("return this.collectedNames");
@@ -125,7 +125,7 @@ describe("NameCollector - State Isolation (Rule #4)", () => {
       expect(doesNotApplyToState).toBe(true);
     });
 
-    it("caller must apply names via orchestrator.setupPlayers()", () => {
+    it("Expected outcome: Caller must apply names via orchestrator setup Players", () => {
       const nameCollector = new NameCollector(
         mockSpeechService,
         "Test Game",
@@ -138,8 +138,8 @@ describe("NameCollector - State Isolation (Rule #4)", () => {
     });
   });
 
-  describe("UI Component Responsibilities", () => {
-    it("handles voice interaction for name collection", () => {
+  describe("Product scenario: UI Component Responsibilities", () => {
+    it("Expected outcome: Handles voice interaction for name collection", () => {
       const code = NameCollector.toString();
 
       const handlesSpeech = code.includes("speechService");
@@ -151,7 +151,7 @@ describe("NameCollector - State Isolation (Rule #4)", () => {
       expect(handlesTranscription).toBe(true);
     });
 
-    it("validates and corrects names using LLM", () => {
+    it("Expected outcome: Validates and corrects names using interpreter", () => {
       const code = NameCollector.toString();
 
       const usesLLMForValidation = code.includes("analyzeResponse") || code.includes("extractName");
@@ -159,7 +159,7 @@ describe("NameCollector - State Isolation (Rule #4)", () => {
       expect(usesLLMForValidation).toBe(true);
     });
 
-    it("does not implement game setup logic", () => {
+    it("Expected outcome: Does not implement game setup logic", () => {
       const code = NameCollector.toString();
 
       const hasNoGameSetup =
@@ -171,8 +171,8 @@ describe("NameCollector - State Isolation (Rule #4)", () => {
     });
   });
 
-  describe("Separation of Concerns", () => {
-    it("only manages name collection flow", () => {
+  describe("Product scenario: Separation of Concerns", () => {
+    it("Expected outcome: Only manages name collection flow", () => {
       const code = NameCollector.toString();
 
       const managesNameCollection = code.includes("collectedNames") && code.includes("playerCount");
@@ -186,7 +186,7 @@ describe("NameCollector - State Isolation (Rule #4)", () => {
       expect(doesNotManageGameState).toBe(true);
     });
 
-    it("presentation concerns only (voice, prompts, validation)", () => {
+    it("Expected outcome: Presentation concerns only (voice, prompts, validation)", () => {
       const code = NameCollector.toString();
 
       const hasPresentationConcerns =
@@ -200,8 +200,8 @@ describe("NameCollector - State Isolation (Rule #4)", () => {
     });
   });
 
-  describe("Integration Pattern Verification", () => {
-    it("demonstrates correct usage pattern in comments", () => {
+  describe("Product scenario: Integration Pattern Verification", () => {
+    it("Expected outcome: Demonstrates correct usage pattern in comments", () => {
       const code = NameCollector.toString();
 
       const hasDocumentation = code.includes("collectNames") && code.includes("@returns");
@@ -209,7 +209,7 @@ describe("NameCollector - State Isolation (Rule #4)", () => {
       expect(hasDocumentation).toBe(true);
     });
 
-    it("example: correct caller pattern", () => {
+    it("Expected outcome: Example correct caller pattern", () => {
       const exampleCode = `
         const names = await nameCollector.collectNames(handler)
         orchestrator.setupPlayers(names)
@@ -224,7 +224,7 @@ describe("NameCollector - State Isolation (Rule #4)", () => {
       expect(followsPattern).toBe(true);
     });
 
-    it("counter-example: incorrect pattern (direct state mutation)", () => {
+    it("Expected outcome: Counter example incorrect pattern (direct state mutation)", () => {
       const incorrectCode = `
         await nameCollector.collectNames(handler)
       `;
@@ -236,7 +236,7 @@ describe("NameCollector - State Isolation (Rule #4)", () => {
   });
 });
 
-describe("NameCollector - Runtime Flow", () => {
+describe("Product scenario: Name Collector Runtime Flow", () => {
   let mockSpeechService: SpeechService;
   let mockLLMClient: LLMClient;
   let mockEnableDirectTranscription: () => void;
@@ -279,7 +279,7 @@ describe("NameCollector - Runtime Flow", () => {
     };
   });
 
-  it("collectNames returns names in order for 2 players happy path", async () => {
+  it("Expected outcome: Collect Names returns names in order for 2 players happy path", async () => {
     const nameCollector = new NameCollector(
       mockSpeechService,
       "Test Game",
@@ -313,7 +313,7 @@ describe("NameCollector - Runtime Flow", () => {
     expect(mockLLMClient.extractName).toHaveBeenCalledWith("Bob");
   });
 
-  it("collectNames calls analyzeResponse for player count and names", async () => {
+  it("Expected outcome: Collect Names calls analyze Response for player count and names", async () => {
     const nameCollector = new NameCollector(
       mockSpeechService,
       "Test Game",
