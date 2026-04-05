@@ -109,9 +109,6 @@ function handlePlayerRolled(
     ctx.position,
     ctx.rollValue,
   );
-  if (door) {
-    ctx.player.magicDoorOpened = false;
-  }
 }
 
 function applyRiddleAnswerToMock(

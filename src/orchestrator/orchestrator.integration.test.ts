@@ -2123,7 +2123,7 @@ describe("Product scenario: Game orchestrator Integration Tests", () => {
       );
     });
 
-    it("Expected outcome: Magic door after open, movement roll leaves 186 and clears opened flag", async () => {
+    it("Expected outcome: Magic door after open, movement roll leaves 186 and keeps opened flag", async () => {
       setLocale("en-US");
       mockLLM = createScriptedLLM([]);
 
@@ -2152,7 +2152,39 @@ describe("Product scenario: Game orchestrator Integration Tests", () => {
       await orchestrator.testExecuteActions([{ action: "PLAYER_ROLLED", value: 1 }]);
 
       expect(stateManager.get("players.p1.position")).toBe(187);
-      expect(stateManager.get("players.p1.magicDoorOpened")).toBe(false);
+      expect(stateManager.get("players.p1.magicDoorOpened")).toBe(true);
+    });
+
+    it("Expected outcome: Opened magic door does not bounce overshoot back to 179", async () => {
+      setLocale("en-US");
+      mockLLM = createScriptedLLM([]);
+
+      const initialState: GameState = {
+        game: {
+          name: "Test Game",
+          phase: GamePhase.PLAYING,
+          turn: "p1",
+          playerOrder: ["p1"],
+          winner: null,
+          lastRoll: 0,
+        },
+        players: {
+          p1: { id: "p1", name: "Alice", position: 187, hearts: 0, magicDoorOpened: true },
+        },
+        board: {
+          squares: {
+            "186": { name: "Magic Door", effect: "magicDoorCheck", target: 6 },
+            "196": { name: "Heart of Kalimba", effect: "win", next: [] },
+          },
+        },
+      };
+
+      setupGame(initialState);
+
+      await orchestrator.testExecuteActions([{ action: "PLAYER_ROLLED", value: 6 }]);
+
+      expect(stateManager.get("players.p1.position")).toBe(193);
+      expect(stateManager.get("players.p1.magicDoorOpened")).toBe(true);
     });
 
     it("Expected outcome: Handles instrument usage in correct habitat", async () => {

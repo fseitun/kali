@@ -136,13 +136,6 @@ async function executeMovementPlayerRoll(
     await ctx.boardEffectsHandler.checkAndApplySquareEffects(path, context);
   }
 
-  const doorCfg = getMagicDoorConfig(
-    (state.board as { squares?: Record<string, SquareLike> } | undefined)?.squares,
-  );
-  if (doorCfg && movement.kind === "complete") {
-    ctx.stateManager.set(playerStatePath(currentTurn, "magicDoorOpened"), false);
-  }
-
   ctx.checkAndApplyWinCondition(path);
 
   if (movement.kind === "complete" && !context.isNestedCall) {

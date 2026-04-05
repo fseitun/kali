@@ -402,6 +402,21 @@ describe("Product scenario: Board Effects Handler", () => {
       expect(context.magicDoorBounce).toBeUndefined();
     });
 
+    it("Expected outcome: Should not apply magic Door Bounce after door was opened", async () => {
+      stateManager.set("board.squares", {
+        "186": { name: "Magic Door", effect: "magicDoorCheck", target: 6 },
+        "196": { effect: "win" },
+      });
+      stateManager.set("players.p1.position", 193);
+      stateManager.set("players.p1.magicDoorOpened", true);
+      const context: ExecutionContext = {};
+
+      await boardEffectsHandler.checkAndApplyBoardMoves("players.p1.position", context);
+
+      expect(stateManager.get("players.p1.position")).toBe(193);
+      expect(context.magicDoorBounce).toBeUndefined();
+    });
+
     it("Expected outcome: Should keep position when jump To Leader but current player is already leader", async () => {
       stateManager.set("board.squares", {
         "54": { effect: "jumpToLeader", name: "Zorro dorado" },
