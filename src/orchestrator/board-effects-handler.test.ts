@@ -26,6 +26,49 @@ describe("Product scenario: Board Effects Handler", () => {
         playerOrder: ["p1", "p2"],
         winner: null,
         lastRoll: null,
+        encounterQuestions: {
+          Bear: {
+            "en-US": [
+              {
+                kali: "A bear appears...",
+                question: "What should you do first?",
+                options: ["Run toward it", "Stay calm and keep distance", "Yell at it", "Touch it"],
+                correctOption: "Stay calm and keep distance",
+              },
+            ],
+          },
+          Halcón: {
+            "es-AR": [
+              {
+                kali: "El halcón aparece en lo alto...",
+                question: "¿Qué conviene hacer para observarlo sin molestarlo?",
+                options: [
+                  "Acercarse corriendo",
+                  "Mirar en silencio y con respeto",
+                  "Tirarle cosas",
+                  "Hacer ruido fuerte",
+                ],
+                correctOption: "Mirar en silencio y con respeto",
+              },
+            ],
+          },
+          Eagle: {
+            "en-US": [
+              {
+                kali: "The eagle lands nearby...",
+                question: "How can you learn safely?",
+                options: [
+                  "Observe from distance",
+                  "Chase it quickly",
+                  "Scare it loudly",
+                  "Try to grab it",
+                ],
+                correctOption: "Observe from distance",
+              },
+            ],
+          },
+        },
+        encounterQuestionCursor: {},
       },
       players: {
         p1: { id: "p1", name: "Alice", position: 0 },
@@ -565,6 +608,15 @@ describe("Product scenario: Board Effects Handler", () => {
         power: 1,
         playerId: "p1",
       });
+    });
+
+    it("Expected outcome: Missing encounter bank throws instead of identity-guess fallback", async () => {
+      stateManager.set("board.squares", { "10": { name: "Unknown beast", power: 2 } });
+      stateManager.set("players.p1.position", 10);
+
+      await expect(
+        boardEffectsHandler.checkAndApplySquareEffects("players.p1.position", baseContext),
+      ).rejects.toThrow('Missing encounterQuestions for animal "Unknown beast"');
     });
 
     it("Expected outcome: Should set is Processing Square Effect flag during processing", async () => {

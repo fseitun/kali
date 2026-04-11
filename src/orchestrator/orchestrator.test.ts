@@ -632,6 +632,19 @@ describe("Product scenario: Game orchestrator New Action Handlers", () => {
             kind: "powerCheck",
             riddleCorrect: true,
           },
+          encounterQuestions: {
+            Camel: {
+              "es-AR": [
+                {
+                  kali: "El camello aparece en el camino...",
+                  question: "¿Qué conviene hacer para observarlo con respeto?",
+                  options: ["Mirarlo a distancia", "Empujarlo", "Correr hacia él", "Asustarlo"],
+                  correctOption: "Mirarlo a distancia",
+                },
+              ],
+            },
+          },
+          encounterQuestionCursor: {},
         },
         players: {
           p1: {

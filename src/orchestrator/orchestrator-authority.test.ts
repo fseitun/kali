@@ -25,6 +25,39 @@ describe("Product scenario: Game orchestrator Authority interpreter Adversarial 
         phase: "PLAYING",
         lastRoll: 0,
         playerOrder: ["p1", "p2"],
+        encounterQuestions: {
+          Cobra: {
+            "en-US": [
+              {
+                kali: "A cobra appears...",
+                question: "What is the safest first move?",
+                options: [
+                  "Rush toward it",
+                  "Keep distance and stay calm",
+                  "Shout at it",
+                  "Try to touch it",
+                ],
+                correctOption: "Keep distance and stay calm",
+              },
+            ],
+          },
+          Camel: {
+            "en-US": [
+              {
+                kali: "A camel appears...",
+                question: "How do you observe safely?",
+                options: [
+                  "Observe from a distance",
+                  "Stand right next to it",
+                  "Pull its tail",
+                  "Throw objects",
+                ],
+                correctOption: "Observe from a distance",
+              },
+            ],
+          },
+        },
+        encounterQuestionCursor: {},
       },
       players: {
         p1: {

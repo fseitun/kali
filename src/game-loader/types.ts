@@ -43,8 +43,6 @@ export interface StateDisplayMetadata {
  * Deterministic encounter question used during animal encounters.
  */
 export interface EncounterQuestion {
-  animal: string;
-  type: string;
   kali: string;
   question: string;
   options: [string, string, string, string];

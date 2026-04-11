@@ -141,6 +141,68 @@ describe("Product scenario: Game Loader", () => {
       );
     });
 
+    it("Expected outcome: Should fail when animal encounter coverage is missing", async () => {
+      const invalidModule = {
+        metadata: {
+          id: "test-game",
+          name: "Test Game",
+          minPlayers: 2,
+          maxPlayers: 4,
+          objective: "Test objective",
+        },
+        squares: {
+          "0": { next: [1], prev: [] },
+          "1": { name: "Wolf", power: 3 },
+          "2": { effect: "win", next: [], prev: [1] },
+        },
+      };
+
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve(invalidModule),
+      });
+
+      await expect(gameLoader.loadGame("invalid")).rejects.toThrow(
+        "Invalid game config: encounterQuestions is required to cover animal encounter squares",
+      );
+    });
+
+    it("Expected outcome: Should accept minimal encounter question schema", async () => {
+      const validModule = {
+        metadata: {
+          id: "test-game",
+          name: "Test Game",
+          minPlayers: 2,
+          maxPlayers: 4,
+          objective: "Test objective",
+        },
+        squares: {
+          "0": { next: [1], prev: [] },
+          "1": { name: "Wolf", power: 3 },
+          "2": { effect: "win", next: [], prev: [1] },
+        },
+        encounterQuestions: {
+          Wolf: {
+            "es-AR": [
+              {
+                kali: "El lobo aparece en silencio...",
+                question: "¿Qué conviene hacer primero?",
+                options: ["Acercarte", "Observar a distancia", "Gritar", "Correr alrededor"],
+                correctOption: "Observar a distancia",
+              },
+            ],
+          },
+        },
+      };
+
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve(validModule),
+      });
+
+      await expect(gameLoader.loadGame("valid")).resolves.toBeDefined();
+    });
+
     it("Expected outcome: Should validate metadata id and name", async () => {
       const invalidModule = {
         metadata: { objective: "Test objective" },

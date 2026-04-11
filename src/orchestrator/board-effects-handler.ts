@@ -842,40 +842,6 @@ export class BoardEffectsHandler {
     };
   }
 
-  private buildFallbackEncounterQuestion(
-    squareName: string,
-    position: number,
-    locale: "es-AR" | "en-US",
-  ): {
-    kali: string;
-    question: string;
-    options: [string, string, string, string];
-    correctOption: string;
-  } {
-    const allAnimalNames = this.getAnimalNamesFromBoard().filter((name) => name !== squareName);
-    const filler =
-      locale === "es-AR" ? ["Elefante", "Tiburon", "Lobo"] : ["Elephant", "Shark", "Wolf"];
-    const distractors = [...allAnimalNames, ...filler].slice(0, 3);
-    const correctIndex = Math.abs(position) % 4;
-    const arranged = [...distractors];
-    arranged.splice(correctIndex, 0, squareName);
-    const options = arranged.slice(0, 4) as [string, string, string, string];
-    if (locale === "es-AR") {
-      return {
-        kali: `${squareName} aparecio frente a vos...`,
-        question: "Que animal encontraron en este casillero?",
-        options,
-        correctOption: squareName,
-      };
-    }
-    return {
-      kali: `${squareName} appeared right in front of you...`,
-      question: "Which animal did you find on this square?",
-      options,
-      correctOption: squareName,
-    };
-  }
-
   private getEncounterQuestion(
     squareName: string,
     position: number,
@@ -891,7 +857,9 @@ export class BoardEffectsHandler {
     if (bankQuestion) {
       return bankQuestion;
     }
-    return this.buildFallbackEncounterQuestion(squareName, position, locale);
+    throw new Error(
+      `Missing encounterQuestions for animal "${squareName}" at position ${String(position)} (${locale})`,
+    );
   }
 
   private buildAnimalEncounterSpeech(args: {

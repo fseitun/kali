@@ -275,8 +275,6 @@ function validateEncounterQuestion(
   question: EncounterQuestion,
 ): void {
   const base = `Invalid game config: encounterQuestions.${animal}.${locale}[${String(index)}]`;
-  assertNonEmptyString(question.animal, `${base}.animal must be a non-empty string`);
-  assertNonEmptyString(question.type, `${base}.type must be a non-empty string`);
   assertNonEmptyString(question.kali, `${base}.kali must be a non-empty string`);
   assertNonEmptyString(question.question, `${base}.question must be a non-empty string`);
   validateEncounterQuestionOptions(question.options, base, question.correctOption);
@@ -317,6 +315,46 @@ function validateEncounterQuestions(
     }
     validateEncounterQuestionBank(animal, "es-AR", localized["es-AR"]);
     validateEncounterQuestionBank(animal, "en-US", localized["en-US"]);
+  }
+}
+
+function getAnimalEncounterNames(squares: Record<string, SquareData>): string[] {
+  const names = new Set<string>();
+  for (const square of Object.values(squares)) {
+    if (
+      typeof square.name === "string" &&
+      square.name.trim() !== "" &&
+      typeof square.power === "number" &&
+      typeof square.effect !== "string"
+    ) {
+      names.add(square.name);
+    }
+  }
+  return [...names].sort((a, b) => a.localeCompare(b));
+}
+
+function validateEncounterCoverage(
+  squares: Record<string, SquareData>,
+  encounterQuestions: Record<string, EncounterQuestionBankByAnimal> | undefined,
+): void {
+  const requiredAnimals = getAnimalEncounterNames(squares);
+  if (requiredAnimals.length === 0) {
+    return;
+  }
+
+  if (!encounterQuestions) {
+    throw new Error(
+      "Invalid game config: encounterQuestions is required to cover animal encounter squares",
+    );
+  }
+
+  for (const animal of requiredAnimals) {
+    const bank = encounterQuestions[animal]?.["es-AR"];
+    if (!Array.isArray(bank) || bank.length === 0) {
+      throw new Error(
+        `Invalid game config: encounterQuestions.${animal}.es-AR must be a non-empty array`,
+      );
+    }
   }
 }
 
@@ -483,6 +521,7 @@ export class GameLoader {
       throw new Error("Invalid game config: squares required");
     }
     validateEncounterQuestions(config.encounterQuestions);
+    validateEncounterCoverage(config.squares, config.encounterQuestions);
 
     Logger.info("Game module validation passed");
   }

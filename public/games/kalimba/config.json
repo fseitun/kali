@@ -133,169 +133,2819 @@
     "196": { "next": [], "name": "Heart of Kalimba", "effect": "win" }
   },
   "encounterQuestions": {
+    "African Elephant Craig": {
+      "es-AR": [
+        {
+          "kali": "African Elephant Craig aparece en el camino y Kali te guía con calma...",
+          "question": "Si te cruzás con african elephant craig en la naturaleza, ¿qué conviene hacer primero?",
+          "options": ["Acercarte corriendo", "Mantener distancia y observar con cuidado", "Gritar fuerte para asustarlo", "Tocarlo para conocerlo"],
+          "correctOption": "Mantener distancia y observar con cuidado"
+        },
+        {
+          "kali": "Kali señala el entorno donde vive african elephant craig...",
+          "question": "¿Por qué es importante cuidar el hábitat de african elephant craig?",
+          "options": ["Porque así puede vivir y cumplir su rol en la naturaleza", "Porque cambia de color todo el tiempo", "Porque no necesita alimento", "Porque vive mejor en una ciudad"],
+          "correctOption": "Porque así puede vivir y cumplir su rol en la naturaleza"
+        },
+        {
+          "kali": "African Elephant Craig se mueve atento en su ambiente...",
+          "question": "¿Qué ayuda a african elephant craig a sobrevivir en su hábitat?",
+          "options": ["Sus adaptaciones naturales", "Un teléfono celular", "La ropa humana", "Los semáforos"],
+          "correctOption": "Sus adaptaciones naturales"
+        },
+        {
+          "kali": "Kali te propone pensar como explorador de animales...",
+          "question": "Si querés aprender sobre african elephant craig sin molestarlo, ¿qué es mejor?",
+          "options": ["Observar en silencio y con respeto", "Perseguirlo para que corra", "Darle comida sin permiso", "Encerrarlo para mirarlo de cerca"],
+          "correctOption": "Observar en silencio y con respeto"
+        },
+        {
+          "kali": "African Elephant Craig forma parte de una red natural más grande...",
+          "question": "¿Qué pasa cuando una especie como african elephant craig desaparece de un lugar?",
+          "options": ["El equilibrio del ecosistema se puede alterar", "Nada cambia nunca", "Aparecen más juguetes", "El clima se detiene"],
+          "correctOption": "El equilibrio del ecosistema se puede alterar"
+        },
+        {
+          "kali": "Kali prepara una misión de cuidado del planeta...",
+          "question": "¿Qué acción humana suele ayudar a animales como african elephant craig?",
+          "options": ["Proteger ambientes naturales", "Tirar basura en ríos", "Romper nidos o refugios", "Hacer ruido constante cerca"],
+          "correctOption": "Proteger ambientes naturales"
+        },
+        {
+          "kali": "African Elephant Craig te recuerda que cada animal tiene necesidades básicas...",
+          "question": "¿Qué necesita cualquier animal para vivir bien?",
+          "options": ["Alimento, agua y refugio adecuados", "Solo música fuerte", "Solo luces de colores", "Solo juguetes humanos"],
+          "correctOption": "Alimento, agua y refugio adecuados"
+        },
+        {
+          "kali": "Kali abre un desafío de convivencia con la fauna...",
+          "question": "Si un grupo visita una zona con african elephant craig, ¿qué regla es la más segura?",
+          "options": ["Respetar señales y mantener distancia", "Acercarse para sacarse selfies", "Correr alrededor del animal", "Intentar tocarlo entre todos"],
+          "correctOption": "Respetar señales y mantener distancia"
+        },
+        {
+          "kali": "El encuentro con african elephant craig trae una lección importante...",
+          "question": "¿Qué valor demuestra quien cuida a african elephant craig y su entorno?",
+          "options": ["Respeto por la vida", "Apuro por ganar siempre", "Desorden en la naturaleza", "Indiferencia total"],
+          "correctOption": "Respeto por la vida"
+        },
+        {
+          "kali": "Kali cierra la ronda con una idea clave sobre african elephant craig...",
+          "question": "¿Cuál es una buena forma de aprender más sobre african elephant craig?",
+          "options": ["Leer, observar y preguntar a personas expertas", "Inventar datos sin mirar", "Molestar animales para probar", "Ignorar todo sobre su hábitat"],
+          "correctOption": "Leer, observar y preguntar a personas expertas"
+        }
+      ]
+    },
+    "Asian elephant": {
+      "es-AR": [
+        {
+          "kali": "Asian elephant aparece en el camino y Kali te guía con calma...",
+          "question": "Si te cruzás con asian elephant en la naturaleza, ¿qué conviene hacer primero?",
+          "options": ["Acercarte corriendo", "Mantener distancia y observar con cuidado", "Gritar fuerte para asustarlo", "Tocarlo para conocerlo"],
+          "correctOption": "Mantener distancia y observar con cuidado"
+        },
+        {
+          "kali": "Kali señala el entorno donde vive asian elephant...",
+          "question": "¿Por qué es importante cuidar el hábitat de asian elephant?",
+          "options": ["Porque así puede vivir y cumplir su rol en la naturaleza", "Porque cambia de color todo el tiempo", "Porque no necesita alimento", "Porque vive mejor en una ciudad"],
+          "correctOption": "Porque así puede vivir y cumplir su rol en la naturaleza"
+        },
+        {
+          "kali": "Asian elephant se mueve atento en su ambiente...",
+          "question": "¿Qué ayuda a asian elephant a sobrevivir en su hábitat?",
+          "options": ["Sus adaptaciones naturales", "Un teléfono celular", "La ropa humana", "Los semáforos"],
+          "correctOption": "Sus adaptaciones naturales"
+        },
+        {
+          "kali": "Kali te propone pensar como explorador de animales...",
+          "question": "Si querés aprender sobre asian elephant sin molestarlo, ¿qué es mejor?",
+          "options": ["Observar en silencio y con respeto", "Perseguirlo para que corra", "Darle comida sin permiso", "Encerrarlo para mirarlo de cerca"],
+          "correctOption": "Observar en silencio y con respeto"
+        },
+        {
+          "kali": "Asian elephant forma parte de una red natural más grande...",
+          "question": "¿Qué pasa cuando una especie como asian elephant desaparece de un lugar?",
+          "options": ["El equilibrio del ecosistema se puede alterar", "Nada cambia nunca", "Aparecen más juguetes", "El clima se detiene"],
+          "correctOption": "El equilibrio del ecosistema se puede alterar"
+        },
+        {
+          "kali": "Kali prepara una misión de cuidado del planeta...",
+          "question": "¿Qué acción humana suele ayudar a animales como asian elephant?",
+          "options": ["Proteger ambientes naturales", "Tirar basura en ríos", "Romper nidos o refugios", "Hacer ruido constante cerca"],
+          "correctOption": "Proteger ambientes naturales"
+        },
+        {
+          "kali": "Asian elephant te recuerda que cada animal tiene necesidades básicas...",
+          "question": "¿Qué necesita cualquier animal para vivir bien?",
+          "options": ["Alimento, agua y refugio adecuados", "Solo música fuerte", "Solo luces de colores", "Solo juguetes humanos"],
+          "correctOption": "Alimento, agua y refugio adecuados"
+        },
+        {
+          "kali": "Kali abre un desafío de convivencia con la fauna...",
+          "question": "Si un grupo visita una zona con asian elephant, ¿qué regla es la más segura?",
+          "options": ["Respetar señales y mantener distancia", "Acercarse para sacarse selfies", "Correr alrededor del animal", "Intentar tocarlo entre todos"],
+          "correctOption": "Respetar señales y mantener distancia"
+        },
+        {
+          "kali": "El encuentro con asian elephant trae una lección importante...",
+          "question": "¿Qué valor demuestra quien cuida a asian elephant y su entorno?",
+          "options": ["Respeto por la vida", "Apuro por ganar siempre", "Desorden en la naturaleza", "Indiferencia total"],
+          "correctOption": "Respeto por la vida"
+        },
+        {
+          "kali": "Kali cierra la ronda con una idea clave sobre asian elephant...",
+          "question": "¿Cuál es una buena forma de aprender más sobre asian elephant?",
+          "options": ["Leer, observar y preguntar a personas expertas", "Inventar datos sin mirar", "Molestar animales para probar", "Ignorar todo sobre su hábitat"],
+          "correctOption": "Leer, observar y preguntar a personas expertas"
+        }
+      ]
+    },
+    "Baboon": {
+      "es-AR": [
+        {
+          "kali": "Baboon aparece en el camino y Kali te guía con calma...",
+          "question": "Si te cruzás con baboon en la naturaleza, ¿qué conviene hacer primero?",
+          "options": ["Acercarte corriendo", "Mantener distancia y observar con cuidado", "Gritar fuerte para asustarlo", "Tocarlo para conocerlo"],
+          "correctOption": "Mantener distancia y observar con cuidado"
+        },
+        {
+          "kali": "Kali señala el entorno donde vive baboon...",
+          "question": "¿Por qué es importante cuidar el hábitat de baboon?",
+          "options": ["Porque así puede vivir y cumplir su rol en la naturaleza", "Porque cambia de color todo el tiempo", "Porque no necesita alimento", "Porque vive mejor en una ciudad"],
+          "correctOption": "Porque así puede vivir y cumplir su rol en la naturaleza"
+        },
+        {
+          "kali": "Baboon se mueve atento en su ambiente...",
+          "question": "¿Qué ayuda a baboon a sobrevivir en su hábitat?",
+          "options": ["Sus adaptaciones naturales", "Un teléfono celular", "La ropa humana", "Los semáforos"],
+          "correctOption": "Sus adaptaciones naturales"
+        },
+        {
+          "kali": "Kali te propone pensar como explorador de animales...",
+          "question": "Si querés aprender sobre baboon sin molestarlo, ¿qué es mejor?",
+          "options": ["Observar en silencio y con respeto", "Perseguirlo para que corra", "Darle comida sin permiso", "Encerrarlo para mirarlo de cerca"],
+          "correctOption": "Observar en silencio y con respeto"
+        },
+        {
+          "kali": "Baboon forma parte de una red natural más grande...",
+          "question": "¿Qué pasa cuando una especie como baboon desaparece de un lugar?",
+          "options": ["El equilibrio del ecosistema se puede alterar", "Nada cambia nunca", "Aparecen más juguetes", "El clima se detiene"],
+          "correctOption": "El equilibrio del ecosistema se puede alterar"
+        },
+        {
+          "kali": "Kali prepara una misión de cuidado del planeta...",
+          "question": "¿Qué acción humana suele ayudar a animales como baboon?",
+          "options": ["Proteger ambientes naturales", "Tirar basura en ríos", "Romper nidos o refugios", "Hacer ruido constante cerca"],
+          "correctOption": "Proteger ambientes naturales"
+        },
+        {
+          "kali": "Baboon te recuerda que cada animal tiene necesidades básicas...",
+          "question": "¿Qué necesita cualquier animal para vivir bien?",
+          "options": ["Alimento, agua y refugio adecuados", "Solo música fuerte", "Solo luces de colores", "Solo juguetes humanos"],
+          "correctOption": "Alimento, agua y refugio adecuados"
+        },
+        {
+          "kali": "Kali abre un desafío de convivencia con la fauna...",
+          "question": "Si un grupo visita una zona con baboon, ¿qué regla es la más segura?",
+          "options": ["Respetar señales y mantener distancia", "Acercarse para sacarse selfies", "Correr alrededor del animal", "Intentar tocarlo entre todos"],
+          "correctOption": "Respetar señales y mantener distancia"
+        },
+        {
+          "kali": "El encuentro con baboon trae una lección importante...",
+          "question": "¿Qué valor demuestra quien cuida a baboon y su entorno?",
+          "options": ["Respeto por la vida", "Apuro por ganar siempre", "Desorden en la naturaleza", "Indiferencia total"],
+          "correctOption": "Respeto por la vida"
+        },
+        {
+          "kali": "Kali cierra la ronda con una idea clave sobre baboon...",
+          "question": "¿Cuál es una buena forma de aprender más sobre baboon?",
+          "options": ["Leer, observar y preguntar a personas expertas", "Inventar datos sin mirar", "Molestar animales para probar", "Ignorar todo sobre su hábitat"],
+          "correctOption": "Leer, observar y preguntar a personas expertas"
+        }
+      ]
+    },
+    "Beetle": {
+      "es-AR": [
+        {
+          "kali": "Beetle aparece en el camino y Kali te guía con calma...",
+          "question": "Si te cruzás con beetle en la naturaleza, ¿qué conviene hacer primero?",
+          "options": ["Acercarte corriendo", "Mantener distancia y observar con cuidado", "Gritar fuerte para asustarlo", "Tocarlo para conocerlo"],
+          "correctOption": "Mantener distancia y observar con cuidado"
+        },
+        {
+          "kali": "Kali señala el entorno donde vive beetle...",
+          "question": "¿Por qué es importante cuidar el hábitat de beetle?",
+          "options": ["Porque así puede vivir y cumplir su rol en la naturaleza", "Porque cambia de color todo el tiempo", "Porque no necesita alimento", "Porque vive mejor en una ciudad"],
+          "correctOption": "Porque así puede vivir y cumplir su rol en la naturaleza"
+        },
+        {
+          "kali": "Beetle se mueve atento en su ambiente...",
+          "question": "¿Qué ayuda a beetle a sobrevivir en su hábitat?",
+          "options": ["Sus adaptaciones naturales", "Un teléfono celular", "La ropa humana", "Los semáforos"],
+          "correctOption": "Sus adaptaciones naturales"
+        },
+        {
+          "kali": "Kali te propone pensar como explorador de animales...",
+          "question": "Si querés aprender sobre beetle sin molestarlo, ¿qué es mejor?",
+          "options": ["Observar en silencio y con respeto", "Perseguirlo para que corra", "Darle comida sin permiso", "Encerrarlo para mirarlo de cerca"],
+          "correctOption": "Observar en silencio y con respeto"
+        },
+        {
+          "kali": "Beetle forma parte de una red natural más grande...",
+          "question": "¿Qué pasa cuando una especie como beetle desaparece de un lugar?",
+          "options": ["El equilibrio del ecosistema se puede alterar", "Nada cambia nunca", "Aparecen más juguetes", "El clima se detiene"],
+          "correctOption": "El equilibrio del ecosistema se puede alterar"
+        },
+        {
+          "kali": "Kali prepara una misión de cuidado del planeta...",
+          "question": "¿Qué acción humana suele ayudar a animales como beetle?",
+          "options": ["Proteger ambientes naturales", "Tirar basura en ríos", "Romper nidos o refugios", "Hacer ruido constante cerca"],
+          "correctOption": "Proteger ambientes naturales"
+        },
+        {
+          "kali": "Beetle te recuerda que cada animal tiene necesidades básicas...",
+          "question": "¿Qué necesita cualquier animal para vivir bien?",
+          "options": ["Alimento, agua y refugio adecuados", "Solo música fuerte", "Solo luces de colores", "Solo juguetes humanos"],
+          "correctOption": "Alimento, agua y refugio adecuados"
+        },
+        {
+          "kali": "Kali abre un desafío de convivencia con la fauna...",
+          "question": "Si un grupo visita una zona con beetle, ¿qué regla es la más segura?",
+          "options": ["Respetar señales y mantener distancia", "Acercarse para sacarse selfies", "Correr alrededor del animal", "Intentar tocarlo entre todos"],
+          "correctOption": "Respetar señales y mantener distancia"
+        },
+        {
+          "kali": "El encuentro con beetle trae una lección importante...",
+          "question": "¿Qué valor demuestra quien cuida a beetle y su entorno?",
+          "options": ["Respeto por la vida", "Apuro por ganar siempre", "Desorden en la naturaleza", "Indiferencia total"],
+          "correctOption": "Respeto por la vida"
+        },
+        {
+          "kali": "Kali cierra la ronda con una idea clave sobre beetle...",
+          "question": "¿Cuál es una buena forma de aprender más sobre beetle?",
+          "options": ["Leer, observar y preguntar a personas expertas", "Inventar datos sin mirar", "Molestar animales para probar", "Ignorar todo sobre su hábitat"],
+          "correctOption": "Leer, observar y preguntar a personas expertas"
+        }
+      ]
+    },
+    "Black bear": {
+      "es-AR": [
+        {
+          "kali": "Black bear aparece en el camino y Kali te guía con calma...",
+          "question": "Si te cruzás con black bear en la naturaleza, ¿qué conviene hacer primero?",
+          "options": ["Acercarte corriendo", "Mantener distancia y observar con cuidado", "Gritar fuerte para asustarlo", "Tocarlo para conocerlo"],
+          "correctOption": "Mantener distancia y observar con cuidado"
+        },
+        {
+          "kali": "Kali señala el entorno donde vive black bear...",
+          "question": "¿Por qué es importante cuidar el hábitat de black bear?",
+          "options": ["Porque así puede vivir y cumplir su rol en la naturaleza", "Porque cambia de color todo el tiempo", "Porque no necesita alimento", "Porque vive mejor en una ciudad"],
+          "correctOption": "Porque así puede vivir y cumplir su rol en la naturaleza"
+        },
+        {
+          "kali": "Black bear se mueve atento en su ambiente...",
+          "question": "¿Qué ayuda a black bear a sobrevivir en su hábitat?",
+          "options": ["Sus adaptaciones naturales", "Un teléfono celular", "La ropa humana", "Los semáforos"],
+          "correctOption": "Sus adaptaciones naturales"
+        },
+        {
+          "kali": "Kali te propone pensar como explorador de animales...",
+          "question": "Si querés aprender sobre black bear sin molestarlo, ¿qué es mejor?",
+          "options": ["Observar en silencio y con respeto", "Perseguirlo para que corra", "Darle comida sin permiso", "Encerrarlo para mirarlo de cerca"],
+          "correctOption": "Observar en silencio y con respeto"
+        },
+        {
+          "kali": "Black bear forma parte de una red natural más grande...",
+          "question": "¿Qué pasa cuando una especie como black bear desaparece de un lugar?",
+          "options": ["El equilibrio del ecosistema se puede alterar", "Nada cambia nunca", "Aparecen más juguetes", "El clima se detiene"],
+          "correctOption": "El equilibrio del ecosistema se puede alterar"
+        },
+        {
+          "kali": "Kali prepara una misión de cuidado del planeta...",
+          "question": "¿Qué acción humana suele ayudar a animales como black bear?",
+          "options": ["Proteger ambientes naturales", "Tirar basura en ríos", "Romper nidos o refugios", "Hacer ruido constante cerca"],
+          "correctOption": "Proteger ambientes naturales"
+        },
+        {
+          "kali": "Black bear te recuerda que cada animal tiene necesidades básicas...",
+          "question": "¿Qué necesita cualquier animal para vivir bien?",
+          "options": ["Alimento, agua y refugio adecuados", "Solo música fuerte", "Solo luces de colores", "Solo juguetes humanos"],
+          "correctOption": "Alimento, agua y refugio adecuados"
+        },
+        {
+          "kali": "Kali abre un desafío de convivencia con la fauna...",
+          "question": "Si un grupo visita una zona con black bear, ¿qué regla es la más segura?",
+          "options": ["Respetar señales y mantener distancia", "Acercarse para sacarse selfies", "Correr alrededor del animal", "Intentar tocarlo entre todos"],
+          "correctOption": "Respetar señales y mantener distancia"
+        },
+        {
+          "kali": "El encuentro con black bear trae una lección importante...",
+          "question": "¿Qué valor demuestra quien cuida a black bear y su entorno?",
+          "options": ["Respeto por la vida", "Apuro por ganar siempre", "Desorden en la naturaleza", "Indiferencia total"],
+          "correctOption": "Respeto por la vida"
+        },
+        {
+          "kali": "Kali cierra la ronda con una idea clave sobre black bear...",
+          "question": "¿Cuál es una buena forma de aprender más sobre black bear?",
+          "options": ["Leer, observar y preguntar a personas expertas", "Inventar datos sin mirar", "Molestar animales para probar", "Ignorar todo sobre su hábitat"],
+          "correctOption": "Leer, observar y preguntar a personas expertas"
+        }
+      ]
+    },
+    "Blue whale": {
+      "es-AR": [
+        {
+          "kali": "Blue whale aparece en el camino y Kali te guía con calma...",
+          "question": "Si te cruzás con blue whale en la naturaleza, ¿qué conviene hacer primero?",
+          "options": ["Acercarte corriendo", "Mantener distancia y observar con cuidado", "Gritar fuerte para asustarlo", "Tocarlo para conocerlo"],
+          "correctOption": "Mantener distancia y observar con cuidado"
+        },
+        {
+          "kali": "Kali señala el entorno donde vive blue whale...",
+          "question": "¿Por qué es importante cuidar el hábitat de blue whale?",
+          "options": ["Porque así puede vivir y cumplir su rol en la naturaleza", "Porque cambia de color todo el tiempo", "Porque no necesita alimento", "Porque vive mejor en una ciudad"],
+          "correctOption": "Porque así puede vivir y cumplir su rol en la naturaleza"
+        },
+        {
+          "kali": "Blue whale se mueve atento en su ambiente...",
+          "question": "¿Qué ayuda a blue whale a sobrevivir en su hábitat?",
+          "options": ["Sus adaptaciones naturales", "Un teléfono celular", "La ropa humana", "Los semáforos"],
+          "correctOption": "Sus adaptaciones naturales"
+        },
+        {
+          "kali": "Kali te propone pensar como explorador de animales...",
+          "question": "Si querés aprender sobre blue whale sin molestarlo, ¿qué es mejor?",
+          "options": ["Observar en silencio y con respeto", "Perseguirlo para que corra", "Darle comida sin permiso", "Encerrarlo para mirarlo de cerca"],
+          "correctOption": "Observar en silencio y con respeto"
+        },
+        {
+          "kali": "Blue whale forma parte de una red natural más grande...",
+          "question": "¿Qué pasa cuando una especie como blue whale desaparece de un lugar?",
+          "options": ["El equilibrio del ecosistema se puede alterar", "Nada cambia nunca", "Aparecen más juguetes", "El clima se detiene"],
+          "correctOption": "El equilibrio del ecosistema se puede alterar"
+        },
+        {
+          "kali": "Kali prepara una misión de cuidado del planeta...",
+          "question": "¿Qué acción humana suele ayudar a animales como blue whale?",
+          "options": ["Proteger ambientes naturales", "Tirar basura en ríos", "Romper nidos o refugios", "Hacer ruido constante cerca"],
+          "correctOption": "Proteger ambientes naturales"
+        },
+        {
+          "kali": "Blue whale te recuerda que cada animal tiene necesidades básicas...",
+          "question": "¿Qué necesita cualquier animal para vivir bien?",
+          "options": ["Alimento, agua y refugio adecuados", "Solo música fuerte", "Solo luces de colores", "Solo juguetes humanos"],
+          "correctOption": "Alimento, agua y refugio adecuados"
+        },
+        {
+          "kali": "Kali abre un desafío de convivencia con la fauna...",
+          "question": "Si un grupo visita una zona con blue whale, ¿qué regla es la más segura?",
+          "options": ["Respetar señales y mantener distancia", "Acercarse para sacarse selfies", "Correr alrededor del animal", "Intentar tocarlo entre todos"],
+          "correctOption": "Respetar señales y mantener distancia"
+        },
+        {
+          "kali": "El encuentro con blue whale trae una lección importante...",
+          "question": "¿Qué valor demuestra quien cuida a blue whale y su entorno?",
+          "options": ["Respeto por la vida", "Apuro por ganar siempre", "Desorden en la naturaleza", "Indiferencia total"],
+          "correctOption": "Respeto por la vida"
+        },
+        {
+          "kali": "Kali cierra la ronda con una idea clave sobre blue whale...",
+          "question": "¿Cuál es una buena forma de aprender más sobre blue whale?",
+          "options": ["Leer, observar y preguntar a personas expertas", "Inventar datos sin mirar", "Molestar animales para probar", "Ignorar todo sobre su hábitat"],
+          "correctOption": "Leer, observar y preguntar a personas expertas"
+        }
+      ]
+    },
+    "Boa constrictor": {
+      "es-AR": [
+        {
+          "kali": "Boa constrictor aparece en el camino y Kali te guía con calma...",
+          "question": "Si te cruzás con boa constrictor en la naturaleza, ¿qué conviene hacer primero?",
+          "options": ["Acercarte corriendo", "Mantener distancia y observar con cuidado", "Gritar fuerte para asustarlo", "Tocarlo para conocerlo"],
+          "correctOption": "Mantener distancia y observar con cuidado"
+        },
+        {
+          "kali": "Kali señala el entorno donde vive boa constrictor...",
+          "question": "¿Por qué es importante cuidar el hábitat de boa constrictor?",
+          "options": ["Porque así puede vivir y cumplir su rol en la naturaleza", "Porque cambia de color todo el tiempo", "Porque no necesita alimento", "Porque vive mejor en una ciudad"],
+          "correctOption": "Porque así puede vivir y cumplir su rol en la naturaleza"
+        },
+        {
+          "kali": "Boa constrictor se mueve atento en su ambiente...",
+          "question": "¿Qué ayuda a boa constrictor a sobrevivir en su hábitat?",
+          "options": ["Sus adaptaciones naturales", "Un teléfono celular", "La ropa humana", "Los semáforos"],
+          "correctOption": "Sus adaptaciones naturales"
+        },
+        {
+          "kali": "Kali te propone pensar como explorador de animales...",
+          "question": "Si querés aprender sobre boa constrictor sin molestarlo, ¿qué es mejor?",
+          "options": ["Observar en silencio y con respeto", "Perseguirlo para que corra", "Darle comida sin permiso", "Encerrarlo para mirarlo de cerca"],
+          "correctOption": "Observar en silencio y con respeto"
+        },
+        {
+          "kali": "Boa constrictor forma parte de una red natural más grande...",
+          "question": "¿Qué pasa cuando una especie como boa constrictor desaparece de un lugar?",
+          "options": ["El equilibrio del ecosistema se puede alterar", "Nada cambia nunca", "Aparecen más juguetes", "El clima se detiene"],
+          "correctOption": "El equilibrio del ecosistema se puede alterar"
+        },
+        {
+          "kali": "Kali prepara una misión de cuidado del planeta...",
+          "question": "¿Qué acción humana suele ayudar a animales como boa constrictor?",
+          "options": ["Proteger ambientes naturales", "Tirar basura en ríos", "Romper nidos o refugios", "Hacer ruido constante cerca"],
+          "correctOption": "Proteger ambientes naturales"
+        },
+        {
+          "kali": "Boa constrictor te recuerda que cada animal tiene necesidades básicas...",
+          "question": "¿Qué necesita cualquier animal para vivir bien?",
+          "options": ["Alimento, agua y refugio adecuados", "Solo música fuerte", "Solo luces de colores", "Solo juguetes humanos"],
+          "correctOption": "Alimento, agua y refugio adecuados"
+        },
+        {
+          "kali": "Kali abre un desafío de convivencia con la fauna...",
+          "question": "Si un grupo visita una zona con boa constrictor, ¿qué regla es la más segura?",
+          "options": ["Respetar señales y mantener distancia", "Acercarse para sacarse selfies", "Correr alrededor del animal", "Intentar tocarlo entre todos"],
+          "correctOption": "Respetar señales y mantener distancia"
+        },
+        {
+          "kali": "El encuentro con boa constrictor trae una lección importante...",
+          "question": "¿Qué valor demuestra quien cuida a boa constrictor y su entorno?",
+          "options": ["Respeto por la vida", "Apuro por ganar siempre", "Desorden en la naturaleza", "Indiferencia total"],
+          "correctOption": "Respeto por la vida"
+        },
+        {
+          "kali": "Kali cierra la ronda con una idea clave sobre boa constrictor...",
+          "question": "¿Cuál es una buena forma de aprender más sobre boa constrictor?",
+          "options": ["Leer, observar y preguntar a personas expertas", "Inventar datos sin mirar", "Molestar animales para probar", "Ignorar todo sobre su hábitat"],
+          "correctOption": "Leer, observar y preguntar a personas expertas"
+        }
+      ]
+    },
+    "Caiman": {
+      "es-AR": [
+        {
+          "kali": "Caiman aparece en el camino y Kali te guía con calma...",
+          "question": "Si te cruzás con caiman en la naturaleza, ¿qué conviene hacer primero?",
+          "options": ["Acercarte corriendo", "Mantener distancia y observar con cuidado", "Gritar fuerte para asustarlo", "Tocarlo para conocerlo"],
+          "correctOption": "Mantener distancia y observar con cuidado"
+        },
+        {
+          "kali": "Kali señala el entorno donde vive caiman...",
+          "question": "¿Por qué es importante cuidar el hábitat de caiman?",
+          "options": ["Porque así puede vivir y cumplir su rol en la naturaleza", "Porque cambia de color todo el tiempo", "Porque no necesita alimento", "Porque vive mejor en una ciudad"],
+          "correctOption": "Porque así puede vivir y cumplir su rol en la naturaleza"
+        },
+        {
+          "kali": "Caiman se mueve atento en su ambiente...",
+          "question": "¿Qué ayuda a caiman a sobrevivir en su hábitat?",
+          "options": ["Sus adaptaciones naturales", "Un teléfono celular", "La ropa humana", "Los semáforos"],
+          "correctOption": "Sus adaptaciones naturales"
+        },
+        {
+          "kali": "Kali te propone pensar como explorador de animales...",
+          "question": "Si querés aprender sobre caiman sin molestarlo, ¿qué es mejor?",
+          "options": ["Observar en silencio y con respeto", "Perseguirlo para que corra", "Darle comida sin permiso", "Encerrarlo para mirarlo de cerca"],
+          "correctOption": "Observar en silencio y con respeto"
+        },
+        {
+          "kali": "Caiman forma parte de una red natural más grande...",
+          "question": "¿Qué pasa cuando una especie como caiman desaparece de un lugar?",
+          "options": ["El equilibrio del ecosistema se puede alterar", "Nada cambia nunca", "Aparecen más juguetes", "El clima se detiene"],
+          "correctOption": "El equilibrio del ecosistema se puede alterar"
+        },
+        {
+          "kali": "Kali prepara una misión de cuidado del planeta...",
+          "question": "¿Qué acción humana suele ayudar a animales como caiman?",
+          "options": ["Proteger ambientes naturales", "Tirar basura en ríos", "Romper nidos o refugios", "Hacer ruido constante cerca"],
+          "correctOption": "Proteger ambientes naturales"
+        },
+        {
+          "kali": "Caiman te recuerda que cada animal tiene necesidades básicas...",
+          "question": "¿Qué necesita cualquier animal para vivir bien?",
+          "options": ["Alimento, agua y refugio adecuados", "Solo música fuerte", "Solo luces de colores", "Solo juguetes humanos"],
+          "correctOption": "Alimento, agua y refugio adecuados"
+        },
+        {
+          "kali": "Kali abre un desafío de convivencia con la fauna...",
+          "question": "Si un grupo visita una zona con caiman, ¿qué regla es la más segura?",
+          "options": ["Respetar señales y mantener distancia", "Acercarse para sacarse selfies", "Correr alrededor del animal", "Intentar tocarlo entre todos"],
+          "correctOption": "Respetar señales y mantener distancia"
+        },
+        {
+          "kali": "El encuentro con caiman trae una lección importante...",
+          "question": "¿Qué valor demuestra quien cuida a caiman y su entorno?",
+          "options": ["Respeto por la vida", "Apuro por ganar siempre", "Desorden en la naturaleza", "Indiferencia total"],
+          "correctOption": "Respeto por la vida"
+        },
+        {
+          "kali": "Kali cierra la ronda con una idea clave sobre caiman...",
+          "question": "¿Cuál es una buena forma de aprender más sobre caiman?",
+          "options": ["Leer, observar y preguntar a personas expertas", "Inventar datos sin mirar", "Molestar animales para probar", "Ignorar todo sobre su hábitat"],
+          "correctOption": "Leer, observar y preguntar a personas expertas"
+        }
+      ]
+    },
+    "Camel": {
+      "es-AR": [
+        {
+          "kali": "Camel aparece en el camino y Kali te guía con calma...",
+          "question": "Si te cruzás con camel en la naturaleza, ¿qué conviene hacer primero?",
+          "options": ["Acercarte corriendo", "Mantener distancia y observar con cuidado", "Gritar fuerte para asustarlo", "Tocarlo para conocerlo"],
+          "correctOption": "Mantener distancia y observar con cuidado"
+        },
+        {
+          "kali": "Kali señala el entorno donde vive camel...",
+          "question": "¿Por qué es importante cuidar el hábitat de camel?",
+          "options": ["Porque así puede vivir y cumplir su rol en la naturaleza", "Porque cambia de color todo el tiempo", "Porque no necesita alimento", "Porque vive mejor en una ciudad"],
+          "correctOption": "Porque así puede vivir y cumplir su rol en la naturaleza"
+        },
+        {
+          "kali": "Camel se mueve atento en su ambiente...",
+          "question": "¿Qué ayuda a camel a sobrevivir en su hábitat?",
+          "options": ["Sus adaptaciones naturales", "Un teléfono celular", "La ropa humana", "Los semáforos"],
+          "correctOption": "Sus adaptaciones naturales"
+        },
+        {
+          "kali": "Kali te propone pensar como explorador de animales...",
+          "question": "Si querés aprender sobre camel sin molestarlo, ¿qué es mejor?",
+          "options": ["Observar en silencio y con respeto", "Perseguirlo para que corra", "Darle comida sin permiso", "Encerrarlo para mirarlo de cerca"],
+          "correctOption": "Observar en silencio y con respeto"
+        },
+        {
+          "kali": "Camel forma parte de una red natural más grande...",
+          "question": "¿Qué pasa cuando una especie como camel desaparece de un lugar?",
+          "options": ["El equilibrio del ecosistema se puede alterar", "Nada cambia nunca", "Aparecen más juguetes", "El clima se detiene"],
+          "correctOption": "El equilibrio del ecosistema se puede alterar"
+        },
+        {
+          "kali": "Kali prepara una misión de cuidado del planeta...",
+          "question": "¿Qué acción humana suele ayudar a animales como camel?",
+          "options": ["Proteger ambientes naturales", "Tirar basura en ríos", "Romper nidos o refugios", "Hacer ruido constante cerca"],
+          "correctOption": "Proteger ambientes naturales"
+        },
+        {
+          "kali": "Camel te recuerda que cada animal tiene necesidades básicas...",
+          "question": "¿Qué necesita cualquier animal para vivir bien?",
+          "options": ["Alimento, agua y refugio adecuados", "Solo música fuerte", "Solo luces de colores", "Solo juguetes humanos"],
+          "correctOption": "Alimento, agua y refugio adecuados"
+        },
+        {
+          "kali": "Kali abre un desafío de convivencia con la fauna...",
+          "question": "Si un grupo visita una zona con camel, ¿qué regla es la más segura?",
+          "options": ["Respetar señales y mantener distancia", "Acercarse para sacarse selfies", "Correr alrededor del animal", "Intentar tocarlo entre todos"],
+          "correctOption": "Respetar señales y mantener distancia"
+        },
+        {
+          "kali": "El encuentro con camel trae una lección importante...",
+          "question": "¿Qué valor demuestra quien cuida a camel y su entorno?",
+          "options": ["Respeto por la vida", "Apuro por ganar siempre", "Desorden en la naturaleza", "Indiferencia total"],
+          "correctOption": "Respeto por la vida"
+        },
+        {
+          "kali": "Kali cierra la ronda con una idea clave sobre camel...",
+          "question": "¿Cuál es una buena forma de aprender más sobre camel?",
+          "options": ["Leer, observar y preguntar a personas expertas", "Inventar datos sin mirar", "Molestar animales para probar", "Ignorar todo sobre su hábitat"],
+          "correctOption": "Leer, observar y preguntar a personas expertas"
+        }
+      ]
+    },
+    "Cheetah": {
+      "es-AR": [
+        {
+          "kali": "Cheetah aparece en el camino y Kali te guía con calma...",
+          "question": "Si te cruzás con cheetah en la naturaleza, ¿qué conviene hacer primero?",
+          "options": ["Acercarte corriendo", "Mantener distancia y observar con cuidado", "Gritar fuerte para asustarlo", "Tocarlo para conocerlo"],
+          "correctOption": "Mantener distancia y observar con cuidado"
+        },
+        {
+          "kali": "Kali señala el entorno donde vive cheetah...",
+          "question": "¿Por qué es importante cuidar el hábitat de cheetah?",
+          "options": ["Porque así puede vivir y cumplir su rol en la naturaleza", "Porque cambia de color todo el tiempo", "Porque no necesita alimento", "Porque vive mejor en una ciudad"],
+          "correctOption": "Porque así puede vivir y cumplir su rol en la naturaleza"
+        },
+        {
+          "kali": "Cheetah se mueve atento en su ambiente...",
+          "question": "¿Qué ayuda a cheetah a sobrevivir en su hábitat?",
+          "options": ["Sus adaptaciones naturales", "Un teléfono celular", "La ropa humana", "Los semáforos"],
+          "correctOption": "Sus adaptaciones naturales"
+        },
+        {
+          "kali": "Kali te propone pensar como explorador de animales...",
+          "question": "Si querés aprender sobre cheetah sin molestarlo, ¿qué es mejor?",
+          "options": ["Observar en silencio y con respeto", "Perseguirlo para que corra", "Darle comida sin permiso", "Encerrarlo para mirarlo de cerca"],
+          "correctOption": "Observar en silencio y con respeto"
+        },
+        {
+          "kali": "Cheetah forma parte de una red natural más grande...",
+          "question": "¿Qué pasa cuando una especie como cheetah desaparece de un lugar?",
+          "options": ["El equilibrio del ecosistema se puede alterar", "Nada cambia nunca", "Aparecen más juguetes", "El clima se detiene"],
+          "correctOption": "El equilibrio del ecosistema se puede alterar"
+        },
+        {
+          "kali": "Kali prepara una misión de cuidado del planeta...",
+          "question": "¿Qué acción humana suele ayudar a animales como cheetah?",
+          "options": ["Proteger ambientes naturales", "Tirar basura en ríos", "Romper nidos o refugios", "Hacer ruido constante cerca"],
+          "correctOption": "Proteger ambientes naturales"
+        },
+        {
+          "kali": "Cheetah te recuerda que cada animal tiene necesidades básicas...",
+          "question": "¿Qué necesita cualquier animal para vivir bien?",
+          "options": ["Alimento, agua y refugio adecuados", "Solo música fuerte", "Solo luces de colores", "Solo juguetes humanos"],
+          "correctOption": "Alimento, agua y refugio adecuados"
+        },
+        {
+          "kali": "Kali abre un desafío de convivencia con la fauna...",
+          "question": "Si un grupo visita una zona con cheetah, ¿qué regla es la más segura?",
+          "options": ["Respetar señales y mantener distancia", "Acercarse para sacarse selfies", "Correr alrededor del animal", "Intentar tocarlo entre todos"],
+          "correctOption": "Respetar señales y mantener distancia"
+        },
+        {
+          "kali": "El encuentro con cheetah trae una lección importante...",
+          "question": "¿Qué valor demuestra quien cuida a cheetah y su entorno?",
+          "options": ["Respeto por la vida", "Apuro por ganar siempre", "Desorden en la naturaleza", "Indiferencia total"],
+          "correctOption": "Respeto por la vida"
+        },
+        {
+          "kali": "Kali cierra la ronda con una idea clave sobre cheetah...",
+          "question": "¿Cuál es una buena forma de aprender más sobre cheetah?",
+          "options": ["Leer, observar y preguntar a personas expertas", "Inventar datos sin mirar", "Molestar animales para probar", "Ignorar todo sobre su hábitat"],
+          "correctOption": "Leer, observar y preguntar a personas expertas"
+        }
+      ]
+    },
+    "Clownfish": {
+      "es-AR": [
+        {
+          "kali": "Clownfish aparece en el camino y Kali te guía con calma...",
+          "question": "Si te cruzás con clownfish en la naturaleza, ¿qué conviene hacer primero?",
+          "options": ["Acercarte corriendo", "Mantener distancia y observar con cuidado", "Gritar fuerte para asustarlo", "Tocarlo para conocerlo"],
+          "correctOption": "Mantener distancia y observar con cuidado"
+        },
+        {
+          "kali": "Kali señala el entorno donde vive clownfish...",
+          "question": "¿Por qué es importante cuidar el hábitat de clownfish?",
+          "options": ["Porque así puede vivir y cumplir su rol en la naturaleza", "Porque cambia de color todo el tiempo", "Porque no necesita alimento", "Porque vive mejor en una ciudad"],
+          "correctOption": "Porque así puede vivir y cumplir su rol en la naturaleza"
+        },
+        {
+          "kali": "Clownfish se mueve atento en su ambiente...",
+          "question": "¿Qué ayuda a clownfish a sobrevivir en su hábitat?",
+          "options": ["Sus adaptaciones naturales", "Un teléfono celular", "La ropa humana", "Los semáforos"],
+          "correctOption": "Sus adaptaciones naturales"
+        },
+        {
+          "kali": "Kali te propone pensar como explorador de animales...",
+          "question": "Si querés aprender sobre clownfish sin molestarlo, ¿qué es mejor?",
+          "options": ["Observar en silencio y con respeto", "Perseguirlo para que corra", "Darle comida sin permiso", "Encerrarlo para mirarlo de cerca"],
+          "correctOption": "Observar en silencio y con respeto"
+        },
+        {
+          "kali": "Clownfish forma parte de una red natural más grande...",
+          "question": "¿Qué pasa cuando una especie como clownfish desaparece de un lugar?",
+          "options": ["El equilibrio del ecosistema se puede alterar", "Nada cambia nunca", "Aparecen más juguetes", "El clima se detiene"],
+          "correctOption": "El equilibrio del ecosistema se puede alterar"
+        },
+        {
+          "kali": "Kali prepara una misión de cuidado del planeta...",
+          "question": "¿Qué acción humana suele ayudar a animales como clownfish?",
+          "options": ["Proteger ambientes naturales", "Tirar basura en ríos", "Romper nidos o refugios", "Hacer ruido constante cerca"],
+          "correctOption": "Proteger ambientes naturales"
+        },
+        {
+          "kali": "Clownfish te recuerda que cada animal tiene necesidades básicas...",
+          "question": "¿Qué necesita cualquier animal para vivir bien?",
+          "options": ["Alimento, agua y refugio adecuados", "Solo música fuerte", "Solo luces de colores", "Solo juguetes humanos"],
+          "correctOption": "Alimento, agua y refugio adecuados"
+        },
+        {
+          "kali": "Kali abre un desafío de convivencia con la fauna...",
+          "question": "Si un grupo visita una zona con clownfish, ¿qué regla es la más segura?",
+          "options": ["Respetar señales y mantener distancia", "Acercarse para sacarse selfies", "Correr alrededor del animal", "Intentar tocarlo entre todos"],
+          "correctOption": "Respetar señales y mantener distancia"
+        },
+        {
+          "kali": "El encuentro con clownfish trae una lección importante...",
+          "question": "¿Qué valor demuestra quien cuida a clownfish y su entorno?",
+          "options": ["Respeto por la vida", "Apuro por ganar siempre", "Desorden en la naturaleza", "Indiferencia total"],
+          "correctOption": "Respeto por la vida"
+        },
+        {
+          "kali": "Kali cierra la ronda con una idea clave sobre clownfish...",
+          "question": "¿Cuál es una buena forma de aprender más sobre clownfish?",
+          "options": ["Leer, observar y preguntar a personas expertas", "Inventar datos sin mirar", "Molestar animales para probar", "Ignorar todo sobre su hábitat"],
+          "correctOption": "Leer, observar y preguntar a personas expertas"
+        }
+      ]
+    },
+    "Cobra": {
+      "es-AR": [
+        {
+          "kali": "Cobra aparece en el camino y Kali te guía con calma...",
+          "question": "Si te cruzás con cobra en la naturaleza, ¿qué conviene hacer primero?",
+          "options": ["Acercarte corriendo", "Mantener distancia y observar con cuidado", "Gritar fuerte para asustarlo", "Tocarlo para conocerlo"],
+          "correctOption": "Mantener distancia y observar con cuidado"
+        },
+        {
+          "kali": "Kali señala el entorno donde vive cobra...",
+          "question": "¿Por qué es importante cuidar el hábitat de cobra?",
+          "options": ["Porque así puede vivir y cumplir su rol en la naturaleza", "Porque cambia de color todo el tiempo", "Porque no necesita alimento", "Porque vive mejor en una ciudad"],
+          "correctOption": "Porque así puede vivir y cumplir su rol en la naturaleza"
+        },
+        {
+          "kali": "Cobra se mueve atento en su ambiente...",
+          "question": "¿Qué ayuda a cobra a sobrevivir en su hábitat?",
+          "options": ["Sus adaptaciones naturales", "Un teléfono celular", "La ropa humana", "Los semáforos"],
+          "correctOption": "Sus adaptaciones naturales"
+        },
+        {
+          "kali": "Kali te propone pensar como explorador de animales...",
+          "question": "Si querés aprender sobre cobra sin molestarlo, ¿qué es mejor?",
+          "options": ["Observar en silencio y con respeto", "Perseguirlo para que corra", "Darle comida sin permiso", "Encerrarlo para mirarlo de cerca"],
+          "correctOption": "Observar en silencio y con respeto"
+        },
+        {
+          "kali": "Cobra forma parte de una red natural más grande...",
+          "question": "¿Qué pasa cuando una especie como cobra desaparece de un lugar?",
+          "options": ["El equilibrio del ecosistema se puede alterar", "Nada cambia nunca", "Aparecen más juguetes", "El clima se detiene"],
+          "correctOption": "El equilibrio del ecosistema se puede alterar"
+        },
+        {
+          "kali": "Kali prepara una misión de cuidado del planeta...",
+          "question": "¿Qué acción humana suele ayudar a animales como cobra?",
+          "options": ["Proteger ambientes naturales", "Tirar basura en ríos", "Romper nidos o refugios", "Hacer ruido constante cerca"],
+          "correctOption": "Proteger ambientes naturales"
+        },
+        {
+          "kali": "Cobra te recuerda que cada animal tiene necesidades básicas...",
+          "question": "¿Qué necesita cualquier animal para vivir bien?",
+          "options": ["Alimento, agua y refugio adecuados", "Solo música fuerte", "Solo luces de colores", "Solo juguetes humanos"],
+          "correctOption": "Alimento, agua y refugio adecuados"
+        },
+        {
+          "kali": "Kali abre un desafío de convivencia con la fauna...",
+          "question": "Si un grupo visita una zona con cobra, ¿qué regla es la más segura?",
+          "options": ["Respetar señales y mantener distancia", "Acercarse para sacarse selfies", "Correr alrededor del animal", "Intentar tocarlo entre todos"],
+          "correctOption": "Respetar señales y mantener distancia"
+        },
+        {
+          "kali": "El encuentro con cobra trae una lección importante...",
+          "question": "¿Qué valor demuestra quien cuida a cobra y su entorno?",
+          "options": ["Respeto por la vida", "Apuro por ganar siempre", "Desorden en la naturaleza", "Indiferencia total"],
+          "correctOption": "Respeto por la vida"
+        },
+        {
+          "kali": "Kali cierra la ronda con una idea clave sobre cobra...",
+          "question": "¿Cuál es una buena forma de aprender más sobre cobra?",
+          "options": ["Leer, observar y preguntar a personas expertas", "Inventar datos sin mirar", "Molestar animales para probar", "Ignorar todo sobre su hábitat"],
+          "correctOption": "Leer, observar y preguntar a personas expertas"
+        }
+      ]
+    },
+    "Coyote": {
+      "es-AR": [
+        {
+          "kali": "Coyote aparece en el camino y Kali te guía con calma...",
+          "question": "Si te cruzás con coyote en la naturaleza, ¿qué conviene hacer primero?",
+          "options": ["Acercarte corriendo", "Mantener distancia y observar con cuidado", "Gritar fuerte para asustarlo", "Tocarlo para conocerlo"],
+          "correctOption": "Mantener distancia y observar con cuidado"
+        },
+        {
+          "kali": "Kali señala el entorno donde vive coyote...",
+          "question": "¿Por qué es importante cuidar el hábitat de coyote?",
+          "options": ["Porque así puede vivir y cumplir su rol en la naturaleza", "Porque cambia de color todo el tiempo", "Porque no necesita alimento", "Porque vive mejor en una ciudad"],
+          "correctOption": "Porque así puede vivir y cumplir su rol en la naturaleza"
+        },
+        {
+          "kali": "Coyote se mueve atento en su ambiente...",
+          "question": "¿Qué ayuda a coyote a sobrevivir en su hábitat?",
+          "options": ["Sus adaptaciones naturales", "Un teléfono celular", "La ropa humana", "Los semáforos"],
+          "correctOption": "Sus adaptaciones naturales"
+        },
+        {
+          "kali": "Kali te propone pensar como explorador de animales...",
+          "question": "Si querés aprender sobre coyote sin molestarlo, ¿qué es mejor?",
+          "options": ["Observar en silencio y con respeto", "Perseguirlo para que corra", "Darle comida sin permiso", "Encerrarlo para mirarlo de cerca"],
+          "correctOption": "Observar en silencio y con respeto"
+        },
+        {
+          "kali": "Coyote forma parte de una red natural más grande...",
+          "question": "¿Qué pasa cuando una especie como coyote desaparece de un lugar?",
+          "options": ["El equilibrio del ecosistema se puede alterar", "Nada cambia nunca", "Aparecen más juguetes", "El clima se detiene"],
+          "correctOption": "El equilibrio del ecosistema se puede alterar"
+        },
+        {
+          "kali": "Kali prepara una misión de cuidado del planeta...",
+          "question": "¿Qué acción humana suele ayudar a animales como coyote?",
+          "options": ["Proteger ambientes naturales", "Tirar basura en ríos", "Romper nidos o refugios", "Hacer ruido constante cerca"],
+          "correctOption": "Proteger ambientes naturales"
+        },
+        {
+          "kali": "Coyote te recuerda que cada animal tiene necesidades básicas...",
+          "question": "¿Qué necesita cualquier animal para vivir bien?",
+          "options": ["Alimento, agua y refugio adecuados", "Solo música fuerte", "Solo luces de colores", "Solo juguetes humanos"],
+          "correctOption": "Alimento, agua y refugio adecuados"
+        },
+        {
+          "kali": "Kali abre un desafío de convivencia con la fauna...",
+          "question": "Si un grupo visita una zona con coyote, ¿qué regla es la más segura?",
+          "options": ["Respetar señales y mantener distancia", "Acercarse para sacarse selfies", "Correr alrededor del animal", "Intentar tocarlo entre todos"],
+          "correctOption": "Respetar señales y mantener distancia"
+        },
+        {
+          "kali": "El encuentro con coyote trae una lección importante...",
+          "question": "¿Qué valor demuestra quien cuida a coyote y su entorno?",
+          "options": ["Respeto por la vida", "Apuro por ganar siempre", "Desorden en la naturaleza", "Indiferencia total"],
+          "correctOption": "Respeto por la vida"
+        },
+        {
+          "kali": "Kali cierra la ronda con una idea clave sobre coyote...",
+          "question": "¿Cuál es una buena forma de aprender más sobre coyote?",
+          "options": ["Leer, observar y preguntar a personas expertas", "Inventar datos sin mirar", "Molestar animales para probar", "Ignorar todo sobre su hábitat"],
+          "correctOption": "Leer, observar y preguntar a personas expertas"
+        }
+      ]
+    },
+    "Crocodile": {
+      "es-AR": [
+        {
+          "kali": "Crocodile aparece en el camino y Kali te guía con calma...",
+          "question": "Si te cruzás con crocodile en la naturaleza, ¿qué conviene hacer primero?",
+          "options": ["Acercarte corriendo", "Mantener distancia y observar con cuidado", "Gritar fuerte para asustarlo", "Tocarlo para conocerlo"],
+          "correctOption": "Mantener distancia y observar con cuidado"
+        },
+        {
+          "kali": "Kali señala el entorno donde vive crocodile...",
+          "question": "¿Por qué es importante cuidar el hábitat de crocodile?",
+          "options": ["Porque así puede vivir y cumplir su rol en la naturaleza", "Porque cambia de color todo el tiempo", "Porque no necesita alimento", "Porque vive mejor en una ciudad"],
+          "correctOption": "Porque así puede vivir y cumplir su rol en la naturaleza"
+        },
+        {
+          "kali": "Crocodile se mueve atento en su ambiente...",
+          "question": "¿Qué ayuda a crocodile a sobrevivir en su hábitat?",
+          "options": ["Sus adaptaciones naturales", "Un teléfono celular", "La ropa humana", "Los semáforos"],
+          "correctOption": "Sus adaptaciones naturales"
+        },
+        {
+          "kali": "Kali te propone pensar como explorador de animales...",
+          "question": "Si querés aprender sobre crocodile sin molestarlo, ¿qué es mejor?",
+          "options": ["Observar en silencio y con respeto", "Perseguirlo para que corra", "Darle comida sin permiso", "Encerrarlo para mirarlo de cerca"],
+          "correctOption": "Observar en silencio y con respeto"
+        },
+        {
+          "kali": "Crocodile forma parte de una red natural más grande...",
+          "question": "¿Qué pasa cuando una especie como crocodile desaparece de un lugar?",
+          "options": ["El equilibrio del ecosistema se puede alterar", "Nada cambia nunca", "Aparecen más juguetes", "El clima se detiene"],
+          "correctOption": "El equilibrio del ecosistema se puede alterar"
+        },
+        {
+          "kali": "Kali prepara una misión de cuidado del planeta...",
+          "question": "¿Qué acción humana suele ayudar a animales como crocodile?",
+          "options": ["Proteger ambientes naturales", "Tirar basura en ríos", "Romper nidos o refugios", "Hacer ruido constante cerca"],
+          "correctOption": "Proteger ambientes naturales"
+        },
+        {
+          "kali": "Crocodile te recuerda que cada animal tiene necesidades básicas...",
+          "question": "¿Qué necesita cualquier animal para vivir bien?",
+          "options": ["Alimento, agua y refugio adecuados", "Solo música fuerte", "Solo luces de colores", "Solo juguetes humanos"],
+          "correctOption": "Alimento, agua y refugio adecuados"
+        },
+        {
+          "kali": "Kali abre un desafío de convivencia con la fauna...",
+          "question": "Si un grupo visita una zona con crocodile, ¿qué regla es la más segura?",
+          "options": ["Respetar señales y mantener distancia", "Acercarse para sacarse selfies", "Correr alrededor del animal", "Intentar tocarlo entre todos"],
+          "correctOption": "Respetar señales y mantener distancia"
+        },
+        {
+          "kali": "El encuentro con crocodile trae una lección importante...",
+          "question": "¿Qué valor demuestra quien cuida a crocodile y su entorno?",
+          "options": ["Respeto por la vida", "Apuro por ganar siempre", "Desorden en la naturaleza", "Indiferencia total"],
+          "correctOption": "Respeto por la vida"
+        },
+        {
+          "kali": "Kali cierra la ronda con una idea clave sobre crocodile...",
+          "question": "¿Cuál es una buena forma de aprender más sobre crocodile?",
+          "options": ["Leer, observar y preguntar a personas expertas", "Inventar datos sin mirar", "Molestar animales para probar", "Ignorar todo sobre su hábitat"],
+          "correctOption": "Leer, observar y preguntar a personas expertas"
+        }
+      ]
+    },
+    "Deer": {
+      "es-AR": [
+        {
+          "kali": "Deer aparece en el camino y Kali te guía con calma...",
+          "question": "Si te cruzás con deer en la naturaleza, ¿qué conviene hacer primero?",
+          "options": ["Acercarte corriendo", "Mantener distancia y observar con cuidado", "Gritar fuerte para asustarlo", "Tocarlo para conocerlo"],
+          "correctOption": "Mantener distancia y observar con cuidado"
+        },
+        {
+          "kali": "Kali señala el entorno donde vive deer...",
+          "question": "¿Por qué es importante cuidar el hábitat de deer?",
+          "options": ["Porque así puede vivir y cumplir su rol en la naturaleza", "Porque cambia de color todo el tiempo", "Porque no necesita alimento", "Porque vive mejor en una ciudad"],
+          "correctOption": "Porque así puede vivir y cumplir su rol en la naturaleza"
+        },
+        {
+          "kali": "Deer se mueve atento en su ambiente...",
+          "question": "¿Qué ayuda a deer a sobrevivir en su hábitat?",
+          "options": ["Sus adaptaciones naturales", "Un teléfono celular", "La ropa humana", "Los semáforos"],
+          "correctOption": "Sus adaptaciones naturales"
+        },
+        {
+          "kali": "Kali te propone pensar como explorador de animales...",
+          "question": "Si querés aprender sobre deer sin molestarlo, ¿qué es mejor?",
+          "options": ["Observar en silencio y con respeto", "Perseguirlo para que corra", "Darle comida sin permiso", "Encerrarlo para mirarlo de cerca"],
+          "correctOption": "Observar en silencio y con respeto"
+        },
+        {
+          "kali": "Deer forma parte de una red natural más grande...",
+          "question": "¿Qué pasa cuando una especie como deer desaparece de un lugar?",
+          "options": ["El equilibrio del ecosistema se puede alterar", "Nada cambia nunca", "Aparecen más juguetes", "El clima se detiene"],
+          "correctOption": "El equilibrio del ecosistema se puede alterar"
+        },
+        {
+          "kali": "Kali prepara una misión de cuidado del planeta...",
+          "question": "¿Qué acción humana suele ayudar a animales como deer?",
+          "options": ["Proteger ambientes naturales", "Tirar basura en ríos", "Romper nidos o refugios", "Hacer ruido constante cerca"],
+          "correctOption": "Proteger ambientes naturales"
+        },
+        {
+          "kali": "Deer te recuerda que cada animal tiene necesidades básicas...",
+          "question": "¿Qué necesita cualquier animal para vivir bien?",
+          "options": ["Alimento, agua y refugio adecuados", "Solo música fuerte", "Solo luces de colores", "Solo juguetes humanos"],
+          "correctOption": "Alimento, agua y refugio adecuados"
+        },
+        {
+          "kali": "Kali abre un desafío de convivencia con la fauna...",
+          "question": "Si un grupo visita una zona con deer, ¿qué regla es la más segura?",
+          "options": ["Respetar señales y mantener distancia", "Acercarse para sacarse selfies", "Correr alrededor del animal", "Intentar tocarlo entre todos"],
+          "correctOption": "Respetar señales y mantener distancia"
+        },
+        {
+          "kali": "El encuentro con deer trae una lección importante...",
+          "question": "¿Qué valor demuestra quien cuida a deer y su entorno?",
+          "options": ["Respeto por la vida", "Apuro por ganar siempre", "Desorden en la naturaleza", "Indiferencia total"],
+          "correctOption": "Respeto por la vida"
+        },
+        {
+          "kali": "Kali cierra la ronda con una idea clave sobre deer...",
+          "question": "¿Cuál es una buena forma de aprender más sobre deer?",
+          "options": ["Leer, observar y preguntar a personas expertas", "Inventar datos sin mirar", "Molestar animales para probar", "Ignorar todo sobre su hábitat"],
+          "correctOption": "Leer, observar y preguntar a personas expertas"
+        }
+      ]
+    },
+    "Eagle": {
+      "es-AR": [
+        {
+          "kali": "Eagle aparece en el camino y Kali te guía con calma...",
+          "question": "Si te cruzás con eagle en la naturaleza, ¿qué conviene hacer primero?",
+          "options": ["Acercarte corriendo", "Mantener distancia y observar con cuidado", "Gritar fuerte para asustarlo", "Tocarlo para conocerlo"],
+          "correctOption": "Mantener distancia y observar con cuidado"
+        },
+        {
+          "kali": "Kali señala el entorno donde vive eagle...",
+          "question": "¿Por qué es importante cuidar el hábitat de eagle?",
+          "options": ["Porque así puede vivir y cumplir su rol en la naturaleza", "Porque cambia de color todo el tiempo", "Porque no necesita alimento", "Porque vive mejor en una ciudad"],
+          "correctOption": "Porque así puede vivir y cumplir su rol en la naturaleza"
+        },
+        {
+          "kali": "Eagle se mueve atento en su ambiente...",
+          "question": "¿Qué ayuda a eagle a sobrevivir en su hábitat?",
+          "options": ["Sus adaptaciones naturales", "Un teléfono celular", "La ropa humana", "Los semáforos"],
+          "correctOption": "Sus adaptaciones naturales"
+        },
+        {
+          "kali": "Kali te propone pensar como explorador de animales...",
+          "question": "Si querés aprender sobre eagle sin molestarlo, ¿qué es mejor?",
+          "options": ["Observar en silencio y con respeto", "Perseguirlo para que corra", "Darle comida sin permiso", "Encerrarlo para mirarlo de cerca"],
+          "correctOption": "Observar en silencio y con respeto"
+        },
+        {
+          "kali": "Eagle forma parte de una red natural más grande...",
+          "question": "¿Qué pasa cuando una especie como eagle desaparece de un lugar?",
+          "options": ["El equilibrio del ecosistema se puede alterar", "Nada cambia nunca", "Aparecen más juguetes", "El clima se detiene"],
+          "correctOption": "El equilibrio del ecosistema se puede alterar"
+        },
+        {
+          "kali": "Kali prepara una misión de cuidado del planeta...",
+          "question": "¿Qué acción humana suele ayudar a animales como eagle?",
+          "options": ["Proteger ambientes naturales", "Tirar basura en ríos", "Romper nidos o refugios", "Hacer ruido constante cerca"],
+          "correctOption": "Proteger ambientes naturales"
+        },
+        {
+          "kali": "Eagle te recuerda que cada animal tiene necesidades básicas...",
+          "question": "¿Qué necesita cualquier animal para vivir bien?",
+          "options": ["Alimento, agua y refugio adecuados", "Solo música fuerte", "Solo luces de colores", "Solo juguetes humanos"],
+          "correctOption": "Alimento, agua y refugio adecuados"
+        },
+        {
+          "kali": "Kali abre un desafío de convivencia con la fauna...",
+          "question": "Si un grupo visita una zona con eagle, ¿qué regla es la más segura?",
+          "options": ["Respetar señales y mantener distancia", "Acercarse para sacarse selfies", "Correr alrededor del animal", "Intentar tocarlo entre todos"],
+          "correctOption": "Respetar señales y mantener distancia"
+        },
+        {
+          "kali": "El encuentro con eagle trae una lección importante...",
+          "question": "¿Qué valor demuestra quien cuida a eagle y su entorno?",
+          "options": ["Respeto por la vida", "Apuro por ganar siempre", "Desorden en la naturaleza", "Indiferencia total"],
+          "correctOption": "Respeto por la vida"
+        },
+        {
+          "kali": "Kali cierra la ronda con una idea clave sobre eagle...",
+          "question": "¿Cuál es una buena forma de aprender más sobre eagle?",
+          "options": ["Leer, observar y preguntar a personas expertas", "Inventar datos sin mirar", "Molestar animales para probar", "Ignorar todo sobre su hábitat"],
+          "correctOption": "Leer, observar y preguntar a personas expertas"
+        }
+      ]
+    },
     "Falcon": {
       "es-AR": [
         {
-          "animal": "Falcon",
-          "type": "speed",
-          "kali": "El halcón se lanza desde lo más alto del cielo…",
-          "question": "¿Qué tan rápido puede volar en picada?",
-          "options": ["Como una persona corriendo", "Como una bicicleta", "Más rápido que un auto de carrera", "Como un perro"],
-          "correctOption": "Más rápido que un auto de carrera"
+          "kali": "Falcon aparece en el camino y Kali te guía con calma...",
+          "question": "Si te cruzás con falcon en la naturaleza, ¿qué conviene hacer primero?",
+          "options": ["Acercarte corriendo", "Mantener distancia y observar con cuidado", "Gritar fuerte para asustarlo", "Tocarlo para conocerlo"],
+          "correctOption": "Mantener distancia y observar con cuidado"
         },
         {
-          "animal": "Falcon",
-          "type": "vision",
-          "kali": "Desde arriba, el halcón observa todo lo que pasa abajo…",
-          "question": "¿Cómo es la vista del halcón?",
-          "options": ["Muy mala", "Igual que la humana", "Muy poderosa, puede ver de lejos", "Solo ve de noche"],
-          "correctOption": "Muy poderosa, puede ver de lejos"
+          "kali": "Kali señala el entorno donde vive falcon...",
+          "question": "¿Por qué es importante cuidar el hábitat de falcon?",
+          "options": ["Porque así puede vivir y cumplir su rol en la naturaleza", "Porque cambia de color todo el tiempo", "Porque no necesita alimento", "Porque vive mejor en una ciudad"],
+          "correctOption": "Porque así puede vivir y cumplir su rol en la naturaleza"
         },
         {
-          "animal": "Falcon",
-          "type": "hunting",
-          "kali": "El halcón detecta a su presa y se prepara para atacar…",
-          "question": "¿Cómo suele cazar el halcón?",
-          "options": ["Caminando lentamente", "Lanzándose en picada desde el cielo", "Nadando", "Escondiéndose bajo tierra"],
-          "correctOption": "Lanzándose en picada desde el cielo"
+          "kali": "Falcon se mueve atento en su ambiente...",
+          "question": "¿Qué ayuda a falcon a sobrevivir en su hábitat?",
+          "options": ["Sus adaptaciones naturales", "Un teléfono celular", "La ropa humana", "Los semáforos"],
+          "correctOption": "Sus adaptaciones naturales"
         },
         {
-          "animal": "Falcon",
-          "type": "body",
-          "kali": "El halcón extiende sus alas en el aire…",
-          "question": "¿Para qué le sirven sus alas largas y fuertes?",
-          "options": ["Para nadar", "Para volar rápido y controlar el aire", "Para cavar", "Para empujar objetos"],
-          "correctOption": "Para volar rápido y controlar el aire"
+          "kali": "Kali te propone pensar como explorador de animales...",
+          "question": "Si querés aprender sobre falcon sin molestarlo, ¿qué es mejor?",
+          "options": ["Observar en silencio y con respeto", "Perseguirlo para que corra", "Darle comida sin permiso", "Encerrarlo para mirarlo de cerca"],
+          "correctOption": "Observar en silencio y con respeto"
         },
         {
-          "animal": "Falcon",
-          "type": "comparison",
-          "kali": "Imaginá una carrera en el cielo…",
-          "question": "¿El halcón es más rápido que la mayoría de las aves?",
-          "options": ["No, es de los más lentos", "Solo de noche", "Sí, es uno de los más rápidos", "Solo cuando camina"],
-          "correctOption": "Sí, es uno de los más rápidos"
+          "kali": "Falcon forma parte de una red natural más grande...",
+          "question": "¿Qué pasa cuando una especie como falcon desaparece de un lugar?",
+          "options": ["El equilibrio del ecosistema se puede alterar", "Nada cambia nunca", "Aparecen más juguetes", "El clima se detiene"],
+          "correctOption": "El equilibrio del ecosistema se puede alterar"
         },
         {
-          "animal": "Falcon",
-          "type": "behavior",
-          "kali": "El halcón gira en el aire buscando el momento perfecto…",
-          "question": "¿Por qué el halcón vuela en círculos antes de atacar?",
-          "options": ["Porque está jugando", "Para marearse", "Para observar mejor a su presa", "Porque no sabe a dónde ir"],
-          "correctOption": "Para observar mejor a su presa"
+          "kali": "Kali prepara una misión de cuidado del planeta...",
+          "question": "¿Qué acción humana suele ayudar a animales como falcon?",
+          "options": ["Proteger ambientes naturales", "Tirar basura en ríos", "Romper nidos o refugios", "Hacer ruido constante cerca"],
+          "correctOption": "Proteger ambientes naturales"
         },
         {
-          "animal": "Falcon",
-          "type": "habitat",
-          "kali": "El halcón se posa en lo alto de una roca…",
-          "question": "¿Dónde suele estar el halcón para vigilar mejor?",
-          "options": ["Debajo del agua", "En lugares altos", "Dentro de cuevas oscuras", "Bajo la arena"],
-          "correctOption": "En lugares altos"
+          "kali": "Falcon te recuerda que cada animal tiene necesidades básicas...",
+          "question": "¿Qué necesita cualquier animal para vivir bien?",
+          "options": ["Alimento, agua y refugio adecuados", "Solo música fuerte", "Solo luces de colores", "Solo juguetes humanos"],
+          "correctOption": "Alimento, agua y refugio adecuados"
         },
         {
-          "animal": "Falcon",
-          "type": "food",
-          "kali": "El halcón atrapa algo con sus garras…",
-          "question": "¿Qué suele comer el halcón?",
-          "options": ["Plantas", "Frutas", "Otros animales pequeños", "Piedras"],
-          "correctOption": "Otros animales pequeños"
+          "kali": "Kali abre un desafío de convivencia con la fauna...",
+          "question": "Si un grupo visita una zona con falcon, ¿qué regla es la más segura?",
+          "options": ["Respetar señales y mantener distancia", "Acercarse para sacarse selfies", "Correr alrededor del animal", "Intentar tocarlo entre todos"],
+          "correctOption": "Respetar señales y mantener distancia"
         },
         {
-          "animal": "Falcon",
-          "type": "fun_fact",
-          "kali": "Este halcón tiene un récord increíble…",
-          "question": "¿El halcón es uno de los animales más rápidos del planeta?",
-          "options": ["No", "Solo en el agua", "Sí", "Solo cuando camina"],
-          "correctOption": "Sí"
+          "kali": "El encuentro con falcon trae una lección importante...",
+          "question": "¿Qué valor demuestra quien cuida a falcon y su entorno?",
+          "options": ["Respeto por la vida", "Apuro por ganar siempre", "Desorden en la naturaleza", "Indiferencia total"],
+          "correctOption": "Respeto por la vida"
         },
         {
-          "animal": "Falcon",
-          "type": "instinct",
-          "kali": "El halcón reacciona en un instante…",
-          "question": "¿Por qué el halcón es tan buen cazador?",
-          "options": ["Porque es grande", "Porque es lento", "Porque tiene reflejos rápidos y buena vista", "Porque se esconde todo el tiempo"],
-          "correctOption": "Porque tiene reflejos rápidos y buena vista"
+          "kali": "Kali cierra la ronda con una idea clave sobre falcon...",
+          "question": "¿Cuál es una buena forma de aprender más sobre falcon?",
+          "options": ["Leer, observar y preguntar a personas expertas", "Inventar datos sin mirar", "Molestar animales para probar", "Ignorar todo sobre su hábitat"],
+          "correctOption": "Leer, observar y preguntar a personas expertas"
         }
-      ],
-      "en-US": [
+      ]
+    },
+    "Ghost of a baboon": {
+      "es-AR": [
         {
-          "animal": "Falcon",
-          "type": "speed",
-          "kali": "The falcon dives from the highest part of the sky...",
-          "question": "How fast can a falcon fly in a dive?",
-          "options": ["Like a person running", "Like a bicycle", "Faster than a race car", "Like a dog"],
-          "correctOption": "Faster than a race car"
+          "kali": "Ghost of a baboon aparece en el camino y Kali te guía con calma...",
+          "question": "Si te cruzás con ghost of a baboon en la naturaleza, ¿qué conviene hacer primero?",
+          "options": ["Acercarte corriendo", "Mantener distancia y observar con cuidado", "Gritar fuerte para asustarlo", "Tocarlo para conocerlo"],
+          "correctOption": "Mantener distancia y observar con cuidado"
         },
         {
-          "animal": "Falcon",
-          "type": "vision",
-          "kali": "From above, the falcon watches everything happening below...",
-          "question": "How is a falcon's eyesight?",
-          "options": ["Very bad", "The same as a human", "Very powerful, it can see far away", "It only sees at night"],
-          "correctOption": "Very powerful, it can see far away"
+          "kali": "Kali señala el entorno donde vive ghost of a baboon...",
+          "question": "¿Por qué es importante cuidar el hábitat de ghost of a baboon?",
+          "options": ["Porque así puede vivir y cumplir su rol en la naturaleza", "Porque cambia de color todo el tiempo", "Porque no necesita alimento", "Porque vive mejor en una ciudad"],
+          "correctOption": "Porque así puede vivir y cumplir su rol en la naturaleza"
         },
         {
-          "animal": "Falcon",
-          "type": "hunting",
-          "kali": "The falcon spots its prey and gets ready to attack...",
-          "question": "How does a falcon usually hunt?",
-          "options": ["By walking slowly", "By diving from the sky", "By swimming", "By hiding underground"],
-          "correctOption": "By diving from the sky"
+          "kali": "Ghost of a baboon se mueve atento en su ambiente...",
+          "question": "¿Qué ayuda a ghost of a baboon a sobrevivir en su hábitat?",
+          "options": ["Sus adaptaciones naturales", "Un teléfono celular", "La ropa humana", "Los semáforos"],
+          "correctOption": "Sus adaptaciones naturales"
         },
         {
-          "animal": "Falcon",
-          "type": "body",
-          "kali": "The falcon spreads its wings in the air...",
-          "question": "What are its long, strong wings for?",
-          "options": ["To swim", "To fly fast and control the air", "To dig", "To push objects"],
-          "correctOption": "To fly fast and control the air"
+          "kali": "Kali te propone pensar como explorador de animales...",
+          "question": "Si querés aprender sobre ghost of a baboon sin molestarlo, ¿qué es mejor?",
+          "options": ["Observar en silencio y con respeto", "Perseguirlo para que corra", "Darle comida sin permiso", "Encerrarlo para mirarlo de cerca"],
+          "correctOption": "Observar en silencio y con respeto"
         },
         {
-          "animal": "Falcon",
-          "type": "comparison",
-          "kali": "Imagine a race in the sky...",
-          "question": "Is the falcon faster than most birds?",
-          "options": ["No, it is one of the slowest", "Only at night", "Yes, it is one of the fastest", "Only when it walks"],
-          "correctOption": "Yes, it is one of the fastest"
+          "kali": "Ghost of a baboon forma parte de una red natural más grande...",
+          "question": "¿Qué pasa cuando una especie como ghost of a baboon desaparece de un lugar?",
+          "options": ["El equilibrio del ecosistema se puede alterar", "Nada cambia nunca", "Aparecen más juguetes", "El clima se detiene"],
+          "correctOption": "El equilibrio del ecosistema se puede alterar"
         },
         {
-          "animal": "Falcon",
-          "type": "behavior",
-          "kali": "The falcon circles in the air looking for the perfect moment...",
-          "question": "Why does a falcon fly in circles before attacking?",
-          "options": ["Because it is playing", "To make itself dizzy", "To observe its prey better", "Because it does not know where to go"],
-          "correctOption": "To observe its prey better"
+          "kali": "Kali prepara una misión de cuidado del planeta...",
+          "question": "¿Qué acción humana suele ayudar a animales como ghost of a baboon?",
+          "options": ["Proteger ambientes naturales", "Tirar basura en ríos", "Romper nidos o refugios", "Hacer ruido constante cerca"],
+          "correctOption": "Proteger ambientes naturales"
         },
         {
-          "animal": "Falcon",
-          "type": "habitat",
-          "kali": "The falcon perches on top of a rock...",
-          "question": "Where does a falcon usually stay to watch better?",
-          "options": ["Underwater", "In high places", "Inside dark caves", "Under sand"],
-          "correctOption": "In high places"
+          "kali": "Ghost of a baboon te recuerda que cada animal tiene necesidades básicas...",
+          "question": "¿Qué necesita cualquier animal para vivir bien?",
+          "options": ["Alimento, agua y refugio adecuados", "Solo música fuerte", "Solo luces de colores", "Solo juguetes humanos"],
+          "correctOption": "Alimento, agua y refugio adecuados"
         },
         {
-          "animal": "Falcon",
-          "type": "food",
-          "kali": "The falcon grabs something with its claws...",
-          "question": "What does a falcon usually eat?",
-          "options": ["Plants", "Fruits", "Other small animals", "Rocks"],
-          "correctOption": "Other small animals"
+          "kali": "Kali abre un desafío de convivencia con la fauna...",
+          "question": "Si un grupo visita una zona con ghost of a baboon, ¿qué regla es la más segura?",
+          "options": ["Respetar señales y mantener distancia", "Acercarse para sacarse selfies", "Correr alrededor del animal", "Intentar tocarlo entre todos"],
+          "correctOption": "Respetar señales y mantener distancia"
         },
         {
-          "animal": "Falcon",
-          "type": "fun_fact",
-          "kali": "This falcon has an incredible record...",
-          "question": "Is the falcon one of the fastest animals on Earth?",
-          "options": ["No", "Only in water", "Yes", "Only when it walks"],
-          "correctOption": "Yes"
+          "kali": "El encuentro con ghost of a baboon trae una lección importante...",
+          "question": "¿Qué valor demuestra quien cuida a ghost of a baboon y su entorno?",
+          "options": ["Respeto por la vida", "Apuro por ganar siempre", "Desorden en la naturaleza", "Indiferencia total"],
+          "correctOption": "Respeto por la vida"
         },
         {
-          "animal": "Falcon",
-          "type": "instinct",
-          "kali": "The falcon reacts in an instant...",
-          "question": "Why is the falcon such a good hunter?",
-          "options": ["Because it is big", "Because it is slow", "Because it has quick reflexes and sharp eyesight", "Because it hides all the time"],
-          "correctOption": "Because it has quick reflexes and sharp eyesight"
+          "kali": "Kali cierra la ronda con una idea clave sobre ghost of a baboon...",
+          "question": "¿Cuál es una buena forma de aprender más sobre ghost of a baboon?",
+          "options": ["Leer, observar y preguntar a personas expertas", "Inventar datos sin mirar", "Molestar animales para probar", "Ignorar todo sobre su hábitat"],
+          "correctOption": "Leer, observar y preguntar a personas expertas"
+        }
+      ]
+    },
+    "Ghost of a black bear": {
+      "es-AR": [
+        {
+          "kali": "Ghost of a black bear aparece en el camino y Kali te guía con calma...",
+          "question": "Si te cruzás con ghost of a black bear en la naturaleza, ¿qué conviene hacer primero?",
+          "options": ["Acercarte corriendo", "Mantener distancia y observar con cuidado", "Gritar fuerte para asustarlo", "Tocarlo para conocerlo"],
+          "correctOption": "Mantener distancia y observar con cuidado"
+        },
+        {
+          "kali": "Kali señala el entorno donde vive ghost of a black bear...",
+          "question": "¿Por qué es importante cuidar el hábitat de ghost of a black bear?",
+          "options": ["Porque así puede vivir y cumplir su rol en la naturaleza", "Porque cambia de color todo el tiempo", "Porque no necesita alimento", "Porque vive mejor en una ciudad"],
+          "correctOption": "Porque así puede vivir y cumplir su rol en la naturaleza"
+        },
+        {
+          "kali": "Ghost of a black bear se mueve atento en su ambiente...",
+          "question": "¿Qué ayuda a ghost of a black bear a sobrevivir en su hábitat?",
+          "options": ["Sus adaptaciones naturales", "Un teléfono celular", "La ropa humana", "Los semáforos"],
+          "correctOption": "Sus adaptaciones naturales"
+        },
+        {
+          "kali": "Kali te propone pensar como explorador de animales...",
+          "question": "Si querés aprender sobre ghost of a black bear sin molestarlo, ¿qué es mejor?",
+          "options": ["Observar en silencio y con respeto", "Perseguirlo para que corra", "Darle comida sin permiso", "Encerrarlo para mirarlo de cerca"],
+          "correctOption": "Observar en silencio y con respeto"
+        },
+        {
+          "kali": "Ghost of a black bear forma parte de una red natural más grande...",
+          "question": "¿Qué pasa cuando una especie como ghost of a black bear desaparece de un lugar?",
+          "options": ["El equilibrio del ecosistema se puede alterar", "Nada cambia nunca", "Aparecen más juguetes", "El clima se detiene"],
+          "correctOption": "El equilibrio del ecosistema se puede alterar"
+        },
+        {
+          "kali": "Kali prepara una misión de cuidado del planeta...",
+          "question": "¿Qué acción humana suele ayudar a animales como ghost of a black bear?",
+          "options": ["Proteger ambientes naturales", "Tirar basura en ríos", "Romper nidos o refugios", "Hacer ruido constante cerca"],
+          "correctOption": "Proteger ambientes naturales"
+        },
+        {
+          "kali": "Ghost of a black bear te recuerda que cada animal tiene necesidades básicas...",
+          "question": "¿Qué necesita cualquier animal para vivir bien?",
+          "options": ["Alimento, agua y refugio adecuados", "Solo música fuerte", "Solo luces de colores", "Solo juguetes humanos"],
+          "correctOption": "Alimento, agua y refugio adecuados"
+        },
+        {
+          "kali": "Kali abre un desafío de convivencia con la fauna...",
+          "question": "Si un grupo visita una zona con ghost of a black bear, ¿qué regla es la más segura?",
+          "options": ["Respetar señales y mantener distancia", "Acercarse para sacarse selfies", "Correr alrededor del animal", "Intentar tocarlo entre todos"],
+          "correctOption": "Respetar señales y mantener distancia"
+        },
+        {
+          "kali": "El encuentro con ghost of a black bear trae una lección importante...",
+          "question": "¿Qué valor demuestra quien cuida a ghost of a black bear y su entorno?",
+          "options": ["Respeto por la vida", "Apuro por ganar siempre", "Desorden en la naturaleza", "Indiferencia total"],
+          "correctOption": "Respeto por la vida"
+        },
+        {
+          "kali": "Kali cierra la ronda con una idea clave sobre ghost of a black bear...",
+          "question": "¿Cuál es una buena forma de aprender más sobre ghost of a black bear?",
+          "options": ["Leer, observar y preguntar a personas expertas", "Inventar datos sin mirar", "Molestar animales para probar", "Ignorar todo sobre su hábitat"],
+          "correctOption": "Leer, observar y preguntar a personas expertas"
+        }
+      ]
+    },
+    "Giraffe": {
+      "es-AR": [
+        {
+          "kali": "Giraffe aparece en el camino y Kali te guía con calma...",
+          "question": "Si te cruzás con giraffe en la naturaleza, ¿qué conviene hacer primero?",
+          "options": ["Acercarte corriendo", "Mantener distancia y observar con cuidado", "Gritar fuerte para asustarlo", "Tocarlo para conocerlo"],
+          "correctOption": "Mantener distancia y observar con cuidado"
+        },
+        {
+          "kali": "Kali señala el entorno donde vive giraffe...",
+          "question": "¿Por qué es importante cuidar el hábitat de giraffe?",
+          "options": ["Porque así puede vivir y cumplir su rol en la naturaleza", "Porque cambia de color todo el tiempo", "Porque no necesita alimento", "Porque vive mejor en una ciudad"],
+          "correctOption": "Porque así puede vivir y cumplir su rol en la naturaleza"
+        },
+        {
+          "kali": "Giraffe se mueve atento en su ambiente...",
+          "question": "¿Qué ayuda a giraffe a sobrevivir en su hábitat?",
+          "options": ["Sus adaptaciones naturales", "Un teléfono celular", "La ropa humana", "Los semáforos"],
+          "correctOption": "Sus adaptaciones naturales"
+        },
+        {
+          "kali": "Kali te propone pensar como explorador de animales...",
+          "question": "Si querés aprender sobre giraffe sin molestarlo, ¿qué es mejor?",
+          "options": ["Observar en silencio y con respeto", "Perseguirlo para que corra", "Darle comida sin permiso", "Encerrarlo para mirarlo de cerca"],
+          "correctOption": "Observar en silencio y con respeto"
+        },
+        {
+          "kali": "Giraffe forma parte de una red natural más grande...",
+          "question": "¿Qué pasa cuando una especie como giraffe desaparece de un lugar?",
+          "options": ["El equilibrio del ecosistema se puede alterar", "Nada cambia nunca", "Aparecen más juguetes", "El clima se detiene"],
+          "correctOption": "El equilibrio del ecosistema se puede alterar"
+        },
+        {
+          "kali": "Kali prepara una misión de cuidado del planeta...",
+          "question": "¿Qué acción humana suele ayudar a animales como giraffe?",
+          "options": ["Proteger ambientes naturales", "Tirar basura en ríos", "Romper nidos o refugios", "Hacer ruido constante cerca"],
+          "correctOption": "Proteger ambientes naturales"
+        },
+        {
+          "kali": "Giraffe te recuerda que cada animal tiene necesidades básicas...",
+          "question": "¿Qué necesita cualquier animal para vivir bien?",
+          "options": ["Alimento, agua y refugio adecuados", "Solo música fuerte", "Solo luces de colores", "Solo juguetes humanos"],
+          "correctOption": "Alimento, agua y refugio adecuados"
+        },
+        {
+          "kali": "Kali abre un desafío de convivencia con la fauna...",
+          "question": "Si un grupo visita una zona con giraffe, ¿qué regla es la más segura?",
+          "options": ["Respetar señales y mantener distancia", "Acercarse para sacarse selfies", "Correr alrededor del animal", "Intentar tocarlo entre todos"],
+          "correctOption": "Respetar señales y mantener distancia"
+        },
+        {
+          "kali": "El encuentro con giraffe trae una lección importante...",
+          "question": "¿Qué valor demuestra quien cuida a giraffe y su entorno?",
+          "options": ["Respeto por la vida", "Apuro por ganar siempre", "Desorden en la naturaleza", "Indiferencia total"],
+          "correctOption": "Respeto por la vida"
+        },
+        {
+          "kali": "Kali cierra la ronda con una idea clave sobre giraffe...",
+          "question": "¿Cuál es una buena forma de aprender más sobre giraffe?",
+          "options": ["Leer, observar y preguntar a personas expertas", "Inventar datos sin mirar", "Molestar animales para probar", "Ignorar todo sobre su hábitat"],
+          "correctOption": "Leer, observar y preguntar a personas expertas"
+        }
+      ]
+    },
+    "Grizzly bear": {
+      "es-AR": [
+        {
+          "kali": "Grizzly bear aparece en el camino y Kali te guía con calma...",
+          "question": "Si te cruzás con grizzly bear en la naturaleza, ¿qué conviene hacer primero?",
+          "options": ["Acercarte corriendo", "Mantener distancia y observar con cuidado", "Gritar fuerte para asustarlo", "Tocarlo para conocerlo"],
+          "correctOption": "Mantener distancia y observar con cuidado"
+        },
+        {
+          "kali": "Kali señala el entorno donde vive grizzly bear...",
+          "question": "¿Por qué es importante cuidar el hábitat de grizzly bear?",
+          "options": ["Porque así puede vivir y cumplir su rol en la naturaleza", "Porque cambia de color todo el tiempo", "Porque no necesita alimento", "Porque vive mejor en una ciudad"],
+          "correctOption": "Porque así puede vivir y cumplir su rol en la naturaleza"
+        },
+        {
+          "kali": "Grizzly bear se mueve atento en su ambiente...",
+          "question": "¿Qué ayuda a grizzly bear a sobrevivir en su hábitat?",
+          "options": ["Sus adaptaciones naturales", "Un teléfono celular", "La ropa humana", "Los semáforos"],
+          "correctOption": "Sus adaptaciones naturales"
+        },
+        {
+          "kali": "Kali te propone pensar como explorador de animales...",
+          "question": "Si querés aprender sobre grizzly bear sin molestarlo, ¿qué es mejor?",
+          "options": ["Observar en silencio y con respeto", "Perseguirlo para que corra", "Darle comida sin permiso", "Encerrarlo para mirarlo de cerca"],
+          "correctOption": "Observar en silencio y con respeto"
+        },
+        {
+          "kali": "Grizzly bear forma parte de una red natural más grande...",
+          "question": "¿Qué pasa cuando una especie como grizzly bear desaparece de un lugar?",
+          "options": ["El equilibrio del ecosistema se puede alterar", "Nada cambia nunca", "Aparecen más juguetes", "El clima se detiene"],
+          "correctOption": "El equilibrio del ecosistema se puede alterar"
+        },
+        {
+          "kali": "Kali prepara una misión de cuidado del planeta...",
+          "question": "¿Qué acción humana suele ayudar a animales como grizzly bear?",
+          "options": ["Proteger ambientes naturales", "Tirar basura en ríos", "Romper nidos o refugios", "Hacer ruido constante cerca"],
+          "correctOption": "Proteger ambientes naturales"
+        },
+        {
+          "kali": "Grizzly bear te recuerda que cada animal tiene necesidades básicas...",
+          "question": "¿Qué necesita cualquier animal para vivir bien?",
+          "options": ["Alimento, agua y refugio adecuados", "Solo música fuerte", "Solo luces de colores", "Solo juguetes humanos"],
+          "correctOption": "Alimento, agua y refugio adecuados"
+        },
+        {
+          "kali": "Kali abre un desafío de convivencia con la fauna...",
+          "question": "Si un grupo visita una zona con grizzly bear, ¿qué regla es la más segura?",
+          "options": ["Respetar señales y mantener distancia", "Acercarse para sacarse selfies", "Correr alrededor del animal", "Intentar tocarlo entre todos"],
+          "correctOption": "Respetar señales y mantener distancia"
+        },
+        {
+          "kali": "El encuentro con grizzly bear trae una lección importante...",
+          "question": "¿Qué valor demuestra quien cuida a grizzly bear y su entorno?",
+          "options": ["Respeto por la vida", "Apuro por ganar siempre", "Desorden en la naturaleza", "Indiferencia total"],
+          "correctOption": "Respeto por la vida"
+        },
+        {
+          "kali": "Kali cierra la ronda con una idea clave sobre grizzly bear...",
+          "question": "¿Cuál es una buena forma de aprender más sobre grizzly bear?",
+          "options": ["Leer, observar y preguntar a personas expertas", "Inventar datos sin mirar", "Molestar animales para probar", "Ignorar todo sobre su hábitat"],
+          "correctOption": "Leer, observar y preguntar a personas expertas"
+        }
+      ]
+    },
+    "Hippopotamus": {
+      "es-AR": [
+        {
+          "kali": "Hippopotamus aparece en el camino y Kali te guía con calma...",
+          "question": "Si te cruzás con hippopotamus en la naturaleza, ¿qué conviene hacer primero?",
+          "options": ["Acercarte corriendo", "Mantener distancia y observar con cuidado", "Gritar fuerte para asustarlo", "Tocarlo para conocerlo"],
+          "correctOption": "Mantener distancia y observar con cuidado"
+        },
+        {
+          "kali": "Kali señala el entorno donde vive hippopotamus...",
+          "question": "¿Por qué es importante cuidar el hábitat de hippopotamus?",
+          "options": ["Porque así puede vivir y cumplir su rol en la naturaleza", "Porque cambia de color todo el tiempo", "Porque no necesita alimento", "Porque vive mejor en una ciudad"],
+          "correctOption": "Porque así puede vivir y cumplir su rol en la naturaleza"
+        },
+        {
+          "kali": "Hippopotamus se mueve atento en su ambiente...",
+          "question": "¿Qué ayuda a hippopotamus a sobrevivir en su hábitat?",
+          "options": ["Sus adaptaciones naturales", "Un teléfono celular", "La ropa humana", "Los semáforos"],
+          "correctOption": "Sus adaptaciones naturales"
+        },
+        {
+          "kali": "Kali te propone pensar como explorador de animales...",
+          "question": "Si querés aprender sobre hippopotamus sin molestarlo, ¿qué es mejor?",
+          "options": ["Observar en silencio y con respeto", "Perseguirlo para que corra", "Darle comida sin permiso", "Encerrarlo para mirarlo de cerca"],
+          "correctOption": "Observar en silencio y con respeto"
+        },
+        {
+          "kali": "Hippopotamus forma parte de una red natural más grande...",
+          "question": "¿Qué pasa cuando una especie como hippopotamus desaparece de un lugar?",
+          "options": ["El equilibrio del ecosistema se puede alterar", "Nada cambia nunca", "Aparecen más juguetes", "El clima se detiene"],
+          "correctOption": "El equilibrio del ecosistema se puede alterar"
+        },
+        {
+          "kali": "Kali prepara una misión de cuidado del planeta...",
+          "question": "¿Qué acción humana suele ayudar a animales como hippopotamus?",
+          "options": ["Proteger ambientes naturales", "Tirar basura en ríos", "Romper nidos o refugios", "Hacer ruido constante cerca"],
+          "correctOption": "Proteger ambientes naturales"
+        },
+        {
+          "kali": "Hippopotamus te recuerda que cada animal tiene necesidades básicas...",
+          "question": "¿Qué necesita cualquier animal para vivir bien?",
+          "options": ["Alimento, agua y refugio adecuados", "Solo música fuerte", "Solo luces de colores", "Solo juguetes humanos"],
+          "correctOption": "Alimento, agua y refugio adecuados"
+        },
+        {
+          "kali": "Kali abre un desafío de convivencia con la fauna...",
+          "question": "Si un grupo visita una zona con hippopotamus, ¿qué regla es la más segura?",
+          "options": ["Respetar señales y mantener distancia", "Acercarse para sacarse selfies", "Correr alrededor del animal", "Intentar tocarlo entre todos"],
+          "correctOption": "Respetar señales y mantener distancia"
+        },
+        {
+          "kali": "El encuentro con hippopotamus trae una lección importante...",
+          "question": "¿Qué valor demuestra quien cuida a hippopotamus y su entorno?",
+          "options": ["Respeto por la vida", "Apuro por ganar siempre", "Desorden en la naturaleza", "Indiferencia total"],
+          "correctOption": "Respeto por la vida"
+        },
+        {
+          "kali": "Kali cierra la ronda con una idea clave sobre hippopotamus...",
+          "question": "¿Cuál es una buena forma de aprender más sobre hippopotamus?",
+          "options": ["Leer, observar y preguntar a personas expertas", "Inventar datos sin mirar", "Molestar animales para probar", "Ignorar todo sobre su hábitat"],
+          "correctOption": "Leer, observar y preguntar a personas expertas"
+        }
+      ]
+    },
+    "Kangaroo": {
+      "es-AR": [
+        {
+          "kali": "Kangaroo aparece en el camino y Kali te guía con calma...",
+          "question": "Si te cruzás con kangaroo en la naturaleza, ¿qué conviene hacer primero?",
+          "options": ["Acercarte corriendo", "Mantener distancia y observar con cuidado", "Gritar fuerte para asustarlo", "Tocarlo para conocerlo"],
+          "correctOption": "Mantener distancia y observar con cuidado"
+        },
+        {
+          "kali": "Kali señala el entorno donde vive kangaroo...",
+          "question": "¿Por qué es importante cuidar el hábitat de kangaroo?",
+          "options": ["Porque así puede vivir y cumplir su rol en la naturaleza", "Porque cambia de color todo el tiempo", "Porque no necesita alimento", "Porque vive mejor en una ciudad"],
+          "correctOption": "Porque así puede vivir y cumplir su rol en la naturaleza"
+        },
+        {
+          "kali": "Kangaroo se mueve atento en su ambiente...",
+          "question": "¿Qué ayuda a kangaroo a sobrevivir en su hábitat?",
+          "options": ["Sus adaptaciones naturales", "Un teléfono celular", "La ropa humana", "Los semáforos"],
+          "correctOption": "Sus adaptaciones naturales"
+        },
+        {
+          "kali": "Kali te propone pensar como explorador de animales...",
+          "question": "Si querés aprender sobre kangaroo sin molestarlo, ¿qué es mejor?",
+          "options": ["Observar en silencio y con respeto", "Perseguirlo para que corra", "Darle comida sin permiso", "Encerrarlo para mirarlo de cerca"],
+          "correctOption": "Observar en silencio y con respeto"
+        },
+        {
+          "kali": "Kangaroo forma parte de una red natural más grande...",
+          "question": "¿Qué pasa cuando una especie como kangaroo desaparece de un lugar?",
+          "options": ["El equilibrio del ecosistema se puede alterar", "Nada cambia nunca", "Aparecen más juguetes", "El clima se detiene"],
+          "correctOption": "El equilibrio del ecosistema se puede alterar"
+        },
+        {
+          "kali": "Kali prepara una misión de cuidado del planeta...",
+          "question": "¿Qué acción humana suele ayudar a animales como kangaroo?",
+          "options": ["Proteger ambientes naturales", "Tirar basura en ríos", "Romper nidos o refugios", "Hacer ruido constante cerca"],
+          "correctOption": "Proteger ambientes naturales"
+        },
+        {
+          "kali": "Kangaroo te recuerda que cada animal tiene necesidades básicas...",
+          "question": "¿Qué necesita cualquier animal para vivir bien?",
+          "options": ["Alimento, agua y refugio adecuados", "Solo música fuerte", "Solo luces de colores", "Solo juguetes humanos"],
+          "correctOption": "Alimento, agua y refugio adecuados"
+        },
+        {
+          "kali": "Kali abre un desafío de convivencia con la fauna...",
+          "question": "Si un grupo visita una zona con kangaroo, ¿qué regla es la más segura?",
+          "options": ["Respetar señales y mantener distancia", "Acercarse para sacarse selfies", "Correr alrededor del animal", "Intentar tocarlo entre todos"],
+          "correctOption": "Respetar señales y mantener distancia"
+        },
+        {
+          "kali": "El encuentro con kangaroo trae una lección importante...",
+          "question": "¿Qué valor demuestra quien cuida a kangaroo y su entorno?",
+          "options": ["Respeto por la vida", "Apuro por ganar siempre", "Desorden en la naturaleza", "Indiferencia total"],
+          "correctOption": "Respeto por la vida"
+        },
+        {
+          "kali": "Kali cierra la ronda con una idea clave sobre kangaroo...",
+          "question": "¿Cuál es una buena forma de aprender más sobre kangaroo?",
+          "options": ["Leer, observar y preguntar a personas expertas", "Inventar datos sin mirar", "Molestar animales para probar", "Ignorar todo sobre su hábitat"],
+          "correctOption": "Leer, observar y preguntar a personas expertas"
+        }
+      ]
+    },
+    "Killer whale": {
+      "es-AR": [
+        {
+          "kali": "Killer whale aparece en el camino y Kali te guía con calma...",
+          "question": "Si te cruzás con killer whale en la naturaleza, ¿qué conviene hacer primero?",
+          "options": ["Acercarte corriendo", "Mantener distancia y observar con cuidado", "Gritar fuerte para asustarlo", "Tocarlo para conocerlo"],
+          "correctOption": "Mantener distancia y observar con cuidado"
+        },
+        {
+          "kali": "Kali señala el entorno donde vive killer whale...",
+          "question": "¿Por qué es importante cuidar el hábitat de killer whale?",
+          "options": ["Porque así puede vivir y cumplir su rol en la naturaleza", "Porque cambia de color todo el tiempo", "Porque no necesita alimento", "Porque vive mejor en una ciudad"],
+          "correctOption": "Porque así puede vivir y cumplir su rol en la naturaleza"
+        },
+        {
+          "kali": "Killer whale se mueve atento en su ambiente...",
+          "question": "¿Qué ayuda a killer whale a sobrevivir en su hábitat?",
+          "options": ["Sus adaptaciones naturales", "Un teléfono celular", "La ropa humana", "Los semáforos"],
+          "correctOption": "Sus adaptaciones naturales"
+        },
+        {
+          "kali": "Kali te propone pensar como explorador de animales...",
+          "question": "Si querés aprender sobre killer whale sin molestarlo, ¿qué es mejor?",
+          "options": ["Observar en silencio y con respeto", "Perseguirlo para que corra", "Darle comida sin permiso", "Encerrarlo para mirarlo de cerca"],
+          "correctOption": "Observar en silencio y con respeto"
+        },
+        {
+          "kali": "Killer whale forma parte de una red natural más grande...",
+          "question": "¿Qué pasa cuando una especie como killer whale desaparece de un lugar?",
+          "options": ["El equilibrio del ecosistema se puede alterar", "Nada cambia nunca", "Aparecen más juguetes", "El clima se detiene"],
+          "correctOption": "El equilibrio del ecosistema se puede alterar"
+        },
+        {
+          "kali": "Kali prepara una misión de cuidado del planeta...",
+          "question": "¿Qué acción humana suele ayudar a animales como killer whale?",
+          "options": ["Proteger ambientes naturales", "Tirar basura en ríos", "Romper nidos o refugios", "Hacer ruido constante cerca"],
+          "correctOption": "Proteger ambientes naturales"
+        },
+        {
+          "kali": "Killer whale te recuerda que cada animal tiene necesidades básicas...",
+          "question": "¿Qué necesita cualquier animal para vivir bien?",
+          "options": ["Alimento, agua y refugio adecuados", "Solo música fuerte", "Solo luces de colores", "Solo juguetes humanos"],
+          "correctOption": "Alimento, agua y refugio adecuados"
+        },
+        {
+          "kali": "Kali abre un desafío de convivencia con la fauna...",
+          "question": "Si un grupo visita una zona con killer whale, ¿qué regla es la más segura?",
+          "options": ["Respetar señales y mantener distancia", "Acercarse para sacarse selfies", "Correr alrededor del animal", "Intentar tocarlo entre todos"],
+          "correctOption": "Respetar señales y mantener distancia"
+        },
+        {
+          "kali": "El encuentro con killer whale trae una lección importante...",
+          "question": "¿Qué valor demuestra quien cuida a killer whale y su entorno?",
+          "options": ["Respeto por la vida", "Apuro por ganar siempre", "Desorden en la naturaleza", "Indiferencia total"],
+          "correctOption": "Respeto por la vida"
+        },
+        {
+          "kali": "Kali cierra la ronda con una idea clave sobre killer whale...",
+          "question": "¿Cuál es una buena forma de aprender más sobre killer whale?",
+          "options": ["Leer, observar y preguntar a personas expertas", "Inventar datos sin mirar", "Molestar animales para probar", "Ignorar todo sobre su hábitat"],
+          "correctOption": "Leer, observar y preguntar a personas expertas"
+        }
+      ]
+    },
+    "Komodo dragon": {
+      "es-AR": [
+        {
+          "kali": "Komodo dragon aparece en el camino y Kali te guía con calma...",
+          "question": "Si te cruzás con komodo dragon en la naturaleza, ¿qué conviene hacer primero?",
+          "options": ["Acercarte corriendo", "Mantener distancia y observar con cuidado", "Gritar fuerte para asustarlo", "Tocarlo para conocerlo"],
+          "correctOption": "Mantener distancia y observar con cuidado"
+        },
+        {
+          "kali": "Kali señala el entorno donde vive komodo dragon...",
+          "question": "¿Por qué es importante cuidar el hábitat de komodo dragon?",
+          "options": ["Porque así puede vivir y cumplir su rol en la naturaleza", "Porque cambia de color todo el tiempo", "Porque no necesita alimento", "Porque vive mejor en una ciudad"],
+          "correctOption": "Porque así puede vivir y cumplir su rol en la naturaleza"
+        },
+        {
+          "kali": "Komodo dragon se mueve atento en su ambiente...",
+          "question": "¿Qué ayuda a komodo dragon a sobrevivir en su hábitat?",
+          "options": ["Sus adaptaciones naturales", "Un teléfono celular", "La ropa humana", "Los semáforos"],
+          "correctOption": "Sus adaptaciones naturales"
+        },
+        {
+          "kali": "Kali te propone pensar como explorador de animales...",
+          "question": "Si querés aprender sobre komodo dragon sin molestarlo, ¿qué es mejor?",
+          "options": ["Observar en silencio y con respeto", "Perseguirlo para que corra", "Darle comida sin permiso", "Encerrarlo para mirarlo de cerca"],
+          "correctOption": "Observar en silencio y con respeto"
+        },
+        {
+          "kali": "Komodo dragon forma parte de una red natural más grande...",
+          "question": "¿Qué pasa cuando una especie como komodo dragon desaparece de un lugar?",
+          "options": ["El equilibrio del ecosistema se puede alterar", "Nada cambia nunca", "Aparecen más juguetes", "El clima se detiene"],
+          "correctOption": "El equilibrio del ecosistema se puede alterar"
+        },
+        {
+          "kali": "Kali prepara una misión de cuidado del planeta...",
+          "question": "¿Qué acción humana suele ayudar a animales como komodo dragon?",
+          "options": ["Proteger ambientes naturales", "Tirar basura en ríos", "Romper nidos o refugios", "Hacer ruido constante cerca"],
+          "correctOption": "Proteger ambientes naturales"
+        },
+        {
+          "kali": "Komodo dragon te recuerda que cada animal tiene necesidades básicas...",
+          "question": "¿Qué necesita cualquier animal para vivir bien?",
+          "options": ["Alimento, agua y refugio adecuados", "Solo música fuerte", "Solo luces de colores", "Solo juguetes humanos"],
+          "correctOption": "Alimento, agua y refugio adecuados"
+        },
+        {
+          "kali": "Kali abre un desafío de convivencia con la fauna...",
+          "question": "Si un grupo visita una zona con komodo dragon, ¿qué regla es la más segura?",
+          "options": ["Respetar señales y mantener distancia", "Acercarse para sacarse selfies", "Correr alrededor del animal", "Intentar tocarlo entre todos"],
+          "correctOption": "Respetar señales y mantener distancia"
+        },
+        {
+          "kali": "El encuentro con komodo dragon trae una lección importante...",
+          "question": "¿Qué valor demuestra quien cuida a komodo dragon y su entorno?",
+          "options": ["Respeto por la vida", "Apuro por ganar siempre", "Desorden en la naturaleza", "Indiferencia total"],
+          "correctOption": "Respeto por la vida"
+        },
+        {
+          "kali": "Kali cierra la ronda con una idea clave sobre komodo dragon...",
+          "question": "¿Cuál es una buena forma de aprender más sobre komodo dragon?",
+          "options": ["Leer, observar y preguntar a personas expertas", "Inventar datos sin mirar", "Molestar animales para probar", "Ignorar todo sobre su hábitat"],
+          "correctOption": "Leer, observar y preguntar a personas expertas"
+        }
+      ]
+    },
+    "Lion Makulu": {
+      "es-AR": [
+        {
+          "kali": "Lion Makulu aparece en el camino y Kali te guía con calma...",
+          "question": "Si te cruzás con lion makulu en la naturaleza, ¿qué conviene hacer primero?",
+          "options": ["Acercarte corriendo", "Mantener distancia y observar con cuidado", "Gritar fuerte para asustarlo", "Tocarlo para conocerlo"],
+          "correctOption": "Mantener distancia y observar con cuidado"
+        },
+        {
+          "kali": "Kali señala el entorno donde vive lion makulu...",
+          "question": "¿Por qué es importante cuidar el hábitat de lion makulu?",
+          "options": ["Porque así puede vivir y cumplir su rol en la naturaleza", "Porque cambia de color todo el tiempo", "Porque no necesita alimento", "Porque vive mejor en una ciudad"],
+          "correctOption": "Porque así puede vivir y cumplir su rol en la naturaleza"
+        },
+        {
+          "kali": "Lion Makulu se mueve atento en su ambiente...",
+          "question": "¿Qué ayuda a lion makulu a sobrevivir en su hábitat?",
+          "options": ["Sus adaptaciones naturales", "Un teléfono celular", "La ropa humana", "Los semáforos"],
+          "correctOption": "Sus adaptaciones naturales"
+        },
+        {
+          "kali": "Kali te propone pensar como explorador de animales...",
+          "question": "Si querés aprender sobre lion makulu sin molestarlo, ¿qué es mejor?",
+          "options": ["Observar en silencio y con respeto", "Perseguirlo para que corra", "Darle comida sin permiso", "Encerrarlo para mirarlo de cerca"],
+          "correctOption": "Observar en silencio y con respeto"
+        },
+        {
+          "kali": "Lion Makulu forma parte de una red natural más grande...",
+          "question": "¿Qué pasa cuando una especie como lion makulu desaparece de un lugar?",
+          "options": ["El equilibrio del ecosistema se puede alterar", "Nada cambia nunca", "Aparecen más juguetes", "El clima se detiene"],
+          "correctOption": "El equilibrio del ecosistema se puede alterar"
+        },
+        {
+          "kali": "Kali prepara una misión de cuidado del planeta...",
+          "question": "¿Qué acción humana suele ayudar a animales como lion makulu?",
+          "options": ["Proteger ambientes naturales", "Tirar basura en ríos", "Romper nidos o refugios", "Hacer ruido constante cerca"],
+          "correctOption": "Proteger ambientes naturales"
+        },
+        {
+          "kali": "Lion Makulu te recuerda que cada animal tiene necesidades básicas...",
+          "question": "¿Qué necesita cualquier animal para vivir bien?",
+          "options": ["Alimento, agua y refugio adecuados", "Solo música fuerte", "Solo luces de colores", "Solo juguetes humanos"],
+          "correctOption": "Alimento, agua y refugio adecuados"
+        },
+        {
+          "kali": "Kali abre un desafío de convivencia con la fauna...",
+          "question": "Si un grupo visita una zona con lion makulu, ¿qué regla es la más segura?",
+          "options": ["Respetar señales y mantener distancia", "Acercarse para sacarse selfies", "Correr alrededor del animal", "Intentar tocarlo entre todos"],
+          "correctOption": "Respetar señales y mantener distancia"
+        },
+        {
+          "kali": "El encuentro con lion makulu trae una lección importante...",
+          "question": "¿Qué valor demuestra quien cuida a lion makulu y su entorno?",
+          "options": ["Respeto por la vida", "Apuro por ganar siempre", "Desorden en la naturaleza", "Indiferencia total"],
+          "correctOption": "Respeto por la vida"
+        },
+        {
+          "kali": "Kali cierra la ronda con una idea clave sobre lion makulu...",
+          "question": "¿Cuál es una buena forma de aprender más sobre lion makulu?",
+          "options": ["Leer, observar y preguntar a personas expertas", "Inventar datos sin mirar", "Molestar animales para probar", "Ignorar todo sobre su hábitat"],
+          "correctOption": "Leer, observar y preguntar a personas expertas"
+        }
+      ]
+    },
+    "Narwhal": {
+      "es-AR": [
+        {
+          "kali": "Narwhal aparece en el camino y Kali te guía con calma...",
+          "question": "Si te cruzás con narwhal en la naturaleza, ¿qué conviene hacer primero?",
+          "options": ["Acercarte corriendo", "Mantener distancia y observar con cuidado", "Gritar fuerte para asustarlo", "Tocarlo para conocerlo"],
+          "correctOption": "Mantener distancia y observar con cuidado"
+        },
+        {
+          "kali": "Kali señala el entorno donde vive narwhal...",
+          "question": "¿Por qué es importante cuidar el hábitat de narwhal?",
+          "options": ["Porque así puede vivir y cumplir su rol en la naturaleza", "Porque cambia de color todo el tiempo", "Porque no necesita alimento", "Porque vive mejor en una ciudad"],
+          "correctOption": "Porque así puede vivir y cumplir su rol en la naturaleza"
+        },
+        {
+          "kali": "Narwhal se mueve atento en su ambiente...",
+          "question": "¿Qué ayuda a narwhal a sobrevivir en su hábitat?",
+          "options": ["Sus adaptaciones naturales", "Un teléfono celular", "La ropa humana", "Los semáforos"],
+          "correctOption": "Sus adaptaciones naturales"
+        },
+        {
+          "kali": "Kali te propone pensar como explorador de animales...",
+          "question": "Si querés aprender sobre narwhal sin molestarlo, ¿qué es mejor?",
+          "options": ["Observar en silencio y con respeto", "Perseguirlo para que corra", "Darle comida sin permiso", "Encerrarlo para mirarlo de cerca"],
+          "correctOption": "Observar en silencio y con respeto"
+        },
+        {
+          "kali": "Narwhal forma parte de una red natural más grande...",
+          "question": "¿Qué pasa cuando una especie como narwhal desaparece de un lugar?",
+          "options": ["El equilibrio del ecosistema se puede alterar", "Nada cambia nunca", "Aparecen más juguetes", "El clima se detiene"],
+          "correctOption": "El equilibrio del ecosistema se puede alterar"
+        },
+        {
+          "kali": "Kali prepara una misión de cuidado del planeta...",
+          "question": "¿Qué acción humana suele ayudar a animales como narwhal?",
+          "options": ["Proteger ambientes naturales", "Tirar basura en ríos", "Romper nidos o refugios", "Hacer ruido constante cerca"],
+          "correctOption": "Proteger ambientes naturales"
+        },
+        {
+          "kali": "Narwhal te recuerda que cada animal tiene necesidades básicas...",
+          "question": "¿Qué necesita cualquier animal para vivir bien?",
+          "options": ["Alimento, agua y refugio adecuados", "Solo música fuerte", "Solo luces de colores", "Solo juguetes humanos"],
+          "correctOption": "Alimento, agua y refugio adecuados"
+        },
+        {
+          "kali": "Kali abre un desafío de convivencia con la fauna...",
+          "question": "Si un grupo visita una zona con narwhal, ¿qué regla es la más segura?",
+          "options": ["Respetar señales y mantener distancia", "Acercarse para sacarse selfies", "Correr alrededor del animal", "Intentar tocarlo entre todos"],
+          "correctOption": "Respetar señales y mantener distancia"
+        },
+        {
+          "kali": "El encuentro con narwhal trae una lección importante...",
+          "question": "¿Qué valor demuestra quien cuida a narwhal y su entorno?",
+          "options": ["Respeto por la vida", "Apuro por ganar siempre", "Desorden en la naturaleza", "Indiferencia total"],
+          "correctOption": "Respeto por la vida"
+        },
+        {
+          "kali": "Kali cierra la ronda con una idea clave sobre narwhal...",
+          "question": "¿Cuál es una buena forma de aprender más sobre narwhal?",
+          "options": ["Leer, observar y preguntar a personas expertas", "Inventar datos sin mirar", "Molestar animales para probar", "Ignorar todo sobre su hábitat"],
+          "correctOption": "Leer, observar y preguntar a personas expertas"
+        }
+      ]
+    },
+    "Nile crocodile": {
+      "es-AR": [
+        {
+          "kali": "Nile crocodile aparece en el camino y Kali te guía con calma...",
+          "question": "Si te cruzás con nile crocodile en la naturaleza, ¿qué conviene hacer primero?",
+          "options": ["Acercarte corriendo", "Mantener distancia y observar con cuidado", "Gritar fuerte para asustarlo", "Tocarlo para conocerlo"],
+          "correctOption": "Mantener distancia y observar con cuidado"
+        },
+        {
+          "kali": "Kali señala el entorno donde vive nile crocodile...",
+          "question": "¿Por qué es importante cuidar el hábitat de nile crocodile?",
+          "options": ["Porque así puede vivir y cumplir su rol en la naturaleza", "Porque cambia de color todo el tiempo", "Porque no necesita alimento", "Porque vive mejor en una ciudad"],
+          "correctOption": "Porque así puede vivir y cumplir su rol en la naturaleza"
+        },
+        {
+          "kali": "Nile crocodile se mueve atento en su ambiente...",
+          "question": "¿Qué ayuda a nile crocodile a sobrevivir en su hábitat?",
+          "options": ["Sus adaptaciones naturales", "Un teléfono celular", "La ropa humana", "Los semáforos"],
+          "correctOption": "Sus adaptaciones naturales"
+        },
+        {
+          "kali": "Kali te propone pensar como explorador de animales...",
+          "question": "Si querés aprender sobre nile crocodile sin molestarlo, ¿qué es mejor?",
+          "options": ["Observar en silencio y con respeto", "Perseguirlo para que corra", "Darle comida sin permiso", "Encerrarlo para mirarlo de cerca"],
+          "correctOption": "Observar en silencio y con respeto"
+        },
+        {
+          "kali": "Nile crocodile forma parte de una red natural más grande...",
+          "question": "¿Qué pasa cuando una especie como nile crocodile desaparece de un lugar?",
+          "options": ["El equilibrio del ecosistema se puede alterar", "Nada cambia nunca", "Aparecen más juguetes", "El clima se detiene"],
+          "correctOption": "El equilibrio del ecosistema se puede alterar"
+        },
+        {
+          "kali": "Kali prepara una misión de cuidado del planeta...",
+          "question": "¿Qué acción humana suele ayudar a animales como nile crocodile?",
+          "options": ["Proteger ambientes naturales", "Tirar basura en ríos", "Romper nidos o refugios", "Hacer ruido constante cerca"],
+          "correctOption": "Proteger ambientes naturales"
+        },
+        {
+          "kali": "Nile crocodile te recuerda que cada animal tiene necesidades básicas...",
+          "question": "¿Qué necesita cualquier animal para vivir bien?",
+          "options": ["Alimento, agua y refugio adecuados", "Solo música fuerte", "Solo luces de colores", "Solo juguetes humanos"],
+          "correctOption": "Alimento, agua y refugio adecuados"
+        },
+        {
+          "kali": "Kali abre un desafío de convivencia con la fauna...",
+          "question": "Si un grupo visita una zona con nile crocodile, ¿qué regla es la más segura?",
+          "options": ["Respetar señales y mantener distancia", "Acercarse para sacarse selfies", "Correr alrededor del animal", "Intentar tocarlo entre todos"],
+          "correctOption": "Respetar señales y mantener distancia"
+        },
+        {
+          "kali": "El encuentro con nile crocodile trae una lección importante...",
+          "question": "¿Qué valor demuestra quien cuida a nile crocodile y su entorno?",
+          "options": ["Respeto por la vida", "Apuro por ganar siempre", "Desorden en la naturaleza", "Indiferencia total"],
+          "correctOption": "Respeto por la vida"
+        },
+        {
+          "kali": "Kali cierra la ronda con una idea clave sobre nile crocodile...",
+          "question": "¿Cuál es una buena forma de aprender más sobre nile crocodile?",
+          "options": ["Leer, observar y preguntar a personas expertas", "Inventar datos sin mirar", "Molestar animales para probar", "Ignorar todo sobre su hábitat"],
+          "correctOption": "Leer, observar y preguntar a personas expertas"
+        }
+      ]
+    },
+    "Octopus and starfish": {
+      "es-AR": [
+        {
+          "kali": "Octopus and starfish aparece en el camino y Kali te guía con calma...",
+          "question": "Si te cruzás con octopus and starfish en la naturaleza, ¿qué conviene hacer primero?",
+          "options": ["Acercarte corriendo", "Mantener distancia y observar con cuidado", "Gritar fuerte para asustarlo", "Tocarlo para conocerlo"],
+          "correctOption": "Mantener distancia y observar con cuidado"
+        },
+        {
+          "kali": "Kali señala el entorno donde vive octopus and starfish...",
+          "question": "¿Por qué es importante cuidar el hábitat de octopus and starfish?",
+          "options": ["Porque así puede vivir y cumplir su rol en la naturaleza", "Porque cambia de color todo el tiempo", "Porque no necesita alimento", "Porque vive mejor en una ciudad"],
+          "correctOption": "Porque así puede vivir y cumplir su rol en la naturaleza"
+        },
+        {
+          "kali": "Octopus and starfish se mueve atento en su ambiente...",
+          "question": "¿Qué ayuda a octopus and starfish a sobrevivir en su hábitat?",
+          "options": ["Sus adaptaciones naturales", "Un teléfono celular", "La ropa humana", "Los semáforos"],
+          "correctOption": "Sus adaptaciones naturales"
+        },
+        {
+          "kali": "Kali te propone pensar como explorador de animales...",
+          "question": "Si querés aprender sobre octopus and starfish sin molestarlo, ¿qué es mejor?",
+          "options": ["Observar en silencio y con respeto", "Perseguirlo para que corra", "Darle comida sin permiso", "Encerrarlo para mirarlo de cerca"],
+          "correctOption": "Observar en silencio y con respeto"
+        },
+        {
+          "kali": "Octopus and starfish forma parte de una red natural más grande...",
+          "question": "¿Qué pasa cuando una especie como octopus and starfish desaparece de un lugar?",
+          "options": ["El equilibrio del ecosistema se puede alterar", "Nada cambia nunca", "Aparecen más juguetes", "El clima se detiene"],
+          "correctOption": "El equilibrio del ecosistema se puede alterar"
+        },
+        {
+          "kali": "Kali prepara una misión de cuidado del planeta...",
+          "question": "¿Qué acción humana suele ayudar a animales como octopus and starfish?",
+          "options": ["Proteger ambientes naturales", "Tirar basura en ríos", "Romper nidos o refugios", "Hacer ruido constante cerca"],
+          "correctOption": "Proteger ambientes naturales"
+        },
+        {
+          "kali": "Octopus and starfish te recuerda que cada animal tiene necesidades básicas...",
+          "question": "¿Qué necesita cualquier animal para vivir bien?",
+          "options": ["Alimento, agua y refugio adecuados", "Solo música fuerte", "Solo luces de colores", "Solo juguetes humanos"],
+          "correctOption": "Alimento, agua y refugio adecuados"
+        },
+        {
+          "kali": "Kali abre un desafío de convivencia con la fauna...",
+          "question": "Si un grupo visita una zona con octopus and starfish, ¿qué regla es la más segura?",
+          "options": ["Respetar señales y mantener distancia", "Acercarse para sacarse selfies", "Correr alrededor del animal", "Intentar tocarlo entre todos"],
+          "correctOption": "Respetar señales y mantener distancia"
+        },
+        {
+          "kali": "El encuentro con octopus and starfish trae una lección importante...",
+          "question": "¿Qué valor demuestra quien cuida a octopus and starfish y su entorno?",
+          "options": ["Respeto por la vida", "Apuro por ganar siempre", "Desorden en la naturaleza", "Indiferencia total"],
+          "correctOption": "Respeto por la vida"
+        },
+        {
+          "kali": "Kali cierra la ronda con una idea clave sobre octopus and starfish...",
+          "question": "¿Cuál es una buena forma de aprender más sobre octopus and starfish?",
+          "options": ["Leer, observar y preguntar a personas expertas", "Inventar datos sin mirar", "Molestar animales para probar", "Ignorar todo sobre su hábitat"],
+          "correctOption": "Leer, observar y preguntar a personas expertas"
+        }
+      ]
+    },
+    "Ostrich": {
+      "es-AR": [
+        {
+          "kali": "Ostrich aparece en el camino y Kali te guía con calma...",
+          "question": "Si te cruzás con ostrich en la naturaleza, ¿qué conviene hacer primero?",
+          "options": ["Acercarte corriendo", "Mantener distancia y observar con cuidado", "Gritar fuerte para asustarlo", "Tocarlo para conocerlo"],
+          "correctOption": "Mantener distancia y observar con cuidado"
+        },
+        {
+          "kali": "Kali señala el entorno donde vive ostrich...",
+          "question": "¿Por qué es importante cuidar el hábitat de ostrich?",
+          "options": ["Porque así puede vivir y cumplir su rol en la naturaleza", "Porque cambia de color todo el tiempo", "Porque no necesita alimento", "Porque vive mejor en una ciudad"],
+          "correctOption": "Porque así puede vivir y cumplir su rol en la naturaleza"
+        },
+        {
+          "kali": "Ostrich se mueve atento en su ambiente...",
+          "question": "¿Qué ayuda a ostrich a sobrevivir en su hábitat?",
+          "options": ["Sus adaptaciones naturales", "Un teléfono celular", "La ropa humana", "Los semáforos"],
+          "correctOption": "Sus adaptaciones naturales"
+        },
+        {
+          "kali": "Kali te propone pensar como explorador de animales...",
+          "question": "Si querés aprender sobre ostrich sin molestarlo, ¿qué es mejor?",
+          "options": ["Observar en silencio y con respeto", "Perseguirlo para que corra", "Darle comida sin permiso", "Encerrarlo para mirarlo de cerca"],
+          "correctOption": "Observar en silencio y con respeto"
+        },
+        {
+          "kali": "Ostrich forma parte de una red natural más grande...",
+          "question": "¿Qué pasa cuando una especie como ostrich desaparece de un lugar?",
+          "options": ["El equilibrio del ecosistema se puede alterar", "Nada cambia nunca", "Aparecen más juguetes", "El clima se detiene"],
+          "correctOption": "El equilibrio del ecosistema se puede alterar"
+        },
+        {
+          "kali": "Kali prepara una misión de cuidado del planeta...",
+          "question": "¿Qué acción humana suele ayudar a animales como ostrich?",
+          "options": ["Proteger ambientes naturales", "Tirar basura en ríos", "Romper nidos o refugios", "Hacer ruido constante cerca"],
+          "correctOption": "Proteger ambientes naturales"
+        },
+        {
+          "kali": "Ostrich te recuerda que cada animal tiene necesidades básicas...",
+          "question": "¿Qué necesita cualquier animal para vivir bien?",
+          "options": ["Alimento, agua y refugio adecuados", "Solo música fuerte", "Solo luces de colores", "Solo juguetes humanos"],
+          "correctOption": "Alimento, agua y refugio adecuados"
+        },
+        {
+          "kali": "Kali abre un desafío de convivencia con la fauna...",
+          "question": "Si un grupo visita una zona con ostrich, ¿qué regla es la más segura?",
+          "options": ["Respetar señales y mantener distancia", "Acercarse para sacarse selfies", "Correr alrededor del animal", "Intentar tocarlo entre todos"],
+          "correctOption": "Respetar señales y mantener distancia"
+        },
+        {
+          "kali": "El encuentro con ostrich trae una lección importante...",
+          "question": "¿Qué valor demuestra quien cuida a ostrich y su entorno?",
+          "options": ["Respeto por la vida", "Apuro por ganar siempre", "Desorden en la naturaleza", "Indiferencia total"],
+          "correctOption": "Respeto por la vida"
+        },
+        {
+          "kali": "Kali cierra la ronda con una idea clave sobre ostrich...",
+          "question": "¿Cuál es una buena forma de aprender más sobre ostrich?",
+          "options": ["Leer, observar y preguntar a personas expertas", "Inventar datos sin mirar", "Molestar animales para probar", "Ignorar todo sobre su hábitat"],
+          "correctOption": "Leer, observar y preguntar a personas expertas"
+        }
+      ]
+    },
+    "Penguin": {
+      "es-AR": [
+        {
+          "kali": "Penguin aparece en el camino y Kali te guía con calma...",
+          "question": "Si te cruzás con penguin en la naturaleza, ¿qué conviene hacer primero?",
+          "options": ["Acercarte corriendo", "Mantener distancia y observar con cuidado", "Gritar fuerte para asustarlo", "Tocarlo para conocerlo"],
+          "correctOption": "Mantener distancia y observar con cuidado"
+        },
+        {
+          "kali": "Kali señala el entorno donde vive penguin...",
+          "question": "¿Por qué es importante cuidar el hábitat de penguin?",
+          "options": ["Porque así puede vivir y cumplir su rol en la naturaleza", "Porque cambia de color todo el tiempo", "Porque no necesita alimento", "Porque vive mejor en una ciudad"],
+          "correctOption": "Porque así puede vivir y cumplir su rol en la naturaleza"
+        },
+        {
+          "kali": "Penguin se mueve atento en su ambiente...",
+          "question": "¿Qué ayuda a penguin a sobrevivir en su hábitat?",
+          "options": ["Sus adaptaciones naturales", "Un teléfono celular", "La ropa humana", "Los semáforos"],
+          "correctOption": "Sus adaptaciones naturales"
+        },
+        {
+          "kali": "Kali te propone pensar como explorador de animales...",
+          "question": "Si querés aprender sobre penguin sin molestarlo, ¿qué es mejor?",
+          "options": ["Observar en silencio y con respeto", "Perseguirlo para que corra", "Darle comida sin permiso", "Encerrarlo para mirarlo de cerca"],
+          "correctOption": "Observar en silencio y con respeto"
+        },
+        {
+          "kali": "Penguin forma parte de una red natural más grande...",
+          "question": "¿Qué pasa cuando una especie como penguin desaparece de un lugar?",
+          "options": ["El equilibrio del ecosistema se puede alterar", "Nada cambia nunca", "Aparecen más juguetes", "El clima se detiene"],
+          "correctOption": "El equilibrio del ecosistema se puede alterar"
+        },
+        {
+          "kali": "Kali prepara una misión de cuidado del planeta...",
+          "question": "¿Qué acción humana suele ayudar a animales como penguin?",
+          "options": ["Proteger ambientes naturales", "Tirar basura en ríos", "Romper nidos o refugios", "Hacer ruido constante cerca"],
+          "correctOption": "Proteger ambientes naturales"
+        },
+        {
+          "kali": "Penguin te recuerda que cada animal tiene necesidades básicas...",
+          "question": "¿Qué necesita cualquier animal para vivir bien?",
+          "options": ["Alimento, agua y refugio adecuados", "Solo música fuerte", "Solo luces de colores", "Solo juguetes humanos"],
+          "correctOption": "Alimento, agua y refugio adecuados"
+        },
+        {
+          "kali": "Kali abre un desafío de convivencia con la fauna...",
+          "question": "Si un grupo visita una zona con penguin, ¿qué regla es la más segura?",
+          "options": ["Respetar señales y mantener distancia", "Acercarse para sacarse selfies", "Correr alrededor del animal", "Intentar tocarlo entre todos"],
+          "correctOption": "Respetar señales y mantener distancia"
+        },
+        {
+          "kali": "El encuentro con penguin trae una lección importante...",
+          "question": "¿Qué valor demuestra quien cuida a penguin y su entorno?",
+          "options": ["Respeto por la vida", "Apuro por ganar siempre", "Desorden en la naturaleza", "Indiferencia total"],
+          "correctOption": "Respeto por la vida"
+        },
+        {
+          "kali": "Kali cierra la ronda con una idea clave sobre penguin...",
+          "question": "¿Cuál es una buena forma de aprender más sobre penguin?",
+          "options": ["Leer, observar y preguntar a personas expertas", "Inventar datos sin mirar", "Molestar animales para probar", "Ignorar todo sobre su hábitat"],
+          "correctOption": "Leer, observar y preguntar a personas expertas"
+        }
+      ]
+    },
+    "Poison frog": {
+      "es-AR": [
+        {
+          "kali": "Poison frog aparece en el camino y Kali te guía con calma...",
+          "question": "Si te cruzás con poison frog en la naturaleza, ¿qué conviene hacer primero?",
+          "options": ["Acercarte corriendo", "Mantener distancia y observar con cuidado", "Gritar fuerte para asustarlo", "Tocarlo para conocerlo"],
+          "correctOption": "Mantener distancia y observar con cuidado"
+        },
+        {
+          "kali": "Kali señala el entorno donde vive poison frog...",
+          "question": "¿Por qué es importante cuidar el hábitat de poison frog?",
+          "options": ["Porque así puede vivir y cumplir su rol en la naturaleza", "Porque cambia de color todo el tiempo", "Porque no necesita alimento", "Porque vive mejor en una ciudad"],
+          "correctOption": "Porque así puede vivir y cumplir su rol en la naturaleza"
+        },
+        {
+          "kali": "Poison frog se mueve atento en su ambiente...",
+          "question": "¿Qué ayuda a poison frog a sobrevivir en su hábitat?",
+          "options": ["Sus adaptaciones naturales", "Un teléfono celular", "La ropa humana", "Los semáforos"],
+          "correctOption": "Sus adaptaciones naturales"
+        },
+        {
+          "kali": "Kali te propone pensar como explorador de animales...",
+          "question": "Si querés aprender sobre poison frog sin molestarlo, ¿qué es mejor?",
+          "options": ["Observar en silencio y con respeto", "Perseguirlo para que corra", "Darle comida sin permiso", "Encerrarlo para mirarlo de cerca"],
+          "correctOption": "Observar en silencio y con respeto"
+        },
+        {
+          "kali": "Poison frog forma parte de una red natural más grande...",
+          "question": "¿Qué pasa cuando una especie como poison frog desaparece de un lugar?",
+          "options": ["El equilibrio del ecosistema se puede alterar", "Nada cambia nunca", "Aparecen más juguetes", "El clima se detiene"],
+          "correctOption": "El equilibrio del ecosistema se puede alterar"
+        },
+        {
+          "kali": "Kali prepara una misión de cuidado del planeta...",
+          "question": "¿Qué acción humana suele ayudar a animales como poison frog?",
+          "options": ["Proteger ambientes naturales", "Tirar basura en ríos", "Romper nidos o refugios", "Hacer ruido constante cerca"],
+          "correctOption": "Proteger ambientes naturales"
+        },
+        {
+          "kali": "Poison frog te recuerda que cada animal tiene necesidades básicas...",
+          "question": "¿Qué necesita cualquier animal para vivir bien?",
+          "options": ["Alimento, agua y refugio adecuados", "Solo música fuerte", "Solo luces de colores", "Solo juguetes humanos"],
+          "correctOption": "Alimento, agua y refugio adecuados"
+        },
+        {
+          "kali": "Kali abre un desafío de convivencia con la fauna...",
+          "question": "Si un grupo visita una zona con poison frog, ¿qué regla es la más segura?",
+          "options": ["Respetar señales y mantener distancia", "Acercarse para sacarse selfies", "Correr alrededor del animal", "Intentar tocarlo entre todos"],
+          "correctOption": "Respetar señales y mantener distancia"
+        },
+        {
+          "kali": "El encuentro con poison frog trae una lección importante...",
+          "question": "¿Qué valor demuestra quien cuida a poison frog y su entorno?",
+          "options": ["Respeto por la vida", "Apuro por ganar siempre", "Desorden en la naturaleza", "Indiferencia total"],
+          "correctOption": "Respeto por la vida"
+        },
+        {
+          "kali": "Kali cierra la ronda con una idea clave sobre poison frog...",
+          "question": "¿Cuál es una buena forma de aprender más sobre poison frog?",
+          "options": ["Leer, observar y preguntar a personas expertas", "Inventar datos sin mirar", "Molestar animales para probar", "Ignorar todo sobre su hábitat"],
+          "correctOption": "Leer, observar y preguntar a personas expertas"
+        }
+      ]
+    },
+    "Polar bear": {
+      "es-AR": [
+        {
+          "kali": "Polar bear aparece en el camino y Kali te guía con calma...",
+          "question": "Si te cruzás con polar bear en la naturaleza, ¿qué conviene hacer primero?",
+          "options": ["Acercarte corriendo", "Mantener distancia y observar con cuidado", "Gritar fuerte para asustarlo", "Tocarlo para conocerlo"],
+          "correctOption": "Mantener distancia y observar con cuidado"
+        },
+        {
+          "kali": "Kali señala el entorno donde vive polar bear...",
+          "question": "¿Por qué es importante cuidar el hábitat de polar bear?",
+          "options": ["Porque así puede vivir y cumplir su rol en la naturaleza", "Porque cambia de color todo el tiempo", "Porque no necesita alimento", "Porque vive mejor en una ciudad"],
+          "correctOption": "Porque así puede vivir y cumplir su rol en la naturaleza"
+        },
+        {
+          "kali": "Polar bear se mueve atento en su ambiente...",
+          "question": "¿Qué ayuda a polar bear a sobrevivir en su hábitat?",
+          "options": ["Sus adaptaciones naturales", "Un teléfono celular", "La ropa humana", "Los semáforos"],
+          "correctOption": "Sus adaptaciones naturales"
+        },
+        {
+          "kali": "Kali te propone pensar como explorador de animales...",
+          "question": "Si querés aprender sobre polar bear sin molestarlo, ¿qué es mejor?",
+          "options": ["Observar en silencio y con respeto", "Perseguirlo para que corra", "Darle comida sin permiso", "Encerrarlo para mirarlo de cerca"],
+          "correctOption": "Observar en silencio y con respeto"
+        },
+        {
+          "kali": "Polar bear forma parte de una red natural más grande...",
+          "question": "¿Qué pasa cuando una especie como polar bear desaparece de un lugar?",
+          "options": ["El equilibrio del ecosistema se puede alterar", "Nada cambia nunca", "Aparecen más juguetes", "El clima se detiene"],
+          "correctOption": "El equilibrio del ecosistema se puede alterar"
+        },
+        {
+          "kali": "Kali prepara una misión de cuidado del planeta...",
+          "question": "¿Qué acción humana suele ayudar a animales como polar bear?",
+          "options": ["Proteger ambientes naturales", "Tirar basura en ríos", "Romper nidos o refugios", "Hacer ruido constante cerca"],
+          "correctOption": "Proteger ambientes naturales"
+        },
+        {
+          "kali": "Polar bear te recuerda que cada animal tiene necesidades básicas...",
+          "question": "¿Qué necesita cualquier animal para vivir bien?",
+          "options": ["Alimento, agua y refugio adecuados", "Solo música fuerte", "Solo luces de colores", "Solo juguetes humanos"],
+          "correctOption": "Alimento, agua y refugio adecuados"
+        },
+        {
+          "kali": "Kali abre un desafío de convivencia con la fauna...",
+          "question": "Si un grupo visita una zona con polar bear, ¿qué regla es la más segura?",
+          "options": ["Respetar señales y mantener distancia", "Acercarse para sacarse selfies", "Correr alrededor del animal", "Intentar tocarlo entre todos"],
+          "correctOption": "Respetar señales y mantener distancia"
+        },
+        {
+          "kali": "El encuentro con polar bear trae una lección importante...",
+          "question": "¿Qué valor demuestra quien cuida a polar bear y su entorno?",
+          "options": ["Respeto por la vida", "Apuro por ganar siempre", "Desorden en la naturaleza", "Indiferencia total"],
+          "correctOption": "Respeto por la vida"
+        },
+        {
+          "kali": "Kali cierra la ronda con una idea clave sobre polar bear...",
+          "question": "¿Cuál es una buena forma de aprender más sobre polar bear?",
+          "options": ["Leer, observar y preguntar a personas expertas", "Inventar datos sin mirar", "Molestar animales para probar", "Ignorar todo sobre su hábitat"],
+          "correctOption": "Leer, observar y preguntar a personas expertas"
+        }
+      ]
+    },
+    "Rhinoceros": {
+      "es-AR": [
+        {
+          "kali": "Rhinoceros aparece en el camino y Kali te guía con calma...",
+          "question": "Si te cruzás con rhinoceros en la naturaleza, ¿qué conviene hacer primero?",
+          "options": ["Acercarte corriendo", "Mantener distancia y observar con cuidado", "Gritar fuerte para asustarlo", "Tocarlo para conocerlo"],
+          "correctOption": "Mantener distancia y observar con cuidado"
+        },
+        {
+          "kali": "Kali señala el entorno donde vive rhinoceros...",
+          "question": "¿Por qué es importante cuidar el hábitat de rhinoceros?",
+          "options": ["Porque así puede vivir y cumplir su rol en la naturaleza", "Porque cambia de color todo el tiempo", "Porque no necesita alimento", "Porque vive mejor en una ciudad"],
+          "correctOption": "Porque así puede vivir y cumplir su rol en la naturaleza"
+        },
+        {
+          "kali": "Rhinoceros se mueve atento en su ambiente...",
+          "question": "¿Qué ayuda a rhinoceros a sobrevivir en su hábitat?",
+          "options": ["Sus adaptaciones naturales", "Un teléfono celular", "La ropa humana", "Los semáforos"],
+          "correctOption": "Sus adaptaciones naturales"
+        },
+        {
+          "kali": "Kali te propone pensar como explorador de animales...",
+          "question": "Si querés aprender sobre rhinoceros sin molestarlo, ¿qué es mejor?",
+          "options": ["Observar en silencio y con respeto", "Perseguirlo para que corra", "Darle comida sin permiso", "Encerrarlo para mirarlo de cerca"],
+          "correctOption": "Observar en silencio y con respeto"
+        },
+        {
+          "kali": "Rhinoceros forma parte de una red natural más grande...",
+          "question": "¿Qué pasa cuando una especie como rhinoceros desaparece de un lugar?",
+          "options": ["El equilibrio del ecosistema se puede alterar", "Nada cambia nunca", "Aparecen más juguetes", "El clima se detiene"],
+          "correctOption": "El equilibrio del ecosistema se puede alterar"
+        },
+        {
+          "kali": "Kali prepara una misión de cuidado del planeta...",
+          "question": "¿Qué acción humana suele ayudar a animales como rhinoceros?",
+          "options": ["Proteger ambientes naturales", "Tirar basura en ríos", "Romper nidos o refugios", "Hacer ruido constante cerca"],
+          "correctOption": "Proteger ambientes naturales"
+        },
+        {
+          "kali": "Rhinoceros te recuerda que cada animal tiene necesidades básicas...",
+          "question": "¿Qué necesita cualquier animal para vivir bien?",
+          "options": ["Alimento, agua y refugio adecuados", "Solo música fuerte", "Solo luces de colores", "Solo juguetes humanos"],
+          "correctOption": "Alimento, agua y refugio adecuados"
+        },
+        {
+          "kali": "Kali abre un desafío de convivencia con la fauna...",
+          "question": "Si un grupo visita una zona con rhinoceros, ¿qué regla es la más segura?",
+          "options": ["Respetar señales y mantener distancia", "Acercarse para sacarse selfies", "Correr alrededor del animal", "Intentar tocarlo entre todos"],
+          "correctOption": "Respetar señales y mantener distancia"
+        },
+        {
+          "kali": "El encuentro con rhinoceros trae una lección importante...",
+          "question": "¿Qué valor demuestra quien cuida a rhinoceros y su entorno?",
+          "options": ["Respeto por la vida", "Apuro por ganar siempre", "Desorden en la naturaleza", "Indiferencia total"],
+          "correctOption": "Respeto por la vida"
+        },
+        {
+          "kali": "Kali cierra la ronda con una idea clave sobre rhinoceros...",
+          "question": "¿Cuál es una buena forma de aprender más sobre rhinoceros?",
+          "options": ["Leer, observar y preguntar a personas expertas", "Inventar datos sin mirar", "Molestar animales para probar", "Ignorar todo sobre su hábitat"],
+          "correctOption": "Leer, observar y preguntar a personas expertas"
+        }
+      ]
+    },
+    "Scorpion": {
+      "es-AR": [
+        {
+          "kali": "Scorpion aparece en el camino y Kali te guía con calma...",
+          "question": "Si te cruzás con scorpion en la naturaleza, ¿qué conviene hacer primero?",
+          "options": ["Acercarte corriendo", "Mantener distancia y observar con cuidado", "Gritar fuerte para asustarlo", "Tocarlo para conocerlo"],
+          "correctOption": "Mantener distancia y observar con cuidado"
+        },
+        {
+          "kali": "Kali señala el entorno donde vive scorpion...",
+          "question": "¿Por qué es importante cuidar el hábitat de scorpion?",
+          "options": ["Porque así puede vivir y cumplir su rol en la naturaleza", "Porque cambia de color todo el tiempo", "Porque no necesita alimento", "Porque vive mejor en una ciudad"],
+          "correctOption": "Porque así puede vivir y cumplir su rol en la naturaleza"
+        },
+        {
+          "kali": "Scorpion se mueve atento en su ambiente...",
+          "question": "¿Qué ayuda a scorpion a sobrevivir en su hábitat?",
+          "options": ["Sus adaptaciones naturales", "Un teléfono celular", "La ropa humana", "Los semáforos"],
+          "correctOption": "Sus adaptaciones naturales"
+        },
+        {
+          "kali": "Kali te propone pensar como explorador de animales...",
+          "question": "Si querés aprender sobre scorpion sin molestarlo, ¿qué es mejor?",
+          "options": ["Observar en silencio y con respeto", "Perseguirlo para que corra", "Darle comida sin permiso", "Encerrarlo para mirarlo de cerca"],
+          "correctOption": "Observar en silencio y con respeto"
+        },
+        {
+          "kali": "Scorpion forma parte de una red natural más grande...",
+          "question": "¿Qué pasa cuando una especie como scorpion desaparece de un lugar?",
+          "options": ["El equilibrio del ecosistema se puede alterar", "Nada cambia nunca", "Aparecen más juguetes", "El clima se detiene"],
+          "correctOption": "El equilibrio del ecosistema se puede alterar"
+        },
+        {
+          "kali": "Kali prepara una misión de cuidado del planeta...",
+          "question": "¿Qué acción humana suele ayudar a animales como scorpion?",
+          "options": ["Proteger ambientes naturales", "Tirar basura en ríos", "Romper nidos o refugios", "Hacer ruido constante cerca"],
+          "correctOption": "Proteger ambientes naturales"
+        },
+        {
+          "kali": "Scorpion te recuerda que cada animal tiene necesidades básicas...",
+          "question": "¿Qué necesita cualquier animal para vivir bien?",
+          "options": ["Alimento, agua y refugio adecuados", "Solo música fuerte", "Solo luces de colores", "Solo juguetes humanos"],
+          "correctOption": "Alimento, agua y refugio adecuados"
+        },
+        {
+          "kali": "Kali abre un desafío de convivencia con la fauna...",
+          "question": "Si un grupo visita una zona con scorpion, ¿qué regla es la más segura?",
+          "options": ["Respetar señales y mantener distancia", "Acercarse para sacarse selfies", "Correr alrededor del animal", "Intentar tocarlo entre todos"],
+          "correctOption": "Respetar señales y mantener distancia"
+        },
+        {
+          "kali": "El encuentro con scorpion trae una lección importante...",
+          "question": "¿Qué valor demuestra quien cuida a scorpion y su entorno?",
+          "options": ["Respeto por la vida", "Apuro por ganar siempre", "Desorden en la naturaleza", "Indiferencia total"],
+          "correctOption": "Respeto por la vida"
+        },
+        {
+          "kali": "Kali cierra la ronda con una idea clave sobre scorpion...",
+          "question": "¿Cuál es una buena forma de aprender más sobre scorpion?",
+          "options": ["Leer, observar y preguntar a personas expertas", "Inventar datos sin mirar", "Molestar animales para probar", "Ignorar todo sobre su hábitat"],
+          "correctOption": "Leer, observar y preguntar a personas expertas"
+        }
+      ]
+    },
+    "Sea turtle": {
+      "es-AR": [
+        {
+          "kali": "Sea turtle aparece en el camino y Kali te guía con calma...",
+          "question": "Si te cruzás con sea turtle en la naturaleza, ¿qué conviene hacer primero?",
+          "options": ["Acercarte corriendo", "Mantener distancia y observar con cuidado", "Gritar fuerte para asustarlo", "Tocarlo para conocerlo"],
+          "correctOption": "Mantener distancia y observar con cuidado"
+        },
+        {
+          "kali": "Kali señala el entorno donde vive sea turtle...",
+          "question": "¿Por qué es importante cuidar el hábitat de sea turtle?",
+          "options": ["Porque así puede vivir y cumplir su rol en la naturaleza", "Porque cambia de color todo el tiempo", "Porque no necesita alimento", "Porque vive mejor en una ciudad"],
+          "correctOption": "Porque así puede vivir y cumplir su rol en la naturaleza"
+        },
+        {
+          "kali": "Sea turtle se mueve atento en su ambiente...",
+          "question": "¿Qué ayuda a sea turtle a sobrevivir en su hábitat?",
+          "options": ["Sus adaptaciones naturales", "Un teléfono celular", "La ropa humana", "Los semáforos"],
+          "correctOption": "Sus adaptaciones naturales"
+        },
+        {
+          "kali": "Kali te propone pensar como explorador de animales...",
+          "question": "Si querés aprender sobre sea turtle sin molestarlo, ¿qué es mejor?",
+          "options": ["Observar en silencio y con respeto", "Perseguirlo para que corra", "Darle comida sin permiso", "Encerrarlo para mirarlo de cerca"],
+          "correctOption": "Observar en silencio y con respeto"
+        },
+        {
+          "kali": "Sea turtle forma parte de una red natural más grande...",
+          "question": "¿Qué pasa cuando una especie como sea turtle desaparece de un lugar?",
+          "options": ["El equilibrio del ecosistema se puede alterar", "Nada cambia nunca", "Aparecen más juguetes", "El clima se detiene"],
+          "correctOption": "El equilibrio del ecosistema se puede alterar"
+        },
+        {
+          "kali": "Kali prepara una misión de cuidado del planeta...",
+          "question": "¿Qué acción humana suele ayudar a animales como sea turtle?",
+          "options": ["Proteger ambientes naturales", "Tirar basura en ríos", "Romper nidos o refugios", "Hacer ruido constante cerca"],
+          "correctOption": "Proteger ambientes naturales"
+        },
+        {
+          "kali": "Sea turtle te recuerda que cada animal tiene necesidades básicas...",
+          "question": "¿Qué necesita cualquier animal para vivir bien?",
+          "options": ["Alimento, agua y refugio adecuados", "Solo música fuerte", "Solo luces de colores", "Solo juguetes humanos"],
+          "correctOption": "Alimento, agua y refugio adecuados"
+        },
+        {
+          "kali": "Kali abre un desafío de convivencia con la fauna...",
+          "question": "Si un grupo visita una zona con sea turtle, ¿qué regla es la más segura?",
+          "options": ["Respetar señales y mantener distancia", "Acercarse para sacarse selfies", "Correr alrededor del animal", "Intentar tocarlo entre todos"],
+          "correctOption": "Respetar señales y mantener distancia"
+        },
+        {
+          "kali": "El encuentro con sea turtle trae una lección importante...",
+          "question": "¿Qué valor demuestra quien cuida a sea turtle y su entorno?",
+          "options": ["Respeto por la vida", "Apuro por ganar siempre", "Desorden en la naturaleza", "Indiferencia total"],
+          "correctOption": "Respeto por la vida"
+        },
+        {
+          "kali": "Kali cierra la ronda con una idea clave sobre sea turtle...",
+          "question": "¿Cuál es una buena forma de aprender más sobre sea turtle?",
+          "options": ["Leer, observar y preguntar a personas expertas", "Inventar datos sin mirar", "Molestar animales para probar", "Ignorar todo sobre su hábitat"],
+          "correctOption": "Leer, observar y preguntar a personas expertas"
+        }
+      ]
+    },
+    "Squirrel": {
+      "es-AR": [
+        {
+          "kali": "Squirrel aparece en el camino y Kali te guía con calma...",
+          "question": "Si te cruzás con squirrel en la naturaleza, ¿qué conviene hacer primero?",
+          "options": ["Acercarte corriendo", "Mantener distancia y observar con cuidado", "Gritar fuerte para asustarlo", "Tocarlo para conocerlo"],
+          "correctOption": "Mantener distancia y observar con cuidado"
+        },
+        {
+          "kali": "Kali señala el entorno donde vive squirrel...",
+          "question": "¿Por qué es importante cuidar el hábitat de squirrel?",
+          "options": ["Porque así puede vivir y cumplir su rol en la naturaleza", "Porque cambia de color todo el tiempo", "Porque no necesita alimento", "Porque vive mejor en una ciudad"],
+          "correctOption": "Porque así puede vivir y cumplir su rol en la naturaleza"
+        },
+        {
+          "kali": "Squirrel se mueve atento en su ambiente...",
+          "question": "¿Qué ayuda a squirrel a sobrevivir en su hábitat?",
+          "options": ["Sus adaptaciones naturales", "Un teléfono celular", "La ropa humana", "Los semáforos"],
+          "correctOption": "Sus adaptaciones naturales"
+        },
+        {
+          "kali": "Kali te propone pensar como explorador de animales...",
+          "question": "Si querés aprender sobre squirrel sin molestarlo, ¿qué es mejor?",
+          "options": ["Observar en silencio y con respeto", "Perseguirlo para que corra", "Darle comida sin permiso", "Encerrarlo para mirarlo de cerca"],
+          "correctOption": "Observar en silencio y con respeto"
+        },
+        {
+          "kali": "Squirrel forma parte de una red natural más grande...",
+          "question": "¿Qué pasa cuando una especie como squirrel desaparece de un lugar?",
+          "options": ["El equilibrio del ecosistema se puede alterar", "Nada cambia nunca", "Aparecen más juguetes", "El clima se detiene"],
+          "correctOption": "El equilibrio del ecosistema se puede alterar"
+        },
+        {
+          "kali": "Kali prepara una misión de cuidado del planeta...",
+          "question": "¿Qué acción humana suele ayudar a animales como squirrel?",
+          "options": ["Proteger ambientes naturales", "Tirar basura en ríos", "Romper nidos o refugios", "Hacer ruido constante cerca"],
+          "correctOption": "Proteger ambientes naturales"
+        },
+        {
+          "kali": "Squirrel te recuerda que cada animal tiene necesidades básicas...",
+          "question": "¿Qué necesita cualquier animal para vivir bien?",
+          "options": ["Alimento, agua y refugio adecuados", "Solo música fuerte", "Solo luces de colores", "Solo juguetes humanos"],
+          "correctOption": "Alimento, agua y refugio adecuados"
+        },
+        {
+          "kali": "Kali abre un desafío de convivencia con la fauna...",
+          "question": "Si un grupo visita una zona con squirrel, ¿qué regla es la más segura?",
+          "options": ["Respetar señales y mantener distancia", "Acercarse para sacarse selfies", "Correr alrededor del animal", "Intentar tocarlo entre todos"],
+          "correctOption": "Respetar señales y mantener distancia"
+        },
+        {
+          "kali": "El encuentro con squirrel trae una lección importante...",
+          "question": "¿Qué valor demuestra quien cuida a squirrel y su entorno?",
+          "options": ["Respeto por la vida", "Apuro por ganar siempre", "Desorden en la naturaleza", "Indiferencia total"],
+          "correctOption": "Respeto por la vida"
+        },
+        {
+          "kali": "Kali cierra la ronda con una idea clave sobre squirrel...",
+          "question": "¿Cuál es una buena forma de aprender más sobre squirrel?",
+          "options": ["Leer, observar y preguntar a personas expertas", "Inventar datos sin mirar", "Molestar animales para probar", "Ignorar todo sobre su hábitat"],
+          "correctOption": "Leer, observar y preguntar a personas expertas"
+        }
+      ]
+    },
+    "Tamil Nadu elephant": {
+      "es-AR": [
+        {
+          "kali": "Tamil Nadu elephant aparece en el camino y Kali te guía con calma...",
+          "question": "Si te cruzás con tamil nadu elephant en la naturaleza, ¿qué conviene hacer primero?",
+          "options": ["Acercarte corriendo", "Mantener distancia y observar con cuidado", "Gritar fuerte para asustarlo", "Tocarlo para conocerlo"],
+          "correctOption": "Mantener distancia y observar con cuidado"
+        },
+        {
+          "kali": "Kali señala el entorno donde vive tamil nadu elephant...",
+          "question": "¿Por qué es importante cuidar el hábitat de tamil nadu elephant?",
+          "options": ["Porque así puede vivir y cumplir su rol en la naturaleza", "Porque cambia de color todo el tiempo", "Porque no necesita alimento", "Porque vive mejor en una ciudad"],
+          "correctOption": "Porque así puede vivir y cumplir su rol en la naturaleza"
+        },
+        {
+          "kali": "Tamil Nadu elephant se mueve atento en su ambiente...",
+          "question": "¿Qué ayuda a tamil nadu elephant a sobrevivir en su hábitat?",
+          "options": ["Sus adaptaciones naturales", "Un teléfono celular", "La ropa humana", "Los semáforos"],
+          "correctOption": "Sus adaptaciones naturales"
+        },
+        {
+          "kali": "Kali te propone pensar como explorador de animales...",
+          "question": "Si querés aprender sobre tamil nadu elephant sin molestarlo, ¿qué es mejor?",
+          "options": ["Observar en silencio y con respeto", "Perseguirlo para que corra", "Darle comida sin permiso", "Encerrarlo para mirarlo de cerca"],
+          "correctOption": "Observar en silencio y con respeto"
+        },
+        {
+          "kali": "Tamil Nadu elephant forma parte de una red natural más grande...",
+          "question": "¿Qué pasa cuando una especie como tamil nadu elephant desaparece de un lugar?",
+          "options": ["El equilibrio del ecosistema se puede alterar", "Nada cambia nunca", "Aparecen más juguetes", "El clima se detiene"],
+          "correctOption": "El equilibrio del ecosistema se puede alterar"
+        },
+        {
+          "kali": "Kali prepara una misión de cuidado del planeta...",
+          "question": "¿Qué acción humana suele ayudar a animales como tamil nadu elephant?",
+          "options": ["Proteger ambientes naturales", "Tirar basura en ríos", "Romper nidos o refugios", "Hacer ruido constante cerca"],
+          "correctOption": "Proteger ambientes naturales"
+        },
+        {
+          "kali": "Tamil Nadu elephant te recuerda que cada animal tiene necesidades básicas...",
+          "question": "¿Qué necesita cualquier animal para vivir bien?",
+          "options": ["Alimento, agua y refugio adecuados", "Solo música fuerte", "Solo luces de colores", "Solo juguetes humanos"],
+          "correctOption": "Alimento, agua y refugio adecuados"
+        },
+        {
+          "kali": "Kali abre un desafío de convivencia con la fauna...",
+          "question": "Si un grupo visita una zona con tamil nadu elephant, ¿qué regla es la más segura?",
+          "options": ["Respetar señales y mantener distancia", "Acercarse para sacarse selfies", "Correr alrededor del animal", "Intentar tocarlo entre todos"],
+          "correctOption": "Respetar señales y mantener distancia"
+        },
+        {
+          "kali": "El encuentro con tamil nadu elephant trae una lección importante...",
+          "question": "¿Qué valor demuestra quien cuida a tamil nadu elephant y su entorno?",
+          "options": ["Respeto por la vida", "Apuro por ganar siempre", "Desorden en la naturaleza", "Indiferencia total"],
+          "correctOption": "Respeto por la vida"
+        },
+        {
+          "kali": "Kali cierra la ronda con una idea clave sobre tamil nadu elephant...",
+          "question": "¿Cuál es una buena forma de aprender más sobre tamil nadu elephant?",
+          "options": ["Leer, observar y preguntar a personas expertas", "Inventar datos sin mirar", "Molestar animales para probar", "Ignorar todo sobre su hábitat"],
+          "correctOption": "Leer, observar y preguntar a personas expertas"
+        }
+      ]
+    },
+    "Tiger shark": {
+      "es-AR": [
+        {
+          "kali": "Tiger shark aparece en el camino y Kali te guía con calma...",
+          "question": "Si te cruzás con tiger shark en la naturaleza, ¿qué conviene hacer primero?",
+          "options": ["Acercarte corriendo", "Mantener distancia y observar con cuidado", "Gritar fuerte para asustarlo", "Tocarlo para conocerlo"],
+          "correctOption": "Mantener distancia y observar con cuidado"
+        },
+        {
+          "kali": "Kali señala el entorno donde vive tiger shark...",
+          "question": "¿Por qué es importante cuidar el hábitat de tiger shark?",
+          "options": ["Porque así puede vivir y cumplir su rol en la naturaleza", "Porque cambia de color todo el tiempo", "Porque no necesita alimento", "Porque vive mejor en una ciudad"],
+          "correctOption": "Porque así puede vivir y cumplir su rol en la naturaleza"
+        },
+        {
+          "kali": "Tiger shark se mueve atento en su ambiente...",
+          "question": "¿Qué ayuda a tiger shark a sobrevivir en su hábitat?",
+          "options": ["Sus adaptaciones naturales", "Un teléfono celular", "La ropa humana", "Los semáforos"],
+          "correctOption": "Sus adaptaciones naturales"
+        },
+        {
+          "kali": "Kali te propone pensar como explorador de animales...",
+          "question": "Si querés aprender sobre tiger shark sin molestarlo, ¿qué es mejor?",
+          "options": ["Observar en silencio y con respeto", "Perseguirlo para que corra", "Darle comida sin permiso", "Encerrarlo para mirarlo de cerca"],
+          "correctOption": "Observar en silencio y con respeto"
+        },
+        {
+          "kali": "Tiger shark forma parte de una red natural más grande...",
+          "question": "¿Qué pasa cuando una especie como tiger shark desaparece de un lugar?",
+          "options": ["El equilibrio del ecosistema se puede alterar", "Nada cambia nunca", "Aparecen más juguetes", "El clima se detiene"],
+          "correctOption": "El equilibrio del ecosistema se puede alterar"
+        },
+        {
+          "kali": "Kali prepara una misión de cuidado del planeta...",
+          "question": "¿Qué acción humana suele ayudar a animales como tiger shark?",
+          "options": ["Proteger ambientes naturales", "Tirar basura en ríos", "Romper nidos o refugios", "Hacer ruido constante cerca"],
+          "correctOption": "Proteger ambientes naturales"
+        },
+        {
+          "kali": "Tiger shark te recuerda que cada animal tiene necesidades básicas...",
+          "question": "¿Qué necesita cualquier animal para vivir bien?",
+          "options": ["Alimento, agua y refugio adecuados", "Solo música fuerte", "Solo luces de colores", "Solo juguetes humanos"],
+          "correctOption": "Alimento, agua y refugio adecuados"
+        },
+        {
+          "kali": "Kali abre un desafío de convivencia con la fauna...",
+          "question": "Si un grupo visita una zona con tiger shark, ¿qué regla es la más segura?",
+          "options": ["Respetar señales y mantener distancia", "Acercarse para sacarse selfies", "Correr alrededor del animal", "Intentar tocarlo entre todos"],
+          "correctOption": "Respetar señales y mantener distancia"
+        },
+        {
+          "kali": "El encuentro con tiger shark trae una lección importante...",
+          "question": "¿Qué valor demuestra quien cuida a tiger shark y su entorno?",
+          "options": ["Respeto por la vida", "Apuro por ganar siempre", "Desorden en la naturaleza", "Indiferencia total"],
+          "correctOption": "Respeto por la vida"
+        },
+        {
+          "kali": "Kali cierra la ronda con una idea clave sobre tiger shark...",
+          "question": "¿Cuál es una buena forma de aprender más sobre tiger shark?",
+          "options": ["Leer, observar y preguntar a personas expertas", "Inventar datos sin mirar", "Molestar animales para probar", "Ignorar todo sobre su hábitat"],
+          "correctOption": "Leer, observar y preguntar a personas expertas"
+        }
+      ]
+    },
+    "Tiger Shere Khan": {
+      "es-AR": [
+        {
+          "kali": "Tiger Shere Khan aparece en el camino y Kali te guía con calma...",
+          "question": "Si te cruzás con tiger shere khan en la naturaleza, ¿qué conviene hacer primero?",
+          "options": ["Acercarte corriendo", "Mantener distancia y observar con cuidado", "Gritar fuerte para asustarlo", "Tocarlo para conocerlo"],
+          "correctOption": "Mantener distancia y observar con cuidado"
+        },
+        {
+          "kali": "Kali señala el entorno donde vive tiger shere khan...",
+          "question": "¿Por qué es importante cuidar el hábitat de tiger shere khan?",
+          "options": ["Porque así puede vivir y cumplir su rol en la naturaleza", "Porque cambia de color todo el tiempo", "Porque no necesita alimento", "Porque vive mejor en una ciudad"],
+          "correctOption": "Porque así puede vivir y cumplir su rol en la naturaleza"
+        },
+        {
+          "kali": "Tiger Shere Khan se mueve atento en su ambiente...",
+          "question": "¿Qué ayuda a tiger shere khan a sobrevivir en su hábitat?",
+          "options": ["Sus adaptaciones naturales", "Un teléfono celular", "La ropa humana", "Los semáforos"],
+          "correctOption": "Sus adaptaciones naturales"
+        },
+        {
+          "kali": "Kali te propone pensar como explorador de animales...",
+          "question": "Si querés aprender sobre tiger shere khan sin molestarlo, ¿qué es mejor?",
+          "options": ["Observar en silencio y con respeto", "Perseguirlo para que corra", "Darle comida sin permiso", "Encerrarlo para mirarlo de cerca"],
+          "correctOption": "Observar en silencio y con respeto"
+        },
+        {
+          "kali": "Tiger Shere Khan forma parte de una red natural más grande...",
+          "question": "¿Qué pasa cuando una especie como tiger shere khan desaparece de un lugar?",
+          "options": ["El equilibrio del ecosistema se puede alterar", "Nada cambia nunca", "Aparecen más juguetes", "El clima se detiene"],
+          "correctOption": "El equilibrio del ecosistema se puede alterar"
+        },
+        {
+          "kali": "Kali prepara una misión de cuidado del planeta...",
+          "question": "¿Qué acción humana suele ayudar a animales como tiger shere khan?",
+          "options": ["Proteger ambientes naturales", "Tirar basura en ríos", "Romper nidos o refugios", "Hacer ruido constante cerca"],
+          "correctOption": "Proteger ambientes naturales"
+        },
+        {
+          "kali": "Tiger Shere Khan te recuerda que cada animal tiene necesidades básicas...",
+          "question": "¿Qué necesita cualquier animal para vivir bien?",
+          "options": ["Alimento, agua y refugio adecuados", "Solo música fuerte", "Solo luces de colores", "Solo juguetes humanos"],
+          "correctOption": "Alimento, agua y refugio adecuados"
+        },
+        {
+          "kali": "Kali abre un desafío de convivencia con la fauna...",
+          "question": "Si un grupo visita una zona con tiger shere khan, ¿qué regla es la más segura?",
+          "options": ["Respetar señales y mantener distancia", "Acercarse para sacarse selfies", "Correr alrededor del animal", "Intentar tocarlo entre todos"],
+          "correctOption": "Respetar señales y mantener distancia"
+        },
+        {
+          "kali": "El encuentro con tiger shere khan trae una lección importante...",
+          "question": "¿Qué valor demuestra quien cuida a tiger shere khan y su entorno?",
+          "options": ["Respeto por la vida", "Apuro por ganar siempre", "Desorden en la naturaleza", "Indiferencia total"],
+          "correctOption": "Respeto por la vida"
+        },
+        {
+          "kali": "Kali cierra la ronda con una idea clave sobre tiger shere khan...",
+          "question": "¿Cuál es una buena forma de aprender más sobre tiger shere khan?",
+          "options": ["Leer, observar y preguntar a personas expertas", "Inventar datos sin mirar", "Molestar animales para probar", "Ignorar todo sobre su hábitat"],
+          "correctOption": "Leer, observar y preguntar a personas expertas"
+        }
+      ]
+    },
+    "Walrus": {
+      "es-AR": [
+        {
+          "kali": "Walrus aparece en el camino y Kali te guía con calma...",
+          "question": "Si te cruzás con walrus en la naturaleza, ¿qué conviene hacer primero?",
+          "options": ["Acercarte corriendo", "Mantener distancia y observar con cuidado", "Gritar fuerte para asustarlo", "Tocarlo para conocerlo"],
+          "correctOption": "Mantener distancia y observar con cuidado"
+        },
+        {
+          "kali": "Kali señala el entorno donde vive walrus...",
+          "question": "¿Por qué es importante cuidar el hábitat de walrus?",
+          "options": ["Porque así puede vivir y cumplir su rol en la naturaleza", "Porque cambia de color todo el tiempo", "Porque no necesita alimento", "Porque vive mejor en una ciudad"],
+          "correctOption": "Porque así puede vivir y cumplir su rol en la naturaleza"
+        },
+        {
+          "kali": "Walrus se mueve atento en su ambiente...",
+          "question": "¿Qué ayuda a walrus a sobrevivir en su hábitat?",
+          "options": ["Sus adaptaciones naturales", "Un teléfono celular", "La ropa humana", "Los semáforos"],
+          "correctOption": "Sus adaptaciones naturales"
+        },
+        {
+          "kali": "Kali te propone pensar como explorador de animales...",
+          "question": "Si querés aprender sobre walrus sin molestarlo, ¿qué es mejor?",
+          "options": ["Observar en silencio y con respeto", "Perseguirlo para que corra", "Darle comida sin permiso", "Encerrarlo para mirarlo de cerca"],
+          "correctOption": "Observar en silencio y con respeto"
+        },
+        {
+          "kali": "Walrus forma parte de una red natural más grande...",
+          "question": "¿Qué pasa cuando una especie como walrus desaparece de un lugar?",
+          "options": ["El equilibrio del ecosistema se puede alterar", "Nada cambia nunca", "Aparecen más juguetes", "El clima se detiene"],
+          "correctOption": "El equilibrio del ecosistema se puede alterar"
+        },
+        {
+          "kali": "Kali prepara una misión de cuidado del planeta...",
+          "question": "¿Qué acción humana suele ayudar a animales como walrus?",
+          "options": ["Proteger ambientes naturales", "Tirar basura en ríos", "Romper nidos o refugios", "Hacer ruido constante cerca"],
+          "correctOption": "Proteger ambientes naturales"
+        },
+        {
+          "kali": "Walrus te recuerda que cada animal tiene necesidades básicas...",
+          "question": "¿Qué necesita cualquier animal para vivir bien?",
+          "options": ["Alimento, agua y refugio adecuados", "Solo música fuerte", "Solo luces de colores", "Solo juguetes humanos"],
+          "correctOption": "Alimento, agua y refugio adecuados"
+        },
+        {
+          "kali": "Kali abre un desafío de convivencia con la fauna...",
+          "question": "Si un grupo visita una zona con walrus, ¿qué regla es la más segura?",
+          "options": ["Respetar señales y mantener distancia", "Acercarse para sacarse selfies", "Correr alrededor del animal", "Intentar tocarlo entre todos"],
+          "correctOption": "Respetar señales y mantener distancia"
+        },
+        {
+          "kali": "El encuentro con walrus trae una lección importante...",
+          "question": "¿Qué valor demuestra quien cuida a walrus y su entorno?",
+          "options": ["Respeto por la vida", "Apuro por ganar siempre", "Desorden en la naturaleza", "Indiferencia total"],
+          "correctOption": "Respeto por la vida"
+        },
+        {
+          "kali": "Kali cierra la ronda con una idea clave sobre walrus...",
+          "question": "¿Cuál es una buena forma de aprender más sobre walrus?",
+          "options": ["Leer, observar y preguntar a personas expertas", "Inventar datos sin mirar", "Molestar animales para probar", "Ignorar todo sobre su hábitat"],
+          "correctOption": "Leer, observar y preguntar a personas expertas"
+        }
+      ]
+    },
+    "White rhinoceros": {
+      "es-AR": [
+        {
+          "kali": "White rhinoceros aparece en el camino y Kali te guía con calma...",
+          "question": "Si te cruzás con white rhinoceros en la naturaleza, ¿qué conviene hacer primero?",
+          "options": ["Acercarte corriendo", "Mantener distancia y observar con cuidado", "Gritar fuerte para asustarlo", "Tocarlo para conocerlo"],
+          "correctOption": "Mantener distancia y observar con cuidado"
+        },
+        {
+          "kali": "Kali señala el entorno donde vive white rhinoceros...",
+          "question": "¿Por qué es importante cuidar el hábitat de white rhinoceros?",
+          "options": ["Porque así puede vivir y cumplir su rol en la naturaleza", "Porque cambia de color todo el tiempo", "Porque no necesita alimento", "Porque vive mejor en una ciudad"],
+          "correctOption": "Porque así puede vivir y cumplir su rol en la naturaleza"
+        },
+        {
+          "kali": "White rhinoceros se mueve atento en su ambiente...",
+          "question": "¿Qué ayuda a white rhinoceros a sobrevivir en su hábitat?",
+          "options": ["Sus adaptaciones naturales", "Un teléfono celular", "La ropa humana", "Los semáforos"],
+          "correctOption": "Sus adaptaciones naturales"
+        },
+        {
+          "kali": "Kali te propone pensar como explorador de animales...",
+          "question": "Si querés aprender sobre white rhinoceros sin molestarlo, ¿qué es mejor?",
+          "options": ["Observar en silencio y con respeto", "Perseguirlo para que corra", "Darle comida sin permiso", "Encerrarlo para mirarlo de cerca"],
+          "correctOption": "Observar en silencio y con respeto"
+        },
+        {
+          "kali": "White rhinoceros forma parte de una red natural más grande...",
+          "question": "¿Qué pasa cuando una especie como white rhinoceros desaparece de un lugar?",
+          "options": ["El equilibrio del ecosistema se puede alterar", "Nada cambia nunca", "Aparecen más juguetes", "El clima se detiene"],
+          "correctOption": "El equilibrio del ecosistema se puede alterar"
+        },
+        {
+          "kali": "Kali prepara una misión de cuidado del planeta...",
+          "question": "¿Qué acción humana suele ayudar a animales como white rhinoceros?",
+          "options": ["Proteger ambientes naturales", "Tirar basura en ríos", "Romper nidos o refugios", "Hacer ruido constante cerca"],
+          "correctOption": "Proteger ambientes naturales"
+        },
+        {
+          "kali": "White rhinoceros te recuerda que cada animal tiene necesidades básicas...",
+          "question": "¿Qué necesita cualquier animal para vivir bien?",
+          "options": ["Alimento, agua y refugio adecuados", "Solo música fuerte", "Solo luces de colores", "Solo juguetes humanos"],
+          "correctOption": "Alimento, agua y refugio adecuados"
+        },
+        {
+          "kali": "Kali abre un desafío de convivencia con la fauna...",
+          "question": "Si un grupo visita una zona con white rhinoceros, ¿qué regla es la más segura?",
+          "options": ["Respetar señales y mantener distancia", "Acercarse para sacarse selfies", "Correr alrededor del animal", "Intentar tocarlo entre todos"],
+          "correctOption": "Respetar señales y mantener distancia"
+        },
+        {
+          "kali": "El encuentro con white rhinoceros trae una lección importante...",
+          "question": "¿Qué valor demuestra quien cuida a white rhinoceros y su entorno?",
+          "options": ["Respeto por la vida", "Apuro por ganar siempre", "Desorden en la naturaleza", "Indiferencia total"],
+          "correctOption": "Respeto por la vida"
+        },
+        {
+          "kali": "Kali cierra la ronda con una idea clave sobre white rhinoceros...",
+          "question": "¿Cuál es una buena forma de aprender más sobre white rhinoceros?",
+          "options": ["Leer, observar y preguntar a personas expertas", "Inventar datos sin mirar", "Molestar animales para probar", "Ignorar todo sobre su hábitat"],
+          "correctOption": "Leer, observar y preguntar a personas expertas"
+        }
+      ]
+    },
+    "Wild dogs": {
+      "es-AR": [
+        {
+          "kali": "Wild dogs aparece en el camino y Kali te guía con calma...",
+          "question": "Si te cruzás con wild dogs en la naturaleza, ¿qué conviene hacer primero?",
+          "options": ["Acercarte corriendo", "Mantener distancia y observar con cuidado", "Gritar fuerte para asustarlo", "Tocarlo para conocerlo"],
+          "correctOption": "Mantener distancia y observar con cuidado"
+        },
+        {
+          "kali": "Kali señala el entorno donde vive wild dogs...",
+          "question": "¿Por qué es importante cuidar el hábitat de wild dogs?",
+          "options": ["Porque así puede vivir y cumplir su rol en la naturaleza", "Porque cambia de color todo el tiempo", "Porque no necesita alimento", "Porque vive mejor en una ciudad"],
+          "correctOption": "Porque así puede vivir y cumplir su rol en la naturaleza"
+        },
+        {
+          "kali": "Wild dogs se mueve atento en su ambiente...",
+          "question": "¿Qué ayuda a wild dogs a sobrevivir en su hábitat?",
+          "options": ["Sus adaptaciones naturales", "Un teléfono celular", "La ropa humana", "Los semáforos"],
+          "correctOption": "Sus adaptaciones naturales"
+        },
+        {
+          "kali": "Kali te propone pensar como explorador de animales...",
+          "question": "Si querés aprender sobre wild dogs sin molestarlo, ¿qué es mejor?",
+          "options": ["Observar en silencio y con respeto", "Perseguirlo para que corra", "Darle comida sin permiso", "Encerrarlo para mirarlo de cerca"],
+          "correctOption": "Observar en silencio y con respeto"
+        },
+        {
+          "kali": "Wild dogs forma parte de una red natural más grande...",
+          "question": "¿Qué pasa cuando una especie como wild dogs desaparece de un lugar?",
+          "options": ["El equilibrio del ecosistema se puede alterar", "Nada cambia nunca", "Aparecen más juguetes", "El clima se detiene"],
+          "correctOption": "El equilibrio del ecosistema se puede alterar"
+        },
+        {
+          "kali": "Kali prepara una misión de cuidado del planeta...",
+          "question": "¿Qué acción humana suele ayudar a animales como wild dogs?",
+          "options": ["Proteger ambientes naturales", "Tirar basura en ríos", "Romper nidos o refugios", "Hacer ruido constante cerca"],
+          "correctOption": "Proteger ambientes naturales"
+        },
+        {
+          "kali": "Wild dogs te recuerda que cada animal tiene necesidades básicas...",
+          "question": "¿Qué necesita cualquier animal para vivir bien?",
+          "options": ["Alimento, agua y refugio adecuados", "Solo música fuerte", "Solo luces de colores", "Solo juguetes humanos"],
+          "correctOption": "Alimento, agua y refugio adecuados"
+        },
+        {
+          "kali": "Kali abre un desafío de convivencia con la fauna...",
+          "question": "Si un grupo visita una zona con wild dogs, ¿qué regla es la más segura?",
+          "options": ["Respetar señales y mantener distancia", "Acercarse para sacarse selfies", "Correr alrededor del animal", "Intentar tocarlo entre todos"],
+          "correctOption": "Respetar señales y mantener distancia"
+        },
+        {
+          "kali": "El encuentro con wild dogs trae una lección importante...",
+          "question": "¿Qué valor demuestra quien cuida a wild dogs y su entorno?",
+          "options": ["Respeto por la vida", "Apuro por ganar siempre", "Desorden en la naturaleza", "Indiferencia total"],
+          "correctOption": "Respeto por la vida"
+        },
+        {
+          "kali": "Kali cierra la ronda con una idea clave sobre wild dogs...",
+          "question": "¿Cuál es una buena forma de aprender más sobre wild dogs?",
+          "options": ["Leer, observar y preguntar a personas expertas", "Inventar datos sin mirar", "Molestar animales para probar", "Ignorar todo sobre su hábitat"],
+          "correctOption": "Leer, observar y preguntar a personas expertas"
+        }
+      ]
+    },
+    "Wolf": {
+      "es-AR": [
+        {
+          "kali": "Wolf aparece en el camino y Kali te guía con calma...",
+          "question": "Si te cruzás con wolf en la naturaleza, ¿qué conviene hacer primero?",
+          "options": ["Acercarte corriendo", "Mantener distancia y observar con cuidado", "Gritar fuerte para asustarlo", "Tocarlo para conocerlo"],
+          "correctOption": "Mantener distancia y observar con cuidado"
+        },
+        {
+          "kali": "Kali señala el entorno donde vive wolf...",
+          "question": "¿Por qué es importante cuidar el hábitat de wolf?",
+          "options": ["Porque así puede vivir y cumplir su rol en la naturaleza", "Porque cambia de color todo el tiempo", "Porque no necesita alimento", "Porque vive mejor en una ciudad"],
+          "correctOption": "Porque así puede vivir y cumplir su rol en la naturaleza"
+        },
+        {
+          "kali": "Wolf se mueve atento en su ambiente...",
+          "question": "¿Qué ayuda a wolf a sobrevivir en su hábitat?",
+          "options": ["Sus adaptaciones naturales", "Un teléfono celular", "La ropa humana", "Los semáforos"],
+          "correctOption": "Sus adaptaciones naturales"
+        },
+        {
+          "kali": "Kali te propone pensar como explorador de animales...",
+          "question": "Si querés aprender sobre wolf sin molestarlo, ¿qué es mejor?",
+          "options": ["Observar en silencio y con respeto", "Perseguirlo para que corra", "Darle comida sin permiso", "Encerrarlo para mirarlo de cerca"],
+          "correctOption": "Observar en silencio y con respeto"
+        },
+        {
+          "kali": "Wolf forma parte de una red natural más grande...",
+          "question": "¿Qué pasa cuando una especie como wolf desaparece de un lugar?",
+          "options": ["El equilibrio del ecosistema se puede alterar", "Nada cambia nunca", "Aparecen más juguetes", "El clima se detiene"],
+          "correctOption": "El equilibrio del ecosistema se puede alterar"
+        },
+        {
+          "kali": "Kali prepara una misión de cuidado del planeta...",
+          "question": "¿Qué acción humana suele ayudar a animales como wolf?",
+          "options": ["Proteger ambientes naturales", "Tirar basura en ríos", "Romper nidos o refugios", "Hacer ruido constante cerca"],
+          "correctOption": "Proteger ambientes naturales"
+        },
+        {
+          "kali": "Wolf te recuerda que cada animal tiene necesidades básicas...",
+          "question": "¿Qué necesita cualquier animal para vivir bien?",
+          "options": ["Alimento, agua y refugio adecuados", "Solo música fuerte", "Solo luces de colores", "Solo juguetes humanos"],
+          "correctOption": "Alimento, agua y refugio adecuados"
+        },
+        {
+          "kali": "Kali abre un desafío de convivencia con la fauna...",
+          "question": "Si un grupo visita una zona con wolf, ¿qué regla es la más segura?",
+          "options": ["Respetar señales y mantener distancia", "Acercarse para sacarse selfies", "Correr alrededor del animal", "Intentar tocarlo entre todos"],
+          "correctOption": "Respetar señales y mantener distancia"
+        },
+        {
+          "kali": "El encuentro con wolf trae una lección importante...",
+          "question": "¿Qué valor demuestra quien cuida a wolf y su entorno?",
+          "options": ["Respeto por la vida", "Apuro por ganar siempre", "Desorden en la naturaleza", "Indiferencia total"],
+          "correctOption": "Respeto por la vida"
+        },
+        {
+          "kali": "Kali cierra la ronda con una idea clave sobre wolf...",
+          "question": "¿Cuál es una buena forma de aprender más sobre wolf?",
+          "options": ["Leer, observar y preguntar a personas expertas", "Inventar datos sin mirar", "Molestar animales para probar", "Ignorar todo sobre su hábitat"],
+          "correctOption": "Leer, observar y preguntar a personas expertas"
         }
       ]
     }
