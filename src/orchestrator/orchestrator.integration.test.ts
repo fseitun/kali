@@ -1867,6 +1867,39 @@ describe("Product scenario: Game orchestrator Integration Tests", () => {
       expect(winner).toBe("p1");
     });
 
+    it("Expected outcome: Speaks winner immediately when landing on win square", async () => {
+      setLocale("es-AR");
+      const responses: PrimitiveAction[][] = [[{ action: "PLAYER_ROLLED", value: 2 }]];
+      mockLLM = createScriptedLLM(responses);
+
+      const initialState: GameState = {
+        game: {
+          name: "Test Game",
+          phase: GamePhase.PLAYING,
+          turn: "p1",
+          playerOrder: ["p1", "p2"],
+          winner: null,
+          lastRoll: 0,
+        },
+        players: {
+          p1: { id: "p1", name: "Alice", position: 98 },
+          p2: { id: "p2", name: "Bob", position: 80 },
+        },
+        board: {
+          squares: { "100": { effect: "win", name: "Heart of Kalimba" } },
+        },
+      };
+
+      setupGame(initialState);
+
+      await orchestrator.handleTranscript("saqué dos");
+
+      expect(stateManager.get("players.p1.position")).toBe(100);
+      expect(stateManager.get("game.winner")).toBe("p1");
+      expect(mockSpeech.speak).toHaveBeenCalledWith(t("game.winner", { name: "Alice" }));
+      setLocale("en-US");
+    });
+
     it("Expected outcome: Sets phase to FINISHED on win", async () => {
       const responses: PrimitiveAction[][] = [
         [

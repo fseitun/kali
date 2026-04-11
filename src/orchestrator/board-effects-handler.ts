@@ -773,22 +773,6 @@ export class BoardEffectsHandler {
     await this.speechService.speak(text);
   }
 
-  private getAnimalNamesFromBoard(): string[] {
-    const state = this.stateManager.getState();
-    const board = state.board as Record<string, unknown> | undefined;
-    const squares = board?.squares as Record<string, Record<string, unknown>> | undefined;
-    if (!squares) {
-      return [];
-    }
-    const names = new Set<string>();
-    for (const sq of Object.values(squares)) {
-      if (typeof sq.name === "string" && typeof sq.power === "number") {
-        names.add(sq.name);
-      }
-    }
-    return [...names].sort((a, b) => a.localeCompare(b));
-  }
-
   private getEncounterQuestionBank(
     squareName: string,
     locale: "es-AR" | "en-US",
@@ -966,6 +950,13 @@ export class BoardEffectsHandler {
     });
   }
 
+  /**
+   * Build deterministic win speech for landing on the final square.
+   */
+  private buildWinLandingSpeech(playerName: string): string {
+    return t("game.winner", { name: playerName });
+  }
+
   private buildNonAnimalDeterministicSpeech(
     playerName: string,
     position: number,
@@ -1113,6 +1104,11 @@ export class BoardEffectsHandler {
       await this.speakDeterministicLanding(
         this.buildMagicDoorLandingSpeech(playerName, playerId, position, squareData),
       );
+      return;
+    }
+
+    if (kind === "win") {
+      await this.speakDeterministicLanding(this.buildWinLandingSpeech(playerName));
       return;
     }
 

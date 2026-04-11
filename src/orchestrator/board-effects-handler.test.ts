@@ -3,7 +3,7 @@ import { BoardEffectsHandler } from "./board-effects-handler";
 import { GamePhase } from "./types";
 import type { ExecutionContext } from "./types";
 import type { IStatusIndicator } from "@/components/status-indicator";
-import { setLocale } from "@/i18n/translations";
+import { setLocale, t } from "@/i18n/translations";
 import type { ISpeechService } from "@/services/speech-service";
 import { StateManager } from "@/state-manager";
 
@@ -630,6 +630,21 @@ describe("Product scenario: Board Effects Handler", () => {
 
       expect(mockProcessTranscript).not.toHaveBeenCalled();
       expect(mockSpeak).toHaveBeenCalledWith(expect.stringMatching(/square 5|Quicksand|skip/i));
+    });
+
+    it("Expected outcome: Win square speaks winner message immediately", async () => {
+      setLocale("es-AR");
+      stateManager.set("board.squares", {
+        "196": { name: "Heart of Kalimba", effect: "win" },
+      });
+      stateManager.set("players.p1.position", 196);
+
+      await boardEffectsHandler.checkAndApplySquareEffects("players.p1.position", baseContext);
+
+      expect(mockProcessTranscript).not.toHaveBeenCalled();
+      expect(mockSpeak).toHaveBeenCalledTimes(1);
+      expect(mockSpeak).toHaveBeenCalledWith(t("game.winner", { name: "Alice" }));
+      setLocale("en-US");
     });
 
     it("Expected outcome: Magic door landing uses clearer es AR copy with player name and threshold guidance", async () => {
