@@ -52,6 +52,8 @@ export const enUS = {
     forkChoiceResolvedRoll: "{name}, you're set. Roll the dice.",
     goldenFoxJump: "{name}, the Golden Fox takes you to first place. You're on square {square}.",
     rollMovementLanded: "{name}, you rolled {roll}. You're on square {square}.",
+    skullReturnToSnakeHead:
+      "{name}, you landed on a skull at square {from}. On this snake path, you go back to the snake head: square {to}.",
     magicDoorOpenSuccess:
       "{name}, you opened the magic door: the math was needed die = {target} - {bonus}, and you rolled {roll}. That gets you to {total}, so it opens. When it's your turn again, roll to move forward.",
     magicDoorOpenFail:

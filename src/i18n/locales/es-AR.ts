@@ -53,6 +53,8 @@ export const esAR = {
     goldenFoxJump:
       "{name}, el Zorro Dorado te lleva al primer puesto. Estás en el casillero {square}.",
     rollMovementLanded: "{name}, sacaste un {roll}. Estás en el casillero {square}.",
+    skullReturnToSnakeHead:
+      "{name}, caíste en una calavera en el casillero {from}. En este camino de la serpiente, volvés a la cabeza: casillero {to}.",
     magicDoorOpenSuccess:
       "{name}, abriste la puerta mágica: la cuenta era dado necesario = {target} - {bonus}, y sacaste {roll}. Con eso llegás a {total} y abrís. Cuando vuelva a tocarte, tirá el dado para avanzar.",
     magicDoorOpenFail:

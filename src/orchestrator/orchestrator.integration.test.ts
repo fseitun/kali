@@ -1375,7 +1375,9 @@ describe("Product scenario: Game orchestrator Integration Tests", () => {
       expect(stateManager.get("players.p1.position")).toBe(187);
       const speakMock = mockSpeech.speak as ReturnType<typeof vi.fn>;
       expect(speakMock).toHaveBeenCalledTimes(1);
-      expect(String(speakMock.mock.calls[0]?.[0] ?? "")).toContain("187");
+      expect(speakMock).toHaveBeenCalledWith(
+        t("game.skullReturnToSnakeHead", { name: "Alice", from: 190, to: 187 }),
+      );
       setLocale("es-AR");
     });
 
@@ -1416,7 +1418,9 @@ describe("Product scenario: Game orchestrator Integration Tests", () => {
       expect(stateManager.get("players.p1.position")).toBe(187);
       const speakMock = mockSpeech.speak as ReturnType<typeof vi.fn>;
       expect(speakMock).toHaveBeenCalledTimes(1);
-      expect(String(speakMock.mock.calls[0]?.[0] ?? "")).toContain("187");
+      expect(speakMock).toHaveBeenCalledWith(
+        t("game.skullReturnToSnakeHead", { name: "Alice", from: 190, to: 187 }),
+      );
       setLocale("es-AR");
     });
 
@@ -1457,7 +1461,9 @@ describe("Product scenario: Game orchestrator Integration Tests", () => {
       expect(stateManager.get("players.p1.position")).toBe(187);
       const speakMock = mockSpeech.speak as ReturnType<typeof vi.fn>;
       expect(speakMock).toHaveBeenCalledTimes(1);
-      expect(String(speakMock.mock.calls[0]?.[0] ?? "")).toContain("187");
+      expect(speakMock).toHaveBeenCalledWith(
+        t("game.skullReturnToSnakeHead", { name: "Alice", from: 190, to: 187 }),
+      );
       setLocale("es-AR");
     });
 

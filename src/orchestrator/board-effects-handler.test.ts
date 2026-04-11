@@ -109,10 +109,16 @@ describe("Product scenario: Board Effects Handler", () => {
         "190": { effect: "returnTo187", name: "Calavera" },
       });
       stateManager.set("players.p1.position", 190);
+      const context: ExecutionContext = {};
 
-      await boardEffectsHandler.checkAndApplyBoardMoves("players.p1.position");
+      await boardEffectsHandler.checkAndApplyBoardMoves("players.p1.position", context);
 
       expect(stateManager.get("players.p1.position")).toBe(187);
+      expect(context.skullReturnToSnakeHead).toEqual({
+        playerId: "p1",
+        fromSquare: 190,
+        toSquare: 187,
+      });
     });
 
     it("Expected outcome: Should not apply magic door bounce after return To187 teleport in the same resolution", async () => {
@@ -143,6 +149,11 @@ describe("Product scenario: Board Effects Handler", () => {
 
       expect(stateManager.get("players.p1.position")).toBe(187);
       expect(context.magicDoorBounce).toBeUndefined();
+      expect(context.skullReturnToSnakeHead).toEqual({
+        playerId: "p1",
+        fromSquare: 190,
+        toSquare: 187,
+      });
     });
 
     it("Expected outcome: Should skip backward teleport when player has retreat Effects Reversed", async () => {

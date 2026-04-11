@@ -245,6 +245,38 @@ function tryMovementRollNarrationOverride(
   return t("game.rollMovementLanded", { name, roll: pending.roll, square: pending.square });
 }
 
+function trySkullReturnNarrationOverride(
+  ctx: ActionExecutorContext,
+  context: ExecutionContext,
+  primitive: Extract<PrimitiveAction, { action: "NARRATE" }>,
+): string | undefined {
+  const skullReturn = context.skullReturnToSnakeHead;
+  if (skullReturn === undefined) {
+    return undefined;
+  }
+  const text = primitive.text;
+  if (text === undefined || text.trim() === "") {
+    return undefined;
+  }
+  const state = ctx.stateManager.getState();
+  const game = state.game as Record<string, unknown> | undefined;
+  if (game?.turn !== skullReturn.playerId) {
+    return undefined;
+  }
+  context.skullReturnToSnakeHead = undefined;
+  context.pendingMovementRollNarration = undefined;
+  const players = state.players as Record<string, Record<string, unknown>> | undefined;
+  const name =
+    typeof players?.[skullReturn.playerId]?.name === "string"
+      ? (players[skullReturn.playerId].name as string)
+      : "";
+  return t("game.skullReturnToSnakeHead", {
+    name,
+    from: skullReturn.fromSquare,
+    to: skullReturn.toSquare,
+  });
+}
+
 function resolveDeterministicNarrationOverrides(
   ctx: ActionExecutorContext,
   context: ExecutionContext,
@@ -259,6 +291,11 @@ function resolveDeterministicNarrationOverrides(
   if (magicDoorLine !== undefined) {
     ctx.setLastNarration(magicDoorLine);
     return magicDoorLine;
+  }
+  const skullReturnLine = trySkullReturnNarrationOverride(ctx, context, primitive);
+  if (skullReturnLine !== undefined) {
+    ctx.setLastNarration(skullReturnLine);
+    return skullReturnLine;
   }
   const movementRollLine = tryMovementRollNarrationOverride(ctx, context, primitive);
   if (movementRollLine !== undefined) {

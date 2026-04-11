@@ -409,6 +409,7 @@ export class BoardEffectsHandler {
           : "ladder";
     Logger.info(`Auto-applying ${moveType}: position ${position} → ${destination}`);
     this.stateManager.set(path, destination);
+    this.captureSkullReturnNarrationContext(path, squareData, position, destination, context);
     this.finishKalimbaOceanForestPortal82Hop(
       squareData,
       position,
@@ -417,6 +418,29 @@ export class BoardEffectsHandler {
       true,
       context,
     );
+  }
+
+  private captureSkullReturnNarrationContext(
+    path: string,
+    squareData: Record<string, unknown>,
+    fromSquare: number,
+    toSquare: number,
+    context?: ExecutionContext,
+  ): void {
+    if (!context || toSquare !== 187) {
+      return;
+    }
+    const isEffectSkull = squareData.effect === "returnTo187";
+    const name = typeof squareData.name === "string" ? squareData.name : "";
+    const isNamedSkull = /skull|calavera/i.test(name);
+    if (!isEffectSkull && !isNamedSkull) {
+      return;
+    }
+    const playerId = path.match(/^players\.([^.]+)\.position$/)?.[1];
+    if (!playerId) {
+      return;
+    }
+    context.skullReturnToSnakeHead = { playerId, fromSquare, toSquare };
   }
 
   /**

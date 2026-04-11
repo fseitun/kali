@@ -152,6 +152,15 @@ export interface ExecutionContext {
     finalPosition: number;
   };
   /**
+   * Set when a skull-square teleport sends the current player back to the snake head.
+   * Consumed on the next movement `NARRATE` in the same batch for deterministic explanation.
+   */
+  skullReturnToSnakeHead?: {
+    playerId: string;
+    fromSquare: number;
+    toSquare: number;
+  };
+  /**
    * After a completed movement PLAYER_ROLLED (non-nested), the graph-resolved landing square for the
    * next NARRATE in the same batch. Consumed in executeNarrate for deterministic position TTS; cleared
    * if the batch ends without a matching NARRATE.
