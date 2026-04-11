@@ -645,7 +645,7 @@ describe("Product scenario: Board Effects Handler", () => {
       expect(text).toMatch(/al menos un 4 en el dado/i);
     });
 
-    it("Expected outcome: Magic door landing with scimitar mentions hearts plus scimitar bonus", async () => {
+    it("Expected outcome: Magic door landing ignores scimitar item and uses hearts-only threshold", async () => {
       setLocale("es-AR");
       stateManager.set("board.squares", {
         "186": { name: "Magic Door", effect: "magicDoorCheck", target: 6 },
@@ -659,9 +659,9 @@ describe("Product scenario: Board Effects Handler", () => {
 
       const text = String(mockSpeak.mock.calls[0]?.[0] ?? "");
       expect(text).toMatch(/cada corazón le baja 1 punto/i);
-      expect(text).toMatch(/la cimitarra suma 1 punto más/i);
-      expect(text).toMatch(/ahora tenés un corazón y la cimitarra/i);
-      expect(text).toMatch(/al menos un 4 en el dado/i);
+      expect(text).not.toMatch(/cimitarra/i);
+      expect(text).toMatch(/ahora tenés un corazón/i);
+      expect(text).toMatch(/al menos un 5 en el dado/i);
     });
 
     it("Expected outcome: Magic door landing copy reflects cumulative hearts threshold in es AR", async () => {
@@ -730,26 +730,39 @@ describe("Product scenario: Board Effects Handler", () => {
       expect(spoken).toMatch(/Options|Decime|Tell me/i);
     });
 
-    it("Expected outcome: Peacock heart square (no power) applies heart immediately and skips encounter pending", async () => {
-      stateManager.set("board.squares", {
-        "185": { name: "Peacock", heart: true },
-      });
-      stateManager.set("players.p1.position", 185);
-      stateManager.set("players.p1.hearts", 0);
-      stateManager.set("game.pending", {
-        kind: "riddle",
-        position: 180,
-        power: 5,
-        playerId: "p1",
-      });
+    it.each([
+      {
+        position: 156,
+        squareData: { name: "Silverback gorilla", heart: true },
+        label: /Silverback/i,
+      },
+      { position: 168, squareData: { name: "Lizard", heart: true }, label: /Lizard/i },
+      { position: 176, squareData: { name: "Scimitar", heart: true }, label: /Scimitar/i },
+      { position: 185, squareData: { name: "Peacock", heart: true }, label: /Peacock/i },
+    ])(
+      "Expected outcome: Heart square at $position applies heart immediately and clears encounter pending",
+      async ({ position, squareData, label }) => {
+        stateManager.set("board.squares", {
+          [String(position)]: squareData,
+        });
+        stateManager.set("players.p1.position", position);
+        stateManager.set("players.p1.hearts", 0);
+        stateManager.set("game.pending", {
+          kind: "riddle",
+          position: 180,
+          power: 5,
+          playerId: "p1",
+        });
 
-      await boardEffectsHandler.checkAndApplySquareEffects("players.p1.position", baseContext);
+        await boardEffectsHandler.checkAndApplySquareEffects("players.p1.position", baseContext);
 
-      expect(stateManager.get("players.p1.hearts")).toBe(1);
-      expect(stateManager.get("game.pending")).toBeNull();
-      expect(mockProcessTranscript).not.toHaveBeenCalled();
-      expect(mockSpeak).toHaveBeenCalledWith(expect.stringMatching(/Peacock|heart/i));
-    });
+        expect(stateManager.get("players.p1.hearts")).toBe(1);
+        expect(stateManager.get("game.pending")).toBeNull();
+        expect(mockProcessTranscript).not.toHaveBeenCalled();
+        expect(mockSpeak).toHaveBeenCalledWith(expect.stringMatching(label));
+        expect(mockSpeak).toHaveBeenCalledWith(expect.stringMatching(/heart/i));
+      },
+    );
 
     it("Expected outcome: Trap squares apply skip Turn and request narration", async () => {
       stateManager.set("board.squares", {
@@ -813,31 +826,21 @@ describe("Product scenario: Board Effects Handler", () => {
       expect(stateManager.get("players.p1.items")).toEqual(["anti-wasp"]);
     });
 
-    it("Expected outcome: Heart square (Cimitarra) adds scimitar item immediately", async () => {
+    it("Expected outcome: Heart square at 176 does not add scimitar item", async () => {
       stateManager.set("board.squares", {
-        "176": { item: "scimitar" },
-      });
-      stateManager.set("players.p1.position", 176);
-      stateManager.set("players.p1.items", []);
-
-      await boardEffectsHandler.checkAndApplySquareEffects("players.p1.position", baseContext);
-
-      expect(stateManager.get("players.p1.items")).toEqual(["scimitar"]);
-    });
-
-    it("Expected outcome: Scimitar pickup speech includes magic door hint with configured target", async () => {
-      stateManager.set("board.squares", {
-        "176": { item: "scimitar" },
+        "176": { name: "Scimitar", heart: true },
         "186": { name: "Magic Door", effect: "magicDoorCheck", target: 6 },
       });
       stateManager.set("players.p1.position", 176);
       stateManager.set("players.p1.items", []);
+      stateManager.set("players.p1.hearts", 0);
 
       await boardEffectsHandler.checkAndApplySquareEffects("players.p1.position", baseContext);
 
+      expect(stateManager.get("players.p1.hearts")).toBe(1);
+      expect(stateManager.get("players.p1.items")).toEqual([]);
       const text = String(mockSpeak.mock.calls[0]?.[0] ?? "");
-      expect(text).toMatch(/scimitar|extra point|magic door/i);
-      expect(text).toMatch(/6/);
+      expect(text).toMatch(/Scimitar|heart/i);
     });
 
     it("Expected outcome: Eagle (animal + extra power dice) sets pending encounter; no rewards on landing", async () => {

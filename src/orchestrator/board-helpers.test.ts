@@ -6,7 +6,6 @@ import {
   getWinPosition,
   isMagicDoorOpeningRollState,
   minDieToOpenMagicDoor,
-  scimitarDoorBonusFromItems,
 } from "./board-helpers";
 
 describe("Product scenario: Find Square By Effect", () => {
@@ -75,7 +74,7 @@ describe("Product scenario: Get Magic Door Config", () => {
 });
 
 describe("Product scenario: Min Die To Open Magic Door", () => {
-  it("Expected outcome: Matches Kalimba rule die + bonus >= target", () => {
+  it("Expected outcome: Matches Kalimba rule die + hearts >= target", () => {
     expect(minDieToOpenMagicDoor(6, 0)).toBe(6);
     expect(minDieToOpenMagicDoor(6, 1)).toBe(5);
     expect(minDieToOpenMagicDoor(6, 2)).toBe(4);
@@ -83,30 +82,14 @@ describe("Product scenario: Min Die To Open Magic Door", () => {
     expect(minDieToOpenMagicDoor(6, 5)).toBe(1);
     expect(minDieToOpenMagicDoor(6, 6)).toBe(1);
   });
-
-  it("Expected outcome: Treats scimitar bonus like an extra heart for the door threshold", () => {
-    expect(minDieToOpenMagicDoor(6, 0, 1)).toBe(5);
-    expect(minDieToOpenMagicDoor(6, 1, 1)).toBe(4);
-    expect(minDieToOpenMagicDoor(6, 5, 1)).toBe(1);
-  });
-});
-
-describe("Product scenario: Scimitar Door Bonus From Items", () => {
-  it("Expected outcome: Returns 1 only when scimitar is in items", () => {
-    expect(scimitarDoorBonusFromItems(undefined)).toBe(0);
-    expect(scimitarDoorBonusFromItems([])).toBe(0);
-    expect(scimitarDoorBonusFromItems(["torch"])).toBe(0);
-    expect(scimitarDoorBonusFromItems(["scimitar"])).toBe(1);
-    expect(scimitarDoorBonusFromItems(["torch", "scimitar"])).toBe(1);
-  });
 });
 
 describe("Product scenario: Get Magic Door Opening Bonus", () => {
-  it("Expected outcome: Sums hearts and scimitar", () => {
+  it("Expected outcome: Returns hearts only", () => {
     expect(getMagicDoorOpeningBonus(undefined)).toBe(0);
     expect(getMagicDoorOpeningBonus({ hearts: 2 })).toBe(2);
-    expect(getMagicDoorOpeningBonus({ hearts: 1, items: ["scimitar"] })).toBe(2);
-    expect(getMagicDoorOpeningBonus({ hearts: 0, items: ["scimitar"] })).toBe(1);
+    expect(getMagicDoorOpeningBonus({ hearts: 1, items: ["scimitar"] })).toBe(1);
+    expect(getMagicDoorOpeningBonus({ hearts: 0, items: ["scimitar"] })).toBe(0);
   });
 });
 

@@ -22,9 +22,6 @@ export const SPECIAL_SQUARE_KINDS = [
 export type SpecialSquareKind = (typeof SPECIAL_SQUARE_KINDS)[number];
 
 function resolveItemKind(item: string | undefined): SpecialSquareKind | null {
-  if (item === "scimitar") {
-    return "heart";
-  }
   if (item === "torch" || item === "anti-wasp") {
     return "protectionItem";
   }

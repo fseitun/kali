@@ -306,11 +306,11 @@ describe("Product scenario: Game orchestrator New Action Handlers", () => {
       );
     });
 
-    it("Expected outcome: After correct riddle on heart animal, speech includes magic heart door hint", async () => {
+    it("Expected outcome: After correct riddle on heart square, speech includes magic heart door hint", async () => {
       setLocale("en-US");
       testState.board = {
         squares: {
-          "5": { name: "Peacock", power: 3, heart: true },
+          "5": { name: "Peacock", heart: true },
           "100": { effect: "win" },
         },
       };

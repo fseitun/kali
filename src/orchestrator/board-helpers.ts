@@ -60,22 +60,10 @@ export function getMagicDoorConfig(
 }
 
 /**
- * Kalimba: scimitar in inventory counts as +1 toward the magic-door sum (with hearts).
+ * Minimum value on a single opening die such that `die + hearts >= target`.
  */
-export function scimitarDoorBonusFromItems(items: unknown): number {
-  if (!Array.isArray(items)) {
-    return 0;
-  }
-  return items.includes("scimitar") ? 1 : 0;
-}
-
-/**
- * Minimum value on a single opening die such that `die + hearts + doorItemBonus >= target`
- * (Kalimba door rule; scimitar adds one to the non-die total).
- */
-export function minDieToOpenMagicDoor(target: number, hearts: number, doorItemBonus = 0): number {
-  const effective = hearts + doorItemBonus;
-  const diff = target - effective;
+export function minDieToOpenMagicDoor(target: number, hearts: number): number {
+  const diff = target - hearts;
   if (diff <= 1) {
     return 1;
   }
@@ -83,7 +71,7 @@ export function minDieToOpenMagicDoor(target: number, hearts: number, doorItemBo
 }
 
 /**
- * Hearts plus scimitar (counts as +1 toward the door sum, same as an extra heart for min-die math).
+ * Hearts toward magic door opening.
  */
 export function getMagicDoorOpeningBonus(player: Record<string, unknown> | undefined): number {
   if (!player) {
@@ -91,9 +79,7 @@ export function getMagicDoorOpeningBonus(player: Record<string, unknown> | undef
   }
   const heartsRaw = player.hearts;
   const hearts = typeof heartsRaw === "number" && heartsRaw >= 0 ? heartsRaw : 0;
-  const items = player.items;
-  const hasScimitar = Array.isArray(items) && items.includes("scimitar");
-  return hearts + (hasScimitar ? 1 : 0);
+  return hearts;
 }
 
 /**

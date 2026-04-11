@@ -1,9 +1,4 @@
-import {
-  findSquareByEffect,
-  getWinPosition,
-  minDieToOpenMagicDoor,
-  scimitarDoorBonusFromItems,
-} from "./board-helpers";
+import { findSquareByEffect, getWinPosition, minDieToOpenMagicDoor } from "./board-helpers";
 import {
   getDirectionalRollDice,
   getSquareKind,
@@ -936,13 +931,9 @@ export class BoardEffectsHandler {
       typeof squareData.target === "number" && squareData.target > 0 ? squareData.target : 6;
     const heartsRaw = this.stateManager.get(playerStatePath(playerId, "hearts"));
     const hearts = typeof heartsRaw === "number" && heartsRaw >= 0 ? heartsRaw : 0;
-    const items = this.stateManager.get(playerStatePath(playerId, "items"));
-    const scimitarBonus = scimitarDoorBonusFromItems(items);
-    const minDie = minDieToOpenMagicDoor(target, hearts, scimitarBonus);
+    const minDie = minDieToOpenMagicDoor(target, hearts);
     const heartsPhrase = magicDoorHeartsPhrase(hearts);
-    const key =
-      scimitarBonus > 0 ? "squares.magicDoorLandingWithScimitar" : "squares.magicDoorLanding";
-    return t(key, {
+    return t("squares.magicDoorLanding", {
       name: playerName,
       position,
       target,

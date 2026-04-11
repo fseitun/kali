@@ -87,17 +87,17 @@ Casillero 148| Cocodrilo del Nilo \- 3pts
 Casillero 149| León “Makulu” \- 5pts  
 Casillero 150| Chita \- 3pts  
 Casillero 154| Elefante Africano “Craig” \- 4pts  
-Casillero 156| Gorila espalda plateada \- 1 vida  
+Casillero 156| Gorila espalda plateada \- 1 vida (corazón inmediato; sin acertijo ni combate)  
 Casillero 159| Hipopótamo \- 3pts  
 Casillero 160| Pirañas \- pierdes 1 turno  
 Casillero 164| Rinoceronte blanco \- 4pts  
 Casillero 165| Canguro \- 2pts
 
 **Casillero 167| Entrada al Hábitat “Selva india”**  
-Casillero 168| Lagartija \- 1 vida  
+Casillero 168| Lagartija \- 1 vida (corazón inmediato; sin acertijo ni combate)  
 Casillero 171| Dragón de Komodo \- 3pts  
 Casillero 174| Cae la noche \- pierdes 1 turno  
-Casillero 176| Cimitarra \- 1 vida  
+Casillero 176| Cimitarra \- 1 vida (corazón inmediato; sin acertijo ni combate)  
 Casillero 178 | Elefante Asiático \- 4pts  
 Casillero 180| Tigre “Shere Khan” \- 5pts  
 Casillero 182| Elefante de “Tamil Nadu” \- 4pts  
@@ -235,9 +235,7 @@ Casilleros con corazones:
 
 - 185 (Pavo real)
 
-📍 En esta versión, el casillero 185 se resuelve como casillero de corazón (efecto inmediato), no como encuentro animal.
-
-📍 La Cimitarra actúa como un corazón especial, pero con la misma función: cuenta como un punto mágico adicional.
+📍 En esta versión, los casilleros 156, 168, 176 y 185 se resuelven como casilleros de corazón con efecto inmediato: suman +1 corazón y no disparan acertijo ni combate.
 
 ---
 
@@ -280,7 +278,7 @@ Los portales están en los casilleros 45 y 82 (Océano–Bosque / Bosque–Océa
 
 - 🌙 Cae la noche (85, 131, 174): perdés un turno, salvo que tengas una antorcha.
 
-- 💖 Corazones y Cimitarra: reducen la dificultad para abrir la puerta mágica.
+- 💖 Corazones: reducen la dificultad para abrir la puerta mágica.
 
 ---
 

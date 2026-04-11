@@ -548,7 +548,7 @@ describe("Product scenario: Game orchestrator Integration Tests", () => {
       setLocale("es-AR");
     });
 
-    it("Expected outcome: Power check win onto Kalimba Cimitarra (168 to 176) yields already Advanced (regression silence after item)", async () => {
+    it("Expected outcome: Power check win onto Kalimba Cimitarra (168 to 176) yields already Advanced (regression silence after heart)", async () => {
       mockLLM = createScriptedLLM([]);
       setLocale("en-US");
       const raw = readFileSync(kalimbaConfigPath, "utf-8");
@@ -612,8 +612,8 @@ describe("Product scenario: Game orchestrator Integration Tests", () => {
         position: 174,
       });
       expect(stateManager.get("players.p1.position")).toBe(176);
-      expect(stateManager.get("players.p1.hearts")).toBe(1);
-      expect(stateManager.get("players.p1.items")).toEqual(["scimitar"]);
+      expect(stateManager.get("players.p1.hearts")).toBe(2);
+      expect(stateManager.get("players.p1.items")).toEqual([]);
       expect(stateManager.get("game.turn")).toBe("p2");
       expect(mockSpeech.speak).toHaveBeenNthCalledWith(1, "You passed.");
       expect(mockSpeech.speak).toHaveBeenNthCalledWith(2, "You gain a heart.");

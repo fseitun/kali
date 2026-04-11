@@ -3,7 +3,6 @@ import { t } from "./translations";
 import {
   getMagicDoorConfig,
   minDieToOpenMagicDoor,
-  scimitarDoorBonusFromItems,
   type SquareLike,
 } from "@/orchestrator/board-helpers";
 import type { GameState } from "@/orchestrator/types";
@@ -16,7 +15,7 @@ function clampNonNegativeHearts(raw: unknown): number {
 function doorOpeningParams(
   nextPlayer: { playerId: string; name: string; position: number },
   state: GameState | undefined,
-): { target: number; hearts: number; scimitarBonus: number } | null {
+): { target: number; hearts: number } | null {
   const squares = state?.board?.squares as Record<string, SquareLike> | undefined;
   const door = getMagicDoorConfig(squares);
   if (nextPlayer.position !== door?.position) {
@@ -26,13 +25,12 @@ function doorOpeningParams(
   return {
     target: door.target,
     hearts: clampNonNegativeHearts(p?.hearts),
-    scimitarBonus: scimitarDoorBonusFromItems(p?.items),
   };
 }
 
 /**
  * If the next player is on the magic door square, returns localized TTS for opening the door
- * (hearts + optional scimitar bonus toward the target sum).
+ * (hearts contribute toward the target sum).
  */
 export function buildMagicDoorTurnAnnouncementIfOnDoor(
   nextPlayer: { playerId: string; name: string; position: number },
@@ -42,13 +40,9 @@ export function buildMagicDoorTurnAnnouncementIfOnDoor(
   if (!params) {
     return null;
   }
-  const { target, hearts, scimitarBonus } = params;
-  const minDie = minDieToOpenMagicDoor(target, hearts, scimitarBonus);
-  const key =
-    scimitarBonus > 0
-      ? "game.turnAnnouncementMagicDoorWithScimitar"
-      : "game.turnAnnouncementMagicDoor";
-  return t(key, {
+  const { target, hearts } = params;
+  const minDie = minDieToOpenMagicDoor(target, hearts);
+  return t("game.turnAnnouncementMagicDoor", {
     name: nextPlayer.name,
     position: nextPlayer.position,
     heartsPhrase: magicDoorHeartsPhrase(hearts),

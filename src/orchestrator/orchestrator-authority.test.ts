@@ -770,7 +770,7 @@ describe("Product scenario: Game orchestrator Authority interpreter Adversarial 
       );
     });
 
-    it("Expected outcome: Speaks applied heart after power check win on heart animal", async () => {
+    it("Expected outcome: Speaks applied heart after power check win on heart square", async () => {
       (testState.players as any).p1.hearts = 0;
       (testState.game as any).pending = {
         kind: "powerCheck",
@@ -782,7 +782,7 @@ describe("Product scenario: Game orchestrator Authority interpreter Adversarial 
       (testState.players as any).p1.position = 10;
       (testState.board as any).squares = {
         "9": { next: [10], prev: [8] },
-        "10": { name: "Peacock", power: 2, heart: true, next: [11], prev: [9] },
+        "10": { name: "Peacock", heart: true, next: [11], prev: [9] },
         "11": { next: [12], prev: [10] },
         "12": { next: [13], prev: [11] },
         "13": { next: [14], prev: [12] },
