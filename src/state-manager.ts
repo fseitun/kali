@@ -151,20 +151,32 @@ export class StateManager {
 
   private setByPath(obj: GameState, path: string, value: unknown): GameState {
     const parts = path.split(".");
-    const newState = structuredClone(obj);
+    const newState: Record<string, unknown> = { ...(obj as Record<string, unknown>) };
 
-    let current: Record<string, unknown> = newState as Record<string, unknown>;
+    let currentNew: Record<string, unknown> = newState;
+    let currentOld: Record<string, unknown> = obj as Record<string, unknown>;
 
     for (let i = 0; i < parts.length - 1; i++) {
       const part = parts[i];
-      if (!(part in current) || typeof current[part] !== "object") {
-        current[part] = {};
+      const oldValue = currentOld[part];
+      let nextNode: Record<string, unknown>;
+
+      if (oldValue && typeof oldValue === "object") {
+        nextNode = Array.isArray(oldValue)
+          ? ([...oldValue] as unknown as Record<string, unknown>)
+          : { ...(oldValue as Record<string, unknown>) };
+      } else {
+        nextNode = {};
       }
-      current = current[part] as Record<string, unknown>;
+
+      currentNew[part] = nextNode;
+      currentNew = nextNode;
+      currentOld =
+        oldValue && typeof oldValue === "object" ? (oldValue as Record<string, unknown>) : {};
     }
 
-    current[parts[parts.length - 1]] = value;
+    currentNew[parts[parts.length - 1]] = value;
 
-    return newState;
+    return newState as GameState;
   }
 }

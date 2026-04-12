@@ -1,3 +1,17 @@
+import {
+  computeMagicDoorBounceDestination as computeMagicDoorBounceDestinationPolicy,
+  isBackwardTeleportApplied as isBackwardTeleportAppliedPolicy,
+  isKalimbaOceanForestPortal82Hop as isKalimbaOceanForestPortal82HopPolicy,
+  readSquarePortalForwardTarget as readSquarePortalForwardTargetPolicy,
+  shouldApplyLeaderSquarePortal as shouldApplyLeaderSquarePortalPolicy,
+  shouldSkipBackwardTeleport as shouldSkipBackwardTeleportPolicy,
+} from "./board-effects-movement-policy";
+import { buildAnimalEncounterLandingSpeech } from "./board-effects-narration-policy";
+import {
+  appendInventoryEntry,
+  consumeProtectionItem,
+  incrementCounter,
+} from "./board-effects-reward-policy";
 import { findSquareByEffect, getWinPosition, minDieToOpenMagicDoor } from "./board-helpers";
 import {
   getDirectionalRollDice,
@@ -95,16 +109,12 @@ export class BoardEffectsHandler {
     this.applyTeleportIfApplicable(path, position, squareData, state, context);
 
     const afterJumpToLeader = this.stateManager.get(path) as number;
-    const backwardTeleportApplied = this.wasBackwardTeleportApplied(
+    const backwardTeleportApplied = isBackwardTeleportAppliedPolicy(
       landingPosition,
       afterJumpToLeader,
     );
     if (
-      this.shouldApplyJumpToLeaderLeaderSquarePortal(
-        landingSquareData,
-        landingPosition,
-        afterJumpToLeader,
-      )
+      shouldApplyLeaderSquarePortalPolicy(landingSquareData, landingPosition, afterJumpToLeader)
     ) {
       this.applyJumpToLeaderLeaderSquarePortal(path, afterJumpToLeader, squares, context);
     }
@@ -120,22 +130,6 @@ export class BoardEffectsHandler {
       landingSquareData,
       landingPosition,
       finalPosition,
-    );
-  }
-
-  private wasBackwardTeleportApplied(landingPosition: number, currentPosition: number): boolean {
-    return typeof currentPosition === "number" && currentPosition < landingPosition;
-  }
-
-  private shouldApplyJumpToLeaderLeaderSquarePortal(
-    landingSquareData: Record<string, unknown> | undefined,
-    landingPosition: number,
-    currentPosition: number,
-  ): boolean {
-    return (
-      landingSquareData?.effect === "jumpToLeader" &&
-      typeof currentPosition === "number" &&
-      currentPosition !== landingPosition
     );
   }
 
@@ -199,12 +193,13 @@ export class BoardEffectsHandler {
     const magicDoorFound = findSquareByEffect(squares, "magicDoorCheck");
     const magicDoorPosition = magicDoorFound?.position;
     const winPosition = getWinPosition(squares);
-    if (
-      typeof magicDoorPosition === "number" &&
-      overshotPosition > magicDoorPosition &&
-      overshotPosition < winPosition
-    ) {
-      const bounceTo = magicDoorPosition - (overshotPosition - magicDoorPosition);
+    const bounceTo = computeMagicDoorBounceDestinationPolicy(
+      overshotPosition,
+      magicDoorPosition,
+      winPosition,
+      false,
+    );
+    if (typeof bounceTo === "number" && typeof magicDoorPosition === "number") {
       Logger.info(
         `Magic door bounce: overshot ${overshotPosition} (door ${magicDoorPosition}), bouncing to ${bounceTo}`,
       );
@@ -257,14 +252,7 @@ export class BoardEffectsHandler {
    * @returns Destination index, or undefined
    */
   private readSquarePortalForwardTarget(squareData: Record<string, unknown>): number | undefined {
-    if (typeof squareData.destination === "number") {
-      return squareData.destination;
-    }
-    if (Array.isArray(squareData.nextOnLanding) && squareData.nextOnLanding.length > 0) {
-      const dest = squareData.nextOnLanding[0];
-      return typeof dest === "number" ? dest : undefined;
-    }
-    return undefined;
+    return readSquarePortalForwardTargetPolicy(squareData);
   }
 
   /**
@@ -276,9 +264,7 @@ export class BoardEffectsHandler {
     landingPosition: number,
     portalTarget: number,
   ): boolean {
-    return (
-      landingPosition === 82 && portalTarget === 45 && squareData?.oceanForestOneShotPortal === true
-    );
+    return isKalimbaOceanForestPortal82HopPolicy(squareData, landingPosition, portalTarget);
   }
 
   private consumeOceanForestPortal82Penalty(playerId: string): void {
@@ -352,16 +338,16 @@ export class BoardEffectsHandler {
     destination: number,
     state: { players?: Record<string, Record<string, unknown>> },
   ): boolean {
-    const isBackward = destination < position;
-    if (!isBackward) {
-      return false;
-    }
     const match = path.match(/^players\.([^.]+)\.position$/);
     const playerId = match?.[1];
     const player = playerId
       ? (state.players as Record<string, Record<string, unknown>>)?.[playerId]
       : undefined;
-    return player?.retreatEffectsReversed === true;
+    return shouldSkipBackwardTeleportPolicy(
+      position,
+      destination,
+      player?.retreatEffectsReversed === true,
+    );
   }
 
   /**
@@ -494,8 +480,8 @@ export class BoardEffectsHandler {
     if (squareData.heart !== true) {
       return null;
     }
-    const current = (this.stateManager.get(playerStatePath(playerId, "hearts")) as number) ?? 0;
-    this.stateManager.set(playerStatePath(playerId, "hearts"), current + 1);
+    const current = this.stateManager.get(playerStatePath(playerId, "hearts"));
+    this.stateManager.set(playerStatePath(playerId, "hearts"), incrementCounter(current));
     return "+1 heart";
   }
 
@@ -507,9 +493,8 @@ export class BoardEffectsHandler {
     if (typeof instrument !== "string" || instrument.length === 0) {
       return null;
     }
-    const current =
-      (this.stateManager.get(playerStatePath(playerId, "instruments")) as unknown[]) ?? [];
-    const next = Array.isArray(current) ? [...current, instrument] : [instrument];
+    const current = this.stateManager.get(playerStatePath(playerId, "instruments"));
+    const next = appendInventoryEntry(current, instrument);
     this.stateManager.set(playerStatePath(playerId, "instruments"), next);
     return `instrument: ${instrument}`;
   }
@@ -519,8 +504,8 @@ export class BoardEffectsHandler {
     if (typeof item !== "string" || item.length === 0) {
       return null;
     }
-    const current = (this.stateManager.get(playerStatePath(playerId, "items")) as unknown[]) ?? [];
-    const next = Array.isArray(current) ? [...current, item] : [item];
+    const current = this.stateManager.get(playerStatePath(playerId, "items"));
+    const next = appendInventoryEntry(current, item);
     this.stateManager.set(playerStatePath(playerId, "items"), next);
     return `item: ${item}`;
   }
@@ -532,8 +517,8 @@ export class BoardEffectsHandler {
     if (squareData.effect !== "skipTurn") {
       return null;
     }
-    const current = (this.stateManager.get(playerStatePath(playerId, "skipTurns")) as number) ?? 0;
-    this.stateManager.set(playerStatePath(playerId, "skipTurns"), current + 1);
+    const current = this.stateManager.get(playerStatePath(playerId, "skipTurns"));
+    this.stateManager.set(playerStatePath(playerId, "skipTurns"), incrementCounter(current));
     return "skip next turn";
   }
 
@@ -548,30 +533,26 @@ export class BoardEffectsHandler {
   }
 
   private applyCheckTorchEffect(playerId: string): string {
-    const items = (this.stateManager.get(playerStatePath(playerId, "items")) as unknown[]) ?? [];
-    const idx = Array.isArray(items) ? items.indexOf("torch") : -1;
-    if (idx >= 0) {
-      const next = [...items];
-      next.splice(idx, 1);
-      this.stateManager.set(playerStatePath(playerId, "items"), next);
+    const items = this.stateManager.get(playerStatePath(playerId, "items"));
+    const { nextItems, consumed } = consumeProtectionItem(items, "torch");
+    if (consumed) {
+      this.stateManager.set(playerStatePath(playerId, "items"), nextItems);
       return "torch used (no skip)";
     }
-    const current = (this.stateManager.get(playerStatePath(playerId, "skipTurns")) as number) ?? 0;
-    this.stateManager.set(playerStatePath(playerId, "skipTurns"), current + 1);
+    const current = this.stateManager.get(playerStatePath(playerId, "skipTurns"));
+    this.stateManager.set(playerStatePath(playerId, "skipTurns"), incrementCounter(current));
     return "skip next turn (no torch)";
   }
 
   private applyCheckAntiWaspEffect(playerId: string): string {
-    const items = (this.stateManager.get(playerStatePath(playerId, "items")) as unknown[]) ?? [];
-    const idx = Array.isArray(items) ? items.indexOf("anti-wasp") : -1;
-    if (idx >= 0) {
-      const next = [...items];
-      next.splice(idx, 1);
-      this.stateManager.set(playerStatePath(playerId, "items"), next);
+    const items = this.stateManager.get(playerStatePath(playerId, "items"));
+    const { nextItems, consumed } = consumeProtectionItem(items, "anti-wasp");
+    if (consumed) {
+      this.stateManager.set(playerStatePath(playerId, "items"), nextItems);
       return "anti-wasp used (no skip)";
     }
-    const current = (this.stateManager.get(playerStatePath(playerId, "skipTurns")) as number) ?? 0;
-    this.stateManager.set(playerStatePath(playerId, "skipTurns"), current + 1);
+    const current = this.stateManager.get(playerStatePath(playerId, "skipTurns"));
+    this.stateManager.set(playerStatePath(playerId, "skipTurns"), incrementCounter(current));
     return "skip next turn (no anti-wasp)";
   }
 
@@ -896,12 +877,13 @@ export class BoardEffectsHandler {
     question: { kali: string; question: string; options: [string, string, string, string] };
   }): string {
     const { playerName, question } = args;
-    const [a, b, c, d] = question.options;
-    const locale = getLocale();
-    if (locale === "es-AR") {
-      return `${playerName}, ${question.kali} ${question.question} Opciones: A) ${a}. B) ${b}. C) ${c}. D) ${d}. Decime cual opcion es correcta.`;
-    }
-    return `${playerName}, ${question.kali} ${question.question} Options: A) ${a}. B) ${b}. C) ${c}. D) ${d}. Tell me which option is correct.`;
+    return buildAnimalEncounterLandingSpeech(
+      getLocale(),
+      playerName,
+      question.kali,
+      question.question,
+      question.options,
+    );
   }
 
   private buildDirectionalDeterministicSpeech(

@@ -17,6 +17,8 @@ export const CONFIG = {
       90_000,
       "VITE_LLM_GET_ACTIONS_TIMEOUT_MS",
     ),
+    /** Opt-in full prompt/response logging for deep debugging. */
+    LOG_FULL_PROMPTS: import.meta.env.VITE_LLM_LOG_FULL_PROMPTS === "true",
   },
 
   LLM_PROVIDER: (import.meta.env.VITE_LLM_PROVIDER ?? "deepinfra") as "deepinfra" | "mock",

@@ -297,15 +297,32 @@ ${summary ? `**Summary (for NARRATE explanations):** ${summary}\n` : ""}${exampl
       const result = await this.orchestrator.handleTranscript(t("game.proactiveStart"), {
         skipDecisionPointEnforcement: true,
       });
-      if (result.success && result.turnAdvance.kind === "callAdvanceTurn") {
-        await this.checkAndAdvanceTurn();
-      }
-      await this.maybeApplySilentGameplayVoice(
-        result.success,
-        result.voiceOutcomeHints,
-        result.turnFrame,
-      );
+      await this.applyPostGameplayResult(result);
     }
+  }
+
+  /**
+   * Applies common post-gameplay handling after orchestrator results:
+   * turn advancement/announcements and silent-success fallback voice policy.
+   */
+  private async applyPostGameplayResult(result: OrchestratorGameplayResult): Promise<void> {
+    if (!this.orchestrator) {
+      return;
+    }
+    if (result.success && result.turnAdvance.kind === "alreadyAdvanced") {
+      const { nextPlayer } = result.turnAdvance;
+      const pendingPrompt = this.orchestrator.getPendingDecisionPrompt();
+      const msg = this.buildGameplayTurnAnnouncement(nextPlayer, pendingPrompt);
+      await this.speechService.speak(msg);
+      this.orchestrator.setLastNarrationForVoicePolicy(msg);
+    } else if (result.success && result.turnAdvance.kind === "callAdvanceTurn") {
+      await this.checkAndAdvanceTurn();
+    }
+    await this.maybeApplySilentGameplayVoice(
+      result.success,
+      result.voiceOutcomeHints,
+      result.turnFrame,
+    );
   }
 
   /**
@@ -536,21 +553,7 @@ ${summary ? `**Summary (for NARRATE explanations):** ${summary}\n` : ""}${exampl
     if (this.orchestrator) {
       this.speechService.beginGameplayTurn();
       const result = await this.orchestrator.handleTranscript(text);
-
-      if (result.success && result.turnAdvance.kind === "alreadyAdvanced") {
-        const { nextPlayer } = result.turnAdvance;
-        const pendingPrompt = this.orchestrator.getPendingDecisionPrompt();
-        const msg = this.buildGameplayTurnAnnouncement(nextPlayer, pendingPrompt);
-        await this.speechService.speak(msg);
-        this.orchestrator.setLastNarrationForVoicePolicy(msg);
-      } else if (result.success && result.turnAdvance.kind === "callAdvanceTurn") {
-        await this.checkAndAdvanceTurn();
-      }
-      await this.maybeApplySilentGameplayVoice(
-        result.success,
-        result.voiceOutcomeHints,
-        result.turnFrame,
-      );
+      await this.applyPostGameplayResult(result);
     }
 
     this.uiService.updateStatus(
@@ -700,22 +703,7 @@ ${summary ? `**Summary (for NARRATE explanations):** ${summary}\n` : ""}${exampl
 
     this.speechService.beginGameplayTurn();
     const result = await this.orchestrator.testExecuteActions(actions);
-
-    if (result.success && result.turnAdvance.kind === "alreadyAdvanced") {
-      const { nextPlayer } = result.turnAdvance;
-      const pendingPrompt = this.orchestrator.getPendingDecisionPrompt();
-      const msg = this.buildGameplayTurnAnnouncement(nextPlayer, pendingPrompt);
-      await this.speechService.speak(msg);
-      this.orchestrator.setLastNarrationForVoicePolicy(msg);
-    } else if (result.success && result.turnAdvance.kind === "callAdvanceTurn") {
-      await this.checkAndAdvanceTurn();
-    }
-
-    await this.maybeApplySilentGameplayVoice(
-      result.success,
-      result.voiceOutcomeHints,
-      result.turnFrame,
-    );
+    await this.applyPostGameplayResult(result);
 
     return result;
   }

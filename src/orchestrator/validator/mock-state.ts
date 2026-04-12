@@ -302,12 +302,10 @@ const MOCK_STATE_HANDLERS: Partial<Record<string, MockStateHandler>> = {
  * @returns Updated mock state
  */
 export function applyActionToMockState(state: GameState, primitive: PrimitiveAction): GameState {
-  const mockState = structuredClone(state);
-
   try {
     const handler = MOCK_STATE_HANDLERS[primitive.action];
     if (handler) {
-      const result = handler(primitive, mockState, state);
+      const result = handler(primitive, state, state);
       if (result !== undefined) {
         return result;
       }
@@ -316,5 +314,5 @@ export function applyActionToMockState(state: GameState, primitive: PrimitiveAct
     return state;
   }
 
-  return mockState;
+  return state;
 }

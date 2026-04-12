@@ -35,22 +35,30 @@ export abstract class BaseLLMClient implements LLMClient {
 
   private logPrompt(purpose: PromptPurpose, prompt: string): void {
     const len = prompt.length;
-    Logger.prompt(`[${purpose}] (${len} chars)`, {
+    const payload: Record<string, unknown> = {
       purpose,
-      fullPrompt: prompt,
       promptLength: len,
-    });
+    };
+    if (CONFIG.LLM.LOG_FULL_PROMPTS) {
+      payload.fullPrompt = prompt;
+    }
+    Logger.prompt(`[${purpose}] (${len} chars)`, payload);
   }
 
   private logPromptResponse(purpose: PromptPurpose, content: string, durationMs?: number): void {
     const len = content.length;
     const durationSuffix = durationMs != null ? ` — ${Math.round(durationMs)}ms` : "";
-    Logger.prompt(`[${purpose}] response (${len} chars)${durationSuffix}`, {
+    const payload: Record<string, unknown> = {
       purpose: `${purpose}Response`,
-      fullResponse: content,
       responseLength: len,
-      ...(durationMs != null && { durationMs }),
-    });
+    };
+    if (durationMs != null) {
+      payload.durationMs = durationMs;
+    }
+    if (CONFIG.LLM.LOG_FULL_PROMPTS) {
+      payload.fullResponse = content;
+    }
+    Logger.prompt(`[${purpose}] response (${len} chars)${durationSuffix}`, payload);
   }
 
   setGameRules(rules: string): void {
