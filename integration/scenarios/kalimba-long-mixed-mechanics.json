@@ -1,0 +1,139 @@
+{
+  "game": "kalimba",
+  "players": 3,
+  "initialState": {
+    "game": {
+      "phase": "PLAYING",
+      "turn": "p1",
+      "playerOrder": ["p1", "p2", "p3"],
+      "winner": null
+    }
+  },
+  "steps": [
+    {
+      "description": "Intro; decision point triggers path choice (Path A)",
+      "actions": [
+        { "action": "PLAYER_ANSWERED", "answer": "1" },
+        { "action": "NARRATE", "text": "Let's begin!" }
+      ],
+      "expect": { "players.p1.activeChoices.0": 1, "game.phase": "PLAYING" }
+    },
+    { "roll": 1 },
+    {
+      "description": "p2 chooses path",
+      "actions": [
+        { "action": "PLAYER_ANSWERED", "answer": "1" },
+        { "action": "NARRATE", "text": "Path A" }
+      ],
+      "expect": { "players.p2.activeChoices.0": 1 }
+    },
+    {
+      "description": "p2 lands on Halcón",
+      "roll": 2,
+      "llmResponses": [
+        [
+          { "action": "SET_STATE", "path": "game.pending", "value": null },
+          { "action": "NARRATE", "text": "Halcón encounter!" }
+        ]
+      ]
+    },
+    {
+      "description": "p3 chooses path",
+      "actions": [
+        { "action": "PLAYER_ANSWERED", "answer": "1" },
+        { "action": "NARRATE", "text": "Path A" }
+      ],
+      "expect": { "players.p3.activeChoices.0": 1 }
+    },
+    { "roll": 1 },
+    { "roll": 2 },
+    {
+      "description": "p2 lands on Cobra",
+      "roll": 3,
+      "llmResponses": [
+        [
+          { "action": "SET_STATE", "path": "game.pending", "value": null },
+          { "action": "NARRATE", "text": "Cobra!" }
+        ]
+      ]
+    },
+    { "roll": 2 },
+    {
+      "description": "p1 lands on Águila",
+      "roll": 4,
+      "llmResponses": [
+        [
+          { "action": "SET_STATE", "path": "game.pending", "value": null },
+          { "action": "NARRATE", "text": "Águila encounter!" }
+        ]
+      ]
+    },
+    { "roll": 4 },
+    {
+      "description": "p3 lands on Águila",
+      "roll": 4,
+      "llmResponses": [
+        [
+          { "action": "SET_STATE", "path": "game.pending", "value": null },
+          { "action": "NARRATE", "text": "Águila!" }
+        ]
+      ]
+    },
+    {
+      "description": "p1 lands on Arenas movedizas (skip next turn)",
+      "roll": 4,
+      "llmResponses": [[{ "action": "NARRATE", "text": "Arenas movedizas! Skip next turn." }]]
+    },
+    {
+      "description": "p2 lands on Arenas (skip next turn)",
+      "roll": 2,
+      "llmResponses": [[{ "action": "NARRATE", "text": "Arenas! Skip next turn." }]]
+    },
+    {
+      "description": "p3 lands on Arenas (skip next turn)",
+      "roll": 3,
+      "llmResponses": [[{ "action": "NARRATE", "text": "Arenas! Skip next turn." }]]
+    },
+    { "roll": 1 },
+    { "roll": 2 },
+    {
+      "description": "Land on Arenas (skip next turn)",
+      "roll": 1,
+      "llmResponses": [[{ "action": "NARRATE", "text": "Arenas! Skip next turn." }]]
+    },
+    { "roll": 2 },
+    { "roll": 1 },
+    { "roll": 2 },
+    {
+      "description": "Land on Escorpión",
+      "roll": 2,
+      "llmResponses": [
+        [
+          { "action": "SET_STATE", "path": "game.pending", "value": null },
+          { "action": "NARRATE", "text": "Escorpión!" }
+        ]
+      ]
+    },
+    {
+      "description": "Land on Escorpión",
+      "roll": 2,
+      "llmResponses": [
+        [
+          { "action": "SET_STATE", "path": "game.pending", "value": null },
+          { "action": "NARRATE", "text": "Escorpión!" }
+        ]
+      ]
+    },
+    {
+      "description": "Land on Escorpión",
+      "roll": 2,
+      "llmResponses": [
+        [
+          { "action": "SET_STATE", "path": "game.pending", "value": null },
+          { "action": "NARRATE", "text": "Escorpión!" }
+        ]
+      ],
+      "expect": { "game.phase": "PLAYING", "game.winner": null }
+    }
+  ]
+}

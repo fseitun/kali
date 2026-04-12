@@ -215,4 +215,29 @@ describe("Product scenario: Wake Word Detector", () => {
     expect(closeAudioContextMock).toHaveBeenCalledTimes(1);
     expect(modelTerminateMock).toHaveBeenCalledTimes(1);
   });
+
+  it("Expected outcome: Propagates model loading failure during initialize", async () => {
+    getModelMock.mockRejectedValueOnce(new Error("model fetch failed"));
+    const detector = new WakeWordDetector(vi.fn(), vi.fn());
+
+    await expect(detector.initialize()).rejects.toThrow("model fetch failed");
+  });
+
+  it("Expected outcome: Recovers from microphone failure after retry", async () => {
+    const deniedError = new Error("permission denied");
+    getUserMediaMock.mockRejectedValueOnce(deniedError);
+    const detector = new WakeWordDetector(vi.fn(), vi.fn());
+    await detector.initialize();
+
+    await expect(detector.startListening()).rejects.toThrow("permission denied");
+    expect(detector.isActive()).toBe(false);
+
+    getUserMediaMock.mockResolvedValueOnce({
+      getTracks: () => [{ stop: mediaTrackStopMock }],
+    });
+    await detector.startListening();
+
+    expect(detector.isActive()).toBe(true);
+    expect(audioNodePostMessageMock).toHaveBeenCalledWith({ type: "start" });
+  });
 });

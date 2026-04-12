@@ -1,0 +1,42 @@
+{
+  "game": "kalimba",
+  "players": 2,
+  "initialState": {
+    "game": {
+      "phase": "PLAYING",
+      "turn": "p1",
+      "playerOrder": ["p1", "p2"],
+      "winner": null,
+      "lastRoll": 0,
+      "pending": {
+        "position": 5,
+        "power": 4,
+        "playerId": "p1",
+        "kind": "powerCheck",
+        "riddleCorrect": true
+      }
+    },
+    "players": {
+      "p1": { "id": "p1", "name": "Player 1", "position": 5, "activeChoices": {} },
+      "p2": { "id": "p2", "name": "Player 2", "position": 40, "activeChoices": {} }
+    },
+    "board": {
+      "squares": {
+        "5": { "name": "Cobra", "power": 4 },
+        "100": { "effect": "win" }
+      }
+    }
+  },
+  "steps": [
+    {
+      "description": "Pending power-check resolution mutates current player only and leaves other players untouched.",
+      "actions": [{ "action": "PLAYER_ANSWERED", "answer": "6" }],
+      "expect": {
+        "players.p1.position": 11,
+        "players.p2.position": 40,
+        "game.turn": "p2",
+        "game.pending": null
+      }
+    }
+  ]
+}

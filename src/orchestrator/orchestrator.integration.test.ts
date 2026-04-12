@@ -2439,6 +2439,44 @@ describe("Product scenario: Game orchestrator Integration Tests", () => {
       setLocale("es-AR");
     });
 
+    it("Expected outcome: Speaks localized answer Riddle First in es-AR", async () => {
+      setLocale("es-AR");
+      mockLLM = createScriptedLLM([[{ action: "PLAYER_ROLLED", value: 4 }]]);
+
+      const initialState: GameState = {
+        game: {
+          name: "Test Game",
+          phase: GamePhase.PLAYING,
+          turn: "p1",
+          playerOrder: ["p1", "p2"],
+          winner: null,
+          lastRoll: 0,
+          pending: {
+            position: 2,
+            power: 3,
+            playerId: "p1",
+            kind: "riddle",
+            riddlePrompt: "¿Qué ave es?",
+            riddleOptions: ["Águila", "Búho", "Halcón", "Cóndor"],
+            correctOption: "Halcón",
+          },
+        },
+        players: {
+          p1: { id: "p1", name: "Alice", position: 2, activeChoices: {} },
+          p2: { id: "p2", name: "Bob", position: 0 },
+        },
+        board: { squares: {} },
+      };
+
+      setupGame(initialState);
+
+      const result = await orchestrator.handleTranscript("saqué cuatro");
+
+      expect(result.success).toBe(false);
+      expect(mockSpeech.speak).toHaveBeenCalledWith(t("errors.answerRiddleFirst"));
+      setLocale("en-US");
+    });
+
     it("Expected outcome: Speaks say Encounter Roll As Answer when interpreter returns PLAYER ROLLED during power check", async () => {
       setLocale("en-US");
       mockLLM = createScriptedLLM([[{ action: "PLAYER_ROLLED", value: 4 }]]);
@@ -2473,6 +2511,42 @@ describe("Product scenario: Game orchestrator Integration Tests", () => {
       expect(result.success).toBe(false);
       expect(mockSpeech.speak).toHaveBeenCalledWith(t("errors.sayEncounterRollAsAnswer"));
       setLocale("es-AR");
+    });
+
+    it("Expected outcome: Speaks localized say Encounter Roll As Answer in es-AR", async () => {
+      setLocale("es-AR");
+      mockLLM = createScriptedLLM([[{ action: "PLAYER_ROLLED", value: 4 }]]);
+
+      const initialState: GameState = {
+        game: {
+          name: "Test Game",
+          phase: GamePhase.PLAYING,
+          turn: "p1",
+          playerOrder: ["p1", "p2"],
+          winner: null,
+          lastRoll: 0,
+          pending: {
+            position: 5,
+            power: 4,
+            playerId: "p1",
+            kind: "powerCheck",
+            riddleCorrect: true,
+          },
+        },
+        players: {
+          p1: { id: "p1", name: "Alice", position: 5, activeChoices: {} },
+          p2: { id: "p2", name: "Bob", position: 0 },
+        },
+        board: { squares: {} },
+      };
+
+      setupGame(initialState);
+
+      const result = await orchestrator.handleTranscript("cuatro");
+
+      expect(result.success).toBe(false);
+      expect(mockSpeech.speak).toHaveBeenCalledWith(t("errors.sayEncounterRollAsAnswer"));
+      setLocale("en-US");
     });
   });
 });

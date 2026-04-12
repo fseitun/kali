@@ -1,0 +1,53 @@
+{
+  "game": "kalimba",
+  "players": 2,
+  "initialState": {
+    "game": {
+      "phase": "PLAYING",
+      "turn": "p1",
+      "playerOrder": ["p1", "p2"],
+      "winner": null,
+      "lastRoll": 0,
+      "pending": {
+        "position": 2,
+        "power": 3,
+        "playerId": "p1",
+        "kind": "riddle",
+        "riddlePrompt": "Which bird?",
+        "riddleOptions": ["Eagle", "Owl", "Falcon", "Condor"],
+        "correctOption": "Falcon"
+      }
+    },
+    "players": {
+      "p1": { "id": "p1", "name": "Player 1", "position": 2, "activeChoices": {} },
+      "p2": { "id": "p2", "name": "Player 2", "position": 10, "activeChoices": {} }
+    },
+    "board": {
+      "squares": {
+        "2": { "name": "Falcon", "power": 3 },
+        "100": { "effect": "win" }
+      }
+    }
+  },
+  "steps": [
+    {
+      "description": "Numeric PLAYER_ANSWERED while pending riddle resolves riddle flow, not movement.",
+      "actions": [{ "action": "PLAYER_ANSWERED", "answer": "1" }],
+      "expect": {
+        "players.p1.position": 2,
+        "game.turn": "p1",
+        "game.pending.kind": "powerCheck"
+      }
+    },
+    {
+      "description": "Pending power-check answer resolves and advances to next player on failure.",
+      "actions": [{ "action": "PLAYER_ANSWERED", "answer": "2" }],
+      "expect": {
+        "players.p1.position": 2,
+        "players.p2.position": 10,
+        "game.turn": "p2",
+        "game.pending.kind": "revenge"
+      }
+    }
+  ]
+}
