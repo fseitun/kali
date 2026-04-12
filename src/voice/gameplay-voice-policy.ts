@@ -1,5 +1,5 @@
 import { t } from "@/i18n/translations";
-import type { GameState, VoiceOutcomeHints } from "@/orchestrator/types";
+import type { GameState, TurnFrame, VoiceOutcomeHints } from "@/orchestrator/types";
 
 /**
  * Resolves the current player's display name for TTS.
@@ -28,16 +28,23 @@ function currentPlayerDisplayName(state: GameState): string {
  */
 export async function applySilentSuccessFallback(options: {
   hints: VoiceOutcomeHints | undefined;
+  turnFrame?: TurnFrame;
   state: GameState;
   speak: (text: string) => Promise<void>;
   setLastNarration: (text: string) => void;
 }): Promise<boolean> {
-  const { hints, state, speak, setLastNarration } = options;
-  if (!hints) {
+  const { hints, turnFrame, state, speak, setLastNarration } = options;
+  const resolvedHints =
+    hints ??
+    (turnFrame?.narrationPlans.length === 0 &&
+    turnFrame.events.some((event) => event.kind === "forkChoiceStored")
+      ? { forkChoiceResolvedWithoutNarrate: true }
+      : undefined);
+  if (!resolvedHints) {
     return false;
   }
 
-  if (hints.forkChoiceResolvedWithoutNarrate) {
+  if (resolvedHints.forkChoiceResolvedWithoutNarrate) {
     const name = currentPlayerDisplayName(state);
     const text = t("game.forkChoiceResolvedRoll", { name });
     setLastNarration(text);

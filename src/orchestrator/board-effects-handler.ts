@@ -7,7 +7,7 @@ import {
   isRollDirectionalKind,
   squareTriggersLandingPipeline,
 } from "./square-types";
-import type { ExecutionContext } from "./types";
+import type { DomainEventPayload, ExecutionContext } from "./types";
 import type { IStatusIndicator } from "@/components/status-indicator";
 import { getLocale } from "@/i18n/locale-manager";
 import { magicDoorHeartsPhrase } from "@/i18n/magic-door-phrases";
@@ -37,6 +37,22 @@ export class BoardEffectsHandler {
     private statusIndicator: IStatusIndicator,
     private setLastNarration: (text: string) => void,
   ) {}
+
+  private recordDomainEvent(
+    context: ExecutionContext | undefined,
+    event: DomainEventPayload,
+  ): void {
+    if (!context || context.isNestedCall) {
+      return;
+    }
+    const eventId = (context.nextDomainEventId ?? 0) + 1;
+    context.nextDomainEventId = eventId;
+    const withId = { eventId, ...event };
+    context.domainEvents = context.domainEvents ?? [];
+    context.domainEvents.push(withId);
+    context.domainEventHistory = context.domainEventHistory ?? [];
+    context.domainEventHistory.push(withId);
+  }
 
   /**
    * Checks if currently processing a square effect.
@@ -99,6 +115,7 @@ export class BoardEffectsHandler {
 
     const finalPosition = this.stateManager.get(path) as number;
     this.setJumpToLeaderRelocatedIfNeeded(
+      path,
       context,
       landingSquareData,
       landingPosition,
@@ -123,9 +140,10 @@ export class BoardEffectsHandler {
   }
 
   /**
-   * Records Golden Fox relocation on the execution context for accurate post-roll narration.
+   * Emits Golden Fox relocation for deterministic narration policy.
    */
   private setJumpToLeaderRelocatedIfNeeded(
+    path: string,
     context: ExecutionContext | undefined,
     landingSquareData: Record<string, unknown> | undefined,
     landingPosition: number,
@@ -140,7 +158,15 @@ export class BoardEffectsHandler {
     ) {
       return;
     }
-    context.jumpToLeaderRelocated = { toPosition: finalPosition };
+    const playerId = path.match(/^players\.([^.]+)\.position$/)?.[1];
+    if (!playerId) {
+      return;
+    }
+    this.recordDomainEvent(context, {
+      kind: "goldenFoxRelocated",
+      playerId,
+      toPosition: finalPosition,
+    });
   }
 
   /** After a successful door open, forward movement past 186 is legal—do not treat it as overshoot. */
@@ -183,17 +209,15 @@ export class BoardEffectsHandler {
         `Magic door bounce: overshot ${overshotPosition} (door ${magicDoorPosition}), bouncing to ${bounceTo}`,
       );
       this.stateManager.set(path, bounceTo);
-      if (context && !context.isNestedCall) {
-        const match = path.match(/^players\.([^.]+)\.position$/);
-        const playerId = match?.[1];
-        if (playerId) {
-          context.magicDoorBounce = {
-            playerId,
-            doorPosition: magicDoorPosition,
-            overshotPosition,
-            finalPosition: bounceTo,
-          };
-        }
+      const playerId = path.match(/^players\.([^.]+)\.position$/)?.[1];
+      if (playerId) {
+        this.recordDomainEvent(context, {
+          kind: "magicDoorBounce",
+          playerId,
+          doorPosition: magicDoorPosition,
+          overshotPosition,
+          finalPosition: bounceTo,
+        });
       }
     }
   }
@@ -440,7 +464,12 @@ export class BoardEffectsHandler {
     if (!playerId) {
       return;
     }
-    context.skullReturnToSnakeHead = { playerId, fromSquare, toSquare };
+    this.recordDomainEvent(context, {
+      kind: "skullReturnToSnakeHead",
+      playerId,
+      fromSquare,
+      toSquare,
+    });
   }
 
   /**

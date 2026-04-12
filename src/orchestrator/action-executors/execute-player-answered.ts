@@ -6,7 +6,7 @@ import { getPowerCheckDiceConfig, getSquareDataAtPosition } from "../power-check
 import { parseRollLikeInput } from "../roll-parser";
 import type { ExecutionContext, GameState, PrimitiveAction } from "../types";
 import type { ActionExecutorContext } from "./shared";
-import { getCurrentTurn } from "./shared";
+import { getCurrentTurn, recordDomainEvent } from "./shared";
 import { possessiveScorePhraseEn, possessiveScorePhraseEs } from "@/i18n/kalimba-encounter-phrases";
 import { getLocale } from "@/i18n/locale-manager";
 import { t } from "@/i18n/translations";
@@ -269,6 +269,15 @@ export async function executePlayerAnswered(
       `Auto-applying PLAYER_ANSWERED to decision point: ${applyState.path} = ${JSON.stringify(applyState.value)}`,
     );
     ctx.stateManager.set(applyState.path, applyState.value);
+    const forkMatch = applyState.path.match(/^players\.([^.]+)\.activeChoices\.(\d+)$/);
+    if (forkMatch && typeof applyState.value === "number") {
+      recordDomainEvent(execCtx, {
+        kind: "forkChoiceStored",
+        playerId: forkMatch[1],
+        position: Number.parseInt(forkMatch[2], 10),
+        target: applyState.value,
+      });
+    }
     const completedForkMove = await tryCompletePendingRollAfterForkChoice(ctx, execCtx);
     if (completedForkMove) {
       return;

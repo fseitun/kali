@@ -1,6 +1,6 @@
 import type { ExecutionContext, PrimitiveAction } from "../types";
 import type { ActionExecutorContext } from "./shared";
-import { isPlayerPositionPath } from "./shared";
+import { isPlayerPositionPath, recordDomainEvent } from "./shared";
 import { Logger } from "@/utils/logger";
 
 export async function executeSetState(
@@ -17,6 +17,15 @@ export async function executeSetState(
   await ctx.turnManager.assertPlayerTurnOwnership(primitive.path);
   Logger.write(`Setting state: ${primitive.path} = ${JSON.stringify(primitive.value)}`);
   ctx.stateManager.set(primitive.path, primitive.value);
+  const forkMatch = primitive.path.match(/^players\.([^.]+)\.activeChoices\.(\d+)$/);
+  if (forkMatch && typeof primitive.value === "number") {
+    recordDomainEvent(execCtx, {
+      kind: "forkChoiceStored",
+      playerId: forkMatch[1],
+      position: Number.parseInt(forkMatch[2], 10),
+      target: primitive.value,
+    });
+  }
 
   const prevSuppress = execCtx.suppressNextOnLandingAtPosition;
   const shouldSuppressLandingTeleport =

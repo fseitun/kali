@@ -103,6 +103,30 @@ describe("Product scenario: Game orchestrator Integration Tests", () => {
       expect(result.success).toBe(true);
       expect(result.voiceOutcomeHints).toBeUndefined();
     });
+
+    it("Expected outcome: Sets fork Choice Resolved Without Narrate when only SET STATE resolves fork", async () => {
+      mockLLM = createScriptedLLM([]);
+
+      const initialState = createPlayingStateFixture({
+        players: {
+          p1: { id: "p1", name: "Alice", position: 96, activeChoices: { 0: 1 } },
+          p2: { id: "p2", name: "Bob", position: 0 },
+        },
+        squares: {
+          "0": { next: [1, 15] },
+          "96": { next: [97, 99] },
+        },
+      });
+
+      setupGame(initialState);
+
+      const result = await orchestrator.testExecuteActions([
+        { action: "SET_STATE", path: "players.p1.activeChoices.0", value: 1 },
+      ]);
+
+      expect(result.success).toBe(true);
+      expect(result.voiceOutcomeHints?.forkChoiceResolvedWithoutNarrate).toBe(true);
+    });
   });
 
   describe("Product scenario: Board Mechanics", () => {
@@ -1335,6 +1359,15 @@ describe("Product scenario: Game orchestrator Integration Tests", () => {
       expect(speakMock).toHaveBeenCalledWith(
         t("game.skullReturnToSnakeHead", { name: "Alice", from: 190, to: 187 }),
       );
+      expect(result.turnFrame?.events).toContainEqual(
+        expect.objectContaining({
+          kind: "skullReturnToSnakeHead",
+          playerId: "p1",
+          fromSquare: 190,
+          toSquare: 187,
+        }),
+      );
+      expect(result.turnFrame?.narrationPlans[0]?.source).toBe("deterministic");
       setLocale("es-AR");
     });
 
@@ -1378,6 +1411,14 @@ describe("Product scenario: Game orchestrator Integration Tests", () => {
       expect(speakMock).toHaveBeenCalledWith(
         t("game.skullReturnToSnakeHead", { name: "Alice", from: 190, to: 187 }),
       );
+      expect(result.turnFrame?.events).toContainEqual(
+        expect.objectContaining({
+          kind: "skullReturnToSnakeHead",
+          playerId: "p1",
+          fromSquare: 190,
+          toSquare: 187,
+        }),
+      );
       setLocale("es-AR");
     });
 
@@ -1420,6 +1461,14 @@ describe("Product scenario: Game orchestrator Integration Tests", () => {
       expect(speakMock).toHaveBeenCalledTimes(1);
       expect(speakMock).toHaveBeenCalledWith(
         t("game.skullReturnToSnakeHead", { name: "Alice", from: 190, to: 187 }),
+      );
+      expect(result.turnFrame?.events).toContainEqual(
+        expect.objectContaining({
+          kind: "skullReturnToSnakeHead",
+          playerId: "p1",
+          fromSquare: 190,
+          toSquare: 187,
+        }),
       );
       setLocale("es-AR");
     });
@@ -1980,7 +2029,7 @@ describe("Product scenario: Game orchestrator Integration Tests", () => {
 
       setupGame(initialState);
 
-      await orchestrator.handleTranscript("I rolled 4");
+      const result = await orchestrator.handleTranscript("I rolled 4");
 
       expect(stateManager.get("players.p1.position")).toBe(184);
       const expectedLine = t("game.magicDoorBounce", {
@@ -1990,6 +2039,16 @@ describe("Product scenario: Game orchestrator Integration Tests", () => {
         final: 184,
       });
       expect(mockSpeech.speak).toHaveBeenCalledWith(expectedLine);
+      expect(result.turnFrame?.events).toContainEqual(
+        expect.objectContaining({
+          kind: "magicDoorBounce",
+          playerId: "p1",
+          doorPosition: 186,
+          overshotPosition: 188,
+          finalPosition: 184,
+        }),
+      );
+      expect(result.turnFrame?.narrationPlans[0]?.text).toBe(expectedLine);
     });
 
     it("Expected outcome: Magic door opening on 186 die only, success sets flag and advances turn", async () => {

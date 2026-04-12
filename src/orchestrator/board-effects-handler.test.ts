@@ -157,11 +157,14 @@ describe("Product scenario: Board Effects Handler", () => {
       await boardEffectsHandler.checkAndApplyBoardMoves("players.p1.position", context);
 
       expect(stateManager.get("players.p1.position")).toBe(187);
-      expect(context.skullReturnToSnakeHead).toEqual({
-        playerId: "p1",
-        fromSquare: 190,
-        toSquare: 187,
-      });
+      expect(context.domainEvents).toContainEqual(
+        expect.objectContaining({
+          kind: "skullReturnToSnakeHead",
+          playerId: "p1",
+          fromSquare: 190,
+          toSquare: 187,
+        }),
+      );
     });
 
     it("Expected outcome: Should not apply magic door bounce after return To187 teleport in the same resolution", async () => {
@@ -176,7 +179,14 @@ describe("Product scenario: Board Effects Handler", () => {
       await boardEffectsHandler.checkAndApplyBoardMoves("players.p1.position", context);
 
       expect(stateManager.get("players.p1.position")).toBe(187);
-      expect(context.magicDoorBounce).toBeUndefined();
+      expect(context.domainEvents).toContainEqual(
+        expect.objectContaining({
+          kind: "skullReturnToSnakeHead",
+          playerId: "p1",
+          fromSquare: 190,
+          toSquare: 187,
+        }),
+      );
     });
 
     it("Expected outcome: Should not apply magic door bounce after destination based backward teleport to 187", async () => {
@@ -191,12 +201,14 @@ describe("Product scenario: Board Effects Handler", () => {
       await boardEffectsHandler.checkAndApplyBoardMoves("players.p1.position", context);
 
       expect(stateManager.get("players.p1.position")).toBe(187);
-      expect(context.magicDoorBounce).toBeUndefined();
-      expect(context.skullReturnToSnakeHead).toEqual({
-        playerId: "p1",
-        fromSquare: 190,
-        toSquare: 187,
-      });
+      expect(context.domainEvents).toContainEqual(
+        expect.objectContaining({
+          kind: "skullReturnToSnakeHead",
+          playerId: "p1",
+          fromSquare: 190,
+          toSquare: 187,
+        }),
+      );
     });
 
     it("Expected outcome: Should skip backward teleport when player has retreat Effects Reversed", async () => {
@@ -420,7 +432,13 @@ describe("Product scenario: Board Effects Handler", () => {
 
       await boardEffectsHandler.checkAndApplyBoardMoves("players.p1.position", context);
 
-      expect(context.jumpToLeaderRelocated).toEqual({ toPosition: 80 });
+      expect(context.domainEvents).toContainEqual(
+        expect.objectContaining({
+          kind: "goldenFoxRelocated",
+          playerId: "p1",
+          toPosition: 80,
+        }),
+      );
     });
 
     it("Expected outcome: Should set magic Door Bounce on context when overshooting magic door", async () => {
@@ -434,12 +452,15 @@ describe("Product scenario: Board Effects Handler", () => {
       await boardEffectsHandler.checkAndApplyBoardMoves("players.p1.position", context);
 
       expect(stateManager.get("players.p1.position")).toBe(184);
-      expect(context.magicDoorBounce).toEqual({
-        playerId: "p1",
-        doorPosition: 186,
-        overshotPosition: 188,
-        finalPosition: 184,
-      });
+      expect(context.domainEvents).toContainEqual(
+        expect.objectContaining({
+          kind: "magicDoorBounce",
+          playerId: "p1",
+          doorPosition: 186,
+          overshotPosition: 188,
+          finalPosition: 184,
+        }),
+      );
     });
 
     it("Expected outcome: Should not set magic Door Bounce on nested calls", async () => {
@@ -453,7 +474,7 @@ describe("Product scenario: Board Effects Handler", () => {
       await boardEffectsHandler.checkAndApplyBoardMoves("players.p1.position", context);
 
       expect(stateManager.get("players.p1.position")).toBe(184);
-      expect(context.magicDoorBounce).toBeUndefined();
+      expect(context.domainEvents).toBeUndefined();
     });
 
     it("Expected outcome: Should not apply magic Door Bounce after door was opened", async () => {
@@ -468,7 +489,7 @@ describe("Product scenario: Board Effects Handler", () => {
       await boardEffectsHandler.checkAndApplyBoardMoves("players.p1.position", context);
 
       expect(stateManager.get("players.p1.position")).toBe(193);
-      expect(context.magicDoorBounce).toBeUndefined();
+      expect(context.domainEvents).toBeUndefined();
     });
 
     it("Expected outcome: Should keep position when jump To Leader but current player is already leader", async () => {

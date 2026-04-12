@@ -94,6 +94,62 @@ export interface GameState {
 }
 
 /**
+ * Deterministic game facts emitted while applying primitives.
+ * Narration policy consumes these events to decide canonical speech.
+ */
+export type DomainEvent =
+  | {
+      eventId: number;
+      kind: "goldenFoxRelocated";
+      playerId: string;
+      toPosition: number;
+    }
+  | {
+      eventId: number;
+      kind: "magicDoorBounce";
+      playerId: string;
+      doorPosition: number;
+      overshotPosition: number;
+      finalPosition: number;
+    }
+  | {
+      eventId: number;
+      kind: "movementRollResolved";
+      playerId: string;
+      roll: number;
+      square: number;
+    }
+  | {
+      eventId: number;
+      kind: "forkChoiceStored";
+      playerId: string;
+      position: number;
+      target: number;
+    }
+  | {
+      eventId: number;
+      kind: "skullReturnToSnakeHead";
+      playerId: string;
+      fromSquare: number;
+      toSquare: number;
+    };
+
+export type DomainEventPayload = DomainEvent extends infer T
+  ? T extends { eventId: number }
+    ? Omit<T, "eventId">
+    : never
+  : never;
+
+/**
+ * Narration decision produced by deterministic policy.
+ */
+export interface NarrationPlan {
+  text: string;
+  source: "deterministic" | "llm";
+  consumedEventIds: number[];
+}
+
+/**
  * Context passed through orchestrator execution. Distinguishes top-level (user-initiated)
  * from nested calls (from board effects or decision-point enforcement).
  */
@@ -129,6 +185,14 @@ export interface ExecutionContext {
   justNarratedDecisionAsk?: boolean;
   /** Paths (e.g. players.p1.position) set by PLAYER_ROLLED this run; SET_STATE for these is ignored to avoid overwriting the roll. */
   positionPathsSetByRoll?: Set<string>;
+  /** Deterministic events collected while executing the current action batch. */
+  domainEvents?: DomainEvent[];
+  /** Full deterministic event history for the current batch (not consumed by narration). */
+  domainEventHistory?: DomainEvent[];
+  /** Monotonic event id counter for the current execution batch. */
+  nextDomainEventId?: number;
+  /** Narration decisions emitted during the current action batch. */
+  narrationPlans?: NarrationPlan[];
   /** Set when checkAndApplyBoardMoves applies a ladder/teleport; the square the player came from. */
   arrivedViaTeleportFrom?: number;
   /**
@@ -136,36 +200,6 @@ export interface ExecutionContext {
    * `destination` once (used so a player placed on 45 after a golden-fox bump does not immediately chain 45→82).
    */
   suppressNextOnLandingAtPosition?: number;
-  /**
-   * Set when the player landed on Golden Fox (`jumpToLeader`) and ended on a different square after
-   * board moves (including leader-square portal). Used so `NARRATE` can speak the real final cell.
-   */
-  jumpToLeaderRelocated?: { toPosition: number };
-  /**
-   * Set when movement ended past the magic door and the orchestrator bounced the token back.
-   * Consumed on the next movement `NARRATE` in the same batch for deterministic rule + position TTS.
-   */
-  magicDoorBounce?: {
-    playerId: string;
-    doorPosition: number;
-    overshotPosition: number;
-    finalPosition: number;
-  };
-  /**
-   * Set when a skull-square teleport sends the current player back to the snake head.
-   * Consumed on the next movement `NARRATE` in the same batch for deterministic explanation.
-   */
-  skullReturnToSnakeHead?: {
-    playerId: string;
-    fromSquare: number;
-    toSquare: number;
-  };
-  /**
-   * After a completed movement PLAYER_ROLLED (non-nested), the graph-resolved landing square for the
-   * next NARRATE in the same batch. Consumed in executeNarrate for deterministic position TTS; cleared
-   * if the batch ends without a matching NARRATE.
-   */
-  pendingMovementRollNarration?: { playerId: string; roll: number; square: number };
 }
 
 /**
@@ -196,6 +230,8 @@ export interface OrchestratorGameplayResult {
   turnAdvance: TurnAdvance;
   /** Present on successful top-level runs when the batch matches a silent-success pattern for voice policy. */
   voiceOutcomeHints?: VoiceOutcomeHints;
+  /** Optional execution trace for deterministic narration flow. */
+  turnFrame?: TurnFrame;
 }
 
 /** Shared failure result — no turn advance, no voice hints. */
@@ -286,4 +322,14 @@ export interface AskRiddleAction {
   correctOption: string;
   /** Optional synonyms or common ways to say the correct option; strict match treats these as correct without calling the LLM. */
   correctOptionSynonyms?: string[];
+}
+
+/**
+ * Trace object for one validated batch execution.
+ */
+export interface TurnFrame {
+  inputActions: PrimitiveAction[];
+  normalizedActions: PrimitiveAction[];
+  events: DomainEvent[];
+  narrationPlans: NarrationPlan[];
 }

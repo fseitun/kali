@@ -1,7 +1,7 @@
 import type { BoardEffectsHandler } from "../board-effects-handler";
 import type { RiddlePowerCheckHandler } from "../riddle-power-check";
 import type { TurnManager } from "../turn-manager";
-import type { GameState } from "../types";
+import type { DomainEventPayload, ExecutionContext, GameState } from "../types";
 import type { IStatusIndicator } from "@/components/status-indicator";
 import type { ISpeechService } from "@/services/speech-service";
 import type { StateManager } from "@/state-manager";
@@ -40,4 +40,17 @@ export function getPlayerNameById(
   fallback = "",
 ): string {
   return playerDisplayName(state.players[playerId]?.name, fallback);
+}
+
+/**
+ * Appends a deterministic domain event to the current execution context.
+ */
+export function recordDomainEvent(context: ExecutionContext, event: DomainEventPayload): void {
+  const eventId = (context.nextDomainEventId ?? 0) + 1;
+  context.nextDomainEventId = eventId;
+  const withId = { eventId, ...event };
+  context.domainEvents = context.domainEvents ?? [];
+  context.domainEvents.push(withId);
+  context.domainEventHistory = context.domainEventHistory ?? [];
+  context.domainEventHistory.push(withId);
 }

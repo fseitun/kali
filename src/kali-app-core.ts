@@ -21,6 +21,7 @@ import {
   type GameState,
   type OrchestratorGameplayResult,
   type PrimitiveAction,
+  type TurnFrame,
   type VoiceOutcomeHints,
 } from "./orchestrator/types";
 import type { ISpeechService } from "./services/speech-service";
@@ -299,7 +300,11 @@ ${summary ? `**Summary (for NARRATE explanations):** ${summary}\n` : ""}${exampl
       if (result.success && result.turnAdvance.kind === "callAdvanceTurn") {
         await this.checkAndAdvanceTurn();
       }
-      await this.maybeApplySilentGameplayVoice(result.success, result.voiceOutcomeHints);
+      await this.maybeApplySilentGameplayVoice(
+        result.success,
+        result.voiceOutcomeHints,
+        result.turnFrame,
+      );
     }
   }
 
@@ -309,6 +314,7 @@ ${summary ? `**Summary (for NARRATE explanations):** ${summary}\n` : ""}${exampl
   private async maybeApplySilentGameplayVoice(
     success: boolean,
     voiceOutcomeHints: VoiceOutcomeHints | undefined,
+    turnFrame: TurnFrame | undefined,
   ): Promise<void> {
     const orchestrator = this.orchestrator;
     const stateManager = this.stateManager;
@@ -321,6 +327,7 @@ ${summary ? `**Summary (for NARRATE explanations):** ${summary}\n` : ""}${exampl
     const state = stateManager.getState() as GameState;
     await applySilentSuccessFallback({
       hints: voiceOutcomeHints,
+      turnFrame,
       state,
       speak: (text) => this.speechService.speak(text),
       setLastNarration: (text) => orchestrator.setLastNarrationForVoicePolicy(text),
@@ -539,7 +546,11 @@ ${summary ? `**Summary (for NARRATE explanations):** ${summary}\n` : ""}${exampl
       } else if (result.success && result.turnAdvance.kind === "callAdvanceTurn") {
         await this.checkAndAdvanceTurn();
       }
-      await this.maybeApplySilentGameplayVoice(result.success, result.voiceOutcomeHints);
+      await this.maybeApplySilentGameplayVoice(
+        result.success,
+        result.voiceOutcomeHints,
+        result.turnFrame,
+      );
     }
 
     this.uiService.updateStatus(
@@ -700,7 +711,11 @@ ${summary ? `**Summary (for NARRATE explanations):** ${summary}\n` : ""}${exampl
       await this.checkAndAdvanceTurn();
     }
 
-    await this.maybeApplySilentGameplayVoice(result.success, result.voiceOutcomeHints);
+    await this.maybeApplySilentGameplayVoice(
+      result.success,
+      result.voiceOutcomeHints,
+      result.turnFrame,
+    );
 
     return result;
   }

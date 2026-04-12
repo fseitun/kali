@@ -887,7 +887,7 @@ describe("Product scenario: Game orchestrator New Action Handlers", () => {
       const results = await Promise.all([promise1, promise2]);
 
       expect(callCount).toBe(1);
-      expect(results[0]).toEqual({ success: true, turnAdvance: { kind: "none" } });
+      expect(results[0]).toMatchObject({ success: true, turnAdvance: { kind: "none" } });
       expect(results[1]).toEqual({ success: false, turnAdvance: { kind: "none" } });
     });
 

@@ -24,6 +24,7 @@ import {
   type ExecutionContext,
   type ActionHandler,
   type GameState,
+  type TurnFrame,
   type TurnAdvance,
   type VoiceOutcomeHints,
 } from "./types";
@@ -575,11 +576,11 @@ export class Orchestrator {
   private computeVoiceOutcomeHints(
     context: ExecutionContext,
     onlyResolvedForkChoice: boolean,
-    actions: PrimitiveAction[],
   ): VoiceOutcomeHints | undefined {
     return !context.isNestedCall &&
       onlyResolvedForkChoice &&
-      !actions.some((a) => a.action === "NARRATE")
+      (context.narrationPlans?.length ?? 0) === 0 &&
+      (context.domainEventHistory ?? []).some((event) => event.kind === "forkChoiceStored")
       ? { forkChoiceResolvedWithoutNarrate: true }
       : undefined;
   }
@@ -661,17 +662,15 @@ export class Orchestrator {
       onlyResolvedForkChoice,
     );
 
-    const voiceOutcomeHints = this.computeVoiceOutcomeHints(
-      context,
-      onlyResolvedForkChoice,
-      actions,
-    );
-
     Logger.info("Actions validated, executing...");
 
     const actionsToRun = context.isNestedCall
       ? actions
       : reorderPowerCheckBeforeRoll(actions, state);
+    context.domainEvents = [];
+    context.domainEventHistory = [];
+    context.nextDomainEventId = 0;
+    context.narrationPlans = [];
     Profiler.start(`${profilerPrefix}.execution.${this.getProfilerKey(context)}`);
     await this.executeActions(actionsToRun, context);
     Profiler.end(`${profilerPrefix}.execution.${this.getProfilerKey(context)}`);
@@ -687,19 +686,14 @@ export class Orchestrator {
 
     // After power-check loss or §2B win the app announces the next player (incl. fork prompt);
     // skip nested enforce here to avoid duplicating the fork question.
-    const shouldEnforceDecisionPoints =
-      !context.isNestedCall &&
-      !context.skipDecisionPointEnforcement &&
-      !context.justNarratedDecisionAsk &&
-      !context.turnAdvancedAfterPowerCheckFail &&
-      !context.turnAdvancedAfterPowerCheckWin &&
-      !context.turnAdvancedAfterMagicDoorOpen;
-    if (shouldEnforceDecisionPoints) {
+    if (this.shouldEnforceDecisionPoints(context)) {
       await this.decisionPointEnforcer.enforceDecisionPoints(context);
     }
 
+    const voiceOutcomeHints = this.computeVoiceOutcomeHints(context, onlyResolvedForkChoice);
     const turnAdvance = this.computeTurnAdvance(context, shouldAdvanceTurn);
-    return { success: true, turnAdvance, voiceOutcomeHints };
+    const turnFrame = this.buildTurnFrame(actions, actionsToRun, context);
+    return { success: true, turnAdvance, voiceOutcomeHints, turnFrame };
   }
 
   private computeTurnAdvance(
@@ -717,6 +711,30 @@ export class Orchestrator {
     const blocked = context.skipTrailingNarrateForPowerCheck && !dismissSuppress;
     const advance = !blocked && (shouldAdvanceTurnFromActions || dismissSuppress);
     return advance ? { kind: "callAdvanceTurn" } : { kind: "none" };
+  }
+
+  private shouldEnforceDecisionPoints(context: ExecutionContext): boolean {
+    return (
+      !context.isNestedCall &&
+      !context.skipDecisionPointEnforcement &&
+      !context.justNarratedDecisionAsk &&
+      !context.turnAdvancedAfterPowerCheckFail &&
+      !context.turnAdvancedAfterPowerCheckWin &&
+      !context.turnAdvancedAfterMagicDoorOpen
+    );
+  }
+
+  private buildTurnFrame(
+    actions: PrimitiveAction[],
+    actionsToRun: PrimitiveAction[],
+    context: ExecutionContext,
+  ): TurnFrame {
+    return {
+      inputActions: [...actions],
+      normalizedActions: [...actionsToRun],
+      events: [...(context.domainEventHistory ?? [])],
+      narrationPlans: [...(context.narrationPlans ?? [])],
+    };
   }
 
   private shouldSkipAction(
@@ -833,12 +851,6 @@ export class Orchestrator {
       } catch (error) {
         Logger.error("Failed to execute action:", action, error);
       }
-    }
-    if (context.pendingMovementRollNarration !== undefined) {
-      context.pendingMovementRollNarration = undefined;
-    }
-    if (context.magicDoorBounce !== undefined) {
-      context.magicDoorBounce = undefined;
     }
   }
 

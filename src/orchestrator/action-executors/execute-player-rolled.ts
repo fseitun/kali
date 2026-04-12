@@ -9,7 +9,7 @@ import { getMovementDirectionForState } from "../fork-roll-policy";
 import type { PendingCompleteRollMovement } from "../pending-types";
 import type { ExecutionContext, GameState, PrimitiveAction } from "../types";
 import type { ActionExecutorContext } from "./shared";
-import { getCurrentTurn, playerDisplayName } from "./shared";
+import { getCurrentTurn, playerDisplayName, recordDomainEvent } from "./shared";
 import { t } from "@/i18n/translations";
 import { GAME_PATH, playerStatePath } from "@/state-paths";
 import { Logger } from "@/utils/logger";
@@ -119,11 +119,12 @@ async function executeMovementPlayerRoll(
   if (movement.kind === "complete" && !execCtx.isNestedCall) {
     const finalSquare = ctx.stateManager.get(path);
     if (typeof finalSquare === "number") {
-      execCtx.pendingMovementRollNarration = {
+      recordDomainEvent(execCtx, {
+        kind: "movementRollResolved",
         playerId: currentTurn,
         roll: primitive.value,
         square: finalSquare,
-      };
+      });
     }
   }
 }
