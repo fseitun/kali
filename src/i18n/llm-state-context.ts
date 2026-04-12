@@ -4,6 +4,7 @@ import {
   llmStateContextEsAR,
 } from "./llm-state-context-bundles";
 import { getLocale } from "./locale-manager";
+import { substituteTemplateVars } from "./substitute-template";
 
 export type { LlmStateContextBundle } from "./llm-state-context-bundles";
 
@@ -13,9 +14,5 @@ export function getLlmStateContext(): LlmStateContextBundle {
 
 /** Replace `{key}` placeholders in template. */
 export function substLlmState(template: string, vars: Record<string, string | number>): string {
-  let result = template;
-  for (const [key, value] of Object.entries(vars)) {
-    result = result.replaceAll(`{${key}}`, String(value));
-  }
-  return result;
+  return substituteTemplateVars(template, vars);
 }

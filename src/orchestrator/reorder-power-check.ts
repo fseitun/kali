@@ -1,3 +1,4 @@
+import { parseRollInRange } from "./roll-parser";
 import type { GameState, PrimitiveAction } from "./types";
 
 /**
@@ -5,9 +6,7 @@ import type { GameState, PrimitiveAction } from "./types";
  * Used to reorder so power-check PLAYER_ANSWERED runs before PLAYER_ROLLED.
  */
 export function isPowerCheckNumericAnswer(answer: string): boolean {
-  const rollStr = answer.trim().replace(/\D/g, "") || answer.trim();
-  const roll = parseInt(rollStr, 10);
-  return !isNaN(roll) && roll >= 1 && roll <= 12;
+  return parseRollInRange(answer, 1, 12) !== null;
 }
 
 /**

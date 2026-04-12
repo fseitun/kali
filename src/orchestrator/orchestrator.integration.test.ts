@@ -3,6 +3,7 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import { Orchestrator } from "./orchestrator";
+import { createPlayingStateFixture } from "./test-fixtures";
 import { GamePhase } from "./types";
 import type { GameState, PrimitiveAction } from "./types";
 import type { StatusIndicator } from "@/components/status-indicator";
@@ -59,26 +60,15 @@ describe("Product scenario: Game orchestrator Integration Tests", () => {
     it("Expected outcome: Sets fork Choice Resolved Without Narrate when only PLAYER ANSWERED resolves fork", async () => {
       mockLLM = createScriptedLLM([]);
 
-      const initialState: GameState = {
-        game: {
-          name: "Test Game",
-          phase: GamePhase.PLAYING,
-          turn: "p1",
-          playerOrder: ["p1", "p2"],
-          winner: null,
-          lastRoll: 0,
-        },
+      const initialState = createPlayingStateFixture({
         players: {
           p1: { id: "p1", name: "Alice", position: 0, activeChoices: {} },
           p2: { id: "p2", name: "Bob", position: 0 },
         },
-        board: {
-          squares: {
-            "0": { next: [1, 15] },
-            "100": { effect: "win" },
-          },
+        squares: {
+          "0": { next: [1, 15] },
         },
-      };
+      });
 
       setupGame(initialState);
 
@@ -93,26 +83,15 @@ describe("Product scenario: Game orchestrator Integration Tests", () => {
     it("Expected outcome: Does not set fork hint when NARRATE is in the batch", async () => {
       mockLLM = createScriptedLLM([]);
 
-      const initialState: GameState = {
-        game: {
-          name: "Test Game",
-          phase: GamePhase.PLAYING,
-          turn: "p1",
-          playerOrder: ["p1", "p2"],
-          winner: null,
-          lastRoll: 0,
-        },
+      const initialState = createPlayingStateFixture({
         players: {
           p1: { id: "p1", name: "Alice", position: 0, activeChoices: {} },
           p2: { id: "p2", name: "Bob", position: 0 },
         },
-        board: {
-          squares: {
-            "0": { next: [1, 15] },
-            "100": { effect: "win" },
-          },
+        squares: {
+          "0": { next: [1, 15] },
         },
-      };
+      });
 
       setupGame(initialState);
 
@@ -137,26 +116,15 @@ describe("Product scenario: Game orchestrator Integration Tests", () => {
 
       mockLLM = createScriptedLLM(responses);
 
-      const initialState: GameState = {
-        game: {
-          name: "Test Game",
-          phase: GamePhase.PLAYING,
-          turn: "p1",
-          playerOrder: ["p1", "p2"],
-          winner: null,
-          lastRoll: 0,
-        },
+      const initialState = createPlayingStateFixture({
         players: {
           p1: { id: "p1", name: "Alice", position: 2 },
           p2: { id: "p2", name: "Bob", position: 0 },
         },
-        board: {
-          squares: {
-            "4": { destination: 14 },
-            "100": { effect: "win" },
-          },
+        squares: {
+          "4": { destination: 14 },
         },
-      };
+      });
 
       setupGame(initialState);
 
@@ -176,26 +144,15 @@ describe("Product scenario: Game orchestrator Integration Tests", () => {
 
       mockLLM = createScriptedLLM(responses);
 
-      const initialState: GameState = {
-        game: {
-          name: "Test Game",
-          phase: GamePhase.PLAYING,
-          turn: "p1",
-          playerOrder: ["p1", "p2"],
-          winner: null,
-          lastRoll: 0,
-        },
+      const initialState = createPlayingStateFixture({
         players: {
           p1: { id: "p1", name: "Alice", position: 15 },
           p2: { id: "p2", name: "Bob", position: 0 },
         },
-        board: {
-          squares: {
-            "17": { destination: 7 },
-            "100": { effect: "win" },
-          },
+        squares: {
+          "17": { destination: 7 },
         },
-      };
+      });
 
       setupGame(initialState);
 

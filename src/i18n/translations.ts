@@ -1,6 +1,7 @@
 import { getLocale } from "./locale-manager";
 import { enUS } from "./locales/en-US";
 import { esAR } from "./locales/es-AR";
+import { substituteTemplateVars } from "./substitute-template";
 
 type TranslationObject = typeof esAR;
 type TranslationKey = string;
@@ -33,9 +34,7 @@ export function t(key: TranslationKey, params?: Record<string, string | number>)
   let result = typeof value === "string" ? value : key;
 
   if (params) {
-    Object.entries(params).forEach(([param, val]) => {
-      result = result.replaceAll(`{${param}}`, String(val));
-    });
+    result = substituteTemplateVars(result, params);
   }
 
   return result;

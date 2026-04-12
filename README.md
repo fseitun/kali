@@ -12,36 +12,17 @@ A voice-first game moderator for kids to play board games independently. Uses sp
    npm install
    ```
 
-2. Configure LLM provider (create `.env` file):
+2. Configure the LLM provider (create `.env` file):
 
    ```bash
-   # For Google Gemini (fast, recommended)
-   VITE_GEMINI_API_KEY=your_api_key_here
-   VITE_LLM_PROVIDER=gemini
-
-   # Or use Groq (fast, free tier available)
-   VITE_GROQ_API_KEY=your_groq_api_key_here
-   VITE_LLM_PROVIDER=groq
-
-   # Or use OpenRouter (many models: Claude, Gemini, Llama, etc.)
-   VITE_OPENROUTER_API_KEY=your_api_key_here
-   VITE_LLM_PROVIDER=openrouter
-   # VITE_OPENROUTER_MODEL=google/gemini-2.0-flash-001  # optional, default
-
-   # Or use DeepInfra (low-cost inference, prompt cache; get key at https://deepinfra.com/dash/api_keys)
+   # DeepInfra (get key at https://deepinfra.com/dash/api_keys)
    VITE_DEEPINFRA_API_KEY=your_api_key_here
    VITE_LLM_PROVIDER=deepinfra
    # VITE_DEEPINFRA_MODEL=Qwen/Qwen2.5-72B-Instruct  # optional, default
 
-   # Or use Ollama (local, free; use llama3.2:1b for low resource usage)
-   VITE_LLM_PROVIDER=ollama
-   VITE_OLLAMA_MODEL=llama3.2:1b
-
    # Optional: show export-logs button in production UI
    VITE_SHOW_EXPORT_BUTTON=true
    ```
-
-   When using Ollama, run `ollama run llama3.2:1b` in another terminal before starting the app.
 
 3. Start development server:
 

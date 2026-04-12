@@ -1,7 +1,7 @@
 import { Logger } from "@/utils/logger";
 
 /**
- * Parses OpenAI-compatible chat completion response (Groq, DeepInfra, OpenRouter).
+ * Parses OpenAI-compatible chat completion response (DeepInfra).
  */
 export function parseOpenAIResponse(data: unknown, providerName: string): string {
   if (!data || typeof data !== "object") {

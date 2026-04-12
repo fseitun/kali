@@ -3,6 +3,7 @@ import { computeNewPositionFromState } from "../board-traversal";
 import { getDecisionPointApplyState } from "../decision-helpers";
 import { getMovementDirectionForState } from "../fork-roll-policy";
 import { isStrictRiddleCorrect } from "../riddle-answer";
+import { parseRollInRange } from "../roll-parser";
 import type { GameState, PrimitiveAction } from "../types";
 
 type MockStateHandler = (
@@ -150,9 +151,7 @@ function applyRiddleAnswerToMock(
 }
 
 function parsePowerCheckRoll(answer: string): number | null {
-  const rollStr = answer.replace(/\D/g, "").trim() || answer.trim();
-  const roll = parseInt(rollStr, 10);
-  return !isNaN(roll) && roll >= 1 && roll <= 18 ? roll : null;
+  return parseRollInRange(answer, 1, 18);
 }
 
 function applyRollAnswerToMock(

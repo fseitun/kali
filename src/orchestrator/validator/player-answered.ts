@@ -3,6 +3,7 @@ import { getDecisionPoints } from "../decision-point-inference";
 import { forkChoiceBlockingValidation, getMovementDirectionForState } from "../fork-roll-policy";
 import type { Pending } from "../pending-types";
 import { getPending, getPendingRollSpec, isPendingRollKind } from "../pending-types";
+import { parseRollLikeInput } from "../roll-parser";
 import type { GameState, PrimitiveAction } from "../types";
 import { validateField } from "./common";
 import type { ValidationResult } from "./types";
@@ -26,12 +27,6 @@ function validateRiddlePhaseAnswer(
   return { valid: true };
 }
 
-function parseRoll(answer: string): number | null {
-  const rollStr = answer.trim().replace(/\D/g, "") || answer.trim();
-  const roll = parseInt(rollStr, 10);
-  return Number.isNaN(roll) ? null : roll;
-}
-
 function validatePendingRollAnswer(
   pending: Pending | null | undefined,
   currentTurn: string,
@@ -42,7 +37,7 @@ function validatePendingRollAnswer(
   if (!pending || !isPendingRollKind(pending) || pending.playerId !== currentTurn) {
     return null;
   }
-  const roll = parseRoll(answer);
+  const roll = parseRollLikeInput(answer);
   if (roll === null) {
     return { valid: true };
   }

@@ -19,13 +19,7 @@ export const CONFIG = {
     ),
   },
 
-  LLM_PROVIDER: (import.meta.env.VITE_LLM_PROVIDER ?? "gemini") as
-    | "ollama"
-    | "gemini"
-    | "groq"
-    | "openrouter"
-    | "deepinfra"
-    | "mock",
+  LLM_PROVIDER: (import.meta.env.VITE_LLM_PROVIDER ?? "deepinfra") as "deepinfra" | "mock",
 
   /** Locale from env (VITE_LOCALE). Use "es", "es-AR", "en", "en-US"; default "es-AR". */
   LOCALE: (() => {
@@ -54,31 +48,6 @@ export const CONFIG = {
       import.meta.env.VITE_VOSK_MODEL_URL ??
       "https://alphacephei.com/vosk/models/vosk-model-small-es-0.42.zip",
     VERSION: "0.42",
-  },
-
-  OLLAMA: {
-    API_URL: "http://localhost:11434/api/chat",
-    MODEL: import.meta.env.VITE_OLLAMA_MODEL ?? "llama3.2:latest",
-  },
-
-  GEMINI: {
-    API_URL:
-      "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent",
-    CACHED_CONTENTS_URL: "https://generativelanguage.googleapis.com/v1beta/cachedContents",
-    MODEL: "models/gemini-2.0-flash",
-    API_KEY: import.meta.env.VITE_GEMINI_API_KEY,
-  },
-
-  GROQ: {
-    API_URL: "https://api.groq.com/openai/v1/chat/completions",
-    API_KEY: import.meta.env.VITE_GROQ_API_KEY,
-    MODEL: "llama-3.3-70b-versatile",
-  },
-
-  OPENROUTER: {
-    API_URL: "https://openrouter.ai/api/v1/chat/completions",
-    API_KEY: import.meta.env.VITE_OPENROUTER_API_KEY,
-    MODEL: import.meta.env.VITE_OPENROUTER_MODEL ?? "google/gemini-2.0-flash-001",
   },
 
   DEEPINFRA: {

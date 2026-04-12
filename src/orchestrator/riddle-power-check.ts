@@ -9,6 +9,13 @@ import type {
 } from "./pending-types";
 import { getPowerCheckRollSpec } from "./power-check-dice";
 import { isStrictRiddleCorrect } from "./riddle-answer";
+import {
+  buildNextPendingFromAskRiddle,
+  createPowerCheckPendingFromRiddle,
+  getPowerCheckContext,
+  isValidAskRiddleInput,
+} from "./riddle-power-check-helpers";
+import { parseRollInRange } from "./roll-parser";
 import type { TurnManager } from "./turn-manager";
 import { GamePhase, type ExecutionContext, type GameState, type SquareData } from "./types";
 import type { IStatusIndicator } from "@/components/status-indicator";
@@ -46,47 +53,9 @@ export class RiddlePowerCheckHandler {
       return;
     }
 
-    const next: PendingPowerCheck = {
-      kind: "powerCheck",
-      playerId: pending.playerId,
-      position: pending.position,
-      power: pending.power,
-      riddleCorrect: correct,
-      phase: "powerCheck",
-    };
+    const next = createPowerCheckPendingFromRiddle(pending, correct);
     this.deps.stateManager.set(GAME_PATH.pending, next);
     Logger.info(`Riddle resolved: correct=${correct}, phase→powerCheck`);
-  }
-
-  private isValidAskRiddleInput(primitive: { options: unknown; correctOption: unknown }): boolean {
-    return (
-      Array.isArray(primitive.options) &&
-      primitive.options.length === 4 &&
-      typeof primitive.correctOption === "string" &&
-      primitive.correctOption.trim().length > 0
-    );
-  }
-
-  private buildNextPendingFromAskRiddle(
-    pending: PendingRiddle,
-    primitive: {
-      text: string;
-      options: [string, string, string, string];
-      correctOption: string;
-      correctOptionSynonyms?: string[];
-    },
-  ): PendingRiddle {
-    const synonyms =
-      Array.isArray(primitive.correctOptionSynonyms) && primitive.correctOptionSynonyms.length > 0
-        ? { correctOptionSynonyms: primitive.correctOptionSynonyms }
-        : {};
-    return {
-      ...pending,
-      riddlePrompt: primitive.text,
-      riddleOptions: primitive.options,
-      correctOption: primitive.correctOption,
-      ...synonyms,
-    };
   }
 
   handleAskRiddle(primitive: {
@@ -102,13 +71,13 @@ export class RiddlePowerCheckHandler {
     if (pending?.kind !== "riddle") {
       return;
     }
-    if (!this.isValidAskRiddleInput(primitive)) {
+    if (!isValidAskRiddleInput(primitive)) {
       Logger.warn(
         `ASK_RIDDLE ignored: need options length 4 and non-empty correctOption, got ${primitive.options?.length ?? 0}, correctOption=${String(primitive.correctOption ?? "").slice(0, 20)}`,
       );
       return;
     }
-    const next = this.buildNextPendingFromAskRiddle(pending, primitive);
+    const next = buildNextPendingFromAskRiddle(pending, primitive);
     this.deps.stateManager.set(GAME_PATH.pending, next);
     Logger.info(
       `Ask riddle stored; correctOption=${primitive.correctOption.slice(0, 30)}${primitive.correctOptionSynonyms?.length ? `, synonyms=${primitive.correctOptionSynonyms.length}` : ""}`,
@@ -407,37 +376,8 @@ export class RiddlePowerCheckHandler {
     return { handled: true, passed: false, turnAdvanced: turnAdvanced ?? undefined };
   }
 
-  private getPowerCheckContext(state: GameState): {
-    pending: PendingPowerCheck | PendingRevenge;
-    playerId: string;
-    position: number;
-    power: number;
-    isRevenge: boolean;
-  } | null {
-    const game = state.game as Record<string, unknown> | undefined;
-    const currentTurn = game?.turn as string | undefined;
-    const pending = game?.pending as PendingPowerCheck | PendingRevenge | null | undefined;
-    if (
-      !pending ||
-      !currentTurn ||
-      pending.playerId !== currentTurn ||
-      (pending.kind !== "powerCheck" && pending.kind !== "revenge")
-    ) {
-      return null;
-    }
-    return {
-      pending,
-      playerId: pending.playerId,
-      position: pending.position,
-      power: pending.power ?? 0,
-      isRevenge: pending.kind === "revenge",
-    };
-  }
-
   private parsePowerCheckRoll(answer: string, min: number, max: number): number | null {
-    const rollStr = answer.trim().replace(/\D/g, "") || answer.trim();
-    const roll = parseInt(rollStr, 10);
-    return !isNaN(roll) && roll >= min && roll <= max ? roll : null;
+    return parseRollInRange(answer, min, max);
   }
 
   async tryHandlePowerCheckAnswer(
@@ -453,7 +393,7 @@ export class RiddlePowerCheckHandler {
       }
   > {
     const state = this.deps.stateManager.getState();
-    const ctx = this.getPowerCheckContext(state);
+    const ctx = getPowerCheckContext(state);
     if (!ctx) {
       return false;
     }

@@ -14,6 +14,7 @@ import {
   type PendingDirectional,
 } from "./pending-types";
 import { resolveRiddleAnswerToOption } from "./riddle-answer";
+import { parseRollLikeInput } from "./roll-parser";
 import type { ExecutionContext, GameState, PrimitiveAction } from "./types";
 import { validatePlayerRolled } from "./validator/player-rolled";
 import type { ValidatorContext } from "./validator/types";
@@ -39,12 +40,6 @@ function parseSingleInt(transcript: string): number | null {
   }
   const n = parseInt(t, 10);
   return Number.isFinite(n) ? n : null;
-}
-
-function parseRollLikeAnswer(answer: string): number | null {
-  const rollStr = answer.trim().replace(/\D/g, "") || answer.trim();
-  const roll = parseInt(rollStr, 10);
-  return Number.isNaN(roll) ? null : roll;
 }
 
 function tryHelpFastPath(trimmed: string): PrimitiveAction[] | null {
@@ -116,7 +111,7 @@ function tryPendingRollFastPath(
     return null;
   }
   const { pending, currentTurn } = ctx;
-  const roll = parseRollLikeAnswer(trimmed);
+  const roll = parseRollLikeInput(trimmed);
   if (roll === null) {
     return null;
   }
