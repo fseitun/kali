@@ -718,6 +718,7 @@ export class Orchestrator {
       !context.isNestedCall &&
       !context.skipDecisionPointEnforcement &&
       !context.justNarratedDecisionAsk &&
+      !context.narratedWhileDecisionPending &&
       !context.turnAdvancedAfterPowerCheckFail &&
       !context.turnAdvancedAfterPowerCheckWin &&
       !context.turnAdvancedAfterMagicDoorOpen
@@ -770,6 +771,9 @@ export class Orchestrator {
       () => this.turnManager.getPendingDecisionPrompt(),
     );
     const text = action.text;
+    if (dp && text) {
+      context.narratedWhileDecisionPending = true;
+    }
     if (dp && text && narrateCoversDecision(text, dp.position, dp.prompt)) {
       context.justNarratedDecisionAsk = true;
     }

@@ -956,6 +956,18 @@ describe("Product scenario: Game orchestrator New Action Handlers", () => {
       expect(mockSpeech.speak).toHaveBeenCalledWith(longNarrate);
     });
 
+    it("Expected outcome: Clarification NARRATE while decision is pending does not trigger immediate re-ask", async () => {
+      const clarification =
+        "fede, parece que dijiste derecha, pero no estoy seguro. ¿Querés ir por la derecha?";
+      mockLLM.getActions = vi.fn().mockResolvedValue([{ action: "NARRATE", text: clarification }]);
+
+      await orchestrator.handleTranscript("der");
+
+      expect(mockLLM.getActions).toHaveBeenCalledTimes(1);
+      expect(mockSpeech.speak).toHaveBeenCalledTimes(1);
+      expect(mockSpeech.speak).toHaveBeenCalledWith(clarification);
+    });
+
     it("Expected outcome: Speaks only once when batch has covering NARRATE then exact prompt NARRATE", async () => {
       const actions: PrimitiveAction[] = [
         { action: "NARRATE", text: longNarrate },

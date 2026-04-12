@@ -738,9 +738,8 @@ describe("Product scenario: Game orchestrator Authority interpreter Adversarial 
 
       expect(getActionsCalls).toHaveLength(1);
       expect(getActionsCalls[0]).not.toContain("[SYSTEM:");
-      expect(mockSpeech.speak).toHaveBeenCalledWith(
-        expect.stringMatching(/Alice.*izquierda|Alice.*derecha/),
-      );
+      expect(mockSpeech.speak).toHaveBeenCalledTimes(1);
+      expect(mockSpeech.speak).toHaveBeenCalledWith("Alice, welcome to the fork.");
     });
   });
 
