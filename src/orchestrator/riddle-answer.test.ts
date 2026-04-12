@@ -31,6 +31,24 @@ describe("Product scenario: Resolve Riddle Answer To Option", () => {
   it("Expected outcome: Resolves opción N (Spanish) to option index", () => {
     expect(resolveRiddleAnswerToOption("opción 2", animalOptions)).toBe("B) Elefante");
     expect(resolveRiddleAnswerToOption("Opción 3", animalOptions)).toBe("C) Puma");
+    expect(resolveRiddleAnswerToOption("opcion 4", animalOptions)).toBe("D) Delfín");
+    expect(resolveRiddleAnswerToOption("option 1", animalOptions)).toBe("A) Hormiga");
+  });
+
+  it("Expected outcome: Resolves letter options (A-D) to option index", () => {
+    expect(resolveRiddleAnswerToOption("a", animalOptions)).toBe("A) Hormiga");
+    expect(resolveRiddleAnswerToOption("D", animalOptions)).toBe("D) Delfín");
+  });
+
+  it("Expected outcome: Resolves opción with letter to option index", () => {
+    expect(resolveRiddleAnswerToOption("opción b", animalOptions)).toBe("B) Elefante");
+    expect(resolveRiddleAnswerToOption("opcion c", animalOptions)).toBe("C) Puma");
+    expect(resolveRiddleAnswerToOption("option d", animalOptions)).toBe("D) Delfín");
+  });
+
+  it("Expected outcome: Returns null for ambiguous free text", () => {
+    const ambiguousOptions = ["A) Oso pardo", "B) Oso polar", "C) Delfín", "D) Puma"];
+    expect(resolveRiddleAnswerToOption("oso", ambiguousOptions)).toBe(null);
   });
 });
 

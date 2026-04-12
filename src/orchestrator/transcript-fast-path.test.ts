@@ -81,4 +81,18 @@ describe("Product scenario: Try Fast Path Transcript", () => {
     const actions = tryFastPathTranscript(state, "1", topContext, { isProcessingEffect: false });
     expect(actions).toEqual([{ action: "PLAYER_ANSWERED", answer: "A" }]);
   });
+
+  it("Expected outcome: Maps letter answer to option when structured riddle pending", () => {
+    (state.game as Record<string, unknown>).pending = {
+      kind: "riddle",
+      playerId: "p1",
+      position: 5,
+      power: 2,
+      riddleOptions: ["A", "B", "C", "D"],
+      correctOption: "A",
+      riddlePrompt: "Q?",
+    };
+    const actions = tryFastPathTranscript(state, "a", topContext, { isProcessingEffect: false });
+    expect(actions).toEqual([{ action: "PLAYER_ANSWERED", answer: "A" }]);
+  });
 });

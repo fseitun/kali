@@ -25,9 +25,25 @@ function resolveRiddleOptionBySpokenIndex(trimmed: string, riddleOptions: string
     return typeof byIndex === "string" ? byIndex : null;
   }
 
-  const opcionIdx = trimmed.match(/^opción\s*([1-4])$/i);
+  const optionKeyword = "(?:opci[oó]n|option)";
+
+  const opcionIdx = trimmed.match(new RegExp(`^${optionKeyword}\\s*([1-4])$`, "i"));
   if (opcionIdx) {
     const idx = parseInt(opcionIdx[1], 10) - 1;
+    const byIndex = riddleOptions[idx];
+    return typeof byIndex === "string" ? byIndex : null;
+  }
+
+  const letterOnly = trimmed.match(/^([A-Da-d])(?:[.)])?$/);
+  if (letterOnly) {
+    const idx = letterOnly[1].toUpperCase().charCodeAt(0) - 65;
+    const byIndex = riddleOptions[idx];
+    return typeof byIndex === "string" ? byIndex : null;
+  }
+
+  const opcionLetter = trimmed.match(new RegExp(`^${optionKeyword}\\s*([A-Da-d])(?:[.)])?$`, "i"));
+  if (opcionLetter) {
+    const idx = opcionLetter[1].toUpperCase().charCodeAt(0) - 65;
     const byIndex = riddleOptions[idx];
     return typeof byIndex === "string" ? byIndex : null;
   }
