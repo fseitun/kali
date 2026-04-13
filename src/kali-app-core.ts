@@ -93,6 +93,7 @@ export class KaliAppCore {
   private activeHabitatAudio: string | null = null;
   private nextHabitatAnimalAtMs = 0;
   private habitatAnimalTimer: ReturnType<typeof setInterval> | null = null;
+  private ambientCaptureMuteHolds = 0;
 
   constructor(
     private uiService: IUIService,
@@ -290,6 +291,23 @@ export class KaliAppCore {
     this.maybePlayHabitatAnimal(habitat, Date.now());
   }
 
+  private acquireAmbientCaptureMute(): void {
+    this.ambientCaptureMuteHolds += 1;
+    if (this.ambientCaptureMuteHolds === 1) {
+      this.speechService.setAmbientCaptureMuted(true);
+    }
+  }
+
+  private releaseAmbientCaptureMute(): void {
+    if (this.ambientCaptureMuteHolds === 0) {
+      return;
+    }
+    this.ambientCaptureMuteHolds -= 1;
+    if (this.ambientCaptureMuteHolds === 0) {
+      this.speechService.setAmbientCaptureMuted(false);
+    }
+  }
+
   private formatGameRules(gameModule: GameModule): string {
     const { metadata } = gameModule;
     const fromMeta = metadata.llmExamples;
@@ -445,6 +463,7 @@ ${summary ? `**Summary (for NARRATE explanations):** ${summary}\n` : ""}${exampl
     if (this.wakeWordDetector) {
       this.wakeWordDetector.disableDirectTranscription();
     }
+    this.releaseAmbientCaptureMute();
   }
 
   private async runNameCollectionCore(
@@ -468,7 +487,10 @@ ${summary ? `**Summary (for NARRATE explanations):** ${summary}\n` : ""}${exampl
     const nameCollector = new NameCollector(
       this.speechService,
       gameName,
-      () => this.wakeWordDetector?.enableDirectTranscription(),
+      () => {
+        this.acquireAmbientCaptureMute();
+        this.wakeWordDetector?.enableDirectTranscription();
+      },
       llmClient,
       gameModule.metadata,
     );
@@ -507,6 +529,7 @@ ${summary ? `**Summary (for NARRATE explanations):** ${summary}\n` : ""}${exampl
   }
 
   private handleWakeWord(): void {
+    this.acquireAmbientCaptureMute();
     const indicator = this.uiService.getStatusIndicator();
     indicator.setState("active");
 
@@ -633,15 +656,19 @@ ${summary ? `**Summary (for NARRATE explanations):** ${summary}\n` : ""}${exampl
     const indicator = this.uiService.getStatusIndicator();
     indicator.setState("listening");
 
-    if (this.currentNameHandler) {
-      this.currentNameHandler(text);
-      return;
-    }
+    try {
+      if (this.currentNameHandler) {
+        this.currentNameHandler(text);
+        return;
+      }
 
-    if (this.orchestrator) {
-      this.speechService.beginGameplayTurn();
-      const result = await this.orchestrator.handleTranscript(text);
-      await this.applyPostGameplayResult(result);
+      if (this.orchestrator) {
+        this.speechService.beginGameplayTurn();
+        const result = await this.orchestrator.handleTranscript(text);
+        await this.applyPostGameplayResult(result);
+      }
+    } finally {
+      this.releaseAmbientCaptureMute();
     }
 
     this.uiService.updateStatus(
@@ -664,6 +691,8 @@ ${summary ? `**Summary (for NARRATE explanations):** ${summary}\n` : ""}${exampl
     }
     this.stopHabitatAnimalTimer();
     this.speechService.stopLoopingSound();
+    this.ambientCaptureMuteHolds = 0;
+    this.speechService.setAmbientCaptureMuted(false);
     this.activeHabitatAudio = null;
     this.nextHabitatAnimalAtMs = 0;
 

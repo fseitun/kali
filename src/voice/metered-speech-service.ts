@@ -56,4 +56,9 @@ export class MeteredSpeechService implements ISpeechService {
   stopLoopingSound(): void {
     this.inner.stopLoopingSound();
   }
+
+  /** @inheritdoc */
+  setAmbientCaptureMuted(muted: boolean): void {
+    this.inner.setAmbientCaptureMuted(muted);
+  }
 }

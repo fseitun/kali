@@ -28,6 +28,7 @@ describe("Product scenario: Kali App Core runtime invariants", () => {
       playSound: vi.fn(),
       startLoopingSound: vi.fn(),
       stopLoopingSound: vi.fn(),
+      setAmbientCaptureMuted: vi.fn(),
       loadSound: vi.fn().mockResolvedValue(undefined),
       prime: vi.fn(),
     } as unknown as ISpeechService;
@@ -48,5 +49,22 @@ describe("Product scenario: Kali App Core runtime invariants", () => {
   it("Expected outcome: Debug teleport is blocked unless feature is explicitly enabled", async () => {
     const result = await core.submitDebugPositionTeleport(5);
     expect(result).toBe(FAILED_RESULT);
+  });
+
+  it("Expected outcome: Wake to transcription window mutes and restores ambient audio", async () => {
+    const nameHandler = vi.fn();
+    const internalCore = core as unknown as {
+      currentNameHandler: (text: string) => void;
+      handleWakeWord(): void;
+      handleTranscription(text: string): Promise<void>;
+    };
+    internalCore.currentNameHandler = nameHandler;
+
+    internalCore.handleWakeWord();
+    await internalCore.handleTranscription("hola");
+
+    expect(mockSpeechService.setAmbientCaptureMuted).toHaveBeenNthCalledWith(1, true);
+    expect(mockSpeechService.setAmbientCaptureMuted).toHaveBeenNthCalledWith(2, false);
+    expect(nameHandler).toHaveBeenCalledWith("hola");
   });
 });

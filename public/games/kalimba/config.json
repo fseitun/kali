@@ -34,38 +34,38 @@
   "habitats": {
     "desert": {
       "positions": [0, 39],
-      "track": "/games/kalimba/sounds/jungle-odyssey.mp3.mpeg",
-      "animalSounds": ["/sounds/animal_collect.wav"]
+      "track": "/games/kalimba/sounds/amb_desert_wind_soft.mp3",
+      "animalSounds": ["/games/kalimba/sounds/sfx_animal_bird_wings.mp3"]
     },
     "forest": {
       "positions": [40, 69],
-      "track": "/games/kalimba/sounds/jungle-odyssey.mp3.mpeg",
-      "animalSounds": ["/sounds/hazard.wav"]
+      "track": "/games/kalimba/sounds/amb_forest_birds_morning.mp3",
+      "animalSounds": ["/games/kalimba/sounds/sfx_animal_bird_wings.mp3"]
     },
     "ocean": {
       "positions": [70, 95],
       "track": "/games/kalimba/sounds/jungle-odyssey.mp3.mpeg",
-      "animalSounds": ["/sounds/portal.wav"]
+      "animalSounds": ["/games/kalimba/sounds/sfx_animal_bird_wings.mp3"]
     },
     "arctic": {
       "positions": [96, 112],
       "track": "/games/kalimba/sounds/jungle-odyssey.mp3.mpeg",
-      "animalSounds": ["/sounds/item_collect.wav"]
+      "animalSounds": ["/games/kalimba/sounds/sfx_animal_bird_wings.mp3"]
     },
     "amazon": {
       "positions": [113, 124],
-      "track": "/games/kalimba/sounds/jungle-odyssey.mp3.mpeg",
-      "animalSounds": ["/sounds/animal_collect.wav"]
+      "track": "/games/kalimba/sounds/amb_jungle_rainforest_day.mp3",
+      "animalSounds": ["/games/kalimba/sounds/sfx_animal_monkey_call.mp3"]
     },
     "savanna": {
       "positions": [125, 166],
-      "track": "/games/kalimba/sounds/jungle-odyssey.mp3.mpeg",
-      "animalSounds": ["/sounds/hazard.wav"]
+      "track": "/games/kalimba/sounds/amb_desert_wind_soft.mp3",
+      "animalSounds": ["/games/kalimba/sounds/sfx_animal_monkey_call.mp3"]
     },
     "india": {
       "positions": [167, 185],
-      "track": "/games/kalimba/sounds/jungle-odyssey.mp3.mpeg",
-      "animalSounds": ["/sounds/portal.wav"]
+      "track": "/games/kalimba/sounds/amb_jungle_rainforest_day.mp3",
+      "animalSounds": ["/games/kalimba/sounds/sfx_animal_monkey_call.mp3"]
     },
     "door": {
       "positions": [186, 196],

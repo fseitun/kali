@@ -51,6 +51,10 @@ describe("Product scenario: Speech Service", () => {
     mockAudioContext = {
       decodeAudioData: vi.fn(),
       createBufferSource: vi.fn(),
+      createGain: vi.fn(() => ({
+        gain: { value: 1 },
+        connect: vi.fn(),
+      })),
       destination: {},
     };
 
@@ -439,6 +443,46 @@ describe("Product scenario: Speech Service", () => {
 
       expect(mockSource.stop).toHaveBeenCalledTimes(1);
       expect(mockSource.disconnect).toHaveBeenCalledTimes(1);
+    });
+
+    it("Expected outcome: Should mute and unmute ambient loop during capture", () => {
+      const mockBuffer = { duration: 1.0 };
+      const mockSource = {
+        buffer: null,
+        loop: false,
+        connect: vi.fn(),
+        start: vi.fn(),
+        stop: vi.fn(),
+        disconnect: vi.fn(),
+      };
+      mockAudioContext.createBufferSource.mockReturnValue(mockSource);
+      (speechService as any).sounds.set("habitat-track", mockBuffer);
+
+      speechService.startLoopingSound("habitat-track");
+      speechService.setAmbientCaptureMuted(true);
+      expect((speechService as any).ambientGainNode?.gain.value).toBe(0);
+
+      speechService.setAmbientCaptureMuted(false);
+      expect((speechService as any).ambientGainNode?.gain.value).toBe(1);
+    });
+
+    it("Expected outcome: Should apply mute state even before loop starts", () => {
+      const mockBuffer = { duration: 1.0 };
+      const mockSource = {
+        buffer: null,
+        loop: false,
+        connect: vi.fn(),
+        start: vi.fn(),
+        stop: vi.fn(),
+        disconnect: vi.fn(),
+      };
+      mockAudioContext.createBufferSource.mockReturnValue(mockSource);
+      (speechService as any).sounds.set("habitat-track", mockBuffer);
+
+      speechService.setAmbientCaptureMuted(true);
+      speechService.startLoopingSound("habitat-track");
+
+      expect((speechService as any).ambientGainNode?.gain.value).toBe(0);
     });
   });
 });

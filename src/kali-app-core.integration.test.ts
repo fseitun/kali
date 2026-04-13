@@ -166,6 +166,7 @@ describe("Product scenario: Kali App Core Integration Runtime Flows", () => {
       playSound: vi.fn(),
       startLoopingSound: vi.fn(),
       stopLoopingSound: vi.fn(),
+      setAmbientCaptureMuted: vi.fn(),
       loadSound: vi.fn().mockResolvedValue(undefined),
       prime: vi.fn(),
     } as unknown as ISpeechService;

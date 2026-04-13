@@ -9,6 +9,7 @@ export interface ISpeechService {
   playSound(name: string): void;
   startLoopingSound(name: string): void;
   stopLoopingSound(): void;
+  setAmbientCaptureMuted(muted: boolean): void;
 }
 
 /**
@@ -20,6 +21,35 @@ export class SpeechService implements ISpeechService {
   private primed = false;
   private loopingSource: AudioBufferSourceNode | null = null;
   private activeLoopName: string | null = null;
+  private sfxGainNode: GainNode | null = null;
+  private ambientGainNode: GainNode | null = null;
+  private ambientCaptureMuted = false;
+
+  private ensureAudioRouting(): void {
+    this.audioContext ??= new AudioContext();
+    if (!this.sfxGainNode || !this.ambientGainNode) {
+      this.sfxGainNode = this.audioContext.createGain();
+      this.ambientGainNode = this.audioContext.createGain();
+      this.sfxGainNode.connect(this.audioContext.destination);
+      this.ambientGainNode.connect(this.audioContext.destination);
+      this.applyAmbientGain();
+    }
+  }
+
+  private applyAmbientGain(): void {
+    if (this.ambientGainNode) {
+      this.ambientGainNode.gain.value = this.ambientCaptureMuted ? 0 : 1;
+    }
+  }
+
+  private getReadyAudioContext(): AudioContext | null {
+    this.ensureAudioRouting();
+    if (!this.audioContext) {
+      Logger.warn("Audio context unavailable");
+      return null;
+    }
+    return this.audioContext;
+  }
 
   /**
    * Primes the speech synthesis API for immediate use.
@@ -91,12 +121,15 @@ export class SpeechService implements ISpeechService {
    * @param url - URL to fetch the sound file from
    */
   async loadSound(name: string, url: string): Promise<void> {
-    this.audioContext ??= new AudioContext();
+    const audioContext = this.getReadyAudioContext();
+    if (!audioContext) {
+      return;
+    }
 
     try {
       const response = await fetch(url);
       const arrayBuffer = await response.arrayBuffer();
-      const audioBuffer = await this.audioContext.decodeAudioData(arrayBuffer);
+      const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
       this.sounds.set(name, audioBuffer);
       Logger.info(`Loaded sound: ${name}`);
     } catch (error) {
@@ -115,7 +148,10 @@ export class SpeechService implements ISpeechService {
       return;
     }
 
-    this.audioContext ??= new AudioContext();
+    const audioContext = this.getReadyAudioContext();
+    if (!audioContext) {
+      return;
+    }
 
     try {
       const buffer = this.sounds.get(name);
@@ -123,9 +159,13 @@ export class SpeechService implements ISpeechService {
         Logger.warn(`Sound not found: ${name}`);
         return;
       }
-      const source = this.audioContext.createBufferSource();
+      const source = audioContext.createBufferSource();
       source.buffer = buffer;
-      source.connect(this.audioContext.destination);
+      if (!this.sfxGainNode) {
+        Logger.warn("SFX gain node unavailable, skipping sound");
+        return;
+      }
+      source.connect(this.sfxGainNode);
       source.start(0);
       Logger.info(`Playing sound: ${name}`);
     } catch (error) {
@@ -148,7 +188,10 @@ export class SpeechService implements ISpeechService {
       return;
     }
 
-    this.audioContext ??= new AudioContext();
+    const audioContext = this.getReadyAudioContext();
+    if (!audioContext) {
+      return;
+    }
     const buffer = this.sounds.get(name);
     if (!buffer) {
       Logger.warn(`Looping sound buffer not found: ${name}`);
@@ -156,10 +199,14 @@ export class SpeechService implements ISpeechService {
     }
 
     try {
-      const source = this.audioContext.createBufferSource();
+      const source = audioContext.createBufferSource();
       source.buffer = buffer;
       source.loop = true;
-      source.connect(this.audioContext.destination);
+      if (!this.ambientGainNode) {
+        Logger.warn("Ambient gain node unavailable, skipping loop");
+        return;
+      }
+      source.connect(this.ambientGainNode);
       source.start(0);
       this.loopingSource = source;
       this.activeLoopName = name;
@@ -188,5 +235,14 @@ export class SpeechService implements ISpeechService {
       this.loopingSource = null;
       this.activeLoopName = null;
     }
+  }
+
+  /**
+   * Mutes/unmutes ambient looping audio while speech capture is active.
+   * @param muted - True to mute ambient loop during capture windows
+   */
+  setAmbientCaptureMuted(muted: boolean): void {
+    this.ambientCaptureMuted = muted;
+    this.applyAmbientGain();
   }
 }

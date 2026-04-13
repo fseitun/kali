@@ -22,4 +22,6 @@ export class NoOpSpeechService implements ISpeechService {
   startLoopingSound(_name: string): void {}
 
   stopLoopingSound(): void {}
+
+  setAmbientCaptureMuted(_muted: boolean): void {}
 }

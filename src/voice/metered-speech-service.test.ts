@@ -11,6 +11,7 @@ describe("Product scenario: Metered Speech Service", () => {
       playSound: vi.fn(),
       startLoopingSound: vi.fn(),
       stopLoopingSound: vi.fn(),
+      setAmbientCaptureMuted: vi.fn(),
     };
     const metered = new MeteredSpeechService(inner);
     metered.beginGameplayTurn();
@@ -30,6 +31,7 @@ describe("Product scenario: Metered Speech Service", () => {
       playSound: vi.fn(),
       startLoopingSound: vi.fn(),
       stopLoopingSound: vi.fn(),
+      setAmbientCaptureMuted: vi.fn(),
     };
     const metered = new MeteredSpeechService(inner);
     metered.beginGameplayTurn();
