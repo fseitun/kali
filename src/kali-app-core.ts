@@ -36,6 +36,11 @@ import { applySilentSuccessFallback } from "./voice/gameplay-voice-policy";
 import { MeteredSpeechService } from "./voice/metered-speech-service";
 import type { WakeWordDetector } from "@/voice-recognition/wake-word";
 
+const HABITAT_ANIMAL_COOLDOWN_MS = 20_000;
+const HABITAT_ANIMAL_JITTER_MIN_MS = 5_000;
+const HABITAT_ANIMAL_JITTER_MAX_MS = 15_000;
+const HABITAT_ANIMAL_TICK_MS = 5_000;
+
 function getMagicDoorAnnouncementContext(
   nextPlayer: { playerId: string; name: string; position: number },
   state: GameState | undefined,
@@ -85,6 +90,9 @@ export class KaliAppCore {
   private initialized = false;
   private currentNameHandler: ((text: string) => void) | null = null;
   private readonly speechService: MeteredSpeechService;
+  private activeHabitatAudio: string | null = null;
+  private nextHabitatAnimalAtMs = 0;
+  private habitatAnimalTimer: ReturnType<typeof setInterval> | null = null;
 
   constructor(
     private uiService: IUIService,
@@ -154,6 +162,7 @@ export class KaliAppCore {
       }
 
       const shouldStartGame = await this.handleSavedGameOrSetup();
+      this.syncHabitatAmbientAudio();
       this.initialized = true;
       this.uiService.hideButton();
       indicator.setState("listening");
@@ -199,8 +208,86 @@ export class KaliAppCore {
 
     Logger.info("Loading sound effects...");
     await gameLoader.loadSoundEffects(this.gameModule, this.speechService);
+    this.syncHabitatAmbientAudio();
+    this.ensureHabitatAnimalTimer();
 
     Logger.info("Orchestrator ready");
+  }
+
+  private ensureHabitatAnimalTimer(): void {
+    if (this.habitatAnimalTimer !== null) {
+      return;
+    }
+    this.habitatAnimalTimer = setInterval(() => {
+      this.syncHabitatAmbientAudio();
+    }, HABITAT_ANIMAL_TICK_MS);
+  }
+
+  private stopHabitatAnimalTimer(): void {
+    if (this.habitatAnimalTimer === null) {
+      return;
+    }
+    clearInterval(this.habitatAnimalTimer);
+    this.habitatAnimalTimer = null;
+  }
+
+  private getCurrentHabitatFromState(): string | null {
+    if (!this.stateManager) {
+      return null;
+    }
+    const state = this.stateManager.getState();
+    const game = state.game as Record<string, unknown> | undefined;
+    const habitat = game?.currentHabitat;
+    return typeof habitat === "string" && habitat.trim() !== "" ? habitat : null;
+  }
+
+  private scheduleNextHabitatAnimal(nowMs: number): void {
+    const jitterRange = HABITAT_ANIMAL_JITTER_MAX_MS - HABITAT_ANIMAL_JITTER_MIN_MS;
+    const jitter = HABITAT_ANIMAL_JITTER_MIN_MS + Math.floor(Math.random() * (jitterRange + 1));
+    this.nextHabitatAnimalAtMs = nowMs + HABITAT_ANIMAL_COOLDOWN_MS + jitter;
+  }
+
+  private maybePlayHabitatAnimal(habitat: string, nowMs: number): void {
+    if (!this.gameModule || !this.stateManager) {
+      return;
+    }
+    const game = this.stateManager.getState().game as Record<string, unknown> | undefined;
+    if (game?.phase !== GamePhase.PLAYING) {
+      return;
+    }
+    if (nowMs < this.nextHabitatAnimalAtMs) {
+      return;
+    }
+    const habitatEntry = this.gameModule.habitatAudio?.[habitat];
+    if (!habitatEntry || habitatEntry.animalSoundKeys.length === 0) {
+      this.scheduleNextHabitatAnimal(nowMs);
+      return;
+    }
+    const index = Math.floor(Math.random() * habitatEntry.animalSoundKeys.length);
+    this.speechService.playSound(habitatEntry.animalSoundKeys[index]);
+    this.scheduleNextHabitatAnimal(nowMs);
+  }
+
+  private syncHabitatAmbientAudio(): void {
+    if (!this.gameModule) {
+      return;
+    }
+    const habitat = this.getCurrentHabitatFromState();
+    if (!habitat) {
+      return;
+    }
+    if (this.activeHabitatAudio !== habitat) {
+      const habitatEntry = this.gameModule.habitatAudio?.[habitat];
+      if (habitatEntry) {
+        this.speechService.startLoopingSound(habitatEntry.trackSoundKey);
+      } else {
+        this.speechService.stopLoopingSound();
+      }
+      this.activeHabitatAudio = habitat;
+      this.scheduleNextHabitatAnimal(Date.now());
+      return;
+    }
+    this.maybePlayHabitatAnimal(habitat, Date.now());
   }
 
   private formatGameRules(gameModule: GameModule): string {
@@ -323,6 +410,7 @@ ${summary ? `**Summary (for NARRATE explanations):** ${summary}\n` : ""}${exampl
       result.voiceOutcomeHints,
       result.turnFrame,
     );
+    this.syncHabitatAmbientAudio();
   }
 
   /**
@@ -574,6 +662,10 @@ ${summary ? `**Summary (for NARRATE explanations):** ${summary}\n` : ""}${exampl
       await this.wakeWordDetector.destroy();
       this.wakeWordDetector = null;
     }
+    this.stopHabitatAnimalTimer();
+    this.speechService.stopLoopingSound();
+    this.activeHabitatAudio = null;
+    this.nextHabitatAnimalAtMs = 0;
 
     this.orchestrator = null;
     this.stateManager = null;

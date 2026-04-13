@@ -302,6 +302,8 @@ describe("Product scenario: Speech Service", () => {
         buffer: null,
         connect: vi.fn(),
         start: vi.fn(),
+        stop: vi.fn(),
+        disconnect: vi.fn(),
       };
 
       mockAudioContext.createBufferSource.mockReturnValue(mockSource);
@@ -331,6 +333,8 @@ describe("Product scenario: Speech Service", () => {
         buffer: null,
         connect: vi.fn(),
         start: vi.fn(),
+        stop: vi.fn(),
+        disconnect: vi.fn(),
       };
 
       mockAudioContext.createBufferSource.mockReturnValue(mockSource);
@@ -361,6 +365,80 @@ describe("Product scenario: Speech Service", () => {
 
       // Should not throw
       expect(true).toBe(true);
+    });
+  });
+
+  describe("Product scenario: Looping Sound", () => {
+    it("Expected outcome: Should start looping loaded sound", () => {
+      const mockBuffer = { duration: 1.0 };
+      const mockSource = {
+        buffer: null,
+        loop: false,
+        connect: vi.fn(),
+        start: vi.fn(),
+        stop: vi.fn(),
+        disconnect: vi.fn(),
+      };
+      mockAudioContext.createBufferSource.mockReturnValue(mockSource);
+      (speechService as any).sounds.set("habitat-track", mockBuffer);
+
+      speechService.startLoopingSound("habitat-track");
+
+      expect(mockAudioContext.createBufferSource).toHaveBeenCalledTimes(1);
+      expect(mockSource.loop).toBe(true);
+      expect(mockSource.start).toHaveBeenCalledWith(0);
+    });
+
+    it("Expected outcome: Should replace active loop when switching sounds", () => {
+      const mockBuffer = { duration: 1.0 };
+      const firstSource = {
+        buffer: null,
+        loop: false,
+        connect: vi.fn(),
+        start: vi.fn(),
+        stop: vi.fn(),
+        disconnect: vi.fn(),
+      };
+      const secondSource = {
+        buffer: null,
+        loop: false,
+        connect: vi.fn(),
+        start: vi.fn(),
+        stop: vi.fn(),
+        disconnect: vi.fn(),
+      };
+      mockAudioContext.createBufferSource
+        .mockReturnValueOnce(firstSource)
+        .mockReturnValueOnce(secondSource);
+      (speechService as any).sounds.set("track-a", mockBuffer);
+      (speechService as any).sounds.set("track-b", mockBuffer);
+
+      speechService.startLoopingSound("track-a");
+      speechService.startLoopingSound("track-b");
+
+      expect(firstSource.stop).toHaveBeenCalledTimes(1);
+      expect(firstSource.disconnect).toHaveBeenCalledTimes(1);
+      expect(secondSource.start).toHaveBeenCalledTimes(1);
+    });
+
+    it("Expected outcome: Should stop active looping sound", () => {
+      const mockBuffer = { duration: 1.0 };
+      const mockSource = {
+        buffer: null,
+        loop: false,
+        connect: vi.fn(),
+        start: vi.fn(),
+        stop: vi.fn(),
+        disconnect: vi.fn(),
+      };
+      mockAudioContext.createBufferSource.mockReturnValue(mockSource);
+      (speechService as any).sounds.set("habitat-track", mockBuffer);
+
+      speechService.startLoopingSound("habitat-track");
+      speechService.stopLoopingSound();
+
+      expect(mockSource.stop).toHaveBeenCalledTimes(1);
+      expect(mockSource.disconnect).toHaveBeenCalledTimes(1);
     });
   });
 });

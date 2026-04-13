@@ -1,8 +1,10 @@
 import type {
   EncounterQuestion,
   EncounterQuestionBankByAnimal,
+  HabitatConfigEntry,
   GameConfigInput,
   GameModule,
+  HabitatAudioRuntimeEntry,
   HabitatDefinition,
   HabitatSegment,
 } from "./types";
@@ -141,7 +143,8 @@ function habitatDefinitionToSegments(name: string, raw: HabitatDefinition): Habi
 }
 
 /**
- * Expands `config.habitat` into position → habitat name. Every index 0..winPosition must appear exactly once.
+ * Expands `config.habitats.*.positions` into position → habitat name.
+ * Every index 0..winPosition must appear exactly once.
  */
 export function expandHabitatConfig(
   habitat: Record<string, HabitatDefinition>,
@@ -358,6 +361,74 @@ function validateEncounterCoverage(
   }
 }
 
+function habitatTrackSoundKey(habitat: string): string {
+  return `habitat_track:${habitat}`;
+}
+
+function habitatAnimalSoundKey(habitat: string, index: number): string {
+  return `habitat_animal:${habitat}:${String(index)}`;
+}
+
+function isNonEmptyString(value: unknown): value is string {
+  return typeof value === "string" && value.trim().length > 0;
+}
+
+function validateHabitatAudioFields(habitat: string, entry: HabitatConfigEntry): void {
+  if (!isNonEmptyString(entry.track)) {
+    throw new Error(`Invalid game config: habitats.${habitat}.track must be a non-empty string`);
+  }
+  if (!Array.isArray(entry.animalSounds)) {
+    throw new Error(`Invalid game config: habitats.${habitat}.animalSounds must be an array`);
+  }
+  if (entry.animalSounds.length === 0) {
+    throw new Error(
+      `Invalid game config: habitats.${habitat}.animalSounds must include at least one sound`,
+    );
+  }
+  for (let i = 0; i < entry.animalSounds.length; i++) {
+    if (!isNonEmptyString(entry.animalSounds[i])) {
+      throw new Error(
+        `Invalid game config: habitats.${habitat}.animalSounds[${String(i)}] must be a non-empty string`,
+      );
+    }
+  }
+}
+
+function resolveHabitatDefinitions(
+  habitats: Record<string, HabitatConfigEntry> | undefined,
+): Record<string, HabitatDefinition> | undefined {
+  if (!habitats) {
+    return undefined;
+  }
+  const out: Record<string, HabitatDefinition> = {};
+  for (const [name, entry] of Object.entries(habitats)) {
+    out[name] = entry.positions;
+  }
+  return out;
+}
+
+function resolveHabitatAudioRuntime(
+  config: GameConfigInput,
+): Record<string, HabitatAudioRuntimeEntry> | undefined {
+  const habitats = config.habitats;
+  if (!habitats) {
+    return undefined;
+  }
+
+  const runtime: Record<string, HabitatAudioRuntimeEntry> = {};
+  for (const [habitat, entry] of Object.entries(habitats)) {
+    runtime[habitat] = {
+      trackUrl: entry.track,
+      animalSoundUrls: [...entry.animalSounds],
+      trackSoundKey: habitatTrackSoundKey(habitat),
+      animalSoundKeys: entry.animalSounds.map((_value, index) =>
+        habitatAnimalSoundKey(habitat, index),
+      ),
+    };
+  }
+  return runtime;
+}
+
 /**
  * Resolves initialState from config squares and metadata.
  * Exported for integration scenario runner which loads config from file.
@@ -370,7 +441,7 @@ export function resolveInitialState(config: GameConfigInput): GameState {
  * Builds initialState from squares + metadata.
  */
 function buildInitialStateFromParts(config: GameConfigInput): GameState {
-  const { metadata, squares: rawSquares, stateDisplay, habitat: habitatConfig } = config;
+  const { metadata, squares: rawSquares, stateDisplay, habitats } = config;
   if (!rawSquares) {
     throw new Error("Cannot build initialState: config has no squares");
   }
@@ -379,6 +450,7 @@ function buildInitialStateFromParts(config: GameConfigInput): GameState {
   const squaresComplete = mergeMissingSquareKeys(rawSquares, winPosition);
   validateBoardTopology(squaresComplete, winPosition);
 
+  const habitatConfig = resolveHabitatDefinitions(habitats);
   const squaresForBoard =
     habitatConfig != null && Object.keys(habitatConfig).length > 0
       ? applyHabitatToSquares(
@@ -471,6 +543,7 @@ export class GameLoader {
         metadata: config.metadata,
         initialState,
         soundEffects: config.soundEffects,
+        habitatAudio: resolveHabitatAudioRuntime(config),
         customActions: config.customActions,
         stateDisplay: config.stateDisplay,
       };
@@ -490,14 +563,30 @@ export class GameLoader {
    * @param speechService - Service to load the sounds into
    */
   async loadSoundEffects(module: GameModule, speechService: ISpeechService): Promise<void> {
-    if (!module.soundEffects) {
+    const soundsToLoad: Array<[string, string]> = [];
+
+    if (module.soundEffects) {
+      soundsToLoad.push(...Object.entries(module.soundEffects));
+    }
+
+    const configHabitatAudio = module.habitatAudio;
+    if (configHabitatAudio) {
+      for (const runtimeEntry of Object.values(configHabitatAudio)) {
+        soundsToLoad.push([runtimeEntry.trackSoundKey, runtimeEntry.trackUrl]);
+        runtimeEntry.animalSoundUrls.forEach((url, index) => {
+          soundsToLoad.push([runtimeEntry.animalSoundKeys[index], url]);
+        });
+      }
+    }
+
+    if (soundsToLoad.length === 0) {
       Logger.info("No sound effects to load");
       return;
     }
 
-    Logger.info(`Loading ${Object.keys(module.soundEffects).length} sound effects...`);
+    Logger.info(`Loading ${String(soundsToLoad.length)} sound effects...`);
 
-    const loadPromises = Object.entries(module.soundEffects).map(async ([name, url]) => {
+    const loadPromises = soundsToLoad.map(async ([name, url]) => {
       try {
         await speechService.loadSound(name, url);
       } catch (error) {
@@ -506,6 +595,46 @@ export class GameLoader {
     });
 
     await Promise.all(loadPromises);
+  }
+
+  private validateHabitatEntries(habitats: Record<string, HabitatConfigEntry>): void {
+    for (const [habitat, entry] of Object.entries(habitats)) {
+      if (!isNonEmptyString(habitat)) {
+        throw new Error("Invalid game config: habitats keys must be non-empty habitat names");
+      }
+      if (entry == null || typeof entry !== "object" || Array.isArray(entry)) {
+        throw new Error(`Invalid game config: habitats.${habitat} must be an object`);
+      }
+      habitatDefinitionToSegments(habitat, entry.positions);
+      validateHabitatAudioFields(habitat, entry);
+    }
+  }
+
+  private validateInitialHabitatExists(config: GameConfigInput): void {
+    if (!config.habitats) {
+      return;
+    }
+    const initialHabitat = config.metadata.initialHabitat ?? "Start";
+    if (!(initialHabitat in config.habitats)) {
+      throw new Error(
+        `Invalid game config: metadata.initialHabitat "${initialHabitat}" must exist in habitats`,
+      );
+    }
+  }
+
+  private validateHabitatsConfig(config: GameConfigInput): void {
+    if (config.habitats === undefined) {
+      return;
+    }
+    if (
+      config.habitats == null ||
+      typeof config.habitats !== "object" ||
+      Array.isArray(config.habitats)
+    ) {
+      throw new Error("Invalid game config: habitats must be an object");
+    }
+    this.validateHabitatEntries(config.habitats);
+    this.validateInitialHabitatExists(config);
   }
 
   private validateGameConfig(config: GameConfigInput): void {
@@ -520,6 +649,7 @@ export class GameLoader {
     if (!config.squares || Object.keys(config.squares).length === 0) {
       throw new Error("Invalid game config: squares required");
     }
+    this.validateHabitatsConfig(config);
     validateEncounterQuestions(config.encounterQuestions);
     validateEncounterCoverage(config.squares, config.encounterQuestions);
 

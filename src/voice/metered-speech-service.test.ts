@@ -9,6 +9,8 @@ describe("Product scenario: Metered Speech Service", () => {
       speak: vi.fn().mockResolvedValue(undefined),
       loadSound: vi.fn().mockResolvedValue(undefined),
       playSound: vi.fn(),
+      startLoopingSound: vi.fn(),
+      stopLoopingSound: vi.fn(),
     };
     const metered = new MeteredSpeechService(inner);
     metered.beginGameplayTurn();
@@ -26,6 +28,8 @@ describe("Product scenario: Metered Speech Service", () => {
       speak: vi.fn().mockResolvedValue(undefined),
       loadSound: vi.fn().mockResolvedValue(undefined),
       playSound: vi.fn(),
+      startLoopingSound: vi.fn(),
+      stopLoopingSound: vi.fn(),
     };
     const metered = new MeteredSpeechService(inner);
     metered.beginGameplayTurn();

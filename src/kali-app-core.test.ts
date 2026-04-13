@@ -26,6 +26,8 @@ describe("Product scenario: Kali App Core runtime invariants", () => {
     mockSpeechService = {
       speak: vi.fn().mockResolvedValue(undefined),
       playSound: vi.fn(),
+      startLoopingSound: vi.fn(),
+      stopLoopingSound: vi.fn(),
       loadSound: vi.fn().mockResolvedValue(undefined),
       prime: vi.fn(),
     } as unknown as ISpeechService;

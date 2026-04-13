@@ -46,4 +46,14 @@ export class MeteredSpeechService implements ISpeechService {
   playSound(name: string): void {
     this.inner.playSound(name);
   }
+
+  /** @inheritdoc */
+  startLoopingSound(name: string): void {
+    this.inner.startLoopingSound(name);
+  }
+
+  /** @inheritdoc */
+  stopLoopingSound(): void {
+    this.inner.stopLoopingSound();
+  }
 }

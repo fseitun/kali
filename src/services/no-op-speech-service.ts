@@ -18,4 +18,8 @@ export class NoOpSpeechService implements ISpeechService {
   }
 
   playSound(_name: string): void {}
+
+  startLoopingSound(_name: string): void {}
+
+  stopLoopingSound(): void {}
 }

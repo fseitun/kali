@@ -5,7 +5,7 @@
     "minPlayers": 2,
     "maxPlayers": 6,
     "objective": "Be the first player to reach square 196 (the Heart of Kalimba).",
-    "initialHabitat": "Start"
+    "initialHabitat": "desert"
   },
   "stateDisplay": {
     "game": {
@@ -31,15 +31,47 @@
     "hazard": "/sounds/hazard.wav",
     "victory": "/sounds/victory.wav"
   },
-  "habitat": {
-    "desert": [0, 39],
-    "forest": [40, 69],
-    "ocean": [70, 95],
-    "arctic": [96, 112],
-    "amazon": [113, 124],
-    "savanna": [125, 166],
-    "india": [167, 185],
-    "door": [186, 196]
+  "habitats": {
+    "desert": {
+      "positions": [0, 39],
+      "track": "/games/kalimba/sounds/jungle-odyssey.mp3.mpeg",
+      "animalSounds": ["/sounds/animal_collect.wav"]
+    },
+    "forest": {
+      "positions": [40, 69],
+      "track": "/games/kalimba/sounds/jungle-odyssey.mp3.mpeg",
+      "animalSounds": ["/sounds/hazard.wav"]
+    },
+    "ocean": {
+      "positions": [70, 95],
+      "track": "/games/kalimba/sounds/jungle-odyssey.mp3.mpeg",
+      "animalSounds": ["/sounds/portal.wav"]
+    },
+    "arctic": {
+      "positions": [96, 112],
+      "track": "/games/kalimba/sounds/jungle-odyssey.mp3.mpeg",
+      "animalSounds": ["/sounds/item_collect.wav"]
+    },
+    "amazon": {
+      "positions": [113, 124],
+      "track": "/games/kalimba/sounds/jungle-odyssey.mp3.mpeg",
+      "animalSounds": ["/sounds/animal_collect.wav"]
+    },
+    "savanna": {
+      "positions": [125, 166],
+      "track": "/games/kalimba/sounds/jungle-odyssey.mp3.mpeg",
+      "animalSounds": ["/sounds/hazard.wav"]
+    },
+    "india": {
+      "positions": [167, 185],
+      "track": "/games/kalimba/sounds/jungle-odyssey.mp3.mpeg",
+      "animalSounds": ["/sounds/portal.wav"]
+    },
+    "door": {
+      "positions": [186, 196],
+      "track": "/games/kalimba/sounds/jungle-odyssey.mp3.mpeg",
+      "animalSounds": ["/sounds/victory.wav"]
+    }
   },
   "squares": {
     "0": { "next": { "1": ["left", "short"], "15": ["right", "long"] }, "prev": [] },

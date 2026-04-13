@@ -16,6 +16,10 @@ describe("Product scenario: Name Collector runtime behavior", () => {
     mockSpeechService = {
       speak: vi.fn(async () => {}),
       playSound: vi.fn(),
+      startLoopingSound: vi.fn(),
+      stopLoopingSound: vi.fn(),
+      loadSound: vi.fn(async () => {}),
+      prime: vi.fn(),
     } as unknown as ISpeechService;
     mockLLMClient = {
       analyzeResponse: vi.fn(async () => ({ isOnTopic: true })),

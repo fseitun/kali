@@ -58,6 +58,38 @@ export interface EncounterQuestionBankByAnimal {
 }
 
 /**
+ * Per-habitat ambient audio configuration.
+ */
+export interface HabitatAudioConfigEntry {
+  /** Looping background track URL for the habitat. */
+  track: string;
+  /** One-shot ambient animal sounds for occasional playback. */
+  animalSounds: string[];
+}
+
+/**
+ * Unified habitat definition: board assignment plus ambient audio.
+ */
+export interface HabitatConfigEntry {
+  /** Squares covered by this habitat in config authoring format. */
+  positions: HabitatDefinition;
+  /** Looping background track URL for this habitat. */
+  track: string;
+  /** One-shot ambient animal sounds for occasional playback. */
+  animalSounds: string[];
+}
+
+/**
+ * Runtime habitat audio payload with deterministic sound keys.
+ */
+export interface HabitatAudioRuntimeEntry {
+  trackUrl: string;
+  animalSoundUrls: string[];
+  trackSoundKey: string;
+  animalSoundKeys: string[];
+}
+
+/**
  * Internal segment after normalizing `HabitatDefinition`: one index or inclusive `[lo, hi]`.
  */
 export type HabitatSegment = number | [number, number];
@@ -77,15 +109,15 @@ export type HabitatDefinition = number | readonly number[];
 export interface GameConfigInput {
   metadata: GameMetadata;
   soundEffects?: Record<string, string>;
+  /**
+   * Unified habitat map. Every square `0..win` must appear exactly once across all entries via `positions`.
+   * Loader merges habitat names onto `board.squares[n].habitat`.
+   */
+  habitats?: Record<string, HabitatConfigEntry>;
   customActions?: string[];
   stateDisplay?: StateDisplayMetadata;
   /** Deterministic encounter question bank by animal name and locale. */
   encounterQuestions?: Record<string, EncounterQuestionBankByAnimal>;
-  /**
-   * When non-empty, every square `0..win` must appear exactly once across all habitats.
-   * Merged onto `board.squares[n].habitat` at load (overrides any `habitat` on authored squares).
-   */
-  habitat?: Record<string, HabitatDefinition>;
   /** Squares 0..boardLength with explicit next/prev. Board, game, and players derived from this. */
   squares?: Record<string, SquareData>;
 }
@@ -97,6 +129,7 @@ export interface GameModule {
   metadata: GameMetadata;
   initialState: GameState;
   soundEffects?: Record<string, string>;
+  habitatAudio?: Record<string, HabitatAudioRuntimeEntry>;
   customActions?: string[];
   stateDisplay?: StateDisplayMetadata;
 }

@@ -218,6 +218,77 @@ describe("Product scenario: Game Loader", () => {
         "Invalid game module: missing metadata",
       );
     });
+
+    it("Expected outcome: Rejects initial habitat missing from habitats map", async () => {
+      const invalidModule = {
+        metadata: {
+          id: "test-game",
+          name: "Test Game",
+          minPlayers: 2,
+          maxPlayers: 4,
+          objective: "Test objective",
+          initialHabitat: "Start",
+        },
+        habitats: {
+          desert: {
+            positions: [0, 0],
+            track: "/games/test/sounds/desert.mp3",
+            animalSounds: ["/games/test/sounds/camel.wav"],
+          },
+          forest: {
+            positions: [1, 1],
+            track: "/games/test/sounds/forest.mp3",
+            animalSounds: ["/games/test/sounds/fox.wav"],
+          },
+        },
+        squares: {
+          "0": { next: [1], prev: [] },
+          "1": { effect: "win", next: [], prev: [0] },
+        },
+      };
+
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve(invalidModule),
+      });
+
+      await expect(gameLoader.loadGame("invalid")).rejects.toThrow(
+        'Invalid game config: metadata.initialHabitat "Start" must exist in habitats',
+      );
+    });
+
+    it("Expected outcome: Rejects malformed habitat audio fields in unified habitats", async () => {
+      const invalidModule = {
+        metadata: {
+          id: "test-game",
+          name: "Test Game",
+          minPlayers: 2,
+          maxPlayers: 4,
+          objective: "Test objective",
+          initialHabitat: "desert",
+        },
+        habitats: {
+          desert: {
+            positions: [0, 0],
+            track: "/games/test/sounds/desert.mp3",
+            animalSounds: [],
+          },
+        },
+        squares: {
+          "0": { next: [1], prev: [] },
+          "1": { effect: "win", next: [], prev: [0] },
+        },
+      };
+
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve(invalidModule),
+      });
+
+      await expect(gameLoader.loadGame("invalid")).rejects.toThrow(
+        "Invalid game config: habitats.desert.animalSounds must include at least one sound",
+      );
+    });
   });
 
   describe("Product scenario: Load Sound Effects", () => {
@@ -245,16 +316,32 @@ describe("Product scenario: Game Loader", () => {
           snake_down: "/sounds/snake.mp3",
           dice_roll: "/sounds/dice.mp3",
         },
+        habitatAudio: {
+          desert: {
+            trackUrl: "/games/test/sounds/desert.mp3",
+            animalSoundUrls: ["/games/test/sounds/camel.wav"],
+            trackSoundKey: "habitat_track:desert",
+            animalSoundKeys: ["habitat_animal:desert:0"],
+          },
+        },
       };
 
       mockSpeechService.loadSound.mockResolvedValue(undefined);
 
       await gameLoader.loadSoundEffects(gameModule, mockSpeechService as unknown as never);
 
-      expect(mockSpeechService.loadSound).toHaveBeenCalledTimes(3);
+      expect(mockSpeechService.loadSound).toHaveBeenCalledTimes(5);
       expect(mockSpeechService.loadSound).toHaveBeenCalledWith("ladder_up", "/sounds/ladder.mp3");
       expect(mockSpeechService.loadSound).toHaveBeenCalledWith("snake_down", "/sounds/snake.mp3");
       expect(mockSpeechService.loadSound).toHaveBeenCalledWith("dice_roll", "/sounds/dice.mp3");
+      expect(mockSpeechService.loadSound).toHaveBeenCalledWith(
+        "habitat_track:desert",
+        "/games/test/sounds/desert.mp3",
+      );
+      expect(mockSpeechService.loadSound).toHaveBeenCalledWith(
+        "habitat_animal:desert:0",
+        "/games/test/sounds/camel.wav",
+      );
     });
 
     it("Expected outcome: Should handle missing sound effects", async () => {
@@ -451,7 +538,10 @@ describe("Product scenario: Resolve Initial State with config habitat", () => {
         maxPlayers: 2,
         objective: "win at 1",
       },
-      habitat: { h0: [0, 0], h1: [1, 1] },
+      habitats: {
+        h0: { positions: [0, 0], track: "/sounds/a.mp3", animalSounds: ["/sounds/a.wav"] },
+        h1: { positions: [1, 1], track: "/sounds/b.mp3", animalSounds: ["/sounds/b.wav"] },
+      },
       squares: {
         "0": { next: [1], prev: [] },
         "1": { effect: "win", next: [], prev: [0] },

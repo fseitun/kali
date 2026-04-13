@@ -7,6 +7,8 @@ export interface ISpeechService {
   speak(text: string): Promise<void>;
   loadSound(name: string, url: string): Promise<void>;
   playSound(name: string): void;
+  startLoopingSound(name: string): void;
+  stopLoopingSound(): void;
 }
 
 /**
@@ -16,6 +18,8 @@ export class SpeechService implements ISpeechService {
   private audioContext?: AudioContext;
   private sounds: Map<string, AudioBuffer> = new Map();
   private primed = false;
+  private loopingSource: AudioBufferSourceNode | null = null;
+  private activeLoopName: string | null = null;
 
   /**
    * Primes the speech synthesis API for immediate use.
@@ -126,6 +130,63 @@ export class SpeechService implements ISpeechService {
       Logger.info(`Playing sound: ${name}`);
     } catch (error) {
       Logger.warn(`Failed to play sound ${name}:`, error);
+    }
+  }
+
+  /**
+   * Starts a looping sound by name. Replaces any currently active loop.
+   * @param name - Identifier of the looping sound to play
+   */
+  startLoopingSound(name: string): void {
+    if (this.activeLoopName === name && this.loopingSource !== null) {
+      return;
+    }
+    this.stopLoopingSound();
+
+    if (!this.sounds.has(name)) {
+      Logger.warn(`Looping sound "${name}" not found, continuing without loop`);
+      return;
+    }
+
+    this.audioContext ??= new AudioContext();
+    const buffer = this.sounds.get(name);
+    if (!buffer) {
+      Logger.warn(`Looping sound buffer not found: ${name}`);
+      return;
+    }
+
+    try {
+      const source = this.audioContext.createBufferSource();
+      source.buffer = buffer;
+      source.loop = true;
+      source.connect(this.audioContext.destination);
+      source.start(0);
+      this.loopingSource = source;
+      this.activeLoopName = name;
+      Logger.info(`Looping sound started: ${name}`);
+    } catch (error) {
+      Logger.warn(`Failed to start looping sound ${name}:`, error);
+      this.loopingSource = null;
+      this.activeLoopName = null;
+    }
+  }
+
+  /**
+   * Stops the currently active looping sound, if any.
+   */
+  stopLoopingSound(): void {
+    if (this.loopingSource === null) {
+      this.activeLoopName = null;
+      return;
+    }
+    try {
+      this.loopingSource.stop();
+      this.loopingSource.disconnect();
+    } catch (error) {
+      Logger.warn("Failed to stop looping sound:", error);
+    } finally {
+      this.loopingSource = null;
+      this.activeLoopName = null;
     }
   }
 }

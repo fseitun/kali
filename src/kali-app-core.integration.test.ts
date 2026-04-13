@@ -48,10 +48,28 @@ vi.mock("./game-loader/game-loader", async () => {
         const raw = fsMod.readFileSync(configPath, "utf-8");
         const config = JSON.parse(raw) as GameConfigInput;
         const initialState = gameLoaderActual.resolveInitialState(config);
+        const habitatAudio = config.habitats
+          ? Object.fromEntries(
+              Object.entries(config.habitats).map(([habitat, entry]) => {
+                return [
+                  habitat,
+                  {
+                    trackUrl: entry.track,
+                    animalSoundUrls: [...entry.animalSounds],
+                    trackSoundKey: `habitat_track:${habitat}`,
+                    animalSoundKeys: entry.animalSounds.map(
+                      (_value, index) => `habitat_animal:${habitat}:${String(index)}`,
+                    ),
+                  },
+                ];
+              }),
+            )
+          : undefined;
         const module: GameModule = {
           metadata: config.metadata,
           initialState,
           soundEffects: config.soundEffects,
+          habitatAudio,
           customActions: config.customActions,
           stateDisplay: config.stateDisplay,
         };
@@ -146,6 +164,8 @@ describe("Product scenario: Kali App Core Integration Runtime Flows", () => {
     mockSpeechService = {
       speak: vi.fn().mockResolvedValue(undefined),
       playSound: vi.fn(),
+      startLoopingSound: vi.fn(),
+      stopLoopingSound: vi.fn(),
       loadSound: vi.fn().mockResolvedValue(undefined),
       prime: vi.fn(),
     } as unknown as ISpeechService;
@@ -161,6 +181,7 @@ describe("Product scenario: Kali App Core Integration Runtime Flows", () => {
       expect(core.isInitialized()).toBe(true);
       expect(mockUIService.hideButton).toHaveBeenCalled();
       expect(mockIndicator.setState).toHaveBeenCalledWith("listening");
+      expect(mockSpeechService.startLoopingSound).toHaveBeenCalled();
     });
   });
 
@@ -340,6 +361,7 @@ describe("Product scenario: Kali App Core Integration Runtime Flows", () => {
       await core.dispose();
 
       expect(core.isInitialized()).toBe(false);
+      expect(mockSpeechService.stopLoopingSound).toHaveBeenCalled();
       expect(mockUIService.showButton).toHaveBeenCalled();
       expect(mockUIService.updateStatus).toHaveBeenCalled();
       expect(mockIndicator.setState).toHaveBeenCalledWith("idle");
