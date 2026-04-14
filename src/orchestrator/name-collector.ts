@@ -100,6 +100,31 @@ export class NameCollector {
       const handler = async (text: string): Promise<void> => {
         Logger.info(`Player count handler received: "${text}"`);
 
+        const deterministicCount = this.extractPlayerCountDeterministic(text);
+        if (deterministicCount !== null) {
+          if (deterministicCount >= this.minPlayers && deterministicCount <= this.maxPlayers) {
+            resolve(deterministicCount);
+            return;
+          }
+          await this.speechService.speak(
+            t("setup.playerCountInvalid", {
+              min: this.minPlayers,
+              max: this.maxPlayers,
+            }),
+          );
+          return;
+        }
+
+        const llmCount = await this.llmClient.extractPlayerCount(
+          text,
+          this.minPlayers,
+          this.maxPlayers,
+        );
+        if (llmCount !== null && llmCount >= this.minPlayers && llmCount <= this.maxPlayers) {
+          resolve(llmCount);
+          return;
+        }
+
         const analysis = await this.llmClient.analyzeResponse(
           text,
           `expecting player count number from ${this.minPlayers} to ${this.maxPlayers}`,
@@ -113,28 +138,12 @@ export class NameCollector {
           return;
         }
 
-        const lower = text.toLowerCase().trim();
-        let count = 0;
-
-        const numberWords = getNumberWords();
-
-        for (let i = 0; i <= 10; i++) {
-          if (lower.includes(String(i)) || lower.includes(numberWords[i])) {
-            count = i;
-            break;
-          }
-        }
-
-        if (count >= this.minPlayers && count <= this.maxPlayers) {
-          resolve(count);
-        } else {
-          await this.speechService.speak(
-            t("setup.playerCountInvalid", {
-              min: this.minPlayers,
-              max: this.maxPlayers,
-            }),
-          );
-        }
+        await this.speechService.speak(
+          t("setup.playerCountInvalid", {
+            min: this.minPlayers,
+            max: this.maxPlayers,
+          }),
+        );
       };
 
       onTranscript(handler);
@@ -143,6 +152,38 @@ export class NameCollector {
         t("setup.playerCount", { min: this.minPlayers, max: this.maxPlayers }),
       );
     });
+  }
+
+  private normalizeForNumberExtraction(text: string): string {
+    return text
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/[^a-z0-9]+/g, " ")
+      .trim();
+  }
+
+  private extractPlayerCountDeterministic(text: string): number | null {
+    const normalized = this.normalizeForNumberExtraction(text);
+    if (normalized === "") {
+      return null;
+    }
+    const digitMatch = normalized.match(/\b\d+\b/);
+    if (digitMatch) {
+      const parsed = Number.parseInt(digitMatch[0], 10);
+      if (Number.isInteger(parsed)) {
+        return parsed;
+      }
+    }
+    const numberWords = getNumberWords().map((word) => this.normalizeForNumberExtraction(word));
+    const tokens = normalized.split(/\s+/).filter(Boolean);
+    for (const token of tokens) {
+      const value = numberWords.indexOf(token);
+      if (value !== -1) {
+        return value;
+      }
+    }
+    return null;
   }
 
   private async askPlayerName(

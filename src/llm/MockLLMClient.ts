@@ -66,6 +66,51 @@ export class MockLLMClient implements LLMClient {
     return defaultNames[this.callCount % defaultNames.length] || "Player";
   }
 
+  async extractPlayerCount(
+    transcript: string,
+    minPlayers: number,
+    maxPlayers: number,
+  ): Promise<number | null> {
+    Logger.info(`MockLLMClient.extractPlayerCount: "${transcript}"`);
+    const normalized = transcript
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, " ")
+      .replace(/[^a-z0-9]+/g, " ")
+      .trim();
+    const digitMatch = normalized.match(/\b\d+\b/);
+    if (digitMatch) {
+      const parsed = Number.parseInt(digitMatch[0], 10);
+      if (parsed >= minPlayers && parsed <= maxPlayers) {
+        return parsed;
+      }
+    }
+    const wordToNumber: Record<string, number> = {
+      zero: 0,
+      cero: 0,
+      one: 1,
+      uno: 1,
+      two: 2,
+      dos: 2,
+      three: 3,
+      tres: 3,
+      four: 4,
+      cuatro: 4,
+      five: 5,
+      cinco: 5,
+      six: 6,
+      seis: 6,
+    };
+    const tokens = normalized.split(/\s+/).filter(Boolean);
+    for (const token of tokens) {
+      const value = wordToNumber[token];
+      if (value !== undefined && value >= minPlayers && value <= maxPlayers) {
+        return value;
+      }
+    }
+    return null;
+  }
+
   async analyzeResponse(
     transcript: string,
     expectedContext: string,

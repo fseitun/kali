@@ -24,6 +24,7 @@ describe("Product scenario: Name Collector runtime behavior", () => {
     mockLLMClient = {
       analyzeResponse: vi.fn(async () => ({ isOnTopic: true })),
       extractName: vi.fn(async (text: string) => text.trim()),
+      extractPlayerCount: vi.fn(async () => null),
     } as unknown as LLMClient;
     mockEnableDirectTranscription = vi.fn();
     gameMetadata = {
@@ -84,6 +85,70 @@ describe("Product scenario: Name Collector runtime behavior", () => {
     await collectPromise;
 
     expect(mockEnableDirectTranscription).toHaveBeenCalledTimes(1);
+  });
+
+  it("Expected outcome: Accepts numeric player count even when on-topic classifier fails", async () => {
+    const analyzeResponseSpy = vi.fn(async (_text: string, expectedContext: string) => {
+      if (expectedContext.includes("player count")) {
+        return { isOnTopic: false as const, urgentMessage: "off topic" };
+      }
+      return { isOnTopic: true as const };
+    });
+    mockLLMClient = {
+      analyzeResponse: analyzeResponseSpy,
+      extractName: vi.fn(async (text: string) => text.trim()),
+      extractPlayerCount: vi.fn(async () => null),
+    } as unknown as LLMClient;
+    const collector = new NameCollector(
+      mockSpeechService,
+      "Test Game",
+      mockEnableDirectTranscription,
+      mockLLMClient,
+      gameMetadata,
+    );
+
+    const collectPromise = collector.collectNames((handler) => {
+      transcriptHandler = handler;
+    });
+
+    await new Promise((resolve) => setTimeout(resolve, 50));
+    await sendTranscript("2");
+    await sendTranscript("Alice");
+    await sendTranscript("Bob");
+
+    await expect(collectPromise).resolves.toEqual(["Alice", "Bob"]);
+    expect(analyzeResponseSpy).not.toHaveBeenCalledWith(
+      "2",
+      expect.stringContaining("player count"),
+    );
+  });
+
+  it("Expected outcome: Uses LLM player count extraction fallback for natural-language phrasing", async () => {
+    const extractPlayerCountSpy = vi.fn(async () => 2);
+    mockLLMClient = {
+      analyzeResponse: vi.fn(async () => ({ isOnTopic: true })),
+      extractName: vi.fn(async (text: string) => text.trim()),
+      extractPlayerCount: extractPlayerCountSpy,
+    } as unknown as LLMClient;
+    const collector = new NameCollector(
+      mockSpeechService,
+      "Test Game",
+      mockEnableDirectTranscription,
+      mockLLMClient,
+      gameMetadata,
+    );
+
+    const collectPromise = collector.collectNames((handler) => {
+      transcriptHandler = handler;
+    });
+
+    await new Promise((resolve) => setTimeout(resolve, 50));
+    await sendTranscript("vamos a jugar en pareja");
+    await sendTranscript("Alice");
+    await sendTranscript("Bob");
+
+    await expect(collectPromise).resolves.toEqual(["Alice", "Bob"]);
+    expect(extractPlayerCountSpy).toHaveBeenCalledWith("vamos a jugar en pareja", 2, 4);
   });
 
   it("Expected outcome: Skip ready message option suppresses setup ready prompt", async () => {

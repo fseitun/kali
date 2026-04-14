@@ -32,6 +32,20 @@ export interface LLMClient {
   extractName(transcript: string): Promise<string | null>;
 
   /**
+   * Extracts the number of players from natural language setup responses.
+   * Returns null when no reliable count can be inferred.
+   * @param transcript - The transcribed user input
+   * @param minPlayers - Inclusive minimum players for current game
+   * @param maxPlayers - Inclusive maximum players for current game
+   * @returns Extracted player count or null when uncertain
+   */
+  extractPlayerCount(
+    transcript: string,
+    minPlayers: number,
+    maxPlayers: number,
+  ): Promise<number | null>;
+
+  /**
    * Analyzes if a user's response is on-topic for the expected context.
    * Detects urgent or off-topic messages (injuries, emergencies, complaints).
    * @param transcript - The transcribed user input

@@ -211,6 +211,7 @@ describe("Product scenario: Kali App Core Integration Runtime Flows", () => {
       expect(core.isInitialized()).toBe(true);
       expect(mockUIService.setTranscriptInputEnabled).toHaveBeenCalledWith(true);
       expect(mockUIService.setTranscriptInputEnabled).toHaveBeenCalledWith(false);
+      expect(mockSpeechService.startLoopingSound).toHaveBeenCalled();
     });
   });
 

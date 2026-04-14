@@ -363,6 +363,7 @@ ${summary ? `**Summary (for NARRATE explanations):** ${summary}\n` : ""}${exampl
       const game = state.game as Record<string, unknown> | undefined;
 
       Logger.info(`Startup phase check - phase: ${game?.phase}`);
+      this.syncHabitatAmbientAudio();
 
       if (game?.phase === GamePhase.PLAYING) {
         Logger.info("Saved game detected - waiting for user command");

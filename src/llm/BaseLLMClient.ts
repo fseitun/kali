@@ -8,7 +8,7 @@ import { safeParse, parseArray, tryCoalesceNdjsonObjectArray } from "@/utils/jso
 import { Logger } from "@/utils/logger";
 import { Profiler } from "@/utils/profiler";
 
-type PromptPurpose = "getActions" | "extractName" | "analyzeResponse";
+type PromptPurpose = "getActions" | "extractName" | "extractPlayerCount" | "analyzeResponse";
 
 export abstract class BaseLLMClient implements LLMClient {
   protected systemPrompt: string = "";
@@ -204,6 +204,53 @@ Name:`;
       return content.trim();
     } catch (error) {
       Logger.error("extractName error:", error);
+      return null;
+    }
+  }
+
+  async extractPlayerCount(
+    transcript: string,
+    minPlayers: number,
+    maxPlayers: number,
+  ): Promise<number | null> {
+    try {
+      const prompt = `Extract player count from this setup response.
+
+User said: "${transcript}"
+Expected range: ${String(minPlayers)} to ${String(maxPlayers)}
+
+Return ONLY valid JSON:
+{"playerCount": <integer>}
+or
+{"playerCount": null}
+
+Use null when no clear count is provided.`;
+
+      this.logPrompt("extractPlayerCount", prompt);
+      const startTime = performance.now();
+      const apiResult = await this.makeApiCall(prompt, {
+        temperature: 0.2,
+        maxTokens: 80,
+        responseFormatJson: true,
+      });
+      const durationMs = performance.now() - startTime;
+      const content = apiResult.content;
+      this.logPromptResponse("extractPlayerCount", content, durationMs);
+
+      const markdownMatch = content.match(/```(?:json)?\s*\n?([\s\S]*?)\n?```/);
+      const jsonString = markdownMatch ? markdownMatch[1].trim() : content.trim();
+      const parseResult = safeParse(jsonString);
+      if (!parseResult.success) {
+        Logger.error("Invalid JSON in extractPlayerCount:", parseResult.error);
+        return null;
+      }
+      const parsed = parseResult.data as { playerCount?: unknown };
+      if (typeof parsed.playerCount !== "number" || !Number.isInteger(parsed.playerCount)) {
+        return null;
+      }
+      return parsed.playerCount;
+    } catch (error) {
+      Logger.error("extractPlayerCount error:", error);
       return null;
     }
   }
