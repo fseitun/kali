@@ -194,7 +194,7 @@ export function validateSetState(
       index,
       state,
       context,
-      action as { value?: unknown },
+      action,
     );
     if (forbiddenError) {
       return forbiddenError;

@@ -31,7 +31,7 @@ describe("Product scenario: Try Fast Path Transcript", () => {
         },
       },
     });
-    state = sm.getState() as GameState;
+    state = sm.getState();
   });
 
   it("Expected outcome: Returns null for nested calls", () => {

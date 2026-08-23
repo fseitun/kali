@@ -25,8 +25,8 @@ export function getSquareDataAtPosition(
   state: GameState,
   position: number,
 ): Record<string, unknown> | undefined {
-  const board = state.board as Record<string, unknown> | undefined;
-  const squares = board?.squares as Record<string, Record<string, unknown>> | undefined;
+  const board = state.board;
+  const squares = board?.squares;
   return squares?.[String(position)];
 }
 

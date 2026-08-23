@@ -337,7 +337,7 @@ Casilleros especiales
 ## **1\. Concepto general**
 
 **Kalimba** es un juego de mesa interactivo, apto para todo público, que combina naturaleza, estrategia y aprendizaje a través de los **7 hábitats del planeta**.  
- El diferencial es **Kali**, una asistente digital con inteligencia artificial que actúa como moderadora del juego: explica reglas, propone adivinanzas, reproduce música ambiental y guía las partidas con voz y personalidad.
+El diferencial es **Kali**, una asistente digital con inteligencia artificial que actúa como moderadora del juego: explica reglas, propone adivinanzas, reproduce música ambiental y guía las partidas con voz y personalidad.
 
 👉 **Kali es la Alexa de los juegos de mesa.**  
- Aporta dinamismo, elimina la lectura del manual y convierte cada partida en una experiencia inmersiva.
+Aporta dinamismo, elimina la lectura del manual y convierte cada partida en una experiencia inmersiva.

@@ -54,9 +54,7 @@ function getDirectionalRollContext(state: Readonly<GameState>): {
   currentPosition: number;
 } | null {
   const pending = state.game.pending as
-    | { kind: string; position: number; playerId: string; dice: 1 | 2 | 3 }
-    | null
-    | undefined;
+    { kind: string; position: number; playerId: string; dice: 1 | 2 | 3 } | null | undefined;
   const currentTurn = getCurrentTurn(state);
   if (pending?.kind !== "directional" || !currentTurn || pending.playerId !== currentTurn) {
     return null;

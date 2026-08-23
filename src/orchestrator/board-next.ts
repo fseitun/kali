@@ -40,7 +40,7 @@ function getForwardTargetsFromNext(
   if (Array.isArray(next)) {
     return [...next];
   }
-  const keys = Object.keys(next as Record<string, unknown>);
+  const keys = Object.keys(next);
   const nums = keys.map((k) => parseInt(k, 10)).filter((n) => !Number.isNaN(n));
   return [...new Set(nums)].sort((a, b) => a - b);
 }
@@ -55,7 +55,7 @@ function getBackwardTargetsFromPrev(prev: PrevField | undefined | null, current:
     }
     return [...prev];
   }
-  const keys = Object.keys(prev as Record<string, unknown>);
+  const keys = Object.keys(prev);
   const nums = keys.map((k) => parseInt(k, 10)).filter((n) => !Number.isNaN(n));
   return [...new Set(nums)].sort((a, b) => a - b);
 }
@@ -88,7 +88,7 @@ export function getNextTargets(sq: { next?: NextField } | undefined): number[] {
   if (Array.isArray(next)) {
     return [...next];
   }
-  const keys = Object.keys(next as Record<string, unknown>);
+  const keys = Object.keys(next);
   const nums = keys.map((k) => parseInt(k, 10)).filter((n) => !Number.isNaN(n));
   return [...new Set(nums)].sort((a, b) => a - b);
 }

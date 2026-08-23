@@ -313,18 +313,18 @@ function kalimbaArcticForkSquares(): Record<string, SquareData> {
   for (let i = 90; i < 97; i++) {
     squares[String(i)] = { next: [i + 1], prev: i > 0 ? [i - 1] : [] };
   }
-  squares["97"] = { name: "Penguin", power: 2, prev: [96] } as SquareData;
-  squares["98"] = { next: [101], prev: [97] } as SquareData;
-  squares["99"] = { prev: [96] } as SquareData;
-  squares["100"] = { prev: [99] } as SquareData;
+  squares["97"] = { name: "Penguin", power: 2, prev: [96] };
+  squares["98"] = { next: [101], prev: [97] };
+  squares["99"] = { prev: [96] };
+  squares["100"] = { prev: [99] };
   squares["101"] = {
     next: { "102": ["102", "down"], "105": ["105", "polar bear", "up"] },
     prev: { "98": ["98", "down"], "100": ["100", "up"] },
     name: "Walrus",
     power: 3,
-  } as SquareData;
-  squares["102"] = { prev: [101] } as SquareData;
-  squares["105"] = { prev: [101] } as SquareData;
+  };
+  squares["102"] = { prev: [101] };
+  squares["105"] = { prev: [101] };
   return squares;
 }
 

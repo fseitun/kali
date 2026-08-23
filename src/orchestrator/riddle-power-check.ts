@@ -142,7 +142,7 @@ export class RiddlePowerCheckHandler {
       newPosition = winJumpTo;
     } else {
       const movement = applyRollMovementResolvingForks(
-        state as GameState,
+        state,
         playerId,
         currentPos,
         roll,
@@ -231,10 +231,7 @@ export class RiddlePowerCheckHandler {
     if (!this.shouldSpeakAfterEncounterMovementNudge(playerId, context)) {
       return;
     }
-    const name = this.displayNameForPlayer(
-      this.deps.stateManager.getState() as GameState,
-      playerId,
-    );
+    const name = this.displayNameForPlayer(this.deps.stateManager.getState(), playerId);
     const landed = this.deps.stateManager.get(playerStatePath(playerId, "position")) as number;
     const nudge = t("game.afterEncounterRollPrompt", { name, position: landed });
     this.deps.setLastNarration(nudge);
@@ -400,7 +397,7 @@ export class RiddlePowerCheckHandler {
 
     const { pending, playerId, position, power, isRevenge } = ctx;
 
-    const board = state.board as Record<string, unknown> | undefined;
+    const board = state.board;
     const squares = (board?.squares as Record<string, Record<string, unknown>>) ?? {};
     const squareData = squares[position.toString()] ?? {};
     const rollSpec =

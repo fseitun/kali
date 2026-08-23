@@ -31,7 +31,7 @@ describe("Product scenario: Kali App Core runtime invariants", () => {
       setAmbientCaptureMuted: vi.fn(),
       loadSound: vi.fn().mockResolvedValue(undefined),
       prime: vi.fn(),
-    } as unknown as ISpeechService;
+    };
     core = new KaliAppCore(mockUIService, mockSpeechService, { skipWakeWord: true });
   });
 

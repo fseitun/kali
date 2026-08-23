@@ -302,7 +302,7 @@ describe("Product scenario: Model Manager", () => {
       // Mock Blob constructor to throw error
       globalThis.Blob = vi.fn().mockImplementation(() => {
         throw new Error("Blob creation failed");
-      }) as unknown as typeof Blob;
+      });
 
       await expect(modelManager.getModel()).rejects.toThrow("Blob creation failed");
     });

@@ -1,10 +1,6 @@
 import { magicDoorHeartsPhrase } from "./magic-door-phrases";
 import { t } from "./translations";
-import {
-  getMagicDoorConfig,
-  minDieToOpenMagicDoor,
-  type SquareLike,
-} from "@/orchestrator/board-helpers";
+import { getMagicDoorConfig, minDieToOpenMagicDoor } from "@/orchestrator/board-helpers";
 import type { GameState } from "@/orchestrator/types";
 
 function clampNonNegativeHearts(raw: unknown): number {
@@ -16,7 +12,7 @@ function doorOpeningParams(
   nextPlayer: { playerId: string; name: string; position: number },
   state: GameState | undefined,
 ): { target: number; hearts: number } | null {
-  const squares = state?.board?.squares as Record<string, SquareLike> | undefined;
+  const squares = state?.board?.squares;
   const door = getMagicDoorConfig(squares);
   if (nextPlayer.position !== door?.position) {
     return null;

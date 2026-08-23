@@ -178,7 +178,7 @@ describe("Product scenario: Speech Service", () => {
       // Simulate speech error
       setTimeout(() => {
         if (typeof utterance?.onerror === "function") {
-          utterance.onerror({ error: "network" } as SpeechSynthesisErrorEvent);
+          utterance.onerror({ error: "network" });
         }
       }, 0);
 
@@ -206,7 +206,7 @@ describe("Product scenario: Speech Service", () => {
         if (typeof utterance?.onerror === "function") {
           utterance.onerror({
             error: "interrupted",
-          } as SpeechSynthesisErrorEvent);
+          });
         }
       }, 0);
 

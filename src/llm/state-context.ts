@@ -410,18 +410,7 @@ function formatPendingContext(state: Record<string, unknown>, L: LlmStateContext
   const power = (pending.power as number | undefined) ?? 0;
 
   if (kind === "riddle") {
-    return formatRiddlePhaseContext(
-      playerName,
-      pending as {
-        riddlePrompt?: string;
-        riddleOptions?: string[];
-        correctOption?: string;
-        position?: number;
-        power?: number;
-      },
-      state,
-      L,
-    );
+    return formatRiddlePhaseContext(playerName, pending, state, L);
   }
   if (kind === "powerCheck") {
     const pos = pending.position as number | undefined;

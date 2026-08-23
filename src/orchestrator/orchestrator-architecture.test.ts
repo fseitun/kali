@@ -143,12 +143,12 @@ describe("Product scenario: Game orchestrator Architecture Authority Model", () 
 
       orchestrator.transitionPhase(GamePhase.PLAYING);
       state = stateManager.getState();
-      game = state.game as Record<string, unknown>;
+      game = state.game;
       expect(game.phase).toBe(GamePhase.PLAYING);
 
       orchestrator.transitionPhase(GamePhase.FINISHED);
       state = stateManager.getState();
-      game = state.game as Record<string, unknown>;
+      game = state.game;
       expect(game.phase).toBe(GamePhase.FINISHED);
     });
   });
@@ -325,7 +325,7 @@ describe("Product scenario: Game orchestrator Architecture Authority Model", () 
       orchestrator.transitionPhase(GamePhase.PLAYING);
 
       state = stateManager.getState();
-      game = state.game as Record<string, unknown>;
+      game = state.game;
 
       expect(game.phase).toBe(GamePhase.PLAYING);
 
@@ -337,7 +337,7 @@ describe("Product scenario: Game orchestrator Architecture Authority Model", () 
       expect(nextPlayer?.name).toBe("Bob");
 
       state = stateManager.getState();
-      game = state.game as Record<string, unknown>;
+      game = state.game;
 
       expect(game.turn).toBe("p2");
     });

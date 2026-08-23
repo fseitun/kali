@@ -69,9 +69,9 @@ type RollSimulationSlice = {
 };
 
 function readRollContext(state: GameState, playerId: string): RollSimulationSlice {
-  const board = state.board as Record<string, unknown> | undefined;
-  const squares = board?.squares as Record<string, SquareShape> | undefined;
-  const winPosition = getWinPosition(squares as Record<string, { effect?: string }> | undefined);
+  const board = state.board;
+  const squares = board?.squares;
+  const winPosition = getWinPosition(squares);
   const player = (state.players as Record<string, Record<string, unknown>>)?.[playerId];
   const retreatEffectsReversed = player?.retreatEffectsReversed === true;
   const activeChoices = (player?.activeChoices as Record<string, number>) ?? {};
