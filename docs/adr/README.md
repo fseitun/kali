@@ -1,6 +1,6 @@
 # Architecture Decision Records (ADRs)
 
-Short, durable notes about **why** Kali behaves a certain way at the system level. They complement [`.cursor/rules/architecture-decisions.mdc`](../../.cursor/rules/architecture-decisions.mdc), which is tuned for agent context on specific globs—ADRs are for **humans and PRs**: stable filenames, light history, easy to link.
+Short, durable notes about **why** Kali behaves a certain way at the system level. They complement [`CLAUDE.md`](../../CLAUDE.md), which is tuned for agent context—ADRs are for **humans and PRs**: stable filenames, light history, easy to link.
 
 ## When to add an ADR
 
@@ -21,7 +21,7 @@ Short, durable notes about **why** Kali behaves a certain way at the system leve
 
 ## Optional agent / review pass
 
-For large orchestrator refactors, run a **readonly second pass** (human or sub-agent) asking only: does this violate [state axioms](../../.cursor/rules/state-axioms.mdc)? Are tests and `integration/scenarios/` updated where behavior changed?
+For large orchestrator refactors, run a **readonly second pass** (human or sub-agent) asking only: does this violate the [state axioms](../../CLAUDE.md)? Are tests and `integration/scenarios/` updated where behavior changed?
 
 ## Index
 

@@ -58,7 +58,7 @@ If any step has `llmResponses`, the runner builds the mock script from steps in 
 
 When adding or editing integration scenarios (or when using these files to guide agents):
 
-**Source of truth.** JSON integration scenarios are the single source of truth for orchestrator state transitions. They document how state changes in response to actions. When in doubt, these scenarios override other descriptions of orchestrator behavior. For global state authority rules, see [.cursor/rules/state-axioms.mdc](../.cursor/rules/state-axioms.mdc).
+**Source of truth.** JSON integration scenarios are the single source of truth for orchestrator state transitions. They document how state changes in response to actions. When in doubt, these scenarios override other descriptions of orchestrator behavior. For global state authority rules, see [CLAUDE.md](../CLAUDE.md).
 
 **Guided LLM pattern.** The orchestrator owns all authoritative state (position, hearts, skipTurns, items, instruments, phase, turn, winner). The LLM is only asked to narrate after the orchestrator has applied effects, or to capture explicit user decisions. Do not encode or script the LLM as the authority for game-rule state.
 

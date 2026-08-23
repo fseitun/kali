@@ -20,7 +20,7 @@ description: >-
 
 ## Kali-specific contract (do not override with generic advice)
 
-- **Guided LLM:** The model interprets; the orchestrator validates and executes. See [`.cursor/kali-architecture.md`](../../kali-architecture.md) (thin LLM, primitive box, synthetic transcripts).
+- **Guided LLM:** The model interprets; the orchestrator validates and executes. See [`docs/kali-architecture.md`](../../../docs/kali-architecture.md) (thin LLM, primitive box, synthetic transcripts).
 - **Output shape:** Primitives as **pure JSON** (no markdown fences); orchestrator is authoritative for state.
 - **Cost/latency:** Prefer concise system instructions; put bulky reference in structured blocks only when needed.
 - **Locales:** Keep a single locale per prompt variant where possible (see roadmap/task guides for i18n).
@@ -31,11 +31,8 @@ description: >-
 - **User-turn envelope (tag order):** [`src/llm/BaseLLMClient.ts`](../../../src/llm/BaseLLMClient.ts) (`<game_state>`, optional `<last_utterance>`, `<user_command>`).
 - **State blob copy and sections:** [`src/llm/state-context.ts`](../../../src/llm/state-context.ts), [`src/i18n/llm-state-context.ts`](../../../src/i18n/llm-state-context.ts).
 - **Game rules and decision prompts in JSON:** [`public/games/**/*.json`](../../../public/games).
-- **Auxiliary model prompts:** e.g. [`src/i18n/riddle-judge-prompt.ts`](../../../src/i18n/riddle-judge-prompt.ts).
 
-## Maps to @Prompt OpenAI / @Prompt Anthropic
-
-Use the indexed docs for depth; below is how their guidance lands in Kali.
+## Mapping OpenAI / Anthropic guidance onto Kali
 
 - **System vs user:** Stable role, tone, and primitive contract live in the **system** prompt (`buildSystemPrompt`); per-turn **user** content is built in [`BaseLLMClient`](../../../src/llm/BaseLLMClient.ts) (state + transcript). Matches OpenAI’s “tone in system, task in user” split.
 - **Long context order:** Anthropic recommends large reference first, immediate task last. Kali’s user message already puts **`<game_state>`** (and optional **`<last_utterance>`**) **before** **`<user_command>`**—do not invert when changing formatters.
@@ -45,15 +42,13 @@ Use the indexed docs for depth; below is how their guidance lands in Kali.
 - **Empirical iteration:** Prefer a minimal prompt diff plus **`npm run full-check`** and targeted [`src/llm/*.test.ts`](../../../src/llm) (and reproduction transcripts) over large rewrites—both vendors stress measuring behavior when prompts or model versions change.
 - **When prompting is not the fix:** Latency, cost, or systematic **validation** failures may need a different model, provider settings, or orchestrator policy (Anthropic overview: not every eval gap is solved by more instructions).
 - **Chaining:** Production gameplay uses **one** interpreter call per transcript. Anthropic-style **prompt chains** apply to offline tooling, evals, or future multi-step pipelines—not the default live path unless architecture changes.
-- **Voice / TTS:** Use explicit pacing, clarity, and confirmation for **names and numbers**; see OpenAI [Voice agents](https://developers.openai.com/api/docs/guides/voice-agents) and development voice-UX rules in [`.cursor/rules/development-guidelines.mdc`](../../rules/development-guidelines.mdc).
+- **Voice / TTS:** Use explicit pacing, clarity, and confirmation for **names and numbers**; see OpenAI [Voice agents](https://developers.openai.com/api/docs/guides/voice-agents) and the voice UX invariants in [`CLAUDE.md`](../../../CLAUDE.md).
 
 ## Vendor-agnostic checklist (short)
 
 Stable rules in **system**; transient facts + user text in **user**. Tag big blocks. Few-shots match schema. State primitive vs host boundaries. Voice flows spell out hearable outcomes.
 
-## Official references (index in Cursor for `@` mentions)
-
-Add these as indexed documentation in Cursor if you want `@Prompt OpenAI` and `@Prompt Anthropic` in chat; **use the same display names** so they match project rules.
+## Official references
 
 **OpenAI**
 
