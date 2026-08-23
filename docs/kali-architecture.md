@@ -1,8 +1,8 @@
 # Kali Architecture: The Guided LLM Pattern
 
 > **Note:** This document details the Guided LLM Pattern philosophy and implementation patterns.
-> For general architecture overview, see [.cursor/rules/architecture.mdc](.cursor/rules/architecture.mdc).
-> For architectural decisions and rationale, see [.cursor/rules/architecture-decisions.mdc](.cursor/rules/architecture-decisions.mdc).
+> For the architecture overview, working conventions, and state axioms, see [`CLAUDE.md`](../CLAUDE.md).
+> For durable per-decision rationale, see [`docs/adr/`](adr/README.md).
 
 ## Core Philosophy
 
@@ -68,16 +68,16 @@ A perfect example of this separation:
 
 ### Game Config Declares Checkpoints
 
+Forks are declared purely as graph topology — a square whose `next` maps to
+multiple targets:
+
 ```json
-"decisionPoints": [
-  {
-    "position": 0,
-    "prompt": "¿Querés ir por el A o el B?"
-  }
-]
+"0": { "next": { "1": ["left"], "15": ["right"] } }
 ```
 
-Graph topology defines forks via `squares[pos].next` (or `prev` in inverse mode). Decisions store `activeChoices[position] = targetPosition`.
+Decision points are **inferred** from that topology at load (`inferDecisionPoints`);
+there is no `decisionPoints` array in the config. Decisions store
+`activeChoices[position] = targetPosition`.
 
 ### Orchestrator Enforces
 
@@ -221,12 +221,16 @@ Warns LLM about constraints without relying on it to enforce:
 
 ### Pattern 3: Config-Driven Behavior
 
-Game-specific rules live in JSON, not code:
+Game-specific rules live in JSON, not code. `squares` is the single source of
+truth — board topology, forks, portals, and square effects are all derived from
+it at load time:
 
 ```json
-"decisionPoints": [...],
-"moves": {...},
-"squares": {...}
+"squares": {
+  "0": { "next": { "1": ["left"], "15": ["right"] } },
+  "10": { "name": "Wolf", "power": 3 },
+  "45": { "destination": 82 }
+}
 ```
 
 ### Pattern 4: Synthetic Transcript Injection
@@ -309,4 +313,4 @@ When adding or reviewing features:
 
 ## Further reading (prompt engineering)
 
-This document defines **Kali’s** guided-LLM architecture. For **how** to write and structure model instructions (system vs user context, long-context layout, few-shots, voice tone), use the project skill [`.cursor/skills/prompt-engineering/SKILL.md`](skills/prompt-engineering/SKILL.md) and the OpenAI/Anthropic URLs there. Index those vendor docs in Cursor as `Prompt OpenAI` and `Prompt Anthropic` if you want `@` mentions in chat.
+This document defines **Kali’s** guided-LLM architecture. For **how** to write and structure model instructions (system vs user context, long-context layout, few-shots, voice tone), use the project skill [`.claude/skills/prompt-engineering/SKILL.md`](../.claude/skills/prompt-engineering/SKILL.md) and the OpenAI/Anthropic URLs it links.

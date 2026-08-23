@@ -27,7 +27,7 @@ Animal encounters (riddle trivia generation and grading policy) remain interpret
 
 ## Links
 
-- Rules: [`.cursor/rules/architecture.mdc`](../../.cursor/rules/architecture.mdc), [`.cursor/rules/state-axioms.mdc`](../../.cursor/rules/state-axioms.mdc), [ADR 0003](0003-always-prompt-next-player-action.md) (next-action voice UX)
+- Rules: [`CLAUDE.md`](../../CLAUDE.md) (architecture, state axioms), [ADR 0003](0003-always-prompt-next-player-action.md) (next-action voice UX)
 - Plan (deferred): [`docs/plans/riddle-bank-llm-removal.md`](../plans/riddle-bank-llm-removal.md)
 - Code: [`src/orchestrator/transcript-fast-path.ts`](../../src/orchestrator/transcript-fast-path.ts), [`src/orchestrator/decision-point-enforcer.ts`](../../src/orchestrator/decision-point-enforcer.ts), [`src/orchestrator/board-effects-handler.ts`](../../src/orchestrator/board-effects-handler.ts), [`src/llm/interpretation-contract.ts`](../../src/llm/interpretation-contract.ts), [`src/llm/state-context.ts`](../../src/llm/state-context.ts)
 - Tests: [`src/orchestrator/transcript-fast-path.test.ts`](../../src/orchestrator/transcript-fast-path.test.ts), [`src/orchestrator/orchestrator.integration.test.ts`](../../src/orchestrator/orchestrator.integration.test.ts), [`src/orchestrator/orchestrator-authority.test.ts`](../../src/orchestrator/orchestrator-authority.test.ts)

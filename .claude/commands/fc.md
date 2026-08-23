@@ -1,3 +1,7 @@
+---
+description: Run npm run full-check and fix failures until it passes
+---
+
 Run `npm run full-check` and fix any failures until it passes.
 
 1. Execute `npm run full-check` in the project root.

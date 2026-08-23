@@ -55,9 +55,9 @@ Kali is built on a strict separation between the **LLM** (interprets natural lan
 
 **For detailed architecture information:**
 
-- [Core Architecture & Technology Stack](.cursor/rules/architecture.mdc)
-- [Architecture Decisions & Rationale](.cursor/rules/architecture-decisions.mdc)
-- [Guided LLM Pattern Philosophy](.cursor/kali-architecture.md)
+- [Architecture, conventions & state axioms](CLAUDE.md)
+- [Guided LLM Pattern Philosophy](docs/kali-architecture.md)
+- [Architecture Decision Records](docs/adr/README.md)
 
 ## Development
 
@@ -74,7 +74,5 @@ Kali is built on a strict separation between the **LLM** (interprets natural lan
 
 **For detailed information:**
 
-- [File Structure & Locations](.cursor/rules/file-structure.mdc)
-- [Task Guides](.cursor/rules/task-guides.mdc)
-- [Development Guidelines](.cursor/rules/development-guidelines.mdc)
-- [Testing Commands & Workflows](.cursor/rules/testing-commands.mdc)
+- [Commands, conventions & testing workflows](CLAUDE.md)
+- [Integration scenario guide](integration/README.md)
