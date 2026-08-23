@@ -7,7 +7,7 @@ export enum GamePhase {
 /**
  * Core game metadata that all games have.
  */
-export interface GameMeta {
+interface GameMeta {
   name: string;
   phase: GamePhase;
   turn: string | null;
@@ -267,7 +267,7 @@ export type PrimitiveAction =
  * Speaks text aloud via TTS and optionally plays a sound effect.
  * LLM's primary job: natural language generation.
  */
-export interface NarrateAction {
+interface NarrateAction {
   action: "NARRATE";
   text: string;
   soundEffect?: string;
@@ -277,7 +277,7 @@ export interface NarrateAction {
  * Resets the game state to initial conditions.
  * Management action for starting new games.
  */
-export interface ResetGameAction {
+interface ResetGameAction {
   action: "RESET_GAME";
   keepPlayerNames: boolean;
 }
@@ -287,7 +287,7 @@ export interface ResetGameAction {
  * Used ONLY for user corrections/overrides (e.g., "we're both at position 50").
  * NOT for calculated state changes (those use event-based primitives like PLAYER_ROLLED).
  */
-export interface SetStateAction {
+interface SetStateAction {
   action: "SET_STATE";
   path: string;
   value: unknown;
@@ -298,7 +298,7 @@ export interface SetStateAction {
  * Orchestrator calculates position change (position += value).
  * playerId is inferred from game.turn (current player).
  */
-export interface PlayerRolledAction {
+interface PlayerRolledAction {
   action: "PLAYER_ROLLED";
   value: number;
 }
@@ -308,7 +308,7 @@ export interface PlayerRolledAction {
  * Context is maintained by orchestrator (single-threaded conversation).
  * Used for: path choices, fight/flee decisions, riddle answers, etc.
  */
-export interface PlayerAnsweredAction {
+interface PlayerAnsweredAction {
   action: "PLAYER_ANSWERED";
   answer: string;
 }
@@ -319,7 +319,7 @@ export interface PlayerAnsweredAction {
  * strict match (option text + synonyms) deterministically resolves the outcome.
  * The riddle MUST be about the animal kingdom (e.g. animals, habitats, behavior, diet, classification); it does not have to be this square's animal/habitat.
  */
-export interface AskRiddleAction {
+interface AskRiddleAction {
   action: "ASK_RIDDLE";
   text: string;
   options: [string, string, string, string];
