@@ -58,16 +58,6 @@ export interface EncounterQuestionBankByAnimal {
 }
 
 /**
- * Per-habitat ambient audio configuration.
- */
-export interface HabitatAudioConfigEntry {
-  /** Looping background track URL for the habitat. */
-  track: string;
-  /** One-shot ambient animal sounds for occasional playback. */
-  animalSounds: string[];
-}
-
-/**
  * Unified habitat definition: board assignment plus ambient audio.
  */
 export interface HabitatConfigEntry {

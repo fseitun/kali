@@ -16,7 +16,7 @@ export function isNextRecord(next: NextField | undefined): next is Record<string
 /**
  * True when `prev` is the object (fork) form, not a number array.
  */
-export function isPrevRecord(prev: PrevField | undefined): prev is Record<string, string[]> {
+function isPrevRecord(prev: PrevField | undefined): prev is Record<string, string[]> {
   return prev !== undefined && prev !== null && typeof prev === "object" && !Array.isArray(prev);
 }
 

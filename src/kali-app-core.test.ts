@@ -51,20 +51,30 @@ describe("Product scenario: Kali App Core runtime invariants", () => {
     expect(result).toBe(FAILED_RESULT);
   });
 
-  it("Expected outcome: Wake to transcription window mutes and restores ambient audio", async () => {
+  it("Expected outcome: Ambient capture stays muted across every name during setup", async () => {
     const nameHandler = vi.fn();
     const internalCore = core as unknown as {
       currentNameHandler: (text: string) => void;
-      handleWakeWord(): void;
+      acquireAmbientCaptureMute(): void;
+      cleanupNameCollection(): void;
       handleTranscription(text: string): Promise<void>;
     };
     internalCore.currentNameHandler = nameHandler;
 
-    internalCore.handleWakeWord();
+    // NameCollector takes a single hold for the whole setup phase.
+    internalCore.acquireAmbientCaptureMute();
     await internalCore.handleTranscription("hola");
+    await internalCore.handleTranscription("Fico");
 
+    // Muted once, and never unmuted mid-setup: Kali's own TTS must not feed
+    // back into the open Deepgram stream while more names are still coming.
+    expect(mockSpeechService.setAmbientCaptureMuted).toHaveBeenCalledTimes(1);
     expect(mockSpeechService.setAmbientCaptureMuted).toHaveBeenNthCalledWith(1, true);
-    expect(mockSpeechService.setAmbientCaptureMuted).toHaveBeenNthCalledWith(2, false);
     expect(nameHandler).toHaveBeenCalledWith("hola");
+    expect(nameHandler).toHaveBeenCalledWith("Fico");
+
+    // The hold is owned by cleanup, which ends setup.
+    internalCore.cleanupNameCollection();
+    expect(mockSpeechService.setAmbientCaptureMuted).toHaveBeenNthCalledWith(2, false);
   });
 });

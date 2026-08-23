@@ -136,6 +136,9 @@ export const esAR = {
     modelDownload: "Error al descargar el modelo.",
     ttsNotSupported: "El sistema de voz no es compatible.",
     somethingWentWrong: "Algo salió mal. Por favor intentá de nuevo.",
+    sttFallbackLocal: "Se cayó la transcripción online. Sigo escuchando en modo local.",
+    sttOnlineTimeout: "No te escuché bien por ruido. Repetí, por favor.",
+    sttOnlineFailed: "Falló la transcripción online. Probemos de nuevo.",
   },
   llm: {
     retrying: "Dejame intentar de nuevo...",

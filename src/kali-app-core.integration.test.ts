@@ -27,6 +27,9 @@ const wakeWordBehavior = vi.hoisted(() => ({
   startListeningCalls: 0,
   destroyCalls: 0,
 }));
+const sttConfigOverride = vi.hoisted(() => ({
+  deepgramApiKey: "test-deepgram-key",
+}));
 
 vi.mock("./game-loader/game-loader", async () => {
   const pathMod = await import("node:path");
@@ -87,8 +90,8 @@ vi.mock("./game-loader/game-loader", async () => {
   };
 });
 
-vi.mock("@/voice-recognition/wake-word", () => ({
-  WakeWordDetector: class MockWakeWordDetector {
+vi.mock("@/voice-recognition/deepgram-stream", () => ({
+  DeepgramStream: class MockDeepgramStream {
     async initialize(): Promise<void> {
       wakeWordBehavior.initializeCalls += 1;
       if (wakeWordBehavior.initializeError) {
@@ -113,10 +116,19 @@ vi.mock("./config", async (importOriginal) => {
   // Assertion needed: importOriginal returns unknown, tsc requires typing for actual.CONFIG
   // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion -- importOriginal resolves to unknown at runtime
   const actual = (await importOriginal()) as { CONFIG: Record<string, unknown> };
+  const sttBase = actual.CONFIG.STT as Record<string, unknown>;
+  const deepgramBase = actual.CONFIG.DEEPGRAM as Record<string, unknown>;
   return {
     CONFIG: {
       ...actual.CONFIG,
       LLM_PROVIDER: "mock" as const,
+      STT: sttBase,
+      DEEPGRAM: {
+        ...deepgramBase,
+        get API_KEY() {
+          return sttConfigOverride.deepgramApiKey;
+        },
+      },
     },
   };
 });
@@ -135,6 +147,7 @@ describe("Product scenario: Kali App Core Integration Runtime Flows", () => {
     wakeWordBehavior.initializeCalls = 0;
     wakeWordBehavior.startListeningCalls = 0;
     wakeWordBehavior.destroyCalls = 0;
+    sttConfigOverride.deepgramApiKey = "test-deepgram-key";
     (
       globalThis as typeof globalThis & {
         window?: { setTimeout: typeof setTimeout; clearTimeout: typeof clearTimeout };

@@ -2,7 +2,7 @@
  * Optional context parts for providers that support prompt caching.
  * When provided, the caller splits system prompt from user message.
  */
-export interface ContextParts {
+interface ContextParts {
   systemPrompt: string;
   userMessage: string;
 }

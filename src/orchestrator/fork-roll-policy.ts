@@ -78,10 +78,7 @@ function getCurrentTurnPlayerSlice(state: GameState): {
  * Minimum/maximum movement roll for the current turn player (normal dice or bonus 2d6;
  * directional pending uses that phase's dice count).
  */
-export function getMovementRollRange(
-  state: GameState,
-  playerId: string,
-): { min: number; max: number } {
+function getMovementRollRange(state: GameState, playerId: string): { min: number; max: number } {
   const game = state.game as Record<string, unknown> | undefined;
   const pending = game?.pending as { kind?: string; playerId?: string; dice?: number } | undefined;
   if (
@@ -101,7 +98,7 @@ export function getMovementRollRange(
 /**
  * True if this roll and direction can land on more than one square without a stored fork choice at `start`.
  */
-export function forkChoiceRequiredForRoll(
+function forkChoiceRequiredForRoll(
   state: GameState,
   playerId: string,
   start: number,
@@ -153,7 +150,7 @@ export function forkChoiceBlockingValidation(
 /**
  * True if some roll in [min,max] produces more than one possible landing square (fork choice matters).
  */
-export function forkMattersForSomeRollInRange(
+function forkMattersForSomeRollInRange(
   state: GameState,
   playerId: string,
   position: number,

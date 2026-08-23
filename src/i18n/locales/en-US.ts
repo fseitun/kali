@@ -135,6 +135,9 @@ export const enUS = {
     modelDownload: "Error downloading model.",
     ttsNotSupported: "Text-to-Speech is not supported.",
     somethingWentWrong: "Something went wrong. Please try again.",
+    sttFallbackLocal: "Online transcription failed. Switching to local listening mode.",
+    sttOnlineTimeout: "I couldn't hear clearly due to noise. Please repeat.",
+    sttOnlineFailed: "Online transcription failed. Let's try again.",
   },
   llm: {
     retrying: "Let me try that again...",

@@ -5,7 +5,7 @@
  * 1. Explicit `kind` 2. `effect` 3. `destination` (number) → portal 4. `item` 5. `name`+`power` (no effect) → animal 6. null
  */
 
-export const SPECIAL_SQUARE_KINDS = [
+const SPECIAL_SQUARE_KINDS = [
   "animal",
   "trap",
   "portal",

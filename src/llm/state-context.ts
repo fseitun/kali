@@ -14,8 +14,6 @@ import {
 } from "@/orchestrator/power-check-dice";
 import type { GameState } from "@/orchestrator/types";
 
-export type { StateDisplayConfig, StateDisplayMetadata };
-
 const LOG_FORMAT_MAX_DEPTH = 2;
 
 function formatFieldValue(value: unknown): string {
