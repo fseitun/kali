@@ -51,32 +51,6 @@ export default defineConfig({
         ],
         runtimeCaching: [
           {
-            urlPattern: /^https:\/\/alphacephei\.com\/vosk\/models\/.*/i,
-            handler: "CacheFirst",
-            options: {
-              cacheName: "kali-models-v1",
-              expiration: {
-                maxEntries: 10,
-                maxAgeSeconds: 60 * 60 * 24 * 365,
-              },
-              cacheableResponse: {
-                statuses: [0, 200],
-              },
-            },
-          },
-          {
-            urlPattern: /^https:\/\/.*\.blob\.vercel-storage\.com\/.*/i,
-            handler: "CacheFirst",
-            options: {
-              cacheName: "kali-models-v1",
-              expiration: {
-                maxEntries: 10,
-                maxAgeSeconds: 60 * 60 * 24 * 365,
-              },
-              cacheableResponse: { statuses: [0, 200] },
-            },
-          },
-          {
             urlPattern: ({ url }) => url.pathname.startsWith("/debug"),
             handler: "NetworkFirst",
             options: {
@@ -125,10 +99,6 @@ export default defineConfig({
       },
       output: {
         manualChunks(id) {
-          // Intentionally large; loaded on demand via dynamic import in kali-app-core (voice only).
-          if (id.includes("vosk-browser")) {
-            return "vosk";
-          }
           if (
             id.includes("debug.ts") ||
             id.includes("debug/") ||

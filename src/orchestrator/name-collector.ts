@@ -48,15 +48,13 @@ export class NameCollector {
       Logger.info("Starting name collection phase");
 
       await this.speechService.speak(t("setup.welcome", { game: this.gameName }));
+      this.enableDirectTranscription();
+      Logger.info("Direct transcription enabled for setup collection");
 
       this.playerCount = await this.askPlayerCount(onTranscript);
       Logger.info(`Collecting names for ${this.playerCount} players`);
 
       for (let i = 0; i < this.playerCount; i++) {
-        if (i === 0) {
-          this.enableDirectTranscription();
-          Logger.info("Direct transcription enabled for name collection");
-        }
         const name = await this.askPlayerName(i + 1, onTranscript);
         this.collectedNames.push(name);
         Logger.info(`Collected name for player ${i + 1}: ${name}`);

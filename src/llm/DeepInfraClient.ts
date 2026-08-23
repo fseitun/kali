@@ -31,10 +31,6 @@ export class DeepInfraClient extends BaseLLMClient {
           ]
         : [{ role: "user" as const, content: prompt }];
 
-    const controller = new AbortController();
-    const timeoutMs = options.timeoutMs ?? CONFIG.LLM.REQUEST_TIMEOUT_MS;
-    const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
-
     let response: Response;
     try {
       response = await fetch(CONFIG.DEEPINFRA.API_URL, {
@@ -50,15 +46,14 @@ export class DeepInfraClient extends BaseLLMClient {
           max_tokens: options.maxTokens ?? 1024,
           ...(options.responseFormatJson && { response_format: { type: "json_object" } }),
         }),
-        signal: controller.signal,
+        signal: AbortSignal.timeout(options.timeoutMs ?? CONFIG.LLM.REQUEST_TIMEOUT_MS),
       });
     } catch (err) {
-      if (err instanceof Error && err.name === "AbortError") {
+      // AbortSignal.timeout is the only abort source here, and it rejects with TimeoutError.
+      if (err instanceof Error && err.name === "TimeoutError") {
         throw new Error("Request timeout", { cause: err });
       }
       throw err;
-    } finally {
-      clearTimeout(timeoutId);
     }
 
     if (!response.ok) {

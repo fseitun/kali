@@ -6,7 +6,7 @@
 /**
  * Strip optional leading "A) ", "B) ", etc. from option text, then trim and lowercase.
  */
-export function normalizeOptionText(option: string): string {
+function normalizeOptionText(option: string): string {
   const stripped = option.replace(/^[A-Da-d][.)]\s*/i, "").trim();
   return stripped.toLowerCase();
 }

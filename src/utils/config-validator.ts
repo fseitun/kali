@@ -39,4 +39,9 @@ export function validateConfig(): void {
         "Get your API key from https://deepinfra.com/dash/api_keys",
     );
   }
+
+  validateProviderApiKey(
+    CONFIG.DEEPGRAM.API_KEY,
+    "VITE_DEEPGRAM_API_KEY environment variable is required for command transcription.",
+  );
 }

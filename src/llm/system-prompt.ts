@@ -103,6 +103,4 @@ export function buildSystemPrompt(gameRules: string): string {
 ${gameRules}`;
 }
 
-export { formatStateContext, type FormatStateContextOptions } from "./state-context";
-
-export const SYSTEM_PROMPT = getBasePrimitivesDocs();
+export { formatStateContext } from "./state-context";

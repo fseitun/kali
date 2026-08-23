@@ -24,6 +24,19 @@ export class SpeechService implements ISpeechService {
   private sfxGainNode: GainNode | null = null;
   private ambientGainNode: GainNode | null = null;
   private ambientCaptureMuted = false;
+  private mutedNonTtsAudioLogged = false;
+
+  private isNonTtsAudioMuted(): boolean {
+    return CONFIG.STT.MUTE_NON_TTS_AUDIO;
+  }
+
+  private maybeLogMutedNonTtsAudio(): void {
+    if (this.mutedNonTtsAudioLogged) {
+      return;
+    }
+    this.mutedNonTtsAudioLogged = true;
+    Logger.info("Non-TTS audio muted for Deepgram STT focus mode");
+  }
 
   private ensureAudioRouting(): void {
     this.audioContext ??= new AudioContext();
@@ -121,6 +134,10 @@ export class SpeechService implements ISpeechService {
    * @param url - URL to fetch the sound file from
    */
   async loadSound(name: string, url: string): Promise<void> {
+    if (this.isNonTtsAudioMuted()) {
+      this.maybeLogMutedNonTtsAudio();
+      return;
+    }
     const audioContext = this.getReadyAudioContext();
     if (!audioContext) {
       return;
@@ -143,6 +160,10 @@ export class SpeechService implements ISpeechService {
    * @param name - Identifier of the sound to play
    */
   playSound(name: string): void {
+    if (this.isNonTtsAudioMuted()) {
+      this.maybeLogMutedNonTtsAudio();
+      return;
+    }
     if (!this.sounds.has(name)) {
       Logger.warn(`Sound effect "${name}" not found, continuing without sound`);
       return;
@@ -178,6 +199,11 @@ export class SpeechService implements ISpeechService {
    * @param name - Identifier of the looping sound to play
    */
   startLoopingSound(name: string): void {
+    if (this.isNonTtsAudioMuted()) {
+      this.stopLoopingSound();
+      this.maybeLogMutedNonTtsAudio();
+      return;
+    }
     if (this.activeLoopName === name && this.loopingSource !== null) {
       return;
     }

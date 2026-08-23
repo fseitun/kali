@@ -3,7 +3,7 @@
  * Users can enable/disable log categories independently (state, brain, llm, etc.).
  */
 
-export const LOG_CATEGORIES = [
+const LOG_CATEGORIES = [
   { id: "general", label: "General", icon: "📋" },
   { id: "state", label: "State", icon: "📊" },
   { id: "brain", label: "Brain", icon: "🧠" },
@@ -13,8 +13,6 @@ export const LOG_CATEGORIES = [
   { id: "user", label: "User input", icon: "👤" },
   { id: "narration", label: "Narration", icon: "🔊" },
 ] as const;
-
-export type LogCategoryId = (typeof LOG_CATEGORIES)[number]["id"];
 
 const enabledCategories = new Set<string>();
 const categoryChangeListeners: Array<() => void> = [];

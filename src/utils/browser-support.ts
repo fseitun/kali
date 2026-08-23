@@ -1,5 +1,3 @@
-import { CONFIG } from "@/config";
-
 /**
  * Checks if all required browser APIs are available.
  * @throws Error if any required API is missing
@@ -23,12 +21,4 @@ export function checkBrowserSupport(): void {
       throw new Error(`${name} API not supported`);
     }
   }
-}
-
-/**
- * Detects if the current device is a mobile device based on user agent.
- * @returns True if mobile device detected
- */
-export function isMobileDevice(): boolean {
-  return CONFIG.MOBILE_DEVICE_PATTERN.test(navigator.userAgent);
 }

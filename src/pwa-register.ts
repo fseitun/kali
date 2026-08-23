@@ -5,7 +5,7 @@ import { registerSW } from "virtual:pwa-register";
  * is available. The callback receives a reload function; call it when the user
  * chooses to refresh (e.g. from a "New version available" prompt).
  */
-export function initPwaRefreshPrompt(showPrompt: (reload: () => void) => void): void {
+function initPwaRefreshPrompt(showPrompt: (reload: () => void) => void): void {
   const updateSW = registerSW({
     onNeedRefresh() {
       showPrompt(updateSW);

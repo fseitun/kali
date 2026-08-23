@@ -34,14 +34,6 @@ export function getCurrentTurn(state: Readonly<GameState>): string | undefined {
   return state.game.turn ?? undefined;
 }
 
-export function getPlayerNameById(
-  state: Readonly<GameState>,
-  playerId: string,
-  fallback = "",
-): string {
-  return playerDisplayName(state.players[playerId]?.name, fallback);
-}
-
 /**
  * Appends a deterministic domain event to the current execution context.
  */

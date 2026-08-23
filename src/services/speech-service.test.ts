@@ -5,6 +5,9 @@ import { SpeechService } from "./speech-service";
 // Mock CONFIG
 vi.mock("../config", () => ({
   CONFIG: {
+    STT: {
+      MUTE_NON_TTS_AUDIO: false,
+    },
     TTS: {
       RATE: 0.9,
       PITCH: 1.0,
