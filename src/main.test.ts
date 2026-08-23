@@ -7,8 +7,6 @@ const speechStore = vi.hoisted(() => ({ instances: [] as any[] }));
 const setupVersionRefreshPromptMock = vi.hoisted(() => vi.fn());
 const initLogBufferMock = vi.hoisted(() => vi.fn());
 const appendChildMock = vi.hoisted(() => vi.fn());
-const getModelMock = vi.hoisted(() => vi.fn(async () => "blob:model-url"));
-const revokeObjectURLMock = vi.hoisted(() => vi.fn());
 
 vi.mock("./config", () => ({
   CONFIG: {
@@ -97,14 +95,6 @@ vi.mock("./utils/logger", () => ({
   },
 }));
 
-vi.mock("@/voice-recognition/model-manager", () => ({
-  ModelManager: {
-    getInstance: () => ({
-      getModel: getModelMock,
-    }),
-  },
-}));
-
 describe("Product scenario: Main Bootstrap", () => {
   let domReadyHandler: (() => void) | null;
   let startClickHandler: (() => Promise<void>) | null;
@@ -172,12 +162,6 @@ describe("Product scenario: Main Bootstrap", () => {
         standalone,
       },
     });
-
-    Object.defineProperty(globalThis.URL, "revokeObjectURL", {
-      configurable: true,
-      value: revokeObjectURLMock,
-      writable: true,
-    });
   }
 
   beforeEach(() => {
@@ -233,7 +217,5 @@ describe("Product scenario: Main Bootstrap", () => {
     expect(elements["version-current"].textContent).toBe("Build: build-123");
     expect(elements["version-current"].title).toBe("Build: build-123");
     expect(setupVersionRefreshPromptMock).toHaveBeenCalledTimes(1);
-    expect(getModelMock).toHaveBeenCalledTimes(1);
-    expect(revokeObjectURLMock).toHaveBeenCalledWith("blob:model-url");
   });
 });

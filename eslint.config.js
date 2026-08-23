@@ -8,7 +8,8 @@ export default tseslint.config(
   ...tseslint.configs.recommended,
   prettierConfig,
   {
-    ignores: ["dist/**", "node_modules/**", "public/**", "scripts/**", "eslint.config.js"],
+    // worker/ is a separate Cloudflare deploy target with its own runtime types and tsconfig.
+    ignores: ["dist/**", "node_modules/**", "public/**", "worker/**", "eslint.config.js"],
   },
   {
     files: ["src/audio-worklet/*.js"],

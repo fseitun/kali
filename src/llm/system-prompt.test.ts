@@ -1,6 +1,9 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { formatStateContext, SYSTEM_PROMPT } from "./system-prompt";
+import { buildSystemPrompt, formatStateContext } from "./system-prompt";
 import * as localeManager from "@/i18n/locale-manager";
+
+// The base primitives docs, reached through the function production actually calls.
+const SYSTEM_PROMPT = buildSystemPrompt("").trim();
 
 describe("Product scenario: SYSTEM PROMPT", () => {
   it("Expected outcome: Slim base prompt has a reasonable size bound (well under historical ~2 5k+ bloated prompts)", () => {

@@ -23,6 +23,40 @@ export const CONFIG = {
 
   LLM_PROVIDER: (import.meta.env.VITE_LLM_PROVIDER ?? "deepinfra") as "deepinfra" | "mock",
 
+  STT: {
+    /** Command capture timeout for post-wake Deepgram STT. */
+    COMMAND_TIMEOUT_MS: parsePositiveIntEnv(
+      import.meta.env.VITE_STT_COMMAND_TIMEOUT_MS as string | undefined,
+      6_000,
+      "VITE_STT_COMMAND_TIMEOUT_MS",
+    ),
+    /**
+     * Delay before considering deepgram stream endpointing as final enough for command handoff.
+     * Tuning knob for environments with brief pauses.
+     */
+    ENDPOINTING_MS: parsePositiveIntEnv(
+      import.meta.env.VITE_STT_ENDPOINTING_MS as string | undefined,
+      700,
+      "VITE_STT_ENDPOINTING_MS",
+    ),
+    /**
+     * Word-gap fallback for end-of-speech. Deepgram requires >= 1000ms because interim
+     * results refresh once a second. Catches utterances where room noise keeps the VAD
+     * busy and `speech_final` never arrives.
+     */
+    UTTERANCE_END_MS: parsePositiveIntEnv(
+      import.meta.env.VITE_STT_UTTERANCE_END_MS as string | undefined,
+      1_000,
+      "VITE_STT_UTTERANCE_END_MS",
+    ),
+    /**
+     * Temporarily suppress non-TTS audio (SFX + habitat ambient) while focusing on online STT.
+     * Enabled by default for Deepgram sessions; set VITE_STT_MUTE_NON_TTS_AUDIO=false to re-enable.
+     */
+    MUTE_NON_TTS_AUDIO:
+      (import.meta.env.VITE_STT_MUTE_NON_TTS_AUDIO ?? "true").toLowerCase() !== "false",
+  },
+
   /** Locale from env (VITE_LOCALE). Use "es", "es-AR", "en", "en-US"; default "es-AR". */
   LOCALE: (() => {
     const raw = import.meta.env.VITE_LOCALE ?? "es-AR";
@@ -39,23 +73,20 @@ export const CONFIG = {
   WAKE_WORD: {
     /** Canonical spellings and common ASR misrecognitions (kali/calli/callie etc.) */
     TEXT: ["kali", "cali", "calli", "kaly", "caly", "callie", "callee", "kari"],
-    TRANSCRIPTION_TIMEOUT_MS: 5000,
-    /** Max Levenshtein distance for per-word fuzzy match (e.g. "callie" -> "kali") */
-    FUZZY_MAX_EDIT_DISTANCE: 1,
-  },
-
-  MODEL: {
-    CACHE_NAME: "kali-models-v1",
-    URL:
-      import.meta.env.VITE_VOSK_MODEL_URL ??
-      "https://alphacephei.com/vosk/models/vosk-model-small-es-0.42.zip",
-    VERSION: "0.42",
   },
 
   DEEPINFRA: {
     API_URL: "https://api.deepinfra.com/v1/openai/chat/completions",
     API_KEY: import.meta.env.VITE_DEEPINFRA_API_KEY,
     MODEL: import.meta.env.VITE_DEEPINFRA_MODEL ?? "Qwen/Qwen2.5-72B-Instruct",
+  },
+
+  DEEPGRAM: {
+    API_KEY: import.meta.env.VITE_DEEPGRAM_API_KEY,
+    MODEL: import.meta.env.VITE_DEEPGRAM_MODEL ?? "nova-3",
+    LANGUAGE: import.meta.env.VITE_DEEPGRAM_LANGUAGE ?? "es",
+    API_URL: import.meta.env.VITE_DEEPGRAM_API_URL ?? "https://api.deepgram.com/v1/listen",
+    WS_URL: import.meta.env.VITE_DEEPGRAM_WS_URL ?? "wss://api.deepgram.com/v1/listen",
   },
 
   AUDIO: {
@@ -88,6 +119,4 @@ export const CONFIG = {
     DEFAULT_MODULE: "kalimba",
     MODULES_PATH: "/games",
   },
-
-  MOBILE_DEVICE_PATTERN: /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i,
 } as const;

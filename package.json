@@ -18,9 +18,8 @@
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
     "full-check": "npm run lint:fix && npm run type-check && npm run test && npm run format",
-    "check-vosk": "node scripts/check-vosk-model.mjs",
-    "upload-vosk": "node scripts/upload-vosk-model.mjs",
-    "prepare": "husky"
+    "prepare": "husky",
+    "knip": "knip"
   },
   "lint-staged": {
     "*.{ts,tsx,js}": [
@@ -44,12 +43,12 @@
   "devDependencies": {
     "@eslint/js": "^10.0.1",
     "@types/node": "^26.2.0",
-    "@vercel/blob": "^2.8.0",
     "@vitest/coverage-v8": "^4.1.11",
     "eslint": "^10.9.0",
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-import-x": "^4.17.1",
     "husky": "^9.1.7",
+    "knip": "^6.32.2",
     "lint-staged": "^17.3.0",
     "prettier": "^3.9.6",
     "typescript": "^6.0.3",
@@ -57,8 +56,5 @@
     "vite": "^8.2.2",
     "vite-plugin-pwa": "^1.3.0",
     "vitest": "^4.1.11"
-  },
-  "dependencies": {
-    "vosk-browser": "^0.0.8"
   }
 }

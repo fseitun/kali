@@ -33,7 +33,16 @@ import { Logger } from "./utils/logger";
 import { acquireScreenWakeLock, releaseWakeLock } from "./utils/wake-lock";
 import { applySilentSuccessFallback } from "./voice/gameplay-voice-policy";
 import { MeteredSpeechService } from "./voice/metered-speech-service";
-import type { WakeWordDetector } from "@/voice-recognition/wake-word";
+import { routeTranscript, type ListeningMode } from "@/voice/intent-router";
+
+interface SpeechDetectorLike {
+  initialize(onProgress?: (percent: number) => void): Promise<void>;
+  startListening(): Promise<void>;
+  stopListening?(): Promise<void>;
+  destroy(): Promise<void>;
+  enableDirectTranscription(): void;
+  disableDirectTranscription(): void;
+}
 
 const HABITAT_ANIMAL_COOLDOWN_MS = 20_000;
 const HABITAT_ANIMAL_JITTER_MIN_MS = 5_000;
@@ -81,7 +90,7 @@ function magicDoorTurnAnnouncementLine(
 }
 
 export class KaliAppCore {
-  private wakeWordDetector: WakeWordDetector | null = null;
+  private speechDetector: SpeechDetectorLike | null = null;
   private orchestrator: Orchestrator | null = null;
   private stateManager: StateManager | null = null;
   private llmClient: LLMClient | null = null;
@@ -93,6 +102,14 @@ export class KaliAppCore {
   private nextHabitatAnimalAtMs = 0;
   private habitatAnimalTimer: ReturnType<typeof setInterval> | null = null;
   private ambientCaptureMuteHolds = 0;
+  private listeningMode: ListeningMode = "ambient";
+  private promptedModeTimeout: ReturnType<typeof setTimeout> | null = null;
+  private routingMetrics = {
+    deterministicCount: 0,
+    llmFallbackCount: 0,
+    ambiguousCount: 0,
+    droppedCount: 0,
+  };
 
   constructor(
     private uiService: IUIService,
@@ -307,6 +324,23 @@ export class KaliAppCore {
     }
   }
 
+  private setListeningMode(mode: ListeningMode): void {
+    this.listeningMode = mode;
+  }
+
+  private openPromptedWindow(durationMs = 10_000): void {
+    this.setListeningMode("prompted");
+    if (this.promptedModeTimeout !== null) {
+      clearTimeout(this.promptedModeTimeout);
+    }
+    this.promptedModeTimeout = setTimeout(() => {
+      this.promptedModeTimeout = null;
+      if (this.currentNameHandler === null) {
+        this.setListeningMode("ambient");
+      }
+    }, durationMs);
+  }
+
   private formatGameRules(gameModule: GameModule): string {
     const { metadata } = gameModule;
     const fromMeta = metadata.llmExamples;
@@ -334,20 +368,21 @@ ${summary ? `**Summary (for NARRATE explanations):** ${summary}\n` : ""}${exampl
   private async initializeWakeWord(): Promise<void> {
     Logger.mic("Initializing speech recognition...");
     const indicator = this.uiService.getStatusIndicator();
-
-    const { WakeWordDetector } = await import("@/voice-recognition/wake-word");
-    this.wakeWordDetector = new WakeWordDetector(
-      () => this.handleWakeWord(),
-      (text) => this.handleTranscription(text),
+    const { DeepgramStream } = await import("@/voice-recognition/deepgram-stream");
+    this.speechDetector = new DeepgramStream(
+      (text) => {
+        void this.handleStreamTranscript(text);
+      },
       (raw, processed, wakeWordDetected) =>
         this.uiService.addTranscription(raw, processed, wakeWordDetected),
     );
+    Logger.info("Deepgram streaming speech detection enabled");
 
-    await this.wakeWordDetector.initialize((percent) => {
+    await this.speechDetector.initialize((percent) => {
       this.uiService.updateStatus(`Downloading model... ${percent}%`);
     });
 
-    await this.wakeWordDetector.startListening();
+    await this.speechDetector.startListening();
     await acquireScreenWakeLock();
     indicator.setState("listening");
   }
@@ -460,9 +495,10 @@ ${summary ? `**Summary (for NARRATE explanations):** ${summary}\n` : ""}${exampl
   private cleanupNameCollection(): void {
     this.currentNameHandler = null;
     this.uiService.setTranscriptInputEnabled?.(false);
-    if (this.wakeWordDetector) {
-      this.wakeWordDetector.disableDirectTranscription();
+    if (this.speechDetector) {
+      this.speechDetector.disableDirectTranscription();
     }
+    this.setListeningMode("ambient");
     this.releaseAmbientCaptureMute();
   }
 
@@ -489,7 +525,8 @@ ${summary ? `**Summary (for NARRATE explanations):** ${summary}\n` : ""}${exampl
       gameName,
       () => {
         this.acquireAmbientCaptureMute();
-        this.wakeWordDetector?.enableDirectTranscription();
+        this.speechDetector?.enableDirectTranscription();
+        this.setListeningMode("prompted");
       },
       llmClient,
       gameModule.metadata,
@@ -528,18 +565,33 @@ ${summary ? `**Summary (for NARRATE explanations):** ${summary}\n` : ""}${exampl
     }
   }
 
-  private handleWakeWord(): void {
-    this.acquireAmbientCaptureMute();
-    const indicator = this.uiService.getStatusIndicator();
-    indicator.setState("active");
-
-    if (this.currentNameHandler) {
-      this.uiService.updateStatus(
-        t("ui.wakeWordInstruction", { wakeWord: CONFIG.WAKE_WORD.TEXT[0] }),
-      );
+  private async handleStreamTranscript(text: string): Promise<void> {
+    const routeDecision = await routeTranscript(
+      text,
+      {
+        mode: this.listeningMode,
+        wakeWords: CONFIG.WAKE_WORD.TEXT,
+        inNameCollection: this.currentNameHandler !== null,
+        hasPendingDecisionPrompt: Boolean(this.orchestrator?.getPendingDecisionPrompt()),
+      },
+      this.llmClient,
+    );
+    if (routeDecision.usedLlmFallback) {
+      this.routingMetrics.llmFallbackCount += 1;
     } else {
-      this.uiService.updateStatus(t("ui.listeningForCommand"));
+      this.routingMetrics.deterministicCount += 1;
     }
+    if (routeDecision.kind === "GAME_COMMAND") {
+      await this.handleTranscription(routeDecision.transcript);
+      return;
+    }
+    if (routeDecision.kind === "AMBIGUOUS") {
+      this.routingMetrics.ambiguousCount += 1;
+      this.openPromptedWindow();
+      await this.speechService.speak(t("errors.sttOnlineTimeout"));
+      return;
+    }
+    this.routingMetrics.droppedCount += 1;
   }
 
   private getCurrentPlayerNameAndPosition(state: {
@@ -619,6 +671,7 @@ ${summary ? `**Summary (for NARRATE explanations):** ${summary}\n` : ""}${exampl
     const message = t("game.turnAnnouncementWithDecision", tParams);
     Logger.info(`Announcing current turn (decision pending): ${ctx.name} at ${ctx.position}`);
     await this.speechService.speak(message);
+    this.openPromptedWindow();
     orchestrator.setLastNarrationForVoicePolicy(message);
   }
 
@@ -643,6 +696,7 @@ ${summary ? `**Summary (for NARRATE explanations):** ${summary}\n` : ""}${exampl
       const message = this.buildGameplayTurnAnnouncement(nextPlayer, pendingPrompt);
       Logger.info(`Turn start sanity check: ${nextPlayer.name} at ${nextPlayer.position}`);
       await this.speechService.speak(message);
+      this.openPromptedWindow();
       this.orchestrator.setLastNarrationForVoicePolicy(message);
     }
   }
@@ -653,19 +707,18 @@ ${summary ? `**Summary (for NARRATE explanations):** ${summary}\n` : ""}${exampl
     const indicator = this.uiService.getStatusIndicator();
     indicator.setState("listening");
 
-    try {
-      if (this.currentNameHandler) {
-        this.currentNameHandler(text);
-        return;
-      }
+    if (this.currentNameHandler) {
+      this.currentNameHandler(text);
+      this.openPromptedWindow();
+      return;
+    }
 
-      if (this.orchestrator) {
-        this.speechService.beginGameplayTurn();
-        const result = await this.orchestrator.handleTranscript(text);
-        await this.applyPostGameplayResult(result);
-      }
-    } finally {
-      this.releaseAmbientCaptureMute();
+    // The only ambient-capture hold is NameCollector's, released by cleanupNameCollection.
+    // Gameplay never acquires one, so there is nothing to release here.
+    if (this.orchestrator) {
+      this.speechService.beginGameplayTurn();
+      const result = await this.orchestrator.handleTranscript(text);
+      await this.applyPostGameplayResult(result);
     }
 
     this.uiService.updateStatus(
@@ -673,6 +726,7 @@ ${summary ? `**Summary (for NARRATE explanations):** ${summary}\n` : ""}${exampl
         ? t("ui.status.ready")
         : t("ui.wakeWordReady", { wakeWord: CONFIG.WAKE_WORD.TEXT[0] }),
     );
+    this.setListeningMode("ambient");
   }
 
   /**
@@ -682,9 +736,13 @@ ${summary ? `**Summary (for NARRATE explanations):** ${summary}\n` : ""}${exampl
    */
   async dispose(): Promise<void> {
     await releaseWakeLock();
-    if (this.wakeWordDetector) {
-      await this.wakeWordDetector.destroy();
-      this.wakeWordDetector = null;
+    if (this.promptedModeTimeout !== null) {
+      clearTimeout(this.promptedModeTimeout);
+      this.promptedModeTimeout = null;
+    }
+    if (this.speechDetector) {
+      await this.speechDetector.destroy();
+      this.speechDetector = null;
     }
     this.stopHabitatAnimalTimer();
     this.speechService.stopLoopingSound();

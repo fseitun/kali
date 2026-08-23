@@ -1,0 +1,11 @@
+name = "kali-key-broker"
+main = "index.ts"
+compatibility_date = "2026-08-01"
+
+[vars]
+# The exact origin of the deployed app. Must match Origin header byte-for-byte.
+ALLOWED_ORIGIN = "https://kali.example.com"
+
+# Secrets are NOT set here. Run these once:
+#   wrangler secret put DEEPGRAM_API_KEY
+#   wrangler secret put DEEPINFRA_API_KEY

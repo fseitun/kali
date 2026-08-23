@@ -94,7 +94,7 @@ export function inferDecisionPoints(board: BoardConfig | undefined): DecisionPoi
 /**
  * Squares with more than one backward (`prev`) target become decision points for directional / backward movement.
  */
-export function inferBackwardDecisionPoints(board: BoardConfig | undefined): DecisionPoint[] {
+function inferBackwardDecisionPoints(board: BoardConfig | undefined): DecisionPoint[] {
   const result: DecisionPoint[] = [];
   forEachBoardSquare(board, (position, sq) => {
     if (!isPrevFork(sq, position)) {
