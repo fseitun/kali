@@ -23,7 +23,7 @@ function validateSquareAtStart(sq: SquareData): void {
     if (n.length === 0) {
       throw new Error(`Invalid game config: square 0 must have non-empty next or use fork object`);
     }
-  } else if (typeof n === "object" && Object.keys(n as object).length === 0) {
+  } else if (typeof n === "object" && Object.keys(n).length === 0) {
     throw new Error(`Invalid game config: square 0 fork next must have at least one branch`);
   }
   if (sq.prev && Array.isArray(sq.prev) && sq.prev.length > 0) {

@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { applySilentSuccessFallback } from "./gameplay-voice-policy";
 import { setLocale } from "@/i18n/translations";
-import { GamePhase, type GameState, type VoiceOutcomeHints } from "@/orchestrator/types";
+import { GamePhase, type GameState } from "@/orchestrator/types";
 
 describe("Product scenario: Apply Silent Success Fallback", () => {
   beforeEach(() => {
@@ -110,7 +110,7 @@ describe("Product scenario: Apply Silent Success Fallback", () => {
     } as GameState;
 
     const spoke = await applySilentSuccessFallback({
-      hints: {} as VoiceOutcomeHints,
+      hints: {},
       state,
       speak,
       setLastNarration: vi.fn(),

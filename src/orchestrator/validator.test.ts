@@ -45,7 +45,7 @@ describe("Product scenario: Rule validation New Primitives", () => {
     mockStateManager = {
       pathExists: (state: GameState, path: string) => {
         const parts = path.split(".");
-        let current: Record<string, unknown> = state as Record<string, unknown>;
+        let current: Record<string, unknown> = state;
         for (const part of parts) {
           if (!(part in current)) {
             return false;
@@ -1545,7 +1545,7 @@ describe("Product scenario: Rule validation New Primitives", () => {
     it("Expected outcome: Rejects non array input", () => {
       const actions = { action: "NARRATE", text: "Not an array" };
       const result = validateActions(
-        actions as unknown as unknown[],
+        actions,
         mockState,
         mockStateManager as unknown as StateManager,
         mockValidatorContext,

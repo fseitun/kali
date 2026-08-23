@@ -674,7 +674,7 @@ describe("Product scenario: Game orchestrator New Action Handlers", () => {
         stateManager,
         { speak: vi.fn(async () => {}), playSound: vi.fn() } as unknown as SpeechService,
         { setState: vi.fn() } as unknown as StatusIndicator,
-        stateManager.getState() as GameState,
+        stateManager.getState(),
       );
 
       await chainOrchestrator.testExecuteActions([{ action: "PLAYER_ANSWERED", answer: "5" }]);
@@ -820,7 +820,7 @@ describe("Product scenario: Game orchestrator New Action Handlers", () => {
         }
         return undefined;
       });
-      mockLLM.getActions = vi.fn(async () => []) as any;
+      mockLLM.getActions = vi.fn(async () => []);
 
       await orchestrator.testExecuteActions([{ action: "PLAYER_ANSWERED", answer: "Desert" }]);
 

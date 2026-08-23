@@ -435,9 +435,7 @@ export class Orchestrator {
       );
 
       const state = this.stateManager.getState();
-      Logger.state(
-        "Current state:\n" + formatStateContext(state as Record<string, unknown>, { forLog: true }),
-      );
+      Logger.state("Current state:\n" + formatStateContext(state, { forLog: true }));
       const profilerKey = context.isNestedCall ? "nested" : "top";
       const lastBotUtterance = this.lastNarration !== "" ? this.lastNarration : undefined;
 
@@ -515,9 +513,7 @@ export class Orchestrator {
     const state = this.stateManager.getState();
     const game = state.game as Record<string, unknown> | undefined;
     const pending = game?.pending as
-      | { kind?: string; riddleOptions?: string[]; correctOption?: string }
-      | null
-      | undefined;
+      { kind?: string; riddleOptions?: string[]; correctOption?: string } | null | undefined;
     if (
       pending?.kind !== "riddle" ||
       !Array.isArray(pending.riddleOptions) ||
@@ -633,9 +629,7 @@ export class Orchestrator {
     profilerPrefix: string,
   ): Promise<OrchestratorGameplayResult> {
     const state = this.stateManager.getState();
-    Logger.state(
-      "Current state:\n" + formatStateContext(state as Record<string, unknown>, { forLog: true }),
-    );
+    Logger.state("Current state:\n" + formatStateContext(state, { forLog: true }));
 
     Profiler.start(`${profilerPrefix}.validation.${this.getProfilerKey(context)}`);
     const validation = validateActions(
@@ -679,7 +673,7 @@ export class Orchestrator {
     }
     Logger.state(
       "Current state (after actions):\n" +
-        formatStateContext(this.stateManager.getState() as Record<string, unknown>, {
+        formatStateContext(this.stateManager.getState(), {
           forLog: true,
         }),
     );

@@ -13,8 +13,7 @@ function summarizePlayersForLog(
 
 function boardSummaryForLog(board: GameState["board"]): { squaresCount: number } {
   const squares = board?.squares;
-  const squareCount =
-    squares && typeof squares === "object" ? Object.keys(squares as object).length : 0;
+  const squareCount = squares && typeof squares === "object" ? Object.keys(squares).length : 0;
   return { squaresCount: squareCount };
 }
 
@@ -154,7 +153,7 @@ export class StateManager {
     const newState: Record<string, unknown> = { ...(obj as Record<string, unknown>) };
 
     let currentNew: Record<string, unknown> = newState;
-    let currentOld: Record<string, unknown> = obj as Record<string, unknown>;
+    let currentOld: Record<string, unknown> = obj;
 
     for (let i = 0; i < parts.length - 1; i++) {
       const part = parts[i];

@@ -139,7 +139,7 @@ export abstract class BaseLLMClient implements LLMClient {
     state: GameState,
     lastBotUtterance?: string,
   ): Promise<PrimitiveAction[]> {
-    const stateContext = formatStateContext(state as Record<string, unknown>);
+    const stateContext = formatStateContext(state);
     const lastUtteranceBlock =
       lastBotUtterance != null && lastBotUtterance !== ""
         ? `<last_utterance>\n${lastBotUtterance}\n</last_utterance>\n\n`
@@ -355,7 +355,7 @@ JSON:`;
       ) {
         const ans = (a as { answer?: unknown }).answer;
         if (typeof ans === "number" && Number.isFinite(ans)) {
-          return { ...a, answer: String(ans) } as PrimitiveAction;
+          return { ...a, answer: String(ans) };
         }
       }
       return a;

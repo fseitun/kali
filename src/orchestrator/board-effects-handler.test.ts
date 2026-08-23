@@ -384,7 +384,7 @@ describe("Product scenario: Board Effects Handler", () => {
 
     it("Expected outcome: Should handle position value that is not a number", async () => {
       stateManager.set("board.squares", { "5": { destination: 15 } });
-      stateManager.set("players.p1.position", "invalid" as unknown as number);
+      stateManager.set("players.p1.position", "invalid");
 
       await boardEffectsHandler.checkAndApplyBoardMoves("players.p1.position");
 
@@ -1111,7 +1111,7 @@ describe("Product scenario: Board Effects Handler", () => {
 
     it("Expected outcome: Should handle position value that is not a number", async () => {
       stateManager.set("board.squares", { "5": { name: "Bear", power: 1 } });
-      stateManager.set("players.p1.position", "invalid" as unknown as number);
+      stateManager.set("players.p1.position", "invalid");
 
       await boardEffectsHandler.checkAndApplySquareEffects("players.p1.position", baseContext);
 

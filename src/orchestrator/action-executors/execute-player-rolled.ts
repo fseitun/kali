@@ -44,7 +44,7 @@ async function tryExecuteMagicDoorOpeningRoll(
     throw new Error("Magic door opening roll but no magicDoorCheck square in board");
   }
   const playerRecord = state.players[currentTurn];
-  const bonus = getMagicDoorOpeningBonus(playerRecord as Record<string, unknown>);
+  const bonus = getMagicDoorOpeningBonus(playerRecord);
   const total = primitive.value + bonus;
   const success = total >= door.target;
   const name = playerDisplayName(playerRecord?.name, currentTurn);

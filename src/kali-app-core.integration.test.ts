@@ -169,7 +169,7 @@ describe("Product scenario: Kali App Core Integration Runtime Flows", () => {
       setAmbientCaptureMuted: vi.fn(),
       loadSound: vi.fn().mockResolvedValue(undefined),
       prime: vi.fn(),
-    } as unknown as ISpeechService;
+    };
   });
 
   describe("Product scenario: Initialize saved game path (phase PLAYING)", () => {

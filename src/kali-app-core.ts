@@ -10,7 +10,6 @@ import {
   getMagicDoorConfig,
   getMagicDoorOpeningBonus,
   minDieToOpenMagicDoor,
-  type SquareLike,
 } from "./orchestrator/board-helpers";
 import { inferDecisionPoints } from "./orchestrator/decision-point-inference";
 import { NameCollector } from "./orchestrator/name-collector";
@@ -48,7 +47,7 @@ function getMagicDoorAnnouncementContext(
   door: { position: number; target: number };
   playerSlice: Record<string, unknown> | undefined;
 } | null {
-  const squares = state?.board?.squares as Record<string, SquareLike> | undefined;
+  const squares = state?.board?.squares;
   const door = getMagicDoorConfig(squares);
   if (nextPlayer.position !== door?.position) {
     return null;
@@ -547,8 +546,8 @@ ${summary ? `**Summary (for NARRATE explanations):** ${summary}\n` : ""}${exampl
     game?: { turn?: string | null };
     players?: Record<string, { name?: string; position?: number }>;
   }): { name: string; position: number } | null {
-    const game = state.game as Record<string, unknown> | undefined;
-    const players = state.players as Record<string, Record<string, unknown>> | undefined;
+    const game = state.game;
+    const players = state.players;
     const currentTurn = game?.turn as string | undefined;
     if (!currentTurn || !players?.[currentTurn]) {
       return null;
@@ -590,10 +589,7 @@ ${summary ? `**Summary (for NARRATE explanations):** ${summary}\n` : ""}${exampl
     nextPlayer: { playerId: string; name: string; position: number },
     pendingPrompt: string | null | undefined,
   ): string {
-    const magicDoorLine = magicDoorTurnAnnouncementLine(
-      nextPlayer,
-      this.stateManager?.getState() as GameState | undefined,
-    );
+    const magicDoorLine = magicDoorTurnAnnouncementLine(nextPlayer, this.stateManager?.getState());
     if (magicDoorLine !== null) {
       return magicDoorLine;
     }
@@ -764,7 +760,7 @@ ${summary ? `**Summary (for NARRATE explanations):** ${summary}\n` : ""}${exampl
     if (!game.turn) {
       return "no current turn";
     }
-    const board = state.board as Record<string, unknown> | undefined;
+    const board = state.board;
     const squares = board?.squares as Record<string, unknown> | undefined;
     if (!squares || !(String(square) in squares)) {
       return `square ${square} not on board`;
