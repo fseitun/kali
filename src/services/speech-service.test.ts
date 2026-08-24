@@ -156,6 +156,30 @@ describe("Product scenario: Speech Service", () => {
       expect(utterance.lang).toBe("en-US");
     });
 
+    it("Expected outcome: Should give up on an utterance that never reports completion", async () => {
+      vi.useFakeTimers();
+      try {
+        // Neither onend nor onerror ever fires. Without the watchdog this promise never settles,
+        // MeteredSpeechService keeps activeSpeakCount above zero, and DeepgramStream gates the
+        // microphone forever — Kali goes deaf for the rest of the session with no recovery.
+        const speakPromise = speechService.speak("Sofi, es tu turno.");
+        let settled = false;
+        void speakPromise.then(() => {
+          settled = true;
+        });
+
+        await vi.advanceTimersByTimeAsync(4_000);
+        expect(settled).toBe(false);
+
+        await vi.advanceTimersByTimeAsync(2_000);
+        await speakPromise;
+        expect(settled).toBe(true);
+        expect(mockSpeechSynthesis.cancel).toHaveBeenCalled();
+      } finally {
+        vi.useRealTimers();
+      }
+    });
+
     it("Expected outcome: Should handle speech synthesis not available", async () => {
       globalThis.window = {} as unknown as Window & typeof globalThis;
 
@@ -249,6 +273,7 @@ describe("Product scenario: Speech Service", () => {
       const mockAudioBuffer = { duration: 1.0 };
 
       mockFetch.mockResolvedValueOnce({
+        ok: true,
         arrayBuffer: () => Promise.resolve(mockArrayBuffer),
       });
 
@@ -258,6 +283,19 @@ describe("Product scenario: Speech Service", () => {
 
       expect(mockFetch).toHaveBeenCalledWith("http://example.com/sound.mp3");
       expect(mockAudioContext.decodeAudioData).toHaveBeenCalledWith(mockArrayBuffer);
+    });
+
+    it("Expected outcome: Should skip decoding when the sound URL 404s", async () => {
+      // A 404 body is HTML; handing it to decodeAudioData is a crash, not a missing sound.
+      mockFetch.mockResolvedValueOnce({
+        ok: false,
+        status: 404,
+        arrayBuffer: () => Promise.resolve(new ArrayBuffer(8)),
+      });
+
+      await speechService.loadSound("test-sound", "http://example.com/missing.mp3");
+
+      expect(mockAudioContext.decodeAudioData).not.toHaveBeenCalled();
     });
 
     it("Expected outcome: Should handle load sound failure", async () => {
@@ -273,6 +311,7 @@ describe("Product scenario: Speech Service", () => {
       const mockArrayBuffer = new ArrayBuffer(1024);
 
       mockFetch.mockResolvedValueOnce({
+        ok: true,
         arrayBuffer: () => Promise.resolve(mockArrayBuffer),
       });
 
@@ -289,6 +328,7 @@ describe("Product scenario: Speech Service", () => {
       const mockAudioBuffer = { duration: 1.0 };
 
       mockFetch.mockResolvedValueOnce({
+        ok: true,
         arrayBuffer: () => Promise.resolve(mockArrayBuffer),
       });
 

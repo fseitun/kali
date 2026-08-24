@@ -11,6 +11,7 @@ const appendChildMock = vi.hoisted(() => vi.fn());
 vi.mock("./config", () => ({
   CONFIG: {
     BUILD_ID: "build-123",
+    LOCALE: "es-AR",
     UI: {
       SHOW_EXPORT_BUTTON: false,
     },
@@ -99,6 +100,7 @@ describe("Product scenario: Main Bootstrap", () => {
   let domReadyHandler: (() => void) | null;
   let startClickHandler: (() => Promise<void>) | null;
   let elements: Record<string, any>;
+  let documentElement: { lang: string };
 
   function setupDom({
     userAgent = "Desktop",
@@ -121,6 +123,7 @@ describe("Product scenario: Main Bootstrap", () => {
       }),
     };
     const iosHint = { textContent: "", hidden: true };
+    documentElement = { lang: "" };
     const versionNoticeMessage = { textContent: "" };
     const versionRefresh = { textContent: "" };
     const versionCurrent = { textContent: "", title: "" };
@@ -136,6 +139,7 @@ describe("Product scenario: Main Bootstrap", () => {
     Object.defineProperty(globalThis, "document", {
       configurable: true,
       value: {
+        documentElement,
         getElementById: (id: string) => elements[id] ?? null,
         addEventListener: vi.fn((event: string, cb: () => void) => {
           if (event === "DOMContentLoaded") {
@@ -171,6 +175,16 @@ describe("Product scenario: Main Bootstrap", () => {
     uiStore.instances = [];
     speechStore.instances = [];
     setupDom();
+  });
+
+  it("Expected outcome: Stamps the resolved locale on the document", async () => {
+    // The markup ships one fixed lang; VITE_LOCALE or a stored override would make it a lie.
+    const { getLocale } = await import("./i18n/locale-manager");
+
+    await import("./main");
+
+    expect(documentElement.lang).toBe(getLocale());
+    expect(documentElement.lang).toBe("es-AR");
   });
 
   it("Expected outcome: Start button primes speech and initializes only once", async () => {

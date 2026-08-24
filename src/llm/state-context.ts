@@ -123,7 +123,7 @@ function formatObjectFields(
   return fields;
 }
 
-export interface FormatStateContextOptions {
+interface FormatStateContextOptions {
   forLog?: boolean;
 }
 
@@ -277,7 +277,10 @@ function buildRiddleCurrentPromptAndOptions(
   }
   const promptText = pending.riddlePrompt?.trim() ?? "";
   const optionsLine = substLlmState(L.riddleCurrentOptions, { optionsList });
-  return promptText ? ` Pregunta actual: ${promptText}.${optionsLine}` : optionsLine;
+  if (!promptText) {
+    return optionsLine;
+  }
+  return `${substLlmState(L.riddleCurrentQuestion, { prompt: promptText })}${optionsLine}`;
 }
 
 function formatRiddlePhaseContext(

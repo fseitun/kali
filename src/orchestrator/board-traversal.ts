@@ -82,7 +82,7 @@ function readRollContext(state: GameState, playerId: string): RollSimulationSlic
  * Simulates a full roll from `start` using the same step and landing-hop rules as gameplay.
  * `activeChoices` is explicit so enumeration can pass temporary overrides.
  */
-export function simulateRollFromState(
+function simulateRollFromState(
   state: GameState,
   playerId: string,
   start: number,

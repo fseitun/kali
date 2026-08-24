@@ -22,6 +22,38 @@ function isPrevRecord(prev: PrevField | undefined): prev is Record<string, strin
 
 type SquareWithEdges = { next?: NextField; prev?: PrevField } | undefined;
 
+/** Fork objects key their branches by target index; return those keys sorted and deduped. */
+function sortedNumericKeys(record: Record<string, unknown>): number[] {
+  const nums = Object.keys(record)
+    .map((k) => parseInt(k, 10))
+    .filter((n) => !Number.isNaN(n));
+  return [...new Set(nums)].sort((a, b) => a - b);
+}
+
+/**
+ * Fork objects map each target index to the phrases that pick it. Returns those lists keyed by the
+ * normalized target string, with the target number appended so PLAYER_ANSWERED with "15" matches
+ * without the JSON having to repeat it.
+ */
+function forkKeywordsWithImplicitTargets(
+  fork: Record<string, string[]>,
+): Record<string, string[]> | undefined {
+  const result: Record<string, string[]> = {};
+  for (const [key, phrases] of Object.entries(fork)) {
+    const n = parseInt(key, 10);
+    if (Number.isNaN(n)) {
+      continue;
+    }
+    const keyStr = String(n);
+    const list = Array.isArray(phrases) ? [...phrases] : [];
+    if (!list.includes(keyStr)) {
+      list.push(keyStr);
+    }
+    result[keyStr] = list;
+  }
+  return Object.keys(result).length > 0 ? result : undefined;
+}
+
 /**
  * Returns sorted unique target indices from a square's `next` or `prev` field.
  * @param sq - Square-like object with optional `next` and `prev`
@@ -40,9 +72,7 @@ function getForwardTargetsFromNext(
   if (Array.isArray(next)) {
     return [...next];
   }
-  const keys = Object.keys(next);
-  const nums = keys.map((k) => parseInt(k, 10)).filter((n) => !Number.isNaN(n));
-  return [...new Set(nums)].sort((a, b) => a - b);
+  return sortedNumericKeys(next);
 }
 
 function getBackwardTargetsFromPrev(prev: PrevField | undefined | null, current: number): number[] {
@@ -55,9 +85,7 @@ function getBackwardTargetsFromPrev(prev: PrevField | undefined | null, current:
     }
     return [...prev];
   }
-  const keys = Object.keys(prev);
-  const nums = keys.map((k) => parseInt(k, 10)).filter((n) => !Number.isNaN(n));
-  return [...new Set(nums)].sort((a, b) => a - b);
+  return sortedNumericKeys(prev);
 }
 
 /**
@@ -88,9 +116,7 @@ export function getNextTargets(sq: { next?: NextField } | undefined): number[] {
   if (Array.isArray(next)) {
     return [...next];
   }
-  const keys = Object.keys(next);
-  const nums = keys.map((k) => parseInt(k, 10)).filter((n) => !Number.isNaN(n));
-  return [...new Set(nums)].sort((a, b) => a - b);
+  return sortedNumericKeys(next);
 }
 
 /**
@@ -124,8 +150,7 @@ export function isNextFork(sq: { next?: NextField } | undefined): boolean {
 }
 
 /**
- * For fork `next` objects, returns phrase lists per target key, with the numeric target string
- * appended to each list so PLAYER_ANSWERED with "15" matches without duplicating in JSON.
+ * Phrase lists per forward fork target.
  * @param sq - Square with object `next`
  * @returns Map of target string → phrases including implicit target number, or undefined if not object next
  */
@@ -133,24 +158,7 @@ export function getForkKeywordsWithImplicitTargets(
   sq: { next?: NextField } | undefined,
 ): Record<string, string[]> | undefined {
   const next = sq?.next;
-  if (!isNextRecord(next)) {
-    return undefined;
-  }
-  const obj = next;
-  const result: Record<string, string[]> = {};
-  for (const [key, phrases] of Object.entries(obj)) {
-    const n = parseInt(key, 10);
-    if (Number.isNaN(n)) {
-      continue;
-    }
-    const keyStr = String(n);
-    const list = Array.isArray(phrases) ? [...phrases] : [];
-    if (!list.includes(keyStr)) {
-      list.push(keyStr);
-    }
-    result[keyStr] = list;
-  }
-  return Object.keys(result).length > 0 ? result : undefined;
+  return isNextRecord(next) ? forkKeywordsWithImplicitTargets(next) : undefined;
 }
 
 /**
@@ -160,23 +168,7 @@ export function getPrevForkKeywordsWithImplicitTargets(
   sq: { prev?: PrevField } | undefined,
 ): Record<string, string[]> | undefined {
   const prev = sq?.prev;
-  if (!isPrevRecord(prev)) {
-    return undefined;
-  }
-  const result: Record<string, string[]> = {};
-  for (const [key, phrases] of Object.entries(prev)) {
-    const n = parseInt(key, 10);
-    if (Number.isNaN(n)) {
-      continue;
-    }
-    const keyStr = String(n);
-    const list = Array.isArray(phrases) ? [...phrases] : [];
-    if (!list.includes(keyStr)) {
-      list.push(keyStr);
-    }
-    result[keyStr] = list;
-  }
-  return Object.keys(result).length > 0 ? result : undefined;
+  return isPrevRecord(prev) ? forkKeywordsWithImplicitTargets(prev) : undefined;
 }
 
 /**

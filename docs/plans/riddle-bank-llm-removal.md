@@ -1,29 +1,42 @@
-# Riddle bank (future): remove LLM from animal encounter generation
+# Riddle bank: remove LLM from animal encounter generation
+
+> **Status: landed.** The bank is live and `ASK_RIDDLE` is gone ([ADR 0006](../adr/0006-remove-ask-riddle-primitive.md)). Kept as the reference for the on-disk data shape. Riddles live under `encounterQuestions` in the game config and are read by `getEncounterQuestion` / `pickEncounterQuestionFromBank` in [`board-effects-handler.ts`](../../src/orchestrator/board-effects-handler.ts).
 
 ## Goal
 
-Today, landing on an animal square triggers a nested `getActions` call with a `[SYSTEM: ...]` transcript. The LLM must emit `ASK_RIDDLE` + `NARRATE` in one JSON array. Failures include empty actions, wrong option counts, and answer leakage.
+Landing on an animal square used to trigger a nested `getActions` call with a `[SYSTEM: ...]` transcript; the LLM had to emit `ASK_RIDDLE` + `NARRATE` in one JSON array. Failures included empty actions, wrong option counts, and answer leakage.
 
-Replacing that with a **static riddle bank** makes the encounter pipeline fully deterministic: the CPU picks a riddle, speaks templated intro + question, and only uses the LLM for **fuzzy answer grading** (`validateRiddleAnswer`) when strict match fails.
+The **static riddle bank** replaced that and made the encounter pipeline deterministic: the CPU picks a riddle, speaks templated intro + question, and only uses the LLM for **fuzzy answer grading** (`validateRiddleAnswer`) when strict match fails.
 
-## Shape of the data
+## Shape of the data (as shipped)
 
-- New file e.g. `public/games/kalimba/riddles.json` keyed by animal / square identifier (or `squareIndex` + `name`).
-- Each entry: `{ "text": "...", "options": ["...", "...", "...", "..."], "correctOption": "...", "correctOptionSynonyms": [] }`.
-- Target ~3–5 riddles per animal encounter square (~47 animals in Kalimba) → on the order of 150–200 entries. Content can be authored or batch-generated offline, then reviewed.
+`encounterQuestions` in `public/games/<game>/config.json`, keyed by **square name**, then by locale (44 animals in Kalimba):
 
-## Code changes (when you implement)
+```json
+"encounterQuestions": {
+  "Baboon": {
+    "es-AR": [
+      {
+        "kali": "spoken intro line",
+        "question": "…?",
+        "options": ["…", "…", "…", "…"],
+        "correctOption": "…"
+      }
+    ],
+    "en-US": []
+  }
+}
+```
 
-1. **Loader**: extend `GameLoader` (or a small `RiddleBank` module) to load `riddles.json` with the game module.
-2. **`BoardEffectsHandler`**: for `isAnimalEncounterKind`, instead of `processTranscriptFn`:
-   - Set `game.pending` as today.
-   - Pick random riddle for `(position, squareData.name)`.
-   - Store `riddlePrompt`, `riddleOptions`, `correctOption` on pending (same shape as after `ASK_RIDDLE`).
-   - Speak via i18n: encounter intro + read options (or one combined string).
-   - Optionally play `animal_collect` or existing encounter SFX.
-3. **Remove** `handleEmptyActionsWithRetry` riddle auto-retry in [`orchestrator.ts`](../../src/orchestrator/orchestrator.ts) once riddles are always present from the bank.
-4. **Tests**: integration tests for “land on animal → pending has structured riddle → no nested `getActions`” (mock LLM call count).
+`getEncounterQuestionBank` falls back to the other locale when one is missing; `pickEncounterQuestionFromBank` walks `game.encounterQuestionCursor.<squareName>` so repeat visits get a different question. A square with no entries **throws** at landing rather than falling back to the model.
+
+## Code changes (as implemented)
+
+1. **Loader**: `encounterQuestions` rides along with the game config into state.
+2. **`BoardEffectsHandler`**: `openPendingForLanding` picks the question (`getEncounterQuestion`), stores it on pending (`setPendingAnimalEncounter`), and speaks intro + question + options deterministically — no `processTranscriptFn` call.
+3. **Removed**: the nested-LLM landing call and its empty-actions riddle retry in [`orchestrator.ts`](../../src/orchestrator/orchestrator.ts).
+4. **Removed**: the `ASK_RIDDLE` primitive itself ([ADR 0006](../adr/0006-remove-ask-riddle-primitive.md)).
 
 ## Relation to completed work
 
-Phases 1A (fork speak), 1B (non-animal deterministic landing speech), 2 (fast path), and 3 (tighter `getActions`) are independent of the riddle bank. After the bank exists, **animal** squares become the last nested-LLM landing path to delete.
+Phases 1A (fork speak), 1B (non-animal deterministic landing speech), 2 (fast path), and 3 (tighter `getActions`) were independent of the riddle bank. With the bank in place, **animal** squares were the last nested-LLM landing path, and it is deleted.

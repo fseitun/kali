@@ -32,14 +32,13 @@ describe("resolveNarrationPlan", () => {
     const plan = resolveNarrationPlan({
       state,
       events,
-      incomingNarrationText: "Moved to 54",
     });
 
     expect(plan?.text).toBe(t("game.goldenFoxJump", { name: "Alice", square: 80 }));
     expect(plan?.consumedEventIds).toEqual([2]);
   });
 
-  it("Expected outcome: Uses magic door bounce deterministic line when incoming narration exists", () => {
+  it("Expected outcome: Uses magic door bounce deterministic line over the plain movement line", () => {
     setLocale("en-US");
     const state = buildState();
     const events: DomainEvent[] = [
@@ -57,7 +56,6 @@ describe("resolveNarrationPlan", () => {
     const plan = resolveNarrationPlan({
       state,
       events,
-      incomingNarrationText: "You got to 188",
     });
 
     expect(plan?.text).toBe(
@@ -76,27 +74,32 @@ describe("resolveNarrationPlan", () => {
     const plan = resolveNarrationPlan({
       state,
       events,
-      incomingNarrationText: "Moved",
     });
 
     expect(plan?.text).toBe(t("game.rollMovementLanded", { name: "Alice", roll: 3, square: 12 }));
     expect(plan?.consumedEventIds).toEqual([1]);
   });
 
-  it("Expected outcome: Returns undefined when incoming narration is empty for movement-linked events", () => {
+  it("Expected outcome: Resolves movement narration even when no NARRATE accompanies the roll", () => {
     setLocale("en-US");
     const state = buildState();
     const events: DomainEvent[] = [
       { eventId: 1, kind: "movementRollResolved", playerId: "p1", roll: 3, square: 12 },
     ];
 
-    const plan = resolveNarrationPlan({
-      state,
-      events,
-      incomingNarrationText: "   ",
-    });
+    const plan = resolveNarrationPlan({ state, events });
 
-    expect(plan).toBeUndefined();
+    expect(plan?.text).toBe(t("game.rollMovementLanded", { name: "Alice", roll: 3, square: 12 }));
+  });
+
+  it("Expected outcome: Returns undefined when the events belong to another player", () => {
+    setLocale("en-US");
+    const state = buildState("p2");
+    const events: DomainEvent[] = [
+      { eventId: 1, kind: "movementRollResolved", playerId: "p1", roll: 3, square: 12 },
+    ];
+
+    expect(resolveNarrationPlan({ state, events })).toBeUndefined();
   });
 
   it("Expected outcome: Consumes only matching event instances when multiple same-kind events exist", () => {
@@ -118,7 +121,6 @@ describe("resolveNarrationPlan", () => {
     const plan = resolveNarrationPlan({
       state,
       events,
-      incomingNarrationText: "I landed on 188",
     });
 
     expect(plan?.text).toBe(

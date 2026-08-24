@@ -12,8 +12,8 @@ export function checkBrowserSupport(): void {
         (window as typeof window & { webkitAudioContext?: typeof AudioContext }).webkitAudioContext,
     },
     { name: "MediaDevices", api: navigator.mediaDevices },
-    { name: "WebAssembly", api: window.WebAssembly },
-    { name: "IndexedDB", api: window.indexedDB },
+    { name: "AudioWorklet", api: window.AudioWorklet },
+    { name: "WebSocket", api: window.WebSocket },
   ];
 
   for (const { name, api } of requiredAPIs) {

@@ -1,40 +1,6 @@
 import type { PendingPowerCheck, PendingRevenge, PendingRiddle } from "./pending-types";
 import type { GameState } from "./types";
 
-export function isValidAskRiddleInput(primitive: {
-  options: unknown;
-  correctOption: unknown;
-}): boolean {
-  return (
-    Array.isArray(primitive.options) &&
-    primitive.options.length === 4 &&
-    typeof primitive.correctOption === "string" &&
-    primitive.correctOption.trim().length > 0
-  );
-}
-
-export function buildNextPendingFromAskRiddle(
-  pending: PendingRiddle,
-  primitive: {
-    text: string;
-    options: [string, string, string, string];
-    correctOption: string;
-    correctOptionSynonyms?: string[];
-  },
-): PendingRiddle {
-  const synonyms =
-    Array.isArray(primitive.correctOptionSynonyms) && primitive.correctOptionSynonyms.length > 0
-      ? { correctOptionSynonyms: primitive.correctOptionSynonyms }
-      : {};
-  return {
-    ...pending,
-    riddlePrompt: primitive.text,
-    riddleOptions: primitive.options,
-    correctOption: primitive.correctOption,
-    ...synonyms,
-  };
-}
-
 export function createPowerCheckPendingFromRiddle(
   pending: PendingRiddle,
   correct: boolean,
@@ -45,7 +11,6 @@ export function createPowerCheckPendingFromRiddle(
     position: pending.position,
     power: pending.power,
     riddleCorrect: correct,
-    phase: "powerCheck",
   };
 }
 

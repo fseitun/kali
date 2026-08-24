@@ -2,7 +2,7 @@
 // @ts-nocheck - Adversarial tests intentionally use malformed data
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import { Orchestrator } from "./orchestrator";
-import type { GameState, PrimitiveAction } from "./types";
+import { GamePhase, type GameState, type PrimitiveAction } from "./types";
 import type { StatusIndicator } from "@/components/status-indicator";
 import { possessiveScorePhraseEs } from "@/i18n/kalimba-encounter-phrases";
 import { setLocale, t } from "@/i18n/translations";
@@ -223,14 +223,18 @@ describe("Product scenario: Game orchestrator New Action Handlers", () => {
     });
   });
 
-  describe("Product scenario: Game asks a riddle", () => {
-    it("Expected outcome: Stores riddle text, options, correct Option and optional synonyms in pending Animal Encounter", async () => {
-      (testState.game as any).pending = {
+  describe("Product scenario: Interpreter tries to invent a riddle", () => {
+    it("Expected outcome: Rejects ASK RIDDLE and leaves the bank riddle in pending untouched", async () => {
+      const bankRiddle = {
         position: 5,
         power: 3,
         playerId: "p1",
         kind: "riddle",
+        riddlePrompt: "¿Dónde vive el pingüino?",
+        riddleOptions: ["Desierto", "Océano", "Ártico", "Bosque"],
+        correctOption: "Ártico",
       };
+      (testState.game as any).pending = bankRiddle;
       mockStateManager.get = vi.fn((path: string) => {
         if (path === "game.pending") {
           return (testState.game as any).pending;
@@ -244,28 +248,19 @@ describe("Product scenario: Game orchestrator New Action Handlers", () => {
         return undefined;
       });
 
-      const actions: PrimitiveAction[] = [
+      const actions = [
         {
           action: "ASK_RIDDLE",
           text: "Where does the penguin live?",
           options: ["Desert", "Ocean", "Arctic", "Forest"],
           correctOption: "Arctic",
-          correctOptionSynonyms: ["polo", "frío"],
         },
-      ];
+      ] as unknown as PrimitiveAction[];
 
-      await orchestrator.testExecuteActions(actions);
+      const result = await orchestrator.testExecuteActions(actions);
 
-      expect(mockStateManager.set).toHaveBeenCalledWith(
-        "game.pending",
-        expect.objectContaining({
-          kind: "riddle",
-          riddlePrompt: "Where does the penguin live?",
-          riddleOptions: ["Desert", "Ocean", "Arctic", "Forest"],
-          correctOption: "Arctic",
-          correctOptionSynonyms: ["polo", "frío"],
-        }),
-      );
+      expect(result.success).toBe(false);
+      expect(mockStateManager.set).not.toHaveBeenCalledWith("game.pending", expect.anything());
     });
   });
 
@@ -931,6 +926,7 @@ describe("Product scenario: Game orchestrator New Action Handlers", () => {
       "Federico, estás en el inicio. ¿Querés ir por el camino A, que es más corto, o por el B, que es más largo?";
 
     beforeEach(() => {
+      setLocale("es-AR");
       (testState.players as any).p1.position = 0;
       (testState.players as any).p1.activeChoices = {};
       (testState.board as any).squares = {
@@ -999,24 +995,38 @@ describe("Product scenario: Game orchestrator New Action Handlers", () => {
       });
     });
 
-    it("Expected outcome: Resets with keep Player Names true", async () => {
+    it("Expected outcome: Rebuilds the kept roster and hands play back to the first player", async () => {
       const actions: PrimitiveAction[] = [{ action: "RESET_GAME", keepPlayerNames: true }];
 
-      await orchestrator.testExecuteActions(actions);
+      const result = await orchestrator.testExecuteActions(actions);
 
       expect(mockStateManager.resetState).toHaveBeenCalled();
-      expect(mockStateManager.set).toHaveBeenCalledWith("players.p1.name", "Alice");
-      expect(mockStateManager.set).toHaveBeenCalledWith("players.p2.name", "Bob");
+      expect(mockStateManager.set).toHaveBeenCalledWith(
+        "players",
+        expect.objectContaining({
+          p1: expect.objectContaining({ name: "Alice", position: 0 }),
+          p2: expect.objectContaining({ name: "Bob", position: 0 }),
+        }),
+      );
+      expect(mockStateManager.set).toHaveBeenCalledWith("game.turn", "p1");
+      expect(mockStateManager.set).toHaveBeenCalledWith("game.phase", GamePhase.PLAYING);
+      // The restart already seated p1; advancing here would skip their turn.
+      expect(result.turnAdvance.kind).toBe("none");
+      expect(result.gameReset).toBe(true);
     });
 
-    it("Expected outcome: Resets with keep Player Names false", async () => {
+    it("Expected outcome: Drops the roster into SETUP so the app collects names again", async () => {
       const actions: PrimitiveAction[] = [{ action: "RESET_GAME", keepPlayerNames: false }];
 
-      await orchestrator.testExecuteActions(actions);
+      const result = await orchestrator.testExecuteActions(actions);
 
       expect(mockStateManager.resetState).toHaveBeenCalled();
-      expect(mockStateManager.set).not.toHaveBeenCalledWith("players.p1.name", "Alice");
-      expect(mockStateManager.set).not.toHaveBeenCalledWith("players.p2.name", "Bob");
+      expect(mockStateManager.set).toHaveBeenCalledWith("game.phase", GamePhase.SETUP);
+      expect(mockStateManager.set).not.toHaveBeenCalledWith(
+        "players",
+        expect.objectContaining({ p1: expect.objectContaining({ name: "Alice" }) }),
+      );
+      expect(result.gameReset).toBe(true);
     });
   });
 });

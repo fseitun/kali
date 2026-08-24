@@ -1,11 +1,11 @@
 /**
- * Parses transcript-like numeric input by extracting digits first.
- * Returns null when no valid integer is present.
+ * Parses transcript-like numeric input holding exactly one integer ("saqué 4" → 4).
+ * Returns null for anything else — several digit groups ("1 y 6", "3.5") are ambiguous,
+ * never a single roll, and must not be concatenated into a bogus number.
  */
 export function parseRollLikeInput(answer: string): number | null {
-  const rollStr = answer.trim().replace(/\D/g, "") || answer.trim();
-  const roll = parseInt(rollStr, 10);
-  return Number.isNaN(roll) ? null : roll;
+  const match = /^\D*(\d+)\D*$/.exec(answer.trim());
+  return match ? Number.parseInt(match[1], 10) : null;
 }
 
 /**

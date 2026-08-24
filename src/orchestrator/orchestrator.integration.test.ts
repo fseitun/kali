@@ -406,7 +406,7 @@ describe("Product scenario: Game orchestrator Integration Tests", () => {
       expect(result.success).toBe(true);
       expect(result.turnAdvance).toEqual({
         kind: "alreadyAdvanced",
-        nextPlayer: { playerId: "p2", name: "Bob", position: 0 },
+        nextPlayer: { playerId: "p2", name: "Bob", position: 0, skippedPlayers: [] },
       });
 
       const turn = stateManager.get("game.turn");
@@ -462,7 +462,7 @@ describe("Product scenario: Game orchestrator Integration Tests", () => {
       expect(result.turnAdvance.kind).toBe("alreadyAdvanced");
       expect(result.turnAdvance).toMatchObject({
         kind: "alreadyAdvanced",
-        nextPlayer: { playerId: "p2", name: "Bob", position: 0 },
+        nextPlayer: { playerId: "p2", name: "Bob", position: 0, skippedPlayers: [] },
       });
 
       const turn = stateManager.get("game.turn");
@@ -553,7 +553,6 @@ describe("Product scenario: Game orchestrator Integration Tests", () => {
             position: 168,
             power: 1,
             riddleCorrect: true,
-            phase: "powerCheck",
           },
         },
         players: {
@@ -683,7 +682,6 @@ describe("Product scenario: Game orchestrator Integration Tests", () => {
             playerId: "p1",
             position: 145,
             power: 2,
-            phase: "revenge",
           },
         },
         players: {
@@ -760,7 +758,7 @@ describe("Product scenario: Game orchestrator Integration Tests", () => {
       expect(result.turnAdvance.kind).toBe("alreadyAdvanced");
       expect(result.turnAdvance).toMatchObject({
         kind: "alreadyAdvanced",
-        nextPlayer: { playerId: "p2", name: "Bob", position: 0 },
+        nextPlayer: { playerId: "p2", name: "Bob", position: 0, skippedPlayers: [] },
       });
 
       expect(stateManager.get("game.turn")).toBe("p2");
@@ -814,7 +812,7 @@ describe("Product scenario: Game orchestrator Integration Tests", () => {
       expect(result.success).toBe(true);
       expect(result.turnAdvance).toEqual({
         kind: "alreadyAdvanced",
-        nextPlayer: { playerId: "p2", name: "Bob", position: 0 },
+        nextPlayer: { playerId: "p2", name: "Bob", position: 0, skippedPlayers: [] },
       });
       expect(mockLLM.getCallCount()).toBe(0);
     });
@@ -1371,7 +1369,7 @@ describe("Product scenario: Game orchestrator Integration Tests", () => {
       setLocale("es-AR");
     });
 
-    it("Expected outcome: Roll from 187 to skull keeps final landing at 187 when magic door is closed", async () => {
+    it("Expected outcome: Roll from 187 to skull returns to 187 once the door has been opened", async () => {
       setLocale("en-US");
       mockLLM = createScriptedLLM([]);
 
@@ -1385,7 +1383,9 @@ describe("Product scenario: Game orchestrator Integration Tests", () => {
           lastRoll: 0,
         },
         players: {
-          p1: { id: "p1", name: "Alice", position: 187, activeChoices: {} },
+          // Standing past 186 is only reachable through an opened door; leaving the flag off would
+          // describe a board state the bounce rule (Kalimba §9) forbids.
+          p1: { id: "p1", name: "Alice", position: 187, activeChoices: {}, magicDoorOpened: true },
         },
         board: {
           squares: {
@@ -1436,7 +1436,9 @@ describe("Product scenario: Game orchestrator Integration Tests", () => {
           lastRoll: 0,
         },
         players: {
-          p1: { id: "p1", name: "Alice", position: 187, activeChoices: {} },
+          // Standing past 186 is only reachable through an opened door; leaving the flag off would
+          // describe a board state the bounce rule (Kalimba §9) forbids.
+          p1: { id: "p1", name: "Alice", position: 187, activeChoices: {}, magicDoorOpened: true },
         },
         board: {
           squares: {
@@ -2547,6 +2549,435 @@ describe("Product scenario: Game orchestrator Integration Tests", () => {
       expect(result.success).toBe(false);
       expect(mockSpeech.speak).toHaveBeenCalledWith(t("errors.sayEncounterRollAsAnswer"));
       setLocale("en-US");
+    });
+  });
+  describe("Product scenario: Review pass regressions", () => {
+    it("Expected outcome: Losing a revenge roll speaks the fail line, keeps the revenge and ends the turn", async () => {
+      setLocale("en-US");
+      mockLLM = createScriptedLLM([]);
+
+      const initialState = createPlayingStateFixture({
+        players: {
+          p1: { id: "p1", name: "Alice", position: 5 },
+          p2: { id: "p2", name: "Bob", position: 0 },
+        },
+        squares: { "5": { name: "Cobra", power: 4 } },
+        pending: { kind: "revenge", playerId: "p1", position: 5, power: 4 },
+      });
+
+      setupGame(initialState);
+
+      const result = await orchestrator.testExecuteActions([
+        { action: "PLAYER_ANSWERED", answer: "2" },
+      ]);
+
+      expect(result.success).toBe(true);
+      expect(mockSpeech.speak).toHaveBeenCalledWith(t("game.powerCheckFail"));
+      expect((mockSpeech.speak as ReturnType<typeof vi.fn>).mock.calls.length).toBeGreaterThan(0);
+      expect(result.turnAdvance).toEqual({
+        kind: "alreadyAdvanced",
+        nextPlayer: { playerId: "p2", name: "Bob", position: 0, skippedPlayers: [] },
+      });
+      expect(stateManager.get("game.turn")).toBe("p2");
+      expect(stateManager.get("players.p1.position")).toBe(5);
+      expect(stateManager.get("game.pending")).toMatchObject({ kind: "revenge", playerId: "p1" });
+    });
+
+    it("Expected outcome: Finishing a fork-paused move advances the turn instead of asking the same player to roll again", async () => {
+      setLocale("en-US");
+      mockLLM = createScriptedLLM([]);
+
+      const initialState = createPlayingStateFixture({
+        players: {
+          p1: { id: "p1", name: "Alice", position: 96, activeChoices: {} },
+          p2: { id: "p2", name: "Bob", position: 0 },
+        },
+        squares: {
+          "96": { next: [97, 99] },
+          "97": { next: [98] },
+          "98": { next: [100] },
+          "99": { next: [100] },
+        },
+        pending: {
+          kind: "completeRollMovement",
+          playerId: "p1",
+          remainingSteps: 1,
+          direction: "forward",
+        },
+      });
+
+      setupGame(initialState);
+
+      const result = await orchestrator.testExecuteActions([
+        { action: "PLAYER_ANSWERED", answer: "99" },
+      ]);
+
+      expect(result.success).toBe(true);
+      expect(stateManager.get("players.p1.position")).toBe(99);
+      expect(result.turnAdvance.kind).toBe("callAdvanceTurn");
+      expect(result.voiceOutcomeHints?.forkChoiceResolvedWithoutNarrate).toBeUndefined();
+    });
+
+    it("Expected outcome: A revenge waits through an opponent's turn even when that opponent opens a pending of their own", async () => {
+      setLocale("en-US");
+      mockLLM = createScriptedLLM([]);
+
+      const initialState = createPlayingStateFixture({
+        players: {
+          p1: { id: "p1", name: "Alice", position: 5 },
+          p2: { id: "p2", name: "Bob", position: 20, activeChoices: {} },
+        },
+        squares: {
+          "5": { name: "Cobra", power: 4 },
+          "21": { next: [22] },
+          "22": { name: "River", effect: "retreat1d6" },
+        },
+        pending: {
+          kind: "powerCheck",
+          playerId: "p1",
+          position: 5,
+          power: 4,
+          riddleCorrect: false,
+        },
+      });
+
+      setupGame(initialState);
+
+      // Alice loses her power check: Kalimba §2C owes her a revenge and passes the turn.
+      await orchestrator.testExecuteActions([{ action: "PLAYER_ANSWERED", answer: "2" }]);
+      expect(stateManager.get("game.turn")).toBe("p2");
+
+      // Bob lands on a square that opens a pending of his own, taking the single global slot.
+      await orchestrator.testExecuteActions([{ action: "PLAYER_ROLLED", value: 2 }]);
+      expect(stateManager.get("game.pending")).toMatchObject({
+        kind: "directional",
+        playerId: "p2",
+      });
+
+      // Bob resolves it and the turn comes back around.
+      await orchestrator.testExecuteActions([{ action: "PLAYER_ANSWERED", answer: "3" }]);
+      await orchestrator.advanceTurn();
+
+      expect(stateManager.get("game.turn")).toBe("p1");
+      expect(stateManager.get("game.pending")).toMatchObject({
+        kind: "revenge",
+        playerId: "p1",
+        position: 5,
+        power: 4,
+      });
+    });
+
+    it("Expected outcome: Winning the revenge retires it for good instead of owing it again next turn", async () => {
+      setLocale("en-US");
+      mockLLM = createScriptedLLM([]);
+
+      const initialState = createPlayingStateFixture({
+        players: {
+          p1: { id: "p1", name: "Alice", position: 5 },
+          p2: { id: "p2", name: "Bob", position: 20 },
+        },
+        squares: { "5": { name: "Cobra", power: 4 } },
+        pending: {
+          kind: "powerCheck",
+          playerId: "p1",
+          position: 5,
+          power: 4,
+          riddleCorrect: false,
+        },
+      });
+
+      setupGame(initialState);
+
+      await orchestrator.testExecuteActions([{ action: "PLAYER_ANSWERED", answer: "2" }]);
+      await orchestrator.testExecuteActions([{ action: "PLAYER_ROLLED", value: 1 }]);
+      await orchestrator.advanceTurn();
+      expect(stateManager.get("game.turn")).toBe("p1");
+      expect(stateManager.get("game.pending")).toMatchObject({ kind: "revenge", playerId: "p1" });
+
+      // 5 beats the Cobra's 4, so the revenge is settled and must not come back with the turn.
+      await orchestrator.testExecuteActions([{ action: "PLAYER_ANSWERED", answer: "5" }]);
+      expect(stateManager.get("game.pending")).toBeNull();
+
+      await orchestrator.testExecuteActions([{ action: "PLAYER_ROLLED", value: 1 }]);
+      await orchestrator.advanceTurn();
+
+      expect(stateManager.get("game.turn")).toBe("p1");
+      expect(stateManager.get("game.pending")).toBeNull();
+    });
+
+    it("Expected outcome: Finishing a fork-paused move onto a plain square still says where the player ended up", async () => {
+      setLocale("en-US");
+      mockLLM = createScriptedLLM([]);
+
+      const initialState = createPlayingStateFixture({
+        players: {
+          p1: { id: "p1", name: "Alice", position: 96, activeChoices: {} },
+          p2: { id: "p2", name: "Bob", position: 0 },
+        },
+        squares: {
+          "96": { next: [97, 99] },
+          "97": { next: [98] },
+          "98": { next: [100] },
+          "99": { next: [100] },
+        },
+        lastRoll: 3,
+        pending: {
+          kind: "completeRollMovement",
+          playerId: "p1",
+          remainingSteps: 2,
+          direction: "forward",
+        },
+      });
+
+      setupGame(initialState);
+
+      const result = await orchestrator.testExecuteActions([
+        { action: "PLAYER_ANSWERED", answer: "97" },
+      ]);
+
+      expect(result.success).toBe(true);
+      expect(stateManager.get("players.p1.position")).toBe(98);
+      // 98 has no mechanics, so nothing else in the pipeline speaks: without the movement event
+      // the child walks two squares in silence.
+      expect(mockSpeech.speak).toHaveBeenCalledWith(
+        t("game.rollMovementLanded", { name: "Alice", roll: 3, square: 98 }),
+      );
+    });
+
+    it("Expected outcome: Overshooting onto the treasure with the door still shut bounces instead of winning", async () => {
+      setLocale("en-US");
+      mockLLM = createScriptedLLM([]);
+
+      const squares: Record<string, Record<string, unknown>> = {
+        "100": { next: [101] },
+        "185": { next: [186] },
+        "186": { name: "Magic Door", effect: "magicDoorCheck", target: 6, next: [187] },
+        "196": { effect: "win", next: [] },
+      };
+      for (let i = 187; i < 196; i++) {
+        squares[String(i)] = { next: [i + 1] };
+      }
+
+      const initialState = createPlayingStateFixture({
+        players: {
+          p1: { id: "p1", name: "Alice", position: 185, bonusDiceNextTurn: true },
+          p2: { id: "p2", name: "Bob", position: 0 },
+        },
+        squares,
+      });
+
+      setupGame(initialState);
+
+      const result = await orchestrator.testExecuteActions([
+        { action: "PLAYER_ROLLED", value: 11 },
+      ]);
+
+      expect(result.success).toBe(true);
+      expect(stateManager.get("players.p1.position")).toBe(176);
+      expect(stateManager.get("game.winner")).toBeNull();
+      expect(stateManager.get("game.phase")).toBe(GamePhase.PLAYING);
+    });
+
+    it("Expected outcome: A retreat that crosses a second fork pauses and asks there too", async () => {
+      setLocale("en-US");
+      mockLLM = createScriptedLLM([]);
+
+      // Backward path 30 → {28,29} → 27 → {25,26}: a retreat of 4 meets a fork on step 1 and step 3.
+      const initialState = createPlayingStateFixture({
+        players: {
+          p1: { id: "p1", name: "Alice", position: 30, activeChoices: {} },
+          p2: { id: "p2", name: "Bob", position: 0 },
+        },
+        squares: {
+          "25": { prev: [24] },
+          "26": { prev: [24] },
+          "27": { prev: { "25": ["25"], "26": ["26"] } },
+          "28": { prev: [27] },
+          "29": { prev: [27] },
+          "30": { prev: { "28": ["28"], "29": ["29"] } },
+        },
+        pending: {
+          kind: "completeRollMovement",
+          playerId: "p1",
+          remainingSteps: 4,
+          direction: "backward",
+        },
+      });
+
+      setupGame(initialState);
+
+      const result = await orchestrator.testExecuteActions([
+        { action: "PLAYER_ANSWERED", answer: "29" },
+      ]);
+
+      expect(result.success).toBe(true);
+      // Two steps run (30 → 29 → 27) and the move pauses on the next fork instead of guessing.
+      expect(stateManager.get("players.p1.position")).toBe(27);
+      expect(stateManager.get("game.pending")).toMatchObject({
+        kind: "completeRollMovement",
+        playerId: "p1",
+        remainingSteps: 2,
+        direction: "backward",
+      });
+      const spoken = (mockSpeech.speak as ReturnType<typeof vi.fn>).mock.calls.map((call) =>
+        String(call[0]),
+      );
+      expect(spoken.some((line) => line.includes("25") && line.includes("26"))).toBe(true);
+      // The batch still asks for an advance, but the fresh pending blocks `advanceTurn()`, so the
+      // same player keeps the turn and the fork prompt above is what they act on.
+      expect(result.turnAdvance.kind).toBe("callAdvanceTurn");
+      expect(await orchestrator.advanceTurn()).toBeNull();
+      expect(stateManager.get("game.turn")).toBe("p1");
+    });
+
+    it("Expected outcome: A revenge left behind by another player does not silence the roller's narration", async () => {
+      setLocale("en-US");
+      mockLLM = createScriptedLLM([]);
+
+      // Alice failed her power check on 5; Kalimba §2C keeps that revenge across Bob's turn.
+      const initialState = createPlayingStateFixture({
+        turn: "p2",
+        players: {
+          p1: { id: "p1", name: "Alice", position: 5 },
+          p2: { id: "p2", name: "Bob", position: 20 },
+        },
+        squares: { "5": { name: "Cobra", power: 4 } },
+        pending: { kind: "revenge", playerId: "p1", position: 5, power: 4 },
+      });
+
+      setupGame(initialState);
+
+      const result = await orchestrator.testExecuteActions([
+        { action: "PLAYER_ROLLED", value: 2 },
+        { action: "NARRATE", text: "Bob moves two." },
+        { action: "NARRATE", text: "The jungle is quiet." },
+      ]);
+
+      expect(result.success).toBe(true);
+      expect(stateManager.get("players.p2.position")).toBe(22);
+      const spoken = (mockSpeech.speak as ReturnType<typeof vi.fn>).mock.calls.map((call) =>
+        String(call[0]),
+      );
+      expect(spoken).toContain(t("game.rollMovementLanded", { name: "Bob", roll: 2, square: 22 }));
+      expect(spoken).toContain("The jungle is quiet.");
+    });
+
+    it("Expected outcome: Bouncing onto a square with mechanics still explains why the player went back", async () => {
+      setLocale("en-US");
+      mockLLM = createScriptedLLM([]);
+
+      const initialState = createPlayingStateFixture({
+        players: {
+          p1: { id: "p1", name: "Sofi", position: 181 },
+          p2: { id: "p2", name: "Beni", position: 0 },
+        },
+        squares: {
+          "100": { next: [101] },
+          "185": { name: "Peacock", heart: true, next: [186] },
+          "186": { name: "Magic Door", effect: "magicDoorCheck", target: 6, next: [187] },
+          "187": { name: "Anaconda head", next: [188] },
+          "196": { effect: "win", next: [] },
+        },
+      });
+
+      setupGame(initialState);
+
+      const result = await orchestrator.testExecuteActions([{ action: "PLAYER_ROLLED", value: 6 }]);
+
+      expect(result.success).toBe(true);
+      expect(stateManager.get("players.p1.position")).toBe(185);
+      const spoken = (mockSpeech.speak as ReturnType<typeof vi.fn>).mock.calls.map((call) =>
+        String(call[0]),
+      );
+      // The heart square announces itself; without the bounce line Sofi is never told she overshot.
+      expect(spoken).toContain(
+        t("game.magicDoorBounce", { name: "Sofi", door: 186, overshot: 187, final: 185 }),
+      );
+    });
+
+    it("Expected outcome: A skull past the shut door does not teleport: the door bounces first", async () => {
+      setLocale("en-US");
+      mockLLM = createScriptedLLM([]);
+
+      const squares: Record<string, Record<string, unknown>> = {
+        "100": { next: [101] },
+        "185": { name: "Peacock", next: [186] },
+        "186": { name: "Magic Door", effect: "magicDoorCheck", target: 6, next: [187] },
+        "190": { name: "Skull", effect: "returnTo187" },
+        "196": { effect: "win", next: [] },
+      };
+      for (const i of [187, 188, 189, 191, 192, 193, 194, 195]) {
+        squares[String(i)] = { next: [i + 1] };
+      }
+
+      const initialState = createPlayingStateFixture({
+        players: {
+          p1: { id: "p1", name: "Alice", position: 185 },
+          p2: { id: "p2", name: "Bob", position: 0 },
+        },
+        squares,
+      });
+
+      setupGame(initialState);
+
+      const result = await orchestrator.testExecuteActions([{ action: "PLAYER_ROLLED", value: 5 }]);
+
+      expect(result.success).toBe(true);
+      // 190 is behind the shut door, so its skull never fires: 186 - (190 - 186) = 182.
+      expect(stateManager.get("players.p1.position")).toBe(182);
+    });
+
+    it("Expected outcome: An executor that throws fails the batch out loud instead of reporting success", async () => {
+      setLocale("en-US");
+      mockLLM = createScriptedLLM([]);
+
+      // No encounterQuestions bank for Wolf: ADR 0006 makes that landing throw. Swallowing it left
+      // the batch "successful", so the turn advanced over a landing nobody was told about.
+      const initialState = createPlayingStateFixture({
+        players: {
+          p1: { id: "p1", name: "Alice", position: 4 },
+          p2: { id: "p2", name: "Bob", position: 0 },
+        },
+        squares: { "5": { name: "Wolf", power: 4 } },
+      });
+
+      setupGame(initialState);
+
+      const result = await orchestrator.testExecuteActions([
+        { action: "PLAYER_ROLLED", value: 1 },
+        { action: "NARRATE", text: "Alice steps onto the trail." },
+      ]);
+
+      expect(result.success).toBe(false);
+      expect(result.turnAdvance).toEqual({ kind: "none" });
+      expect(mockSpeech.speak).toHaveBeenCalledWith(t("errors.somethingWentWrong"));
+      // The batch stops at the throw: the trailing NARRATE never runs.
+      expect(
+        (mockSpeech.speak as ReturnType<typeof vi.fn>).mock.calls.map((call) => String(call[0])),
+      ).not.toContain("Alice steps onto the trail.");
+    });
+
+    it("Expected outcome: A bare movement roll says where the player landed", async () => {
+      setLocale("en-US");
+      mockLLM = createScriptedLLM([]);
+
+      const initialState = createPlayingStateFixture({
+        players: {
+          p1: { id: "p1", name: "Alice", position: 22 },
+          p2: { id: "p2", name: "Bob", position: 0 },
+        },
+        squares: {},
+      });
+
+      setupGame(initialState);
+
+      const result = await orchestrator.handleTranscript("1");
+
+      expect(result.success).toBe(true);
+      expect(stateManager.get("players.p1.position")).toBe(23);
+      expect(mockSpeech.speak).toHaveBeenCalledWith(
+        t("game.rollMovementLanded", { name: "Alice", roll: 1, square: 23 }),
+      );
     });
   });
 });

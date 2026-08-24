@@ -8,7 +8,6 @@ export interface PendingRiddle {
   playerId: string;
   position: number;
   power: number;
-  phase?: "riddle";
   riddlePrompt?: string;
   riddleOptions?: string[];
   correctOption?: string;
@@ -22,7 +21,6 @@ export interface PendingPowerCheck {
   position: number;
   power: number;
   riddleCorrect: boolean;
-  phase?: "powerCheck";
 }
 
 /** Revenge phase: awaiting 1d6 roll. */
@@ -31,7 +29,6 @@ export interface PendingRevenge {
   playerId: string;
   position: number;
   power: number;
-  phase?: "revenge";
 }
 
 /** Directional roll: awaiting Nd6 roll to move backward. */
@@ -51,7 +48,6 @@ export interface PendingCompleteRollMovement {
   playerId: string;
   remainingSteps: number;
   direction: RollMovementDirection;
-  phase?: "completeRollMovement";
 }
 
 export type Pending =
@@ -91,6 +87,13 @@ export function hasPendingForCurrentTurn(state: {
     return false;
   }
   return pending.playerId === currentTurn;
+}
+
+/** True when the current player still owes an answer to an animal-encounter riddle. */
+export function isPendingRiddleForCurrentTurn(game: Record<string, unknown> | undefined): boolean {
+  const currentTurn = game?.turn as string | undefined;
+  const pending = getPending(game);
+  return pending?.kind === "riddle" && Boolean(currentTurn) && pending.playerId === currentTurn;
 }
 
 export function getPending(game: Record<string, unknown> | undefined): Pending | null | undefined {

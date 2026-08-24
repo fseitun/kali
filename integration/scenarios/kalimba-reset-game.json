@@ -1,0 +1,47 @@
+{
+  "game": "kalimba",
+  "players": 3,
+  "initialState": {
+    "game": {
+      "phase": "PLAYING",
+      "turn": "p1",
+      "playerOrder": ["p1", "p2", "p3"],
+      "winner": null
+    }
+  },
+  "steps": [
+    {
+      "description": "p1 picks a path so the board is mid-game before the restart",
+      "actions": [
+        { "action": "PLAYER_ANSWERED", "answer": "1" },
+        { "action": "NARRATE", "text": "Path A" }
+      ]
+    },
+    { "roll": 1, "expect": { "players.p1.position": 1, "game.turn": "p2" } },
+    {
+      "description": "A child asks to start over keeping the same players",
+      "actions": [{ "action": "RESET_GAME", "keepPlayerNames": true }],
+      "expect": {
+        "game.phase": "PLAYING",
+        "game.turn": "p1",
+        "game.playerOrder": ["p1", "p2", "p3"],
+        "players.p1.position": 0,
+        "players.p1.name": "Player 1",
+        "players.p3.name": "Player 3"
+      }
+    },
+    {
+      "description": "Play resumes immediately: p1 picks a path and rolls again",
+      "actions": [
+        { "action": "PLAYER_ANSWERED", "answer": "1" },
+        { "action": "NARRATE", "text": "Path A again" }
+      ]
+    },
+    { "roll": 1, "expect": { "players.p1.position": 1, "game.turn": "p2" } },
+    {
+      "description": "Dropping the roster parks the game in SETUP for name collection",
+      "actions": [{ "action": "RESET_GAME", "keepPlayerNames": false }],
+      "expect": { "game.phase": "SETUP" }
+    }
+  ]
+}

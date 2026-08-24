@@ -10,11 +10,20 @@ import { Profiler } from "@/utils/profiler";
 
 type PromptPurpose = "getActions" | "extractName" | "extractPlayerCount" | "analyzeResponse";
 
+/**
+ * The interpreter could not be reached or could not be understood, after the retry. Distinct from
+ * `getActions` resolving to `[]`, which means the model was reached and decided no action fits —
+ * the two need different things said out loud, and only this one is a connection problem.
+ */
+export class LLMUnavailableError extends Error {
+  constructor(cause: unknown) {
+    super(cause instanceof Error ? cause.message : String(cause), { cause });
+    this.name = "LLMUnavailableError";
+  }
+}
+
 export abstract class BaseLLMClient implements LLMClient {
   protected systemPrompt: string = "";
-  private lastTranscript: string = "";
-  private lastTranscriptTime: number = 0;
-  private readonly deduplicationWindowMs = 2000;
 
   onRetry?: (attempt: number, maxAttempts: number) => void;
 
@@ -72,12 +81,10 @@ export abstract class BaseLLMClient implements LLMClient {
     lastBotUtterance?: string,
   ): Promise<PrimitiveAction[]> {
     const actions = await this.attemptLLMCall(transcript, state, lastBotUtterance);
-    if (actions.length > 0) {
-      this.recordTranscript(transcript);
-      return actions;
+    if (actions.length === 0) {
+      Logger.warn("Interpreter reached but found no action to take (first attempt)");
     }
-    Logger.warn("LLM returned empty actions on first attempt");
-    return [];
+    return actions;
   }
 
   private async getActionsRetry(
@@ -97,12 +104,10 @@ export abstract class BaseLLMClient implements LLMClient {
       ? transcript
       : `[RETRY: Previous response failed - ${error instanceof Error ? error.message : String(error)}] Original command: "${transcript}"`;
     const actions = await this.attemptLLMCall(retryTranscript, state, lastBotUtterance);
-    if (actions.length > 0) {
-      this.recordTranscript(transcript);
-      return actions;
+    if (actions.length === 0) {
+      Logger.warn("Interpreter reached but found no action to take (retry)");
     }
-    Logger.warn("LLM returned empty actions on retry");
-    return [];
+    return actions;
   }
 
   async getActions(
@@ -113,10 +118,6 @@ export abstract class BaseLLMClient implements LLMClient {
     if (!this.systemPrompt) {
       throw new Error("Game rules not set. Call setGameRules() first.");
     }
-    if (this.isDuplicate(transcript)) {
-      Logger.debug("Duplicate request detected, ignoring");
-      return [];
-    }
     try {
       return await this.getActionsFirstAttempt(transcript, state, lastBotUtterance);
     } catch (error) {
@@ -125,7 +126,7 @@ export abstract class BaseLLMClient implements LLMClient {
       } catch (retryError) {
         Logger.error("LLM retry attempt failed:", retryError);
         Logger.warn("All LLM retries exhausted");
-        return [];
+        throw new LLMUnavailableError(retryError);
       }
     }
   }
@@ -155,16 +156,17 @@ export abstract class BaseLLMClient implements LLMClient {
       maxTokens: 512,
       contextParts: { systemPrompt: this.systemPrompt, userMessage },
       timeoutMs: CONFIG.LLM.GET_ACTIONS_TIMEOUT_MS,
-      responseMimeApplicationJson: true,
     });
     const durationMs = performance.now() - startTime;
     Profiler.end("llm.network");
 
     const content = result.content;
 
+    // An empty body is a provider failure, not a decision: throwing earns it the retry, and a
+    // second empty body surfaces as LLMUnavailableError instead of a silent "no actions".
     if (!content) {
       Logger.error("No content in LLM response");
-      return [];
+      throw new Error("Empty response from the interpreter");
     }
 
     this.logPromptResponse("getActions", content, durationMs);
@@ -360,28 +362,5 @@ JSON:`;
       }
       return a;
     });
-  }
-
-  private isDuplicate(transcript: string): boolean {
-    // Never deduplicate system-injected prompts (decision point enforcer, etc.)
-    if (transcript.startsWith("[SYSTEM:")) {
-      return false;
-    }
-    const now = Date.now();
-    const timeSinceLastRequest = now - this.lastTranscriptTime;
-
-    if (
-      transcript.toLowerCase() === this.lastTranscript.toLowerCase() &&
-      timeSinceLastRequest < this.deduplicationWindowMs
-    ) {
-      return true;
-    }
-
-    return false;
-  }
-
-  private recordTranscript(transcript: string): void {
-    this.lastTranscript = transcript;
-    this.lastTranscriptTime = Date.now();
   }
 }

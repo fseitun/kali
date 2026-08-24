@@ -34,7 +34,7 @@ async function tryExecuteMagicDoorOpeningRoll(
   currentTurn: string,
   path: string,
 ): Promise<boolean> {
-  if (execCtx.isNestedCall || !isMagicDoorOpeningRollState(state)) {
+  if (!isMagicDoorOpeningRollState(state)) {
     return false;
   }
   const door = getMagicDoorConfig(
@@ -116,7 +116,7 @@ async function executeMovementPlayerRoll(
 
   ctx.checkAndApplyWinCondition(path);
 
-  if (movement.kind === "complete" && !execCtx.isNestedCall) {
+  if (movement.kind === "complete") {
     const finalSquare = ctx.stateManager.get(path);
     if (typeof finalSquare === "number") {
       recordDomainEvent(execCtx, {

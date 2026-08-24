@@ -123,7 +123,7 @@ newPosition = currentPosition + rollValue;
 
 All interpreters – LLM clients, debug tools, or any future non-LLM input paths – communicate with the orchestrator **only** by emitting a `PrimitiveAction[]` request. This is the **Primitive Box** contract:
 
-- The only allowed primitives are `NARRATE`, `RESET_GAME`, `SET_STATE`, `PLAYER_ROLLED`, `PLAYER_ANSWERED`, and `ASK_RIDDLE`. Animal-encounter riddles use `ASK_RIDDLE` plus `PLAYER_ANSWERED`; the orchestrator applies strict match then optional LLM judge—no separate “riddle resolved” primitive (see [`docs/adr/0004-no-riddle-resolved-primitive.md`](../docs/adr/0004-no-riddle-resolved-primitive.md)).
+- The only allowed primitives are `NARRATE`, `RESET_GAME`, `SET_STATE`, `PLAYER_ROLLED`, and `PLAYER_ANSWERED`. Animal-encounter riddles come from the orchestrator’s deterministic bank and resolve through `PLAYER_ANSWERED` alone: strict match then optional LLM judge—no “ask riddle” primitive (see [`docs/adr/0006-remove-ask-riddle-primitive.md`](adr/0006-remove-ask-riddle-primitive.md)) and no separate “riddle resolved” primitive (see [`docs/adr/0004-no-riddle-resolved-primitive.md`](adr/0004-no-riddle-resolved-primitive.md)).
 - Interpreters:
   - **Report events and corrections** through these primitives.
   - **Never manipulate turns, phases, or winners directly.**

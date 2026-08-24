@@ -150,25 +150,35 @@ export interface NarrationPlan {
 }
 
 /**
- * Context passed through orchestrator execution. Distinguishes top-level (user-initiated)
- * from nested calls (from board effects or decision-point enforcement).
+ * Who plays next after an advance, plus every player whose `skipTurns` was consumed on the
+ * way there (in order) so the app can announce each skip.
+ */
+export interface NextPlayer {
+  playerId: string;
+  name: string;
+  position: number;
+  skippedPlayers: Array<{ playerId: string; name: string }>;
+}
+
+/**
+ * Per-transcript scratchpad threaded through validation, execution, board effects and
+ * decision-point enforcement: the domain events produced, the narration already spoken,
+ * and the follow-up the app layer still owes the player out loud.
  */
 export interface ExecutionContext {
-  /** When true, call originated from board effects or decision-point enforcement, not user. */
-  isNestedCall?: boolean;
   /** When true, skip decision point enforcement after actions (e.g. proactive start). */
   skipDecisionPointEnforcement?: boolean;
   /** Set when power check fails and turn was advanced; app should announce next player. */
-  turnAdvancedAfterPowerCheckFail?: { playerId: string; name: string; position: number };
+  turnAdvancedAfterPowerCheckFail?: NextPlayer;
   /**
    * Set when magic door open attempt finished; same shape as power-check mechanical advance for app TTS.
    */
-  turnAdvancedAfterMagicDoorOpen?: { playerId: string; name: string; position: number };
+  turnAdvancedAfterMagicDoorOpen?: NextPlayer;
   /**
    * Set when power-check win used Kalimba §2B full graph advance; orchestrator advanced `game.turn`
    * mechanically so the app announces the next player (same UX as `turnAdvancedAfterPowerCheckFail`).
    */
-  turnAdvancedAfterPowerCheckWin?: { playerId: string; name: string; position: number };
+  turnAdvancedAfterPowerCheckWin?: NextPlayer;
   /** After magic door open attempt, skip LLM movement NARRATE in the same batch (orchestrator spoke outcome). */
   skipTrailingNarrateAfterMagicDoorAttempt?: boolean;
   /** Set when power check/revenge was handled; skip trailing NARRATE from LLM (orchestrator speaks pass/fail). */
@@ -198,6 +208,8 @@ export interface ExecutionContext {
   nextDomainEventId?: number;
   /** Narration decisions emitted during the current action batch. */
   narrationPlans?: NarrationPlan[];
+  /** Set when BoardEffectsHandler already spoke a landing line, so the movement fallback stays quiet. */
+  spokeDeterministicLanding?: boolean;
   /** Set when checkAndApplyBoardMoves applies a ladder/teleport; the square the player came from. */
   arrivedViaTeleportFrom?: number;
   /**
@@ -225,7 +237,7 @@ export interface VoiceOutcomeHints {
 export type TurnAdvance =
   | { kind: "none" }
   | { kind: "callAdvanceTurn" }
-  | { kind: "alreadyAdvanced"; nextPlayer: { playerId: string; name: string; position: number } };
+  | { kind: "alreadyAdvanced"; nextPlayer: NextPlayer };
 
 /**
  * Result of orchestrator transcript or direct primitive execution (gameplay paths).
@@ -237,6 +249,11 @@ export interface OrchestratorGameplayResult {
   voiceOutcomeHints?: VoiceOutcomeHints;
   /** Optional execution trace for deterministic narration flow. */
   turnFrame?: TurnFrame;
+  /**
+   * RESET_GAME ran. The app must finish the restart out loud: announce the kept roster's first
+   * turn, or collect names again when the reset dropped back to SETUP.
+   */
+  gameReset?: boolean;
 }
 
 /** Shared failure result — no turn advance, no voice hints. */
@@ -256,12 +273,7 @@ export type ActionHandler = (action: PrimitiveAction, context: ExecutionContext)
  * - Primitives are deterministic and testable
  */
 export type PrimitiveAction =
-  | NarrateAction
-  | ResetGameAction
-  | SetStateAction
-  | PlayerRolledAction
-  | PlayerAnsweredAction
-  | AskRiddleAction;
+  NarrateAction | ResetGameAction | SetStateAction | PlayerRolledAction | PlayerAnsweredAction;
 
 /**
  * Speaks text aloud via TTS and optionally plays a sound effect.
@@ -311,22 +323,6 @@ interface PlayerRolledAction {
 interface PlayerAnsweredAction {
   action: "PLAYER_ANSWERED";
   answer: string;
-}
-
-/**
- * Asks a structured riddle with exactly four options during an animal encounter.
- * Orchestrator stores options and correctOption (and optional synonyms); when user answers with PLAYER_ANSWERED,
- * strict match (option text + synonyms) deterministically resolves the outcome.
- * The riddle MUST be about the animal kingdom (e.g. animals, habitats, behavior, diet, classification); it does not have to be this square's animal/habitat.
- */
-interface AskRiddleAction {
-  action: "ASK_RIDDLE";
-  text: string;
-  options: [string, string, string, string];
-  /** Exact text of the correct option (must equal one of the four options after normalization). */
-  correctOption: string;
-  /** Optional synonyms or common ways to say the correct option; strict match treats these as correct without calling the LLM. */
-  correctOptionSynonyms?: string[];
 }
 
 /**

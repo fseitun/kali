@@ -2,6 +2,7 @@ import "./styles/shared.css";
 import "./styles/production.css";
 import "./i18n/translations";
 import { CONFIG } from "./config";
+import { getLocale } from "./i18n/locale-manager";
 import { t } from "./i18n/translations";
 import { KaliAppCore } from "./kali-app-core";
 import { setupVersionRefreshPrompt } from "./pwa-register";
@@ -10,6 +11,9 @@ import { SpeechService } from "./services/speech-service";
 import { createExportLogsButton } from "./utils/export-logs-button";
 import { initLogBuffer } from "./utils/log-buffer";
 import { Logger } from "./utils/logger";
+
+// The markup ships the default locale; VITE_LOCALE or a stored override can make it a lie.
+document.documentElement.lang = getLocale();
 
 class KaliApp {
   private core: KaliAppCore;

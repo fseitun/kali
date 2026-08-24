@@ -24,17 +24,10 @@
       "hidden": ["moves", "squares"]
     }
   },
-  "soundEffects": {
-    "animal_collect": "/sounds/animal_collect.wav",
-    "item_collect": "/sounds/item_collect.wav",
-    "portal": "/sounds/portal.wav",
-    "hazard": "/sounds/hazard.wav",
-    "victory": "/sounds/victory.wav"
-  },
   "habitats": {
     "desert": {
       "positions": [0, 39],
-      "track": "/games/kalimba/sounds/jungle-odyssey.mp3.mpeg",
+      "track": "/games/kalimba/sounds/amb_desert_wind_soft.mp3",
       "animalSounds": ["/games/kalimba/sounds/sfx_animal_bird_wings.mp3"]
     },
     "forest": {
@@ -70,11 +63,17 @@
     "door": {
       "positions": [186, 196],
       "track": "/games/kalimba/sounds/jungle-odyssey.mp3.mpeg",
-      "animalSounds": ["/sounds/victory.wav"]
+      "animalSounds": ["/games/kalimba/sounds/sfx_animal_monkey_call.mp3"]
     }
   },
   "squares": {
-    "0": { "next": { "1": ["left", "short"], "15": ["right", "long"] }, "prev": [] },
+    "0": {
+      "next": {
+        "1": ["izquierda", "izquierdo", "corto", "uno", "left", "short"],
+        "15": ["derecha", "derecho", "largo", "quince", "right", "long"]
+      },
+      "prev": []
+    },
     "2": { "name": "Falcon", "power": 3 },
     "5": { "name": "Cobra", "power": 4 },
     "7": { "name": "Eagle", "power": 3, "powerCheckDiceIfRiddleCorrect": 3, "powerCheckDiceIfRiddleWrong": 2 },
@@ -111,17 +110,40 @@
     "92": { "name": "Killer whale", "power": 4 },
     "93": { "nextOnLanding": [97] },
     "95": { "name": "Meteor showers", "effect": "skipTurn" },
-    "96": { "next": { "97": ["97", "down", "penguin"], "99": ["99", "up", "narwhal"] } },
+    "96": {
+      "next": {
+        "97": ["97", "abajo", "pingüino", "pinguino", "down", "penguin"],
+        "99": ["99", "arriba", "narval", "up", "narwhal"]
+      }
+    },
     "97": { "name": "Penguin", "power": 2 },
     "98": { "next": [101] },
     "99": { "prev": [96] },
     "100": { "name": "Narwhal", "power": 2 },
-    "101": { "next": { "102": ["102", "down"], "105": ["105", "polar bear", "up"] }, "prev": { "98": ["98", "down"], "100": ["100", "up"] }, "name": "Walrus", "power": 3 },
+    "101": {
+      "next": {
+        "102": ["102", "abajo", "down"],
+        "105": ["105", "arriba", "oso polar", "polar bear", "up"]
+      },
+      "prev": {
+        "98": ["98", "abajo", "down"],
+        "100": ["100", "arriba", "narval", "up", "narwhal"]
+      },
+      "name": "Walrus",
+      "power": 3
+    },
     "102": { "prev": [101], "next": [103] },
     "103": { "name": "Iceberg", "effect": "retreat1d6" },
     "104": { "next": [106] },
     "105": { "prev": [101], "name": "Polar bear", "power": 4 },
-    "106": { "prev": { "104": ["104", "down"], "105": ["105", "up"] }, "name": "Blue whale", "power": 5 },
+    "106": {
+      "prev": {
+        "104": ["104", "abajo", "down"],
+        "105": ["105", "arriba", "oso polar", "polar bear", "up"]
+      },
+      "name": "Blue whale",
+      "power": 5
+    },
     "109": { "name": "Volcano eruption", "effect": "skipTurn" },
     "114": { "name": "Ghost of a baboon", "power": 1 },
     "115": { "name": "Jungle squall", "effect": "retreat3d6" },

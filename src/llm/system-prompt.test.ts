@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { buildSystemPrompt, formatStateContext } from "./system-prompt";
+import { formatStateContext } from "./state-context";
+import { buildSystemPrompt } from "./system-prompt";
 import * as localeManager from "@/i18n/locale-manager";
 
 // The base primitives docs, reached through the function production actually calls.
@@ -35,10 +36,48 @@ describe("Product scenario: SYSTEM PROMPT", () => {
     expect(SYSTEM_PROMPT).toContain("PLAYER_ANSWERED");
   });
 
+  it("Expected outcome: Does not promise a primitive count that can drift, nor dead synthetic transcripts", () => {
+    expect(SYSTEM_PROMPT).not.toMatch(/\d+ Primitives/);
+    expect(SYSTEM_PROMPT).not.toContain("[SYSTEM:");
+  });
+
+  it("Expected outcome: Sends clarification numbers to PLAYER ANSWERED during a pending roll", () => {
+    expect(SYSTEM_PROMPT).toMatch(
+      /Clarification reply[^.]*unless a ⚠️ POWER CHECK \/ REVENGE \/ DIRECTIONAL ROLL line is present/,
+    );
+  });
+
+  it("Expected outcome: Lists every warning block the state context can emit", () => {
+    const stateBlockLine = SYSTEM_PROMPT.split("\n").find((line) =>
+      line.startsWith("State block may include"),
+    );
+    for (const block of [
+      "RIDDLE",
+      "POWER CHECK",
+      "DECISION",
+      "REVENGE",
+      "DIRECTIONAL ROLL",
+      "MOVIMIENTO A MEDIAS",
+    ]) {
+      expect(stateBlockLine).toContain(block);
+    }
+  });
+
   it("Expected outcome: Documents tagged user turn layout game state and user command", () => {
     expect(SYSTEM_PROMPT).toContain("<game_state>");
     expect(SYSTEM_PROMPT).toContain("<user_command>");
     expect(SYSTEM_PROMPT).toMatch(/Ground decisions in <game_state>/);
+  });
+
+  it("Expected outcome: Teaches nothing that no longer exists, no sound effects, no bonus dice", () => {
+    expect(SYSTEM_PROMPT).not.toContain("soundEffect");
+    expect(SYSTEM_PROMPT).not.toContain("bonusDiceNextTurn");
+  });
+
+  it("Expected outcome: Names the restart phrase the post win refusal tells players to say", () => {
+    expect(SYSTEM_PROMPT).toContain("RESET_GAME");
+    expect(SYSTEM_PROMPT).toContain("juego nuevo");
+    expect(SYSTEM_PROMPT).toContain("new game");
   });
 });
 
@@ -285,7 +324,6 @@ describe("Product scenario: Format State Context (es AR)", () => {
           position: 7,
           power: 3,
           playerId: "p1",
-          phase: "riddle",
         },
       },
       players: {
@@ -327,7 +365,6 @@ describe("Product scenario: Format State Context (es AR)", () => {
           position: 7,
           power: 3,
           playerId: "p1",
-          phase: "riddle",
           riddlePrompt: "¿Qué ave…?",
           riddleOptions: ["Águila", "Halcón", "Búho", "Pingüino"],
           correctOption: "Águila",
@@ -533,5 +570,32 @@ describe("Product scenario: Format State Context (en US)", () => {
 
     expect(result).toContain("on the die");
     expect(result).toContain("The orchestrator announces pass/fail");
+  });
+
+  it("Expected outcome: Uses English wording for the stored riddle question", () => {
+    const state = {
+      game: {
+        turn: "p1",
+        phase: "PLAYING",
+        pending: {
+          kind: "riddle",
+          position: 7,
+          power: 3,
+          playerId: "p1",
+          riddlePrompt: "Which bird flies highest?",
+          riddleOptions: ["Eagle", "Falcon", "Owl", "Penguin"],
+          correctOption: "Eagle",
+        },
+      },
+      players: {
+        p1: { id: "p1", name: "Alice", position: 7, activeChoices: {} },
+      },
+      board: { squares: { "7": { power: 3, habitat: "desert" } } },
+    } as Record<string, unknown>;
+
+    const result = formatStateContext(state);
+
+    expect(result).toContain("Current question: Which bird flies highest?");
+    expect(result).not.toContain("Pregunta actual");
   });
 });

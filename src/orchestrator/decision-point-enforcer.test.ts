@@ -1,7 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import { DecisionPointEnforcer } from "./decision-point-enforcer";
 import { GamePhase } from "./types";
-import type { ExecutionContext } from "./types";
 import type { IStatusIndicator } from "@/components/status-indicator";
 import { setLocale } from "@/i18n/translations";
 import type { ISpeechService } from "@/services/speech-service";
@@ -47,10 +46,8 @@ describe("Product scenario: Decision Point Enforcer", () => {
   });
 
   describe("Product scenario: Enforce Decision Points", () => {
-    const baseContext: ExecutionContext = {};
-
     it("Expected outcome: Should do nothing when no decision points exist", async () => {
-      await decisionPointEnforcer.enforceDecisionPoints(baseContext);
+      await decisionPointEnforcer.enforceDecisionPoints();
 
       expect(mockSpeak).not.toHaveBeenCalled();
     });
@@ -61,7 +58,7 @@ describe("Product scenario: Decision Point Enforcer", () => {
         "5": { next: [6, 7], prev: [4] },
       });
 
-      await decisionPointEnforcer.enforceDecisionPoints(baseContext);
+      await decisionPointEnforcer.enforceDecisionPoints();
 
       expect(mockSpeak).not.toHaveBeenCalled();
     });
@@ -72,7 +69,7 @@ describe("Product scenario: Decision Point Enforcer", () => {
       });
       stateManager.set("players.p1.position", 5);
 
-      await decisionPointEnforcer.enforceDecisionPoints(baseContext);
+      await decisionPointEnforcer.enforceDecisionPoints();
 
       expect(mockSpeak).not.toHaveBeenCalled();
     });
@@ -84,7 +81,7 @@ describe("Product scenario: Decision Point Enforcer", () => {
       stateManager.set("players.p1.position", 5);
       stateManager.set("players.p1.activeChoices", { 5: 6 });
 
-      await decisionPointEnforcer.enforceDecisionPoints(baseContext);
+      await decisionPointEnforcer.enforceDecisionPoints();
 
       expect(mockSpeak).not.toHaveBeenCalled();
     });
@@ -96,7 +93,7 @@ describe("Product scenario: Decision Point Enforcer", () => {
       stateManager.set("players.p1.position", 5);
       stateManager.set("players.p1.activeChoices", {});
 
-      await decisionPointEnforcer.enforceDecisionPoints(baseContext);
+      await decisionPointEnforcer.enforceDecisionPoints();
 
       expect(mockSpeak).toHaveBeenCalledTimes(1);
       const spoken = mockSpeak.mock.calls[0][0] as string;
@@ -104,6 +101,21 @@ describe("Product scenario: Decision Point Enforcer", () => {
       expect(spoken).toMatch(/6|7/);
       expect(mockSetLastNarration).toHaveBeenCalledWith(spoken);
       expect(mockSetState).toHaveBeenCalledWith("speaking");
+    });
+
+    it("Expected outcome: Stays quiet outside PLAYING, where the roster is still templates", async () => {
+      // A reset that dropped the roster leaves `Player 1` on square 0 in SETUP: asking that
+      // template which way to go talks over name collection with a name nobody has.
+      stateManager.set("game.phase", GamePhase.SETUP);
+      stateManager.set("board.squares", {
+        "5": { next: [6, 7], prev: [4] },
+      });
+      stateManager.set("players.p1.position", 5);
+      stateManager.set("players.p1.activeChoices", {});
+
+      await decisionPointEnforcer.enforceDecisionPoints();
+
+      expect(mockSpeak).not.toHaveBeenCalled();
     });
 
     it("Expected outcome: Does not enforce fork when power Check is pending for current player (roll first)", async () => {
@@ -118,10 +130,9 @@ describe("Product scenario: Decision Point Enforcer", () => {
         position: 5,
         power: 3,
         riddleCorrect: false,
-        phase: "powerCheck",
       });
 
-      await decisionPointEnforcer.enforceDecisionPoints(baseContext);
+      await decisionPointEnforcer.enforceDecisionPoints();
 
       expect(mockSpeak).not.toHaveBeenCalled();
     });
@@ -137,10 +148,9 @@ describe("Product scenario: Decision Point Enforcer", () => {
         playerId: "p1",
         position: 5,
         power: 3,
-        phase: "revenge",
       });
 
-      await decisionPointEnforcer.enforceDecisionPoints(baseContext);
+      await decisionPointEnforcer.enforceDecisionPoints();
 
       expect(mockSpeak).not.toHaveBeenCalled();
     });
@@ -154,7 +164,7 @@ describe("Product scenario: Decision Point Enforcer", () => {
       stateManager.set("players.p1.position", 5);
       stateManager.set("players.p1.activeChoices", {});
 
-      await decisionPointEnforcer.enforceDecisionPoints(baseContext);
+      await decisionPointEnforcer.enforceDecisionPoints();
 
       expect(mockSpeak).toHaveBeenCalledTimes(1);
       expect(mockSpeak.mock.calls[0][0] as string).toMatch(/6|7/);
@@ -166,7 +176,7 @@ describe("Product scenario: Decision Point Enforcer", () => {
         "5": { next: [6, 7], prev: [4] },
       });
 
-      await decisionPointEnforcer.enforceDecisionPoints(baseContext);
+      await decisionPointEnforcer.enforceDecisionPoints();
 
       expect(mockSpeak).not.toHaveBeenCalled();
     });
@@ -179,7 +189,7 @@ describe("Product scenario: Decision Point Enforcer", () => {
       delete player.position;
       stateManager.set("players.p1", player);
 
-      await decisionPointEnforcer.enforceDecisionPoints(baseContext);
+      await decisionPointEnforcer.enforceDecisionPoints();
 
       expect(mockSpeak).not.toHaveBeenCalled();
     });
@@ -193,7 +203,7 @@ describe("Product scenario: Decision Point Enforcer", () => {
 
       mockSpeak.mockRejectedValue(new Error("Test error"));
 
-      await expect(decisionPointEnforcer.enforceDecisionPoints(baseContext)).resolves.not.toThrow();
+      await expect(decisionPointEnforcer.enforceDecisionPoints()).resolves.not.toThrow();
     });
   });
 });

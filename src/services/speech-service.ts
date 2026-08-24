@@ -2,6 +2,17 @@ import { CONFIG } from "@/config";
 import { getTtsLang } from "@/i18n/locale-manager";
 import { Logger } from "@/utils/logger";
 
+/**
+ * Upper bound on how long one utterance may take before {@link SpeechService.speak} gives up on
+ * it. Generous on purpose: cutting a line short would lift the microphone gate while Kali is still
+ * audible, which is the failure this whole mechanism exists to prevent. Speech runs at roughly
+ * 12 characters per second, so 150 ms per character leaves better than a 1.5x margin, and the
+ * floor covers very short lines where startup latency dominates.
+ */
+function speechWatchdogMs(text: string): number {
+  return Math.max(5_000, text.length * 150);
+}
+
 export interface ISpeechService {
   prime(): void;
   speak(text: string): Promise<void>;
@@ -105,13 +116,33 @@ export class SpeechService implements ISpeechService {
       utterance.pitch = CONFIG.TTS.PITCH;
       utterance.lang = getTtsLang();
 
-      utterance.onend = () => {
+      let settled = false;
+      const finish = (): void => {
+        if (settled) {
+          return;
+        }
+        settled = true;
+        clearTimeout(watchdog);
         resolve();
+      };
+
+      // speechSynthesis can drop an utterance without ever firing onend or onerror. Nothing else
+      // would then settle this promise, and MeteredSpeechService keeps the microphone gated for as
+      // long as a speak() is outstanding — so a single hung utterance would leave Kali deaf for the
+      // rest of the session with no way back. Bound the wait instead.
+      const watchdog = setTimeout(() => {
+        Logger.error(`Speech synthesis never reported completion; giving up on: "${text}"`);
+        window.speechSynthesis.cancel();
+        finish();
+      }, speechWatchdogMs(text));
+
+      utterance.onend = () => {
+        finish();
       };
 
       utterance.onerror = (event) => {
         if (event.error === "interrupted") {
-          Logger.debug("Speech synthesis interrupted (expected when wake word detected)");
+          Logger.debug("Speech synthesis interrupted (expected when a new line cancels this one)");
         } else {
           Logger.error("Speech synthesis error:", {
             error: event.error,
@@ -120,7 +151,7 @@ export class SpeechService implements ISpeechService {
             elapsedTime: event.elapsedTime,
           });
         }
-        resolve();
+        finish();
       };
 
       window.speechSynthesis.speak(utterance);
@@ -145,6 +176,11 @@ export class SpeechService implements ISpeechService {
 
     try {
       const response = await fetch(url);
+      if (!response.ok) {
+        // A 404 returns an HTML body that decodeAudioData would choke on.
+        Logger.warn(`Failed to load sound ${name} from ${url}: HTTP ${response.status}`);
+        return;
+      }
       const arrayBuffer = await response.arrayBuffer();
       const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
       this.sounds.set(name, audioBuffer);

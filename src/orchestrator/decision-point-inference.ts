@@ -7,6 +7,7 @@ import {
   isPrevFork,
 } from "./board-next";
 import type { BoardConfig, DecisionPoint, GameState, SquareData } from "./types";
+import { t } from "@/i18n/translations";
 
 function buildSortedPositionOptions(targets: number[]): {
   sorted: number[];
@@ -18,6 +19,11 @@ function buildSortedPositionOptions(targets: number[]): {
     positionOptions[String(n)] = n;
   }
   return { sorted, positionOptions };
+}
+
+/** Spoken list of fork targets ("97 o al 99" / "97 or 99"). */
+export function formatForkTargetsForSpeech(targets: number[]): string {
+  return targets.map(String).join(t("game.forkOptionSeparator"));
 }
 
 function forEachBoardSquare(
@@ -77,8 +83,8 @@ export function inferDecisionPoints(board: BoardConfig | undefined): DecisionPoi
     const choiceKeywords = getForkKeywordsWithImplicitTargets(sq);
     const prompt =
       position === 0
-        ? "¿Querés ir por la izquierda o por la derecha?"
-        : `¿Querés ir al ${sorted.join(" o al ")}?`;
+        ? t("game.forkPromptLeftRight")
+        : t("game.forkPromptTargets", { options: formatForkTargetsForSpeech(sorted) });
 
     const dp: DecisionPoint = { position, prompt, positionOptions };
     if (choiceKeywords) {
@@ -102,7 +108,7 @@ function inferBackwardDecisionPoints(board: BoardConfig | undefined): DecisionPo
     }
     const { sorted, positionOptions } = buildSortedPositionOptions(getPrevTargets(sq, position));
     const choiceKeywords = getPrevForkKeywordsWithImplicitTargets(sq);
-    const prompt = `¿Hacia atrás, al ${sorted.join(" o al ")}?`;
+    const prompt = t("game.forkPromptBackward", { options: formatForkTargetsForSpeech(sorted) });
     const dp: DecisionPoint = {
       position,
       prompt,

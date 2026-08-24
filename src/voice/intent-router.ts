@@ -8,7 +8,7 @@ export interface IntentRouterContext {
   mode: ListeningMode;
   wakeWords: readonly string[];
   inNameCollection: boolean;
-  hasPendingDecisionPrompt: boolean;
+  awaitingPlayerAnswer: boolean;
 }
 
 export interface RouteDecision {
@@ -17,27 +17,40 @@ export interface RouteDecision {
   usedLlmFallback: boolean;
 }
 
+interface DeterministicRoute {
+  kind: RouteKind;
+  transcript: string;
+  /**
+   * The child said the wake word, or Kali had just asked something: either way this utterance
+   * is meant for her, so it must never be dropped in silence.
+   */
+  addressedToKali: boolean;
+}
+
 function normalizeWakeWords(wakeWords: readonly string[]): string[] {
   return wakeWords.map((w) => w.trim().toLowerCase()).filter(Boolean);
 }
+
+/** Punctuation the recogniser puts around the wake word: "¿Kali?", "Kali, saqué cuatro". */
+const WAKE_WORD_LEADING = /^[¿¡"'\s]+/u;
+const WAKE_WORD_TRAILING = /^[\s,.:;!?]+/u;
 
 function stripAmbientWakeWord(
   transcript: string,
   wakeWords: readonly string[],
 ): { hasWakeWord: boolean; stripped: string } {
-  const trimmed = transcript.trim();
-  if (trimmed === "") {
-    return { hasWakeWord: false, stripped: "" };
-  }
+  const trimmed = transcript.trim().replace(WAKE_WORD_LEADING, "");
   const lower = trimmed.toLowerCase();
-  const normalizedWakeWords = normalizeWakeWords(wakeWords);
-  for (const wakeWord of normalizedWakeWords) {
-    if (lower === wakeWord) {
-      return { hasWakeWord: true, stripped: "" };
+  for (const wakeWord of normalizeWakeWords(wakeWords)) {
+    if (!lower.startsWith(wakeWord)) {
+      continue;
     }
-    if (lower.startsWith(`${wakeWord} `)) {
-      return { hasWakeWord: true, stripped: trimmed.slice(wakeWord.length).trim() };
+    const rest = trimmed.slice(wakeWord.length);
+    // Only a word boundary counts: "kalimba" is a game name, not a child addressing Kali.
+    if (rest !== "" && !WAKE_WORD_TRAILING.test(rest)) {
+      continue;
     }
+    return { hasWakeWord: true, stripped: rest.replace(WAKE_WORD_TRAILING, "").trim() };
   }
   return { hasWakeWord: false, stripped: trimmed };
 }
@@ -65,32 +78,28 @@ function isLikelyLowSignal(text: string): boolean {
   return /^(eh+|ah+|mm+|mmm+|uh+|um+|jugadores|players?)$/u.test(lower);
 }
 
-function deterministicRoute(
-  transcript: string,
-  context: IntentRouterContext,
-): Omit<RouteDecision, "usedLlmFallback"> {
+function deterministicRoute(transcript: string, context: IntentRouterContext): DeterministicRoute {
+  const isAmbient = context.mode === "ambient";
   const ambientCandidate = stripAmbientWakeWord(transcript, context.wakeWords);
-  const candidate = context.mode === "ambient" ? ambientCandidate.stripped : transcript.trim();
+  const candidate = isAmbient ? ambientCandidate.stripped : transcript.trim();
+  const addressedToKali = !isAmbient || ambientCandidate.hasWakeWord;
+  const awaitingReply = context.inNameCollection || context.awaitingPlayerAnswer;
 
-  if (context.mode === "ambient" && !ambientCandidate.hasWakeWord) {
-    return { kind: "SOCIAL_CHAT_OR_NOISE", transcript: transcript.trim() };
+  // Nobody said the wake word and Kali is not waiting on anyone: this is the table talking.
+  if (!addressedToKali && !awaitingReply) {
+    return { kind: "SOCIAL_CHAT_OR_NOISE", transcript: transcript.trim(), addressedToKali };
   }
-  if (candidate === "") {
-    return { kind: "AMBIGUOUS", transcript: "" };
+  if (candidate === "" || isLikelyLowSignal(candidate)) {
+    return { kind: "AMBIGUOUS", transcript: candidate, addressedToKali };
   }
-  if (isLikelyLowSignal(candidate)) {
-    return { kind: "AMBIGUOUS", transcript: candidate };
+  // The wake word (or the prompt she just gave) proves the utterance is for Kali, whether or
+  // not it matches a heuristic. Dropping it here loses the very commands she asked for.
+  if (addressedToKali || isLikelyStructuredAnswer(candidate)) {
+    return { kind: "GAME_COMMAND", transcript: candidate, addressedToKali };
   }
-  if (context.inNameCollection || context.hasPendingDecisionPrompt) {
-    return { kind: "GAME_COMMAND", transcript: candidate };
-  }
-  if (context.mode === "prompted") {
-    return { kind: "GAME_COMMAND", transcript: candidate };
-  }
-  if (isLikelyStructuredAnswer(candidate)) {
-    return { kind: "GAME_COMMAND", transcript: candidate };
-  }
-  return { kind: "SOCIAL_CHAT_OR_NOISE", transcript: candidate };
+  // Kali is owed an answer and this was not said to her: only the LLM can tell an answer she
+  // is waiting on from the children talking among themselves.
+  return { kind: "AMBIGUOUS", transcript: candidate, addressedToKali };
 }
 
 /**
@@ -102,23 +111,26 @@ export async function routeTranscript(
   context: IntentRouterContext,
   llmClient?: LLMClient | null,
 ): Promise<RouteDecision> {
-  const deterministic = deterministicRoute(transcript, context);
-  if (deterministic.kind !== "AMBIGUOUS" || !llmClient || deterministic.transcript === "") {
-    return { ...deterministic, usedLlmFallback: false };
+  const { kind, transcript: routed, addressedToKali } = deterministicRoute(transcript, context);
+  // Something said to Kali that she cannot place is worth a "repeat, please"; the same words
+  // overheard from across the table are not.
+  const unresolved: RouteKind = addressedToKali ? "AMBIGUOUS" : "SOCIAL_CHAT_OR_NOISE";
+  if (kind !== "AMBIGUOUS") {
+    return { kind, transcript: routed, usedLlmFallback: false };
+  }
+  if (!llmClient || routed === "") {
+    return { kind: unresolved, transcript: routed, usedLlmFallback: false };
   }
 
   const expectedContext = context.inNameCollection
     ? "setup response: player count or player name"
-    : context.hasPendingDecisionPrompt
+    : context.awaitingPlayerAnswer
       ? "gameplay decision answer for current turn"
       : "gameplay command";
-  const analysis = await llmClient.analyzeResponse(deterministic.transcript, expectedContext);
-  if (analysis.isOnTopic) {
-    return {
-      kind: "GAME_COMMAND",
-      transcript: deterministic.transcript,
-      usedLlmFallback: true,
-    };
-  }
-  return { ...deterministic, usedLlmFallback: true };
+  const analysis = await llmClient.analyzeResponse(routed, expectedContext);
+  return {
+    kind: analysis.isOnTopic ? "GAME_COMMAND" : unresolved,
+    transcript: routed,
+    usedLlmFallback: true,
+  };
 }

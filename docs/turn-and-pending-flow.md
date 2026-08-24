@@ -4,10 +4,9 @@ Reference for how a player turn works end-to-end, what `game.pending` means, and
 
 ## Encounter rules (Kalimba)
 
-1. Player lands on an animal square → orchestrator sets `pending: riddle`.
-2. LLM emits `ASK_RIDDLE` (four options + `correctOption`) → stored on pending.
-3. Player answers → graded (strict match via [`riddle-answer.ts`](../src/orchestrator/riddle-answer.ts), or LLM judge as fallback).
-4. Transition to `pending: powerCheck`.
+1. Player lands on an animal square → [`BoardEffectsHandler`](../src/orchestrator/board-effects-handler.ts) picks the next question for that animal from the deterministic bank (`getEncounterQuestion` / `pickEncounterQuestionFromBank`) and sets `pending: riddle` with `riddlePrompt`, `riddleOptions` and `correctOption` already filled in. The interpreter is never asked to invent one (ADR 0006).
+2. Player answers → graded (strict match via [`riddle-answer.ts`](../src/orchestrator/riddle-answer.ts), or LLM judge as fallback).
+3. Transition to `pending: powerCheck`.
 
 **Dice:** correct answer gives +1 die; wrong gives +0 extra. Exact counts come from [`getPowerCheckRollSpec`](../src/orchestrator/power-check-dice.ts).
 
@@ -15,7 +14,7 @@ Reference for how a player turn works end-to-end, what `game.pending` means, and
 
 **Power check lose:** `pending` becomes `revenge`; turn passes to the next player via `advanceTurnMechanical`.
 
-**Revenge:** 1d6 **`>=`** animal power → win. Fail → pending cleared, nothing happens.
+**Revenge:** 1d6 **`>=`** animal power → win. Fail → the player stays on the animal square, `pending` stays `revenge` for them, and the turn passes on; they retry on their next turn (Kalimba rules §2C — the riddle is never re-asked).
 
 Code: `const win = isRevenge ? roll >= power : roll > power` in [`riddle-power-check.ts`](../src/orchestrator/riddle-power-check.ts).
 
@@ -45,7 +44,6 @@ Orchestrator returns `turnAdvance: { kind: "callAdvanceTurn" }` → app runs `ch
 
 - Phase is not `PLAYING`
 - `game.winner` is set
-- Square effect is being processed (`isProcessingSquareEffect`)
 - Current player has pending decisions (`hasPendingDecisions`)
 - Current player has pending state — riddle, powerCheck, revenge, directional, or completeRollMovement (`hasPendingForCurrentTurn`)
 

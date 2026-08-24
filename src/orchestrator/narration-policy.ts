@@ -51,13 +51,12 @@ function resolveGoldenFoxPlan(
 function resolveMagicDoorPlan(options: {
   state: Readonly<GameState>;
   events: DomainEvent[];
-  hasIncomingNarration: boolean;
 }): NarrationPlan | undefined {
-  const { state, events, hasIncomingNarration } = options;
+  const { state, events } = options;
   const turn = state.game.turn;
   const bounce = findLatestEvent(
     events,
-    (event) => event.kind === "magicDoorBounce" && hasIncomingNarration && turn === event.playerId,
+    (event) => event.kind === "magicDoorBounce" && turn === event.playerId,
   );
   if (bounce?.kind !== "magicDoorBounce") {
     return undefined;
@@ -78,14 +77,12 @@ function resolveMagicDoorPlan(options: {
 function resolveSkullPlan(options: {
   state: Readonly<GameState>;
   events: DomainEvent[];
-  hasIncomingNarration: boolean;
 }): NarrationPlan | undefined {
-  const { state, events, hasIncomingNarration } = options;
+  const { state, events } = options;
   const turn = state.game.turn;
   const skull = findLatestEvent(
     events,
-    (event) =>
-      event.kind === "skullReturnToSnakeHead" && hasIncomingNarration && turn === event.playerId,
+    (event) => event.kind === "skullReturnToSnakeHead" && turn === event.playerId,
   );
   if (skull?.kind !== "skullReturnToSnakeHead") {
     return undefined;
@@ -105,14 +102,12 @@ function resolveSkullPlan(options: {
 function resolveMovementPlan(options: {
   state: Readonly<GameState>;
   events: DomainEvent[];
-  hasIncomingNarration: boolean;
 }): NarrationPlan | undefined {
-  const { state, events, hasIncomingNarration } = options;
+  const { state, events } = options;
   const turn = state.game.turn;
   const movement = findLatestEvent(
     events,
-    (event) =>
-      event.kind === "movementRollResolved" && hasIncomingNarration && turn === event.playerId,
+    (event) => event.kind === "movementRollResolved" && turn === event.playerId,
   );
   if (movement?.kind !== "movementRollResolved") {
     return undefined;
@@ -130,21 +125,20 @@ function resolveMovementPlan(options: {
 
 /**
  * Resolves a deterministic narration plan based on emitted domain events.
+ *
+ * Independent of whether the LLM produced a NARRATE: a bare movement roll takes the fast path
+ * and emits no NARRATE at all, yet the player must still hear where they landed.
  */
 export function resolveNarrationPlan(options: {
   state: Readonly<GameState>;
   events: DomainEvent[];
-  incomingNarrationText: string | undefined;
 }): NarrationPlan | undefined {
-  const { state, events, incomingNarrationText } = options;
-  const hasIncomingNarration = Boolean(
-    incomingNarrationText && incomingNarrationText.trim() !== "",
-  );
+  const { state, events } = options;
 
   return (
     resolveGoldenFoxPlan(state, events) ??
-    resolveMagicDoorPlan({ state, events, hasIncomingNarration }) ??
-    resolveSkullPlan({ state, events, hasIncomingNarration }) ??
-    resolveMovementPlan({ state, events, hasIncomingNarration })
+    resolveMagicDoorPlan({ state, events }) ??
+    resolveSkullPlan({ state, events }) ??
+    resolveMovementPlan({ state, events })
   );
 }

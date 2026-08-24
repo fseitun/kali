@@ -10,6 +10,8 @@ import { BoardEffectsHandler } from "./board-effects-handler";
 import { getWinPosition } from "./board-helpers";
 import { getCurrentDecisionPoint, narrateCoversDecision } from "./decision-helpers";
 import { DecisionPointEnforcer } from "./decision-point-enforcer";
+import { resolveNarrationPlan } from "./narration-policy";
+import { isPendingRiddleForCurrentTurn } from "./pending-types";
 import { reorderPowerCheckBeforeRoll } from "./reorder-power-check";
 import { resolveRiddleAnswerToOption } from "./riddle-answer";
 import { RiddlePowerCheckHandler } from "./riddle-power-check";
@@ -24,6 +26,8 @@ import {
   type ExecutionContext,
   type ActionHandler,
   type GameState,
+  type NarrationPlan,
+  type NextPlayer,
   type TurnFrame,
   type TurnAdvance,
   type VoiceOutcomeHints,
@@ -60,10 +64,38 @@ export interface OrchestratorOptions {
   allowBypassPositionDecisionGate?: boolean;
 }
 
-function isPendingAnimalRiddleForCurrentTurn(game: Record<string, unknown> | undefined): boolean {
-  const currentTurn = game?.turn as string | undefined;
+/** Pending phases that narrate themselves, so a trailing movement NARRATE would double up. */
+const SELF_NARRATING_PENDING_KINDS = [
+  "riddle",
+  "powerCheck",
+  "revenge",
+  "directional",
+  "completeRollMovement",
+];
+
+/**
+ * `game.pending` only when it belongs to the player whose turn it is. Another player's pending
+ * (e.g. a revenge that survives their opponents' landings) says nothing about this turn.
+ */
+function pendingForCurrentTurn(
+  game: Record<string, unknown> | undefined,
+): { kind?: string; riddleOptions?: string[]; correctOption?: string } | null {
   const pending = game?.pending as { kind?: string; playerId?: string } | null | undefined;
-  return pending?.kind === "riddle" && Boolean(currentTurn) && pending.playerId === currentTurn;
+  return pending && pending.playerId === game?.turn ? pending : null;
+}
+
+/** Board moves the player did not choose; the line explaining one is never redundant. */
+const RELOCATION_EVENT_KINDS = new Set([
+  "goldenFoxRelocated",
+  "magicDoorBounce",
+  "skullReturnToSnakeHead",
+]);
+
+function explainsRelocation(plan: NarrationPlan, context: ExecutionContext): boolean {
+  return (context.domainEvents ?? []).some(
+    (event) =>
+      RELOCATION_EVENT_KINDS.has(event.kind) && plan.consumedEventIds.includes(event.eventId),
+  );
 }
 
 function normalizedRiddleOptionFromTranscript(
@@ -91,7 +123,6 @@ export class Orchestrator {
   private actionHandlers: Map<string, ActionHandler> = new Map();
   private isProcessing = false;
   private initialState: GameState;
-  private readonly defaultContext: ExecutionContext = {};
   /** Last NARRATE text spoken; passed to LLM so short replies (sí/no, number) can be interpreted as answers to that question. */
   private lastNarration = "";
 
@@ -108,7 +139,6 @@ export class Orchestrator {
     this.turnManager = new TurnManager(stateManager);
     this.boardEffectsHandler = new BoardEffectsHandler(
       stateManager,
-      this.processTranscriptAsBool.bind(this),
       speechService,
       statusIndicator,
       (text) => {
@@ -162,15 +192,6 @@ export class Orchestrator {
   }
 
   /**
-   * Checks if the orchestrator is currently processing a square effect.
-   * Used by validator to block inappropriate actions during effect resolution.
-   * @returns true if processing square effect, false otherwise
-   */
-  isProcessingEffect(): boolean {
-    return this.boardEffectsHandler.isProcessingEffect();
-  }
-
-  /**
    * Registers a custom action handler for extending primitive actions.
    * @param actionType - The action type to handle (e.g., "CUSTOM_ACTION")
    * @param handler - Function to execute when action is encountered
@@ -199,7 +220,6 @@ export class Orchestrator {
 
     try {
       const context: ExecutionContext = {
-        ...this.defaultContext,
         skipDecisionPointEnforcement: options?.skipDecisionPointEnforcement,
       };
       const result = await this.processTranscript(transcript, context);
@@ -227,7 +247,7 @@ export class Orchestrator {
 
     try {
       Logger.info("Test mode: Executing actions directly");
-      const context: ExecutionContext = { ...this.defaultContext };
+      const context: ExecutionContext = {};
       Profiler.start("orchestrator.test.run");
       const result = await this.runValidatedActions(actions, context, "orchestrator.test");
       Profiler.end("orchestrator.test.run");
@@ -261,7 +281,7 @@ export class Orchestrator {
     Profiler.start("orchestrator.primitives.total");
 
     try {
-      const context: ExecutionContext = { ...this.defaultContext };
+      const context: ExecutionContext = {};
       return await this.runValidatedActions(actions, context, "orchestrator.primitives");
     } finally {
       this.isProcessing = false;
@@ -348,17 +368,8 @@ export class Orchestrator {
    * AUTHORITY: Only the orchestrator can advance turns.
    * @returns The next player's ID and details, or null if unable to advance. Includes skippedPlayers (all skipped in order).
    */
-  async advanceTurn(): Promise<{
-    playerId: string;
-    name: string;
-    position: number;
-    skippedPlayers: Array<{ playerId: string; name: string }>;
-  } | null> {
-    return await this.turnManager.advanceTurn(this.boardEffectsHandler.isProcessingEffect());
-  }
-
-  private processTranscriptAsBool(transcript: string, context: ExecutionContext): Promise<boolean> {
-    return this.processTranscript(transcript, context).then((r) => r.success);
+  async advanceTurn(): Promise<NextPlayer | null> {
+    return await this.turnManager.advanceTurn();
   }
 
   /**
@@ -370,12 +381,7 @@ export class Orchestrator {
     state: GameState,
     context: ExecutionContext,
   ): Promise<OrchestratorGameplayResult | null> {
-    const fastPathActions = tryFastPathTranscript(
-      state,
-      transcript,
-      context,
-      this.getValidatorContext(),
-    );
+    const fastPathActions = tryFastPathTranscript(state, transcript);
     if (!fastPathActions) {
       return null;
     }
@@ -399,12 +405,11 @@ export class Orchestrator {
     transcript: string,
     state: GameState,
     context: ExecutionContext,
-    profilerKey: "nested" | "top",
     lastBotUtterance: string | undefined,
   ): Promise<OrchestratorGameplayResult> {
-    Profiler.start(`orchestrator.llm.${profilerKey}`);
+    Profiler.start("orchestrator.llm");
     const actions = await this.llmClient.getActions(transcript, state, lastBotUtterance);
-    Profiler.end(`orchestrator.llm.${profilerKey}`);
+    Profiler.end("orchestrator.llm");
 
     if (Array.isArray(actions)) {
       Logger.robot(
@@ -430,13 +435,10 @@ export class Orchestrator {
     context: ExecutionContext,
   ): Promise<OrchestratorGameplayResult> {
     try {
-      Logger.brain(
-        `Orchestrator processing: ${transcript} (${context.isNestedCall ? "nested" : "top"})`,
-      );
+      Logger.brain(`Orchestrator processing: ${transcript}`);
 
       const state = this.stateManager.getState();
       Logger.state("Current state:\n" + formatStateContext(state, { forLog: true }));
-      const profilerKey = context.isNestedCall ? "nested" : "top";
       const lastBotUtterance = this.lastNarration !== "" ? this.lastNarration : undefined;
 
       const fastPathResult = await this.tryConsumeFastPathTranscript(transcript, state, context);
@@ -444,13 +446,7 @@ export class Orchestrator {
         return fastPathResult;
       }
 
-      return await this.fetchLlmActionsAndExecute(
-        transcript,
-        state,
-        context,
-        profilerKey,
-        lastBotUtterance,
-      );
+      return await this.fetchLlmActionsAndExecute(transcript, state, context, lastBotUtterance);
     } catch (error) {
       Logger.error("Orchestrator error:", error);
       await this.speechService.speak(t("errors.somethingWentWrong"));
@@ -469,7 +465,7 @@ export class Orchestrator {
   ): PrimitiveAction[] {
     const state = this.stateManager.getState();
     const game = state.game as Record<string, unknown> | undefined;
-    if (isPendingAnimalRiddleForCurrentTurn(game)) {
+    if (isPendingRiddleForCurrentTurn(game)) {
       return actions;
     }
 
@@ -492,9 +488,7 @@ export class Orchestrator {
       return actions;
     }
     const rolled: PrimitiveAction = { action: "PLAYER_ROLLED", value };
-    const validation = validatePlayerRolled(rolled, state, 0, {
-      isProcessingEffect: this.boardEffectsHandler.isProcessingEffect(),
-    });
+    const validation = validatePlayerRolled(rolled, state, 0);
     if (!validation.valid) {
       return actions;
     }
@@ -512,8 +506,7 @@ export class Orchestrator {
   ): PrimitiveAction[] {
     const state = this.stateManager.getState();
     const game = state.game as Record<string, unknown> | undefined;
-    const pending = game?.pending as
-      { kind?: string; riddleOptions?: string[]; correctOption?: string } | null | undefined;
+    const pending = pendingForCurrentTurn(game);
     if (
       pending?.kind !== "riddle" ||
       !Array.isArray(pending.riddleOptions) ||
@@ -543,10 +536,6 @@ export class Orchestrator {
     });
   }
 
-  private getProfilerKey(context: ExecutionContext): "nested" | "top" {
-    return context.isNestedCall ? "nested" : "top";
-  }
-
   private resolveValidationErrorI18n(validation: ValidationResult): string {
     return validation.errorCode && VALIDATION_ERROR_I18N[validation.errorCode]
       ? VALIDATION_ERROR_I18N[validation.errorCode]
@@ -555,7 +544,6 @@ export class Orchestrator {
 
   private computeShouldAdvanceTurn(
     actions: PrimitiveAction[],
-    _hasPendingDecisions: boolean,
     isForkAnswerAtStart: boolean,
     onlyResolvedForkChoice: boolean,
   ): boolean {
@@ -563,7 +551,6 @@ export class Orchestrator {
       (a) =>
         a.action === "PLAYER_ROLLED" ||
         a.action === "SET_STATE" ||
-        a.action === "RESET_GAME" ||
         (a.action === "PLAYER_ANSWERED" && !isForkAnswerAtStart),
     );
     return rawShouldAdvanceTurn && !onlyResolvedForkChoice;
@@ -573,22 +560,33 @@ export class Orchestrator {
     context: ExecutionContext,
     onlyResolvedForkChoice: boolean,
   ): VoiceOutcomeHints | undefined {
-    return !context.isNestedCall &&
-      onlyResolvedForkChoice &&
+    return onlyResolvedForkChoice &&
       (context.narrationPlans?.length ?? 0) === 0 &&
       (context.domainEventHistory ?? []).some((event) => event.kind === "forkChoiceStored")
       ? { forkChoiceResolvedWithoutNarrate: true }
       : undefined;
   }
 
+  /**
+   * True when the current player's dice roll is paused mid-flight at a fork: the fork answer
+   * finishes a *movement*, so the turn must advance normally instead of being treated as a
+   * bare fork choice that leaves the same player waiting to roll again.
+   */
+  private currentPlayerCompletesPausedMove(): boolean {
+    const game = this.stateManager.getState().game as Record<string, unknown> | undefined;
+    const pending = game?.pending as { kind?: string; playerId?: string } | null | undefined;
+    return pending?.kind === "completeRollMovement" && pending.playerId === game?.turn;
+  }
+
   private computeForkChoiceFlags(actions: PrimitiveAction[]): {
-    hasPendingDecisions: boolean;
     isForkAnswerAtStart: boolean;
     onlyResolvedForkChoice: boolean;
   } {
     const hasPendingDecisions = this.turnManager.hasPendingDecisions();
+    const completesPausedMove = this.currentPlayerCompletesPausedMove();
     const isForkAnswerAtStart =
       hasPendingDecisions &&
+      !completesPausedMove &&
       actions.some((a) => a.action === "PLAYER_ANSWERED") &&
       !actions.some((a) => a.action === "PLAYER_ROLLED");
 
@@ -603,6 +601,7 @@ export class Orchestrator {
       );
     const onlyResolvedForkChoice =
       hasPendingDecisions &&
+      !completesPausedMove &&
       !actions.some((a) => a.action === "PLAYER_ROLLED") &&
       (actions.some((a) => a.action === "PLAYER_ANSWERED") ||
         setStateActions.some(
@@ -612,12 +611,11 @@ export class Orchestrator {
         )) &&
       allSetStateTargetForkChoice;
 
-    return { hasPendingDecisions, isForkAnswerAtStart, onlyResolvedForkChoice };
+    return { isForkAnswerAtStart, onlyResolvedForkChoice };
   }
 
   private getValidatorContext(): ValidatorContext {
     return {
-      isProcessingEffect: this.boardEffectsHandler.isProcessingEffect(),
       allowScenarioOnlyStatePaths: this.options?.allowScenarioOnlyStatePaths,
       allowBypassPositionDecisionGate: this.options?.allowBypassPositionDecisionGate,
     };
@@ -631,14 +629,14 @@ export class Orchestrator {
     const state = this.stateManager.getState();
     Logger.state("Current state:\n" + formatStateContext(state, { forLog: true }));
 
-    Profiler.start(`${profilerPrefix}.validation.${this.getProfilerKey(context)}`);
+    Profiler.start(`${profilerPrefix}.validation`);
     const validation = validateActions(
       actions,
       state,
       this.stateManager,
       this.getValidatorContext(),
     );
-    Profiler.end(`${profilerPrefix}.validation.${this.getProfilerKey(context)}`);
+    Profiler.end(`${profilerPrefix}.validation`);
 
     if (!validation.valid) {
       Logger.warn("Validation failed:", validation.error);
@@ -646,31 +644,36 @@ export class Orchestrator {
       return FAILED_RESULT;
     }
 
-    const { hasPendingDecisions, isForkAnswerAtStart, onlyResolvedForkChoice } =
-      this.computeForkChoiceFlags(actions);
+    const { isForkAnswerAtStart, onlyResolvedForkChoice } = this.computeForkChoiceFlags(actions);
 
     const shouldAdvanceTurn = this.computeShouldAdvanceTurn(
       actions,
-      hasPendingDecisions,
       isForkAnswerAtStart,
       onlyResolvedForkChoice,
     );
 
     Logger.info("Actions validated, executing...");
 
-    const actionsToRun = context.isNestedCall
-      ? actions
-      : reorderPowerCheckBeforeRoll(actions, state);
+    const actionsToRun = reorderPowerCheckBeforeRoll(actions, state);
     context.domainEvents = [];
     context.domainEventHistory = [];
     context.nextDomainEventId = 0;
     context.narrationPlans = [];
-    Profiler.start(`${profilerPrefix}.execution.${this.getProfilerKey(context)}`);
-    await this.executeActions(actionsToRun, context);
-    Profiler.end(`${profilerPrefix}.execution.${this.getProfilerKey(context)}`);
-    if (!context.isNestedCall) {
-      Logger.info("Actions executed successfully");
+    context.spokeDeterministicLanding = false;
+    Profiler.start(`${profilerPrefix}.execution`);
+    try {
+      await this.executeActions(actionsToRun, context);
+    } catch (error) {
+      // An executor that throws leaves the batch half-applied. Reporting success would advance the
+      // turn over a move that never finished and leave the table with nothing to go on.
+      Logger.error("Action execution failed, abandoning batch:", error);
+      await this.speechService.speak(t("errors.somethingWentWrong"));
+      return FAILED_RESULT;
+    } finally {
+      Profiler.end(`${profilerPrefix}.execution`);
     }
+    await this.speakUnnarratedMovement(context);
+    Logger.info("Actions executed successfully");
     Logger.state(
       "Current state (after actions):\n" +
         formatStateContext(this.stateManager.getState(), {
@@ -679,15 +682,46 @@ export class Orchestrator {
     );
 
     // After power-check loss or §2B win the app announces the next player (incl. fork prompt);
-    // skip nested enforce here to avoid duplicating the fork question.
+    // skip enforcement here to avoid duplicating the fork question.
     if (this.shouldEnforceDecisionPoints(context)) {
-      await this.decisionPointEnforcer.enforceDecisionPoints(context);
+      await this.decisionPointEnforcer.enforceDecisionPoints();
     }
 
     const voiceOutcomeHints = this.computeVoiceOutcomeHints(context, onlyResolvedForkChoice);
     const turnAdvance = this.computeTurnAdvance(context, shouldAdvanceTurn);
     const turnFrame = this.buildTurnFrame(actions, actionsToRun, context);
-    return { success: true, turnAdvance, voiceOutcomeHints, turnFrame };
+    const gameReset = actions.some((a) => a.action === "RESET_GAME");
+    return { success: true, turnAdvance, voiceOutcomeHints, turnFrame, gameReset };
+  }
+
+  /**
+   * Voice invariant: a bare movement roll takes the fast path and produces no NARRATE, so nothing
+   * would tell the player where they landed. When the batch spoke nothing, say the deterministic
+   * movement line for the events it left unconsumed.
+   */
+  private async speakUnnarratedMovement(context: ExecutionContext): Promise<void> {
+    if ((context.narrationPlans?.length ?? 0) > 0) {
+      return;
+    }
+    const plan = resolveNarrationPlan({
+      state: this.stateManager.getState(),
+      events: context.domainEvents ?? [],
+    });
+    if (!plan) {
+      return;
+    }
+    // The landing square says where the player ended up; a relocation still owes them the reason
+    // they went there (door bounce, skull, golden fox). Only the plain movement line is redundant.
+    if (context.spokeDeterministicLanding === true && !explainsRelocation(plan, context)) {
+      return;
+    }
+    context.domainEvents = (context.domainEvents ?? []).filter(
+      (event) => !plan.consumedEventIds.includes(event.eventId),
+    );
+    context.narrationPlans = [...(context.narrationPlans ?? []), plan];
+    this.lastNarration = plan.text;
+    this.statusIndicator.setState("speaking");
+    await this.speechService.speak(plan.text);
   }
 
   private computeTurnAdvance(
@@ -709,7 +743,6 @@ export class Orchestrator {
 
   private shouldEnforceDecisionPoints(context: ExecutionContext): boolean {
     return (
-      !context.isNestedCall &&
       !context.skipDecisionPointEnforcement &&
       !context.justNarratedDecisionAsk &&
       !context.narratedWhileDecisionPending &&
@@ -776,22 +809,17 @@ export class Orchestrator {
   /**
    * After PLAYER_ROLLED, skip any trailing movement NARRATE in the same LLM batch when either:
    * - `pending` holds an encounter that will narrate separately, or
-   * - the final landing square runs `checkAndApplySquareEffects` (nested narration), e.g. hazards
-   *   that clear `pending` (Wasps, Night falls) — see BoardEffectsHandler.syncAnimalEncounterState.
+   * - the final landing square runs `checkAndApplySquareEffects`, which speaks its own
+   *   deterministic line, e.g. hazards that clear `pending` (Wasps, Night falls).
    */
   private handlePlayerRolledPostExecute(): boolean {
     const state = this.stateManager.getState();
     const game = state.game as Record<string, unknown> | undefined;
-    const pending = game?.pending as { kind?: string } | null | undefined;
-    if (
-      pending &&
-      ["riddle", "powerCheck", "revenge", "directional", "completeRollMovement"].includes(
-        pending.kind ?? "",
-      )
-    ) {
+    const currentTurn = game?.turn as string | undefined;
+    const pending = pendingForCurrentTurn(game);
+    if (pending && SELF_NARRATING_PENDING_KINDS.includes(pending.kind ?? "")) {
       return true;
     }
-    const currentTurn = game?.turn as string | undefined;
     if (!currentTurn) {
       return false;
     }
@@ -837,17 +865,13 @@ export class Orchestrator {
     let skipTrailingNarrate = false;
 
     for (const action of actions) {
-      try {
-        if (this.shouldSkipAction(action, context, skipTrailingNarrate)) {
-          continue;
-        }
-        skipTrailingNarrate = false;
-        await this.executeAction(action, context);
-        if (this.handlePostExecute(action, context)) {
-          skipTrailingNarrate = true;
-        }
-      } catch (error) {
-        Logger.error("Failed to execute action:", action, error);
+      if (this.shouldSkipAction(action, context, skipTrailingNarrate)) {
+        continue;
+      }
+      skipTrailingNarrate = false;
+      await this.executeAction(action, context);
+      if (this.handlePostExecute(action, context)) {
+        skipTrailingNarrate = true;
       }
     }
   }
@@ -894,6 +918,8 @@ export class Orchestrator {
       boardEffectsHandler: this.boardEffectsHandler,
       riddlePowerCheckHandler: this.riddlePowerCheckHandler,
       initialState: this.initialState,
+      setupPlayers: (playerNames) => this.setupPlayers(playerNames),
+      transitionPhase: (phase) => this.transitionPhase(phase),
       setLastNarration: (text) => {
         this.lastNarration = text;
       },
@@ -922,9 +948,6 @@ export class Orchestrator {
         break;
       case "PLAYER_ROLLED":
         await executePlayerRolled(ctx, primitive, context);
-        break;
-      case "ASK_RIDDLE":
-        this.riddlePowerCheckHandler.handleAskRiddle(primitive);
         break;
       case "PLAYER_ANSWERED":
         await executePlayerAnswered(ctx, primitive, context);

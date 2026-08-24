@@ -32,3 +32,4 @@ For large orchestrator refactors, run a **readonly second pass** (human or sub-a
 | [0003-always-prompt-next-player-action.md](0003-always-prompt-next-player-action.md)                                 | Voice UX: always say what the player should do next                                        |
 | [0004-no-riddle-resolved-primitive.md](0004-no-riddle-resolved-primitive.md)                                         | Riddle outcomes only via `PLAYER_ANSWERED`; no `RIDDLE_RESOLVED` primitive                 |
 | [0005-deterministic-narration-and-transcript-fast-path.md](0005-deterministic-narration-and-transcript-fast-path.md) | Fork / non-animal landings: TTS+i18n; fast path before LLM; same validate/execute pipeline |
+| [0006-remove-ask-riddle-primitive.md](0006-remove-ask-riddle-primitive.md)                                           | Riddles come from the deterministic bank; `ASK_RIDDLE` deleted                             |

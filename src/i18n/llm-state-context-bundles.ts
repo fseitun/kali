@@ -20,6 +20,8 @@ export type LlmStateContextBundle = {
   riddlePhaseNoStructured: string;
   riddlePhaseStructuredPrefix: string;
   riddleCurrentOptions: string;
+  /** Prefix for the stored riddle question when repeating it to the model. */
+  riddleCurrentQuestion: string;
   powerCheckBlock: string;
   powerRollOneDie: string;
   powerRollSum: string;
@@ -67,6 +69,7 @@ export const llmStateContextEsAR: LlmStateContextBundle = {
     "⚠️ RIDDLE ({playerName}) phase=riddle. El usuario debe elegir una de las cuatro opciones. PLAYER_ANSWERED con lo que dijo; el orquestador resuelve acierto/error con matching estricto determinístico.",
   riddleCurrentOptions:
     " Opciones actuales: {optionsList}. PLAYER_ANSWERED con la respuesta del usuario (texto de opción o lo que dijo).",
+  riddleCurrentQuestion: " Pregunta actual: {prompt}.",
   powerCheckBlock:
     "⚠️ POWER CHECK ({playerName}) phase=powerCheck. Si REPORTA su tirada → {rollInstruction} NO preguntes «decime el resultado», «¿alcanza?», «¿sirve?» ni frases en inglés del estilo «is that enough?» — ya dio el número; procesalo al toque. NO NARRATES la tirada. Devolvé solo PLAYER_ANSWERED. El orquestador anuncia si pasó o no.{helpLine} [current]",
   powerCheckHelpOneDie: " Si pregunta qué hacer → NARRATE «Tirá un dado... decime el resultado.»",
@@ -122,6 +125,7 @@ export const llmStateContextEnUS: LlmStateContextBundle = {
     "⚠️ RIDDLE ({playerName}) phase=riddle. The user must choose one of the four options. Return PLAYER_ANSWERED with what the user said; the orchestrator resolves correct/incorrect with deterministic strict matching.",
   riddleCurrentOptions:
     " Current options: {optionsList}. Return PLAYER_ANSWERED with the user's answer (option text or what they said).",
+  riddleCurrentQuestion: " Current question: {prompt}.",
   powerCheckBlock:
     '⚠️ POWER CHECK ({playerName}) phase=powerCheck. If the user REPORTS their roll → {rollInstruction} Do NOT ask "tell me the result", "does that count", "is that enough" — they gave the number; process it immediately. Do NOT NARRATE the roll. Return only PLAYER_ANSWERED. The orchestrator announces pass/fail.{helpLine} [current]',
   powerCheckHelpOneDie:

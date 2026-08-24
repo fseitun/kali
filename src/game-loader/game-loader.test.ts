@@ -1,6 +1,7 @@
+import { existsSync, readFileSync } from "node:fs";
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { GameLoader, expandHabitatConfig, resolveInitialState } from "./game-loader";
-import type { GameModule, HabitatDefinition } from "./types";
+import type { GameConfigInput, GameModule, HabitatDefinition } from "./types";
 import { GamePhase } from "@/orchestrator/types";
 
 // Mock SpeechService
@@ -549,5 +550,86 @@ describe("Product scenario: Resolve Initial State with config habitat", () => {
     });
     expect(state.board?.squares?.["0"]?.habitat).toBe("h0");
     expect(state.board?.squares?.["1"]?.habitat).toBe("h1");
+  });
+});
+
+describe("Product scenario: Board topology validation", () => {
+  const metadata = { id: "t", name: "T", minPlayers: 1, maxPlayers: 2, objective: "o" };
+
+  /** 0..5 board with `win` at 5; caller overrides squares to inject a bad edge. */
+  function load(squares: Record<string, unknown>): ReturnType<typeof resolveInitialState> {
+    return resolveInitialState({
+      metadata,
+      squares: { "0": { next: [1], prev: [] }, "5": { effect: "win", next: [] }, ...squares },
+    });
+  }
+
+  it("Expected outcome: Rejects a next target past the win square", () => {
+    expect(() => load({ "2": { next: [999] } })).toThrow(/square 2 next target 999/);
+  });
+
+  it("Expected outcome: Rejects a negative prev target", () => {
+    expect(() => load({ "3": { prev: [-1] } })).toThrow(/square 3 prev target -1/);
+  });
+
+  it("Expected outcome: Rejects a non-integer edge target", () => {
+    expect(() => load({ "2": { next: [1.5] } })).toThrow(/square 2 next target 1.5/);
+  });
+
+  it("Expected outcome: Rejects an out-of-range fork target on square 0", () => {
+    expect(() => load({ "0": { next: { "1": ["left"], "77": ["right"] }, prev: [] } })).toThrow(
+      /square 0 next target 77/,
+    );
+  });
+
+  it("Expected outcome: Rejects a fork whose keys are not square indices", () => {
+    expect(() => load({ "0": { next: { left: ["l"], right: ["r"] }, prev: [] } })).toThrow(
+      /square 0 next fork key "left"/,
+    );
+  });
+
+  it("Expected outcome: Rejects an edge that points at its own square", () => {
+    expect(() => load({ "2": { next: [2] } })).toThrow(/square 2 next target 2 .*itself/);
+  });
+
+  it("Expected outcome: Rejects an out-of-range nextOnLanding target", () => {
+    expect(() => load({ "2": { nextOnLanding: [42] } })).toThrow(
+      /square 2 nextOnLanding target 42/,
+    );
+  });
+
+  it("Expected outcome: Rejects nextOnLanding that is not an array", () => {
+    expect(() => load({ "2": { nextOnLanding: 3 } })).toThrow(/square 2 nextOnLanding must be/);
+  });
+
+  it("Expected outcome: Accepts in-range edges, forks, and sparse squares", () => {
+    const state = load({
+      "0": { next: { "1": ["left"], "3": ["right"] }, prev: [] },
+      "3": { prev: [0, 2] },
+      "4": { nextOnLanding: [5] },
+    });
+    expect(state.board?.squares?.["4"]?.nextOnLanding).toEqual([5]);
+  });
+});
+
+describe("Product scenario: Shipped Kalimba config", () => {
+  const configUrl = new URL("../../public/games/kalimba/config.json", import.meta.url);
+  const kalimba = JSON.parse(readFileSync(configUrl, "utf8")) as GameConfigInput;
+
+  it("Expected outcome: Passes topology validation as shipped", () => {
+    const state = resolveInitialState(kalimba);
+    expect(state.board?.squares?.["196"]?.effect).toBe("win");
+    expect(state.board?.squares?.["0"]?.habitat).toBe("desert");
+  });
+
+  it("Expected outcome: Every referenced audio file exists in public/", () => {
+    const urls = Object.values(kalimba.habitats ?? {}).flatMap((h) => [h.track, ...h.animalSounds]);
+    expect(urls.length).toBeGreaterThan(0);
+    for (const url of urls) {
+      const exists = existsSync(new URL(`../../public${url}`, import.meta.url));
+      expect([url, exists]).toEqual([url, true]);
+    }
+    // soundEffects pointed at a /sounds/ directory that never existed; keep it gone.
+    expect(kalimba.soundEffects).toBeUndefined();
   });
 });

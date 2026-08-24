@@ -44,14 +44,11 @@ function summarizeInitialStateForLog(state: GameState): Record<string, unknown> 
  * Access control is enforced at the ORCHESTRATOR level, not here.
  *
  * AUTHORITY MODEL:
- * - Orchestrator OWNS all state mutations during gameplay
- * - App layer (KaliAppCore) should NOT mutate state directly
- * - NameCollector and other UI components should NOT mutate state directly
- * - State mutations should only happen via orchestrator methods or primitives
- *
- * Exceptions (initialization only):
- * - Initial state loading during app startup
- * - Orchestrator's internal methods (setupPlayers, transitionPhase, advanceTurn)
+ * - Orchestrator OWNS every state mutation: `set`, `setState` and `resetState` belong to it
+ *   and to its primitives (setupPlayers, transitionPhase, advanceTurn, RESET_GAME).
+ * - The app layer's only entry point is `init` at bootstrap. KaliAppCore, NameCollector and
+ *   every other UI component go through the orchestrator for anything after that — including
+ *   a fresh start, which is `RESET_GAME`, not a `resetState` call of their own.
  */
 export class StateManager {
   private state: GameState = {} as GameState;
@@ -136,10 +133,11 @@ export class StateManager {
     let current: unknown = obj;
 
     for (const part of parts) {
-      if (current === null || current === undefined) {
+      if (current === null || typeof current !== "object") {
         return undefined;
       }
-      if (typeof current !== "object") {
+      // Own properties only: `game.__proto__` / `game.constructor` are not state.
+      if (!Object.hasOwn(current, part)) {
         return undefined;
       }
       current = (current as Record<string, unknown>)[part];

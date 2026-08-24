@@ -41,17 +41,11 @@ function getDecisionPointContext(state: GameState): {
   return { currentTurn, currentPlayer, position, decisionPoint, path };
 }
 
-function matchDecisionAnswer(
-  answer: string,
-  position: number,
-  decisionPoint: DecisionPoint,
-): number | null {
-  if (position === 0) {
-    const val = matchPosition0Answer(answer);
-    if (val !== null) {
-      return val;
-    }
-  }
+/**
+ * Fork answers resolve only against this board's own fork: the target numbers it declares and the
+ * phrases its `next` / `prev` map lists. The orchestrator knows no board's geography.
+ */
+function matchDecisionAnswer(answer: string, decisionPoint: DecisionPoint): number | null {
   if (decisionPoint.positionOptions) {
     const val = matchPositionOptions(answer, decisionPoint.positionOptions);
     if (val !== null) {
@@ -106,17 +100,6 @@ export function narrateCoversDecision(text: string, position: number, prompt: st
   return false;
 }
 
-function matchPosition0Answer(answer: string): number | null {
-  const first = answer.trim().charAt(0).toUpperCase();
-  if (first === "A") {
-    return 1;
-  }
-  if (first === "B") {
-    return 15;
-  }
-  return null;
-}
-
 function matchPositionOptions(answer: string, options: Record<string, number>): number | null {
   const trimmed = answer.trim();
   const numMatch = trimmed.match(/\d+/);
@@ -141,7 +124,7 @@ export function getDecisionPointApplyState(
   if (!ctx) {
     return null;
   }
-  const { position, decisionPoint, path } = ctx;
-  const value = matchDecisionAnswer(answer, position, decisionPoint);
+  const { decisionPoint, path } = ctx;
+  const value = matchDecisionAnswer(answer, decisionPoint);
   return value !== null ? { path, value } : null;
 }

@@ -216,17 +216,13 @@ describe("Product scenario: Game orchestrator Architecture Authority Model", () 
       expect(game.turn).toBe("p1"); // Turn not advanced
     });
 
-    it("Expected outcome: Advance Turn blocks when square effect is processing", async () => {
-      // Add a square effect to trigger processing
+    it("Expected outcome: Advance Turn still advances when the landing square has mechanics", async () => {
       stateManager.set("board.squares", {
         "5": { name: "Test Enemy", power: 1 },
       });
 
-      // Move player to trigger effect (this would set isProcessingSquareEffect internally)
-      // For this test, we verify the method exists and returns appropriately
       const nextPlayer = await orchestrator.advanceTurn();
 
-      // Should still work in normal case (when not actually processing an effect)
       expect(nextPlayer).not.toBeNull();
     });
 

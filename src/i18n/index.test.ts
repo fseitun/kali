@@ -21,7 +21,7 @@ describe("Product scenario: I18n", () => {
 
     it("Expected outcome: Should translate nested keys", () => {
       expect(t("ui.status.ready")).toBe("Ready");
-      expect(t("ui.status.listening")).toBe("Listening...");
+      expect(t("ui.status.initializing")).toBe("Initializing...");
     });
 
     it("Expected outcome: Should interpolate parameters", () => {
@@ -37,7 +37,9 @@ describe("Product scenario: I18n", () => {
     });
 
     it("Expected outcome: Should handle numeric parameters", () => {
-      expect(t("game.position", { position: 15 })).toBe("You're at position 15.");
+      expect(t("game.powerCheckPassLandedAt", { name: "Ana", position: 15 })).toBe(
+        "Ana, you landed on square 15.",
+      );
     });
 
     it("Expected outcome: Should return key when translation missing", () => {
@@ -184,17 +186,17 @@ describe("Product scenario: I18n", () => {
 
   describe("Product scenario: Debug UI version line", () => {
     function debugVersionLine(buildId: string): string {
-      return `${t("ui.upToDate")} · ${t("ui.buildLabel")}${buildId}`;
+      return `${t("ui.versionNoticeMessage")} · ${t("ui.buildLabel")}${buildId}`;
     }
 
     it("Expected outcome: Uses English when locale is en US", () => {
       setLocale("en-US");
-      expect(debugVersionLine("latest")).toBe("Up to date · Build: latest");
+      expect(debugVersionLine("latest")).toBe("New version available. · Build: latest");
     });
 
     it("Expected outcome: Uses Spanish when locale is es AR", () => {
       setLocale("es-AR");
-      expect(debugVersionLine("latest")).toBe("Al día · Versión: latest");
+      expect(debugVersionLine("latest")).toBe("Hay una nueva versión. · Versión: latest");
     });
   });
 

@@ -104,7 +104,7 @@ describe("Product scenario: Turn Manager", () => {
 
   describe("Product scenario: Advance Turn", () => {
     it("Expected outcome: Should advance to next player successfully", async () => {
-      const result = await turnManager.advanceTurn(false);
+      const result = await turnManager.advanceTurn();
 
       expect(result).toEqual({
         playerId: "p2",
@@ -121,7 +121,7 @@ describe("Product scenario: Turn Manager", () => {
     it("Expected outcome: Should wrap around from last to first player", async () => {
       stateManager.set("game.turn", "p3");
 
-      const result = await turnManager.advanceTurn(false);
+      const result = await turnManager.advanceTurn();
 
       expect(result).toEqual({
         playerId: "p1",
@@ -135,7 +135,7 @@ describe("Product scenario: Turn Manager", () => {
     it("Expected outcome: Should return null when game has winner", async () => {
       stateManager.set("game.winner", "p1");
 
-      const result = await turnManager.advanceTurn(false);
+      const result = await turnManager.advanceTurn();
 
       expect(result).toBeNull();
       // Turn should not have changed
@@ -145,7 +145,7 @@ describe("Product scenario: Turn Manager", () => {
     it("Expected outcome: Should return null when not in PLAYING phase", async () => {
       stateManager.set("game.phase", GamePhase.SETUP);
 
-      const result = await turnManager.advanceTurn(false);
+      const result = await turnManager.advanceTurn();
 
       expect(result).toBeNull();
     });
@@ -153,7 +153,7 @@ describe("Product scenario: Turn Manager", () => {
     it("Expected outcome: Should return null when phase is FINISHED", async () => {
       stateManager.set("game.phase", GamePhase.FINISHED);
 
-      const result = await turnManager.advanceTurn(false);
+      const result = await turnManager.advanceTurn();
 
       expect(result).toBeNull();
     });
@@ -161,7 +161,7 @@ describe("Product scenario: Turn Manager", () => {
     it("Expected outcome: Should return null when no current turn set", async () => {
       stateManager.set("game.turn", null);
 
-      const result = await turnManager.advanceTurn(false);
+      const result = await turnManager.advanceTurn();
 
       expect(result).toBeNull();
     });
@@ -169,17 +169,9 @@ describe("Product scenario: Turn Manager", () => {
     it("Expected outcome: Should return null when no player order exists", async () => {
       stateManager.set("game.playerOrder", []);
 
-      const result = await turnManager.advanceTurn(false);
+      const result = await turnManager.advanceTurn();
 
       expect(result).toBeNull();
-    });
-
-    it("Expected outcome: Should block when square effect is processing", async () => {
-      const result = await turnManager.advanceTurn(true); // isProcessingSquareEffect = true
-
-      expect(result).toBeNull();
-      // Turn should not have changed
-      expect((stateManager.getState().game as Record<string, unknown>).turn).toBe("p1");
     });
 
     it("Expected outcome: Should block when current player has pending directional roll", async () => {
@@ -190,7 +182,7 @@ describe("Product scenario: Turn Manager", () => {
         dice: 2,
       });
 
-      const result = await turnManager.advanceTurn(false);
+      const result = await turnManager.advanceTurn();
 
       expect(result).toBeNull();
       expect((stateManager.getState().game as Record<string, unknown>).turn).toBe("p1");
@@ -203,7 +195,7 @@ describe("Product scenario: Turn Manager", () => {
       stateManager.set("players.p1.position", 0);
       stateManager.set("players.p1.activeChoices", {});
 
-      const result = await turnManager.advanceTurn(false);
+      const result = await turnManager.advanceTurn();
 
       expect(result).toBeNull();
       // Turn should not have changed
@@ -217,14 +209,14 @@ describe("Product scenario: Turn Manager", () => {
       stateManager.set("players.p1.position", 0);
       stateManager.set("players.p1.activeChoices", { 0: 1 }); // Decision filled
 
-      const result = await turnManager.advanceTurn(false);
+      const result = await turnManager.advanceTurn();
 
       expect(result).not.toBeNull();
       expect(result?.playerId).toBe("p2");
     });
 
     it("Expected outcome: Should return correct player data (id, name, position)", async () => {
-      const result = await turnManager.advanceTurn(false);
+      const result = await turnManager.advanceTurn();
 
       expect(result).toHaveProperty("playerId");
       expect(result).toHaveProperty("name");
@@ -239,7 +231,7 @@ describe("Product scenario: Turn Manager", () => {
       stateManager.set("game.playerOrder", ["p1", "p99"]);
       stateManager.set("game.turn", "p1");
 
-      const result = await turnManager.advanceTurn(false);
+      const result = await turnManager.advanceTurn();
 
       // Should still advance, but might have undefined values
       expect(result?.playerId).toBe("p99");
@@ -248,7 +240,7 @@ describe("Product scenario: Turn Manager", () => {
     it("Expected outcome: Should skip next player when they have skip Turns and return skipped Players", async () => {
       stateManager.set("players.p2.skipTurns", 1);
 
-      const result = await turnManager.advanceTurn(false);
+      const result = await turnManager.advanceTurn();
 
       expect(result?.playerId).toBe("p3");
       expect(result?.skippedPlayers).toEqual([{ playerId: "p2", name: "Bob" }]);
@@ -260,7 +252,7 @@ describe("Product scenario: Turn Manager", () => {
       stateManager.set("players.p2.skipTurns", 1);
       stateManager.set("players.p3.skipTurns", 1);
 
-      const result = await turnManager.advanceTurn(false);
+      const result = await turnManager.advanceTurn();
 
       expect(result?.playerId).toBe("p1");
       expect(result?.skippedPlayers).toEqual([
@@ -270,6 +262,74 @@ describe("Product scenario: Turn Manager", () => {
       expect((stateManager.getState().game as Record<string, unknown>).turn).toBe("p1");
       expect(stateManager.get("players.p2.skipTurns")).toBe(0);
       expect(stateManager.get("players.p3.skipTurns")).toBe(0);
+    });
+
+    it("Expected outcome: Should keep skipping a player who still owes a second skip after a full lap", async () => {
+      // Bob owes two turns; the wheel reaches him twice before anyone can play.
+      stateManager.set("players.p2.skipTurns", 2);
+      stateManager.set("players.p3.skipTurns", 1);
+      stateManager.set("players.p1.skipTurns", 1);
+
+      const result = await turnManager.advanceTurn();
+
+      // Bob's second skip must be spent by an actual skip, not handed back as his turn.
+      expect(result?.playerId).toBe("p3");
+      expect(result?.skippedPlayers).toEqual([
+        { playerId: "p2", name: "Bob" },
+        { playerId: "p3", name: "Carol" },
+        { playerId: "p1", name: "Alice" },
+        { playerId: "p2", name: "Bob" },
+      ]);
+      expect(stateManager.get("players.p1.skipTurns")).toBe(0);
+      expect(stateManager.get("players.p2.skipTurns")).toBe(0);
+      expect(stateManager.get("players.p3.skipTurns")).toBe(0);
+      expect((stateManager.getState().game as Record<string, unknown>).turn).toBe("p3");
+    });
+
+    it("Expected outcome: Should advance past a negative skip Turns instead of going silent", async () => {
+      // SET_STATE may write any player field: -1 used to shrink the step budget below the
+      // turns the wheel needs, so advanceTurn threw and returned null — nobody's turn, no voice.
+      stateManager.set("players.p2.skipTurns", -1);
+
+      const result = await turnManager.advanceTurn();
+
+      expect(result?.playerId).toBe("p2");
+      expect(result?.skippedPlayers).toEqual([]);
+      expect((stateManager.getState().game as Record<string, unknown>).turn).toBe("p2");
+    });
+  });
+
+  describe("Product scenario: Advance Turn Mechanical", () => {
+    it("Expected outcome: Should not throw when a player carries a negative skip Turns", () => {
+      stateManager.set("players.p2.skipTurns", -1);
+
+      const result = turnManager.advanceTurnMechanical();
+
+      expect(result?.playerId).toBe("p2");
+      expect((stateManager.getState().game as Record<string, unknown>).turn).toBe("p2");
+    });
+
+    it("Expected outcome: Should skip every consecutive skipper and report all of them", () => {
+      stateManager.set("players.p2.skipTurns", 1);
+      stateManager.set("players.p3.skipTurns", 1);
+
+      const result = turnManager.advanceTurnMechanical();
+
+      expect(result?.playerId).toBe("p1");
+      expect(result?.skippedPlayers).toEqual([
+        { playerId: "p2", name: "Bob" },
+        { playerId: "p3", name: "Carol" },
+      ]);
+      expect((stateManager.getState().game as Record<string, unknown>).turn).toBe("p1");
+      expect(stateManager.get("players.p2.skipTurns")).toBe(0);
+      expect(stateManager.get("players.p3.skipTurns")).toBe(0);
+    });
+
+    it("Expected outcome: Should report no skipped players when the next player is ready", () => {
+      const result = turnManager.advanceTurnMechanical();
+
+      expect(result?.playerId).toBe("p2");
+      expect(result?.skippedPlayers).toEqual([]);
     });
   });
 

@@ -2,18 +2,13 @@ import { CONFIG } from "./config";
 import { KALIMBA_EXAMPLES } from "./game-loader/examples/kalimba";
 import { GameLoader } from "./game-loader/game-loader";
 import type { GameModule } from "./game-loader/types";
-import { magicDoorHeartsPhrase } from "./i18n/magic-door-phrases";
 import { t } from "./i18n/translations";
 import { createLLMClient } from "./llm/llm-client-factory";
 import type { LLMClient } from "./llm/LLMClient";
-import {
-  getMagicDoorConfig,
-  getMagicDoorOpeningBonus,
-  minDieToOpenMagicDoor,
-} from "./orchestrator/board-helpers";
 import { inferDecisionPoints } from "./orchestrator/decision-point-inference";
 import { NameCollector } from "./orchestrator/name-collector";
 import { Orchestrator } from "./orchestrator/orchestrator";
+import { hasPendingForCurrentTurn } from "./orchestrator/pending-types";
 import {
   FAILED_RESULT,
   GamePhase,
@@ -31,63 +26,23 @@ import { checkBrowserSupport } from "./utils/browser-support";
 import { validateConfig } from "./utils/config-validator";
 import { Logger } from "./utils/logger";
 import { acquireScreenWakeLock, releaseWakeLock } from "./utils/wake-lock";
-import { applySilentSuccessFallback } from "./voice/gameplay-voice-policy";
+import { applySilentSuccessFallback, buildTurnAnnouncement } from "./voice/gameplay-voice-policy";
 import { MeteredSpeechService } from "./voice/metered-speech-service";
 import { routeTranscript, type ListeningMode } from "@/voice/intent-router";
 
 interface SpeechDetectorLike {
-  initialize(onProgress?: (percent: number) => void): Promise<void>;
+  initialize(): Promise<void>;
   startListening(): Promise<void>;
   stopListening?(): Promise<void>;
   destroy(): Promise<void>;
-  enableDirectTranscription(): void;
-  disableDirectTranscription(): void;
 }
 
 const HABITAT_ANIMAL_COOLDOWN_MS = 20_000;
 const HABITAT_ANIMAL_JITTER_MIN_MS = 5_000;
 const HABITAT_ANIMAL_JITTER_MAX_MS = 15_000;
 const HABITAT_ANIMAL_TICK_MS = 5_000;
-
-function getMagicDoorAnnouncementContext(
-  nextPlayer: { playerId: string; name: string; position: number },
-  state: GameState | undefined,
-): {
-  door: { position: number; target: number };
-  playerSlice: Record<string, unknown> | undefined;
-} | null {
-  const squares = state?.board?.squares;
-  const door = getMagicDoorConfig(squares);
-  if (nextPlayer.position !== door?.position) {
-    return null;
-  }
-  const playerSlice = state?.players?.[nextPlayer.playerId] as Record<string, unknown> | undefined;
-  if (playerSlice?.magicDoorOpened === true) {
-    return null;
-  }
-  return { door, playerSlice };
-}
-
-function magicDoorTurnAnnouncementLine(
-  nextPlayer: { playerId: string; name: string; position: number },
-  state: GameState | undefined,
-): string | null {
-  const ctx = getMagicDoorAnnouncementContext(nextPlayer, state);
-  if (!ctx) {
-    return null;
-  }
-  const heartsRaw = ctx.playerSlice?.hearts;
-  const hearts = typeof heartsRaw === "number" && heartsRaw >= 0 ? heartsRaw : 0;
-  const doorBonus = getMagicDoorOpeningBonus(ctx.playerSlice);
-  const minDie = minDieToOpenMagicDoor(ctx.door.target, doorBonus);
-  return t("game.turnAnnouncementMagicDoor", {
-    name: nextPlayer.name,
-    position: nextPlayer.position,
-    heartsPhrase: magicDoorHeartsPhrase(hearts),
-    target: ctx.door.target,
-    minDie,
-  });
-}
+/** A queued transcript older than this describes a board that has already moved on. */
+const STALE_TRANSCRIPT_MS = 8_000;
 
 export class KaliAppCore {
   private speechDetector: SpeechDetectorLike | null = null;
@@ -104,12 +59,10 @@ export class KaliAppCore {
   private ambientCaptureMuteHolds = 0;
   private listeningMode: ListeningMode = "ambient";
   private promptedModeTimeout: ReturnType<typeof setTimeout> | null = null;
-  private routingMetrics = {
-    deterministicCount: 0,
-    llmFallbackCount: 0,
-    ambiguousCount: 0,
-    droppedCount: 0,
-  };
+  /** Serializes voice transcripts: the orchestrator drops anything that arrives mid-turn. */
+  private transcriptQueue: Promise<void> = Promise.resolve();
+  /** Normalized text of every transcript still queued or in flight. */
+  private readonly queuedTranscripts = new Set<string>();
 
   constructor(
     private uiService: IUIService,
@@ -151,16 +104,36 @@ export class KaliAppCore {
     if (statusMessage !== defaultStatus) {
       await this.speechService.speak(statusMessage);
     }
+    // A resumed game is mid-play with nothing scheduled to speak: "partida guardada" alone
+    // leaves the table not knowing whose turn it is or what they owe. Deterministic, and
+    // outside the wake-word branch above so the debug route resumes out loud too.
+    await this.announceCurrentTurn();
     Logger.info("Kali is ready");
   }
 
   private async handleInitError(error: unknown): Promise<void> {
+    // A half-started detector still holds a mic, an AudioContext and a socket; a retry would
+    // stack a second one on top and every utterance would be handled twice.
+    if (this.speechDetector) {
+      try {
+        await this.speechDetector.destroy();
+      } catch (destroyError) {
+        Logger.warn(`Failed to dispose speech detector after init error: ${destroyError}`);
+      }
+      this.speechDetector = null;
+    }
     this.uiService.setButtonState(t("ui.startKali"), false);
     this.uiService.updateStatus(t("ui.initializationFailed"));
     Logger.error(`Error: ${error}`);
     const indicator = this.uiService.getStatusIndicator();
     indicator.setState("idle");
-    await this.speechService.speak(t("ui.initializationFailed"));
+    // getUserMedia rejects with a DOMException; "no mic" needs different words than "broken".
+    const micDenied =
+      error instanceof DOMException &&
+      (error.name === "NotAllowedError" || error.name === "NotFoundError");
+    await this.speechService.speak(
+      micDenied ? t("errors.microphoneAccess") : t("ui.initializationFailed"),
+    );
   }
 
   async initialize(): Promise<void> {
@@ -175,7 +148,7 @@ export class KaliAppCore {
       if (!this.options?.skipWakeWord) {
         await this.initializeWakeWord();
       } else {
-        Logger.info("Skipping Vosk (debug mode - text input only)");
+        Logger.info("Skipping speech recognition (debug mode - text input only)");
       }
 
       const shouldStartGame = await this.handleSavedGameOrSetup();
@@ -199,10 +172,6 @@ export class KaliAppCore {
     Logger.info("Initializing game state...");
     this.stateManager = new StateManager();
     this.stateManager.init(this.gameModule.initialState);
-
-    if (this.gameModule.stateDisplay) {
-      this.stateManager.set("stateDisplay", this.gameModule.stateDisplay);
-    }
 
     Logger.robot(`Configuring LLM (${CONFIG.LLM_PROVIDER}) with game rules...`);
     this.llmClient = createLLMClient();
@@ -232,7 +201,8 @@ export class KaliAppCore {
   }
 
   private ensureHabitatAnimalTimer(): void {
-    if (this.habitatAnimalTimer !== null) {
+    // Every tick is a no-op while non-TTS audio is muted; do not run the timer at all.
+    if (this.habitatAnimalTimer !== null || CONFIG.STT.MUTE_NON_TTS_AUDIO) {
       return;
     }
     this.habitatAnimalTimer = setInterval(() => {
@@ -370,17 +340,21 @@ ${summary ? `**Summary (for NARRATE explanations):** ${summary}\n` : ""}${exampl
     const indicator = this.uiService.getStatusIndicator();
     const { DeepgramStream } = await import("@/voice-recognition/deepgram-stream");
     this.speechDetector = new DeepgramStream(
-      (text) => {
-        void this.handleStreamTranscript(text);
-      },
+      (text) => this.enqueueStreamTranscript(text),
       (raw, processed, wakeWordDetected) =>
         this.uiService.addTranscription(raw, processed, wakeWordDetected),
+      () => {
+        void this.speechService.speak(t("errors.sttOnlineFailed"));
+      },
+      // Gates the microphone while Kali talks: her voice never reaches the recogniser, so no
+      // transcript she could obey is ever produced from it. Recognising her words afterwards is
+      // unwinnable — she reads the options aloud, so a correct answer is drawn from her own
+      // vocabulary by design.
+      () => this.speechService.isSelfAudible(),
     );
     Logger.info("Deepgram streaming speech detection enabled");
 
-    await this.speechDetector.initialize((percent) => {
-      this.uiService.updateStatus(`Downloading model... ${percent}%`);
-    });
+    await this.speechDetector.initialize();
 
     await this.speechDetector.startListening();
     await acquireScreenWakeLock();
@@ -412,7 +386,12 @@ ${summary ? `**Summary (for NARRATE explanations):** ${summary}\n` : ""}${exampl
       return false;
     } catch (error) {
       Logger.error(`Error handling saved game: ${error}. Starting fresh.`);
-      this.stateManager.resetState(this.gameModule.initialState);
+      // Axiom 1: the app never resets state itself. RESET_GAME without the roster is the
+      // orchestrator's own fresh start, and name collection below finishes it out loud.
+      const reset = await this.orchestrator.executePrimitiveActions([
+        { action: "RESET_GAME", keepPlayerNames: false },
+      ]);
+      Logger.info(`Fresh start via RESET_GAME: success=${reset.success}`);
       await this.runNameCollection();
       return true;
     }
@@ -428,11 +407,10 @@ ${summary ? `**Summary (for NARRATE explanations):** ${summary}\n` : ""}${exampl
 
     this.speechService.beginGameplayTurn();
 
-    const pendingPrompt = this.orchestrator.getPendingDecisionPrompt();
-    if (pendingPrompt) {
-      // At game start with a decision point (e.g. path choice): speak turn announcement
-      // directly. Avoids proactiveGameStart LLM also asking, causing duplicate path ask.
-      await this.announceCurrentTurnIfPending();
+    if (this.orchestrator.getPendingDecisionPrompt()) {
+      // At game start with a decision point (e.g. path choice): say it deterministically.
+      // Letting the LLM welcome the table here makes it ask the same question a second time.
+      await this.announceCurrentTurn();
     } else {
       const result = await this.orchestrator.handleTranscript(t("game.proactiveStart"), {
         skipDecisionPointEnforcement: true,
@@ -449,41 +427,127 @@ ${summary ? `**Summary (for NARRATE explanations):** ${summary}\n` : ""}${exampl
     if (!this.orchestrator) {
       return;
     }
+    await this.announceGameRestart(result);
     if (result.success && result.turnAdvance.kind === "alreadyAdvanced") {
       const { nextPlayer } = result.turnAdvance;
+      await this.announceSkippedPlayers(nextPlayer.skippedPlayers);
       const pendingPrompt = this.orchestrator.getPendingDecisionPrompt();
       const msg = this.buildGameplayTurnAnnouncement(nextPlayer, pendingPrompt);
       await this.speechService.speak(msg);
+      this.openPromptedWindow();
       this.orchestrator.setLastNarrationForVoicePolicy(msg);
     } else if (result.success && result.turnAdvance.kind === "callAdvanceTurn") {
       await this.checkAndAdvanceTurn();
     }
-    await this.maybeApplySilentGameplayVoice(
+    const askedForNextAction = await this.maybeApplySilentGameplayVoice(
       result.success,
       result.voiceOutcomeHints,
       result.turnFrame,
     );
+    // A busy or failed turn is otherwise a Logger.warn only, and production has no log sink.
+    if (!result.success && !this.speechService.didSpeakThisTurn()) {
+      await this.speechService.speak(t("errors.somethingWentWrong"));
+    }
+    // Kali just asked a question — a fork, an animal riddle, an encounter roll — or told the
+    // player to roll after their fork choice, so the reply must not need the wake word.
+    if (this.currentTurnOwesAnswer() || askedForNextAction) {
+      this.openPromptedWindow();
+    }
     this.syncHabitatAmbientAudio();
+    this.scheduleNameCollectionAfterReset(result);
+  }
+
+  private isInSetupPhase(): boolean {
+    return this.stateManager?.getState().game?.phase === GamePhase.SETUP;
+  }
+
+  /**
+   * A reset that kept no roster lands in SETUP, so the names have to be collected again. Name
+   * collection awaits the next transcripts and this runs inside the transcript queue: awaiting it
+   * here would starve NameCollector of every following utterance.
+   *
+   * The startup follow-up matters as much as the collection itself: `transitionPhase(PLAYING)`
+   * speaks nothing, so without `proactiveGameStart` the new game is silently unplayable.
+   */
+  private scheduleNameCollectionAfterReset(result: OrchestratorGameplayResult): void {
+    if (!result.success || result.gameReset !== true || !this.isInSetupPhase()) {
+      return;
+    }
+    void this.runNameCollection()
+      .then(() => this.proactiveGameStart())
+      .catch(async (error: unknown) => {
+        Logger.error(`Name collection after reset failed: ${error}`);
+        await this.speechService.speak(t("errors.somethingWentWrong"));
+      });
+  }
+
+  /**
+   * RESET_GAME leaves the game either playable with the kept roster or back in SETUP. Both are
+   * silent without this: `turn-manager` refuses to advance outside PLAYING, so no turn
+   * announcement fires on its own (ADR 0003).
+   */
+  private async announceGameRestart(result: OrchestratorGameplayResult): Promise<void> {
+    const orchestrator = this.orchestrator;
+    const stateManager = this.stateManager;
+    if (!result.success || result.gameReset !== true || !orchestrator || !stateManager) {
+      return;
+    }
+    const restarted = t("game.restarted");
+    await this.speechService.speak(restarted);
+    orchestrator.setLastNarrationForVoicePolicy(restarted);
+    await this.announceCurrentTurn();
+  }
+
+  /**
+   * Says whose turn it is and what they owe Kali — the fork question, the revenge roll, the
+   * magic door, or the plain roll — straight from state, with no LLM in the loop.
+   *
+   * Every path that resumes play rather than advancing a turn needs this: `turn-manager` only
+   * announces on advancement, so a restart and a saved game picked up at startup are both
+   * silent without it, and the child is left with nothing to do (ADR 0003).
+   */
+  private async announceCurrentTurn(): Promise<void> {
+    const orchestrator = this.orchestrator;
+    const stateManager = this.stateManager;
+    if (!orchestrator || !stateManager) {
+      return;
+    }
+    const state = stateManager.getState();
+    const playerInfo = this.getCurrentPlayerNameAndPosition(state);
+    const turn = state.game?.turn;
+    if (state.game?.phase !== GamePhase.PLAYING || !playerInfo || !turn) {
+      return;
+    }
+    const msg = this.buildGameplayTurnAnnouncement(
+      { playerId: turn, ...playerInfo },
+      orchestrator.getPendingDecisionPrompt(),
+    );
+    Logger.info(`Announcing current turn: ${playerInfo.name} at ${playerInfo.position}`);
+    await this.speechService.speak(msg);
+    this.openPromptedWindow();
+    orchestrator.setLastNarrationForVoicePolicy(msg);
   }
 
   /**
    * Ensures the gameplay voice-turn invariant after orchestrator + turn follow-ups (see development guidelines).
+   *
+   * @returns true when it spoke a fallback line, which always asks for the next roll or answer
    */
   private async maybeApplySilentGameplayVoice(
     success: boolean,
     voiceOutcomeHints: VoiceOutcomeHints | undefined,
     turnFrame: TurnFrame | undefined,
-  ): Promise<void> {
+  ): Promise<boolean> {
     const orchestrator = this.orchestrator;
     const stateManager = this.stateManager;
     if (!success || !orchestrator || !stateManager) {
-      return;
+      return false;
     }
     if (this.speechService.didSpeakThisTurn()) {
-      return;
+      return false;
     }
     const state = stateManager.getState() as GameState;
-    await applySilentSuccessFallback({
+    return applySilentSuccessFallback({
       hints: voiceOutcomeHints,
       turnFrame,
       state,
@@ -495,9 +559,6 @@ ${summary ? `**Summary (for NARRATE explanations):** ${summary}\n` : ""}${exampl
   private cleanupNameCollection(): void {
     this.currentNameHandler = null;
     this.uiService.setTranscriptInputEnabled?.(false);
-    if (this.speechDetector) {
-      this.speechDetector.disableDirectTranscription();
-    }
     this.setListeningMode("ambient");
     this.releaseAmbientCaptureMute();
   }
@@ -525,7 +586,6 @@ ${summary ? `**Summary (for NARRATE explanations):** ${summary}\n` : ""}${exampl
       gameName,
       () => {
         this.acquireAmbientCaptureMute();
-        this.speechDetector?.enableDirectTranscription();
         this.setListeningMode("prompted");
       },
       llmClient,
@@ -565,6 +625,65 @@ ${summary ? `**Summary (for NARRATE explanations):** ${summary}\n` : ""}${exampl
     }
   }
 
+  /**
+   * Queues one voice transcript. Two children talking over Kali's narration would otherwise
+   * race into the orchestrator's `isProcessing` lock and the second utterance would vanish.
+   *
+   * No self-speech check here any more: the microphone is gated while Kali is audible, so
+   * everything that reaches this point was said by a person and is handled on its merits.
+   *
+   * ponytail: a repeat is only dropped while the first copy is still queued; an identical
+   * command said again after that one finished is handled normally. Add a time window if
+   * duplicates ever survive that.
+   */
+  private enqueueStreamTranscript(text: string): void {
+    const trimmed = text.trim();
+    const key = trimmed.toLowerCase();
+    if (this.queuedTranscripts.has(key)) {
+      // Nothing happened yet, so the child said it again: acting on both moves them twice.
+      Logger.debug(`Ignoring repeat of a transcript still being handled: "${trimmed}"`);
+      return;
+    }
+    this.queuedTranscripts.add(key);
+    const arrivedAtMs = Date.now();
+    this.transcriptQueue = this.transcriptQueue
+      .then(async () => {
+        try {
+          if (Date.now() - arrivedAtMs > STALE_TRANSCRIPT_MS) {
+            Logger.warn(`Dropping stale transcript: "${trimmed}"`);
+            await this.askToRepeat();
+            return;
+          }
+          await this.handleStreamTranscript(text);
+        } finally {
+          this.queuedTranscripts.delete(key);
+        }
+      })
+      // A rejected queue promise would never run another transcript: Kali would go deaf.
+      .catch(async (error: unknown) => {
+        Logger.error(`Transcript handling failed: ${error}`);
+        await this.speechService.speak(t("errors.somethingWentWrong"));
+      });
+  }
+
+  /** True while the current player still owes Kali an answer: a fork, a riddle, or a roll. */
+  private currentTurnOwesAnswer(): boolean {
+    if (this.currentNameHandler !== null) {
+      return true;
+    }
+    if (this.orchestrator?.getPendingDecisionPrompt()) {
+      return true;
+    }
+    const state = this.stateManager?.getState();
+    return state !== undefined && hasPendingForCurrentTurn(state);
+  }
+
+  /** Kali could not act on what she heard: say so, and keep the wake word out of the way. */
+  private async askToRepeat(): Promise<void> {
+    this.openPromptedWindow();
+    await this.speechService.speak(t("errors.sttOnlineTimeout"));
+  }
+
   private async handleStreamTranscript(text: string): Promise<void> {
     const routeDecision = await routeTranscript(
       text,
@@ -572,26 +691,20 @@ ${summary ? `**Summary (for NARRATE explanations):** ${summary}\n` : ""}${exampl
         mode: this.listeningMode,
         wakeWords: CONFIG.WAKE_WORD.TEXT,
         inNameCollection: this.currentNameHandler !== null,
-        hasPendingDecisionPrompt: Boolean(this.orchestrator?.getPendingDecisionPrompt()),
+        // A fork prompt is only one of the things Kali waits on: an animal riddle or an
+        // encounter roll owes her an answer too, and after the prompted window lapses that
+        // answer is the only thing keeping it from being routed away as chatter.
+        awaitingPlayerAnswer: this.currentTurnOwesAnswer(),
       },
       this.llmClient,
     );
-    if (routeDecision.usedLlmFallback) {
-      this.routingMetrics.llmFallbackCount += 1;
-    } else {
-      this.routingMetrics.deterministicCount += 1;
-    }
     if (routeDecision.kind === "GAME_COMMAND") {
       await this.handleTranscription(routeDecision.transcript);
       return;
     }
     if (routeDecision.kind === "AMBIGUOUS") {
-      this.routingMetrics.ambiguousCount += 1;
-      this.openPromptedWindow();
-      await this.speechService.speak(t("errors.sttOnlineTimeout"));
-      return;
+      await this.askToRepeat();
     }
-    this.routingMetrics.droppedCount += 1;
   }
 
   private getCurrentPlayerNameAndPosition(state: {
@@ -610,69 +723,20 @@ ${summary ? `**Summary (for NARRATE explanations):** ${summary}\n` : ""}${exampl
     return { name, position };
   }
 
-  private getCurrentTurnAnnouncementContext(): {
-    name: string;
-    position: number;
-    prompt: string;
-    orchestrator: NonNullable<KaliAppCore["orchestrator"]>;
-  } | null {
-    if (!this.orchestrator || !this.stateManager) {
-      return null;
-    }
-    const pendingPrompt = this.orchestrator.getPendingDecisionPrompt();
-    if (!pendingPrompt) {
-      return null;
-    }
-    const playerInfo = this.getCurrentPlayerNameAndPosition(this.stateManager.getState());
-    if (!playerInfo) {
-      return null;
-    }
-    return {
-      ...playerInfo,
-      prompt: pendingPrompt,
-      orchestrator: this.orchestrator,
-    };
-  }
-
-  /**
-   * Turn line after advance or alreadyAdvanced: normal move prompt, magic door opening prompt, or fork prompt.
-   */
   private buildGameplayTurnAnnouncement(
     nextPlayer: { playerId: string; name: string; position: number },
     pendingPrompt: string | null | undefined,
   ): string {
-    const magicDoorLine = magicDoorTurnAnnouncementLine(nextPlayer, this.stateManager?.getState());
-    if (magicDoorLine !== null) {
-      return magicDoorLine;
-    }
-    if (pendingPrompt) {
-      return t("game.turnAnnouncementWithDecision", {
-        name: nextPlayer.name,
-        position: nextPlayer.position,
-        prompt: pendingPrompt,
-      });
-    }
-    return t("game.turnAnnouncement", {
-      name: nextPlayer.name,
-      position: nextPlayer.position,
-    });
+    return buildTurnAnnouncement(nextPlayer, pendingPrompt, this.stateManager?.getState());
   }
 
   /**
-   * Speaks the current player's turn announcement when they have a pending decision.
-   * Used at game start before proactive welcome to ensure one clear "your turn, which path?"
+   * Both advancement paths pass over skipping players; saying nothing loses the table.
    */
-  private async announceCurrentTurnIfPending(): Promise<void> {
-    const ctx = this.getCurrentTurnAnnouncementContext();
-    if (!ctx) {
-      return;
+  private async announceSkippedPlayers(skipped: readonly { name: string }[]): Promise<void> {
+    for (const player of skipped) {
+      await this.speechService.speak(t("game.skipTurnAnnouncement", { name: player.name }));
     }
-    const { orchestrator, ...tParams } = ctx;
-    const message = t("game.turnAnnouncementWithDecision", tParams);
-    Logger.info(`Announcing current turn (decision pending): ${ctx.name} at ${ctx.position}`);
-    await this.speechService.speak(message);
-    this.openPromptedWindow();
-    orchestrator.setLastNarrationForVoicePolicy(message);
   }
 
   /**
@@ -689,9 +753,7 @@ ${summary ? `**Summary (for NARRATE explanations):** ${summary}\n` : ""}${exampl
 
     if (result) {
       const nextPlayer = result;
-      for (const skipped of nextPlayer.skippedPlayers) {
-        await this.speechService.speak(t("game.skipTurnAnnouncement", { name: skipped.name }));
-      }
+      await this.announceSkippedPlayers(nextPlayer.skippedPlayers);
       const pendingPrompt = this.orchestrator.getPendingDecisionPrompt();
       const message = this.buildGameplayTurnAnnouncement(nextPlayer, pendingPrompt);
       Logger.info(`Turn start sanity check: ${nextPlayer.name} at ${nextPlayer.position}`);
@@ -726,7 +788,8 @@ ${summary ? `**Summary (for NARRATE explanations):** ${summary}\n` : ""}${exampl
         ? t("ui.status.ready")
         : t("ui.wakeWordReady", { wakeWord: CONFIG.WAKE_WORD.TEXT[0] }),
     );
-    this.setListeningMode("ambient");
+    // No ambient reset here: it would cancel the prompted window Kali just opened when she
+    // asked for the next roll or answer. openPromptedWindow's own timeout owns that reset.
   }
 
   /**
