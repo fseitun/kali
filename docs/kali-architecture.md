@@ -1,7 +1,7 @@
 # Kali Architecture: The Guided LLM Pattern
 
 > **Note:** This document details the Guided LLM Pattern philosophy and implementation patterns.
-> For the architecture overview, working conventions, and state axioms, see [`CLAUDE.md`](../CLAUDE.md).
+> For the architecture overview, working conventions, and state axioms, see [`AGENTS.md`](../AGENTS.md).
 > For durable per-decision rationale, see [`docs/adr/`](adr/README.md).
 
 ## Core Philosophy

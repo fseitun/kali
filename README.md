@@ -61,7 +61,7 @@ Kali is built on a strict separation between the **LLM** (interprets natural lan
 
 **For detailed architecture information:**
 
-- [Architecture, conventions & state axioms](CLAUDE.md)
+- [Architecture, conventions & state axioms](AGENTS.md)
 - [Guided LLM Pattern Philosophy](docs/kali-architecture.md)
 - [Architecture Decision Records](docs/adr/README.md)
 
@@ -82,5 +82,5 @@ Kali is built on a strict separation between the **LLM** (interprets natural lan
 
 **For detailed information:**
 
-- [Commands, conventions & testing workflows](CLAUDE.md)
+- [Commands, conventions & testing workflows](AGENTS.md)
 - [Integration scenario guide](integration/README.md)

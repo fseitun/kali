@@ -30,6 +30,8 @@ description: >-
 - **System / primitives + narration examples:** [`src/llm/system-prompt.ts`](../../../src/llm/system-prompt.ts).
 - **User-turn envelope (tag order):** [`src/llm/BaseLLMClient.ts`](../../../src/llm/BaseLLMClient.ts) (`<game_state>`, optional `<last_utterance>`, `<user_command>`).
 - **State blob copy and sections:** [`src/llm/state-context.ts`](../../../src/llm/state-context.ts), [`src/i18n/llm-state-context.ts`](../../../src/i18n/llm-state-context.ts).
+- **Per-state `interpreter_contract` line (which primitive is legal right now):** [`src/llm/interpretation-contract.ts`](../../../src/llm/interpretation-contract.ts).
+- **Few-shot examples appended to the system prompt:** `metadata.llmExamples` in the game config, else [`src/game-loader/examples/kalimba.ts`](../../../src/game-loader/examples/kalimba.ts), assembled by `formatGameRules` in [`src/kali-app-core.ts`](../../../src/kali-app-core.ts).
 - **Game rules and decision prompts in JSON:** [`public/games/**/*.json`](../../../public/games).
 
 ## Mapping OpenAI / Anthropic guidance onto Kali
@@ -42,7 +44,7 @@ description: >-
 - **Empirical iteration:** Prefer a minimal prompt diff plus **`npm run full-check`** and targeted [`src/llm/*.test.ts`](../../../src/llm) (and reproduction transcripts) over large rewrites—both vendors stress measuring behavior when prompts or model versions change.
 - **When prompting is not the fix:** Latency, cost, or systematic **validation** failures may need a different model, provider settings, or orchestrator policy (Anthropic overview: not every eval gap is solved by more instructions).
 - **Chaining:** Production gameplay uses **one** interpreter call per transcript. Anthropic-style **prompt chains** apply to offline tooling, evals, or future multi-step pipelines—not the default live path unless architecture changes.
-- **Voice / TTS:** Use explicit pacing, clarity, and confirmation for **names and numbers**; see OpenAI [Voice agents](https://developers.openai.com/api/docs/guides/voice-agents) and the voice UX invariants in [`CLAUDE.md`](../../../CLAUDE.md).
+- **Voice / TTS:** Use explicit pacing, clarity, and confirmation for **names and numbers**; see OpenAI [Voice agents](https://developers.openai.com/api/docs/guides/voice-agents) and the voice UX invariants in [`AGENTS.md`](../../../AGENTS.md).
 
 ## Vendor-agnostic checklist (short)
 

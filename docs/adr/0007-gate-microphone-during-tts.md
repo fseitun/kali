@@ -38,6 +38,6 @@ All content-based detection is deleted (`echoWords`, `isRenditionOf`, `isEchoOfR
 
 ## Links
 
-- Rules: [`CLAUDE.md`](../../CLAUDE.md) (Voice UX invariants)
+- Rules: [`AGENTS.md`](../../AGENTS.md) (Voice UX invariants)
 - Code: [`src/voice/metered-speech-service.ts`](../../src/voice/metered-speech-service.ts) (`isSelfAudible`), [`src/voice-recognition/deepgram-stream.ts`](../../src/voice-recognition/deepgram-stream.ts) (audio pump), [`src/services/speech-service.ts`](../../src/services/speech-service.ts) (watchdog)
 - Tests: [`src/voice-recognition/deepgram-stream.test.ts`](../../src/voice-recognition/deepgram-stream.test.ts) ("Kali's own voice never reaches the recogniser"), [`src/kali-app-core.integration.test.ts`](../../src/kali-app-core.integration.test.ts) ("Takes the fork answer built out of the words Kali just spoke")

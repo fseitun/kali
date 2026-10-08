@@ -26,7 +26,7 @@ Riddles come from the bank; outcomes come from `PLAYER_ANSWERED` grading ([ADR 0
 
 ## Links
 
-- Rules: [`CLAUDE.md`](../../CLAUDE.md) (primitives, thin-LLM principle), [ADR 0004](0004-no-riddle-resolved-primitive.md), [ADR 0005](0005-deterministic-narration-and-transcript-fast-path.md)
+- Rules: [`AGENTS.md`](../../AGENTS.md) (primitives, thin-LLM principle), [ADR 0004](0004-no-riddle-resolved-primitive.md), [ADR 0005](0005-deterministic-narration-and-transcript-fast-path.md)
 - Plan (landed): [`docs/plans/riddle-bank-llm-removal.md`](../plans/riddle-bank-llm-removal.md)
 - Code: [`src/orchestrator/board-effects-handler.ts`](../../src/orchestrator/board-effects-handler.ts) (`getEncounterQuestion`, `setPendingAnimalEncounter`), [`src/orchestrator/riddle-power-check.ts`](../../src/orchestrator/riddle-power-check.ts), [`src/orchestrator/types.ts`](../../src/orchestrator/types.ts)
 - Tests: [`src/orchestrator/validator.test.ts`](../../src/orchestrator/validator.test.ts) ("Interpreter tries to ask its own riddle"), [`src/orchestrator/orchestrator.test.ts`](../../src/orchestrator/orchestrator.test.ts) ("Interpreter tries to invent a riddle")

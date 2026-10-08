@@ -20,6 +20,6 @@ Use **deterministic JSON scenarios** under `integration/scenarios/` driven by Vi
 
 ## Links
 
-- Rules: [`CLAUDE.md`](../../CLAUDE.md) (commands, testing notes)
+- Rules: [`AGENTS.md`](../../AGENTS.md) (commands, testing notes)
 - Tests: [`integration/scenarios.test.ts`](../../integration/scenarios.test.ts), `integration/scenarios/*.json`
 - Code: [`integration/scenario-runner.ts`](../../integration/scenario-runner.ts)

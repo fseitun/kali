@@ -18,6 +18,6 @@ What becomes easier or harder; what must stay true going forward.
 
 ## Links
 
-- Rules: (e.g. `CLAUDE.md`, other ADRs)
+- Rules: (e.g. `AGENTS.md`, other ADRs)
 - Tests: (e.g. `src/.../*.test.ts`, `integration/scenarios/...`)
 - Code: (key modules)

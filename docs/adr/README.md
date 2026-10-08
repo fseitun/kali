@@ -1,6 +1,6 @@
 # Architecture Decision Records (ADRs)
 
-Short, durable notes about **why** Kali behaves a certain way at the system level. They complement [`CLAUDE.md`](../../CLAUDE.md), which is tuned for agent context—ADRs are for **humans and PRs**: stable filenames, light history, easy to link.
+Short, durable notes about **why** Kali behaves a certain way at the system level. They complement [`AGENTS.md`](../../AGENTS.md), which is tuned for agent context—ADRs are for **humans and PRs**: stable filenames, light history, easy to link.
 
 ## When to add an ADR
 
@@ -21,7 +21,7 @@ Short, durable notes about **why** Kali behaves a certain way at the system leve
 
 ## Optional agent / review pass
 
-For large orchestrator refactors, run a **readonly second pass** (human or sub-agent) asking only: does this violate the [state axioms](../../CLAUDE.md)? Are tests and `integration/scenarios/` updated where behavior changed?
+For large orchestrator refactors, run a **readonly second pass** (human or sub-agent) asking only: does this violate the [state axioms](../../AGENTS.md)? Are tests and `integration/scenarios/` updated where behavior changed?
 
 ## Index
 
@@ -33,3 +33,4 @@ For large orchestrator refactors, run a **readonly second pass** (human or sub-a
 | [0004-no-riddle-resolved-primitive.md](0004-no-riddle-resolved-primitive.md)                                         | Riddle outcomes only via `PLAYER_ANSWERED`; no `RIDDLE_RESOLVED` primitive                 |
 | [0005-deterministic-narration-and-transcript-fast-path.md](0005-deterministic-narration-and-transcript-fast-path.md) | Fork / non-animal landings: TTS+i18n; fast path before LLM; same validate/execute pipeline |
 | [0006-remove-ask-riddle-primitive.md](0006-remove-ask-riddle-primitive.md)                                           | Riddles come from the deterministic bank; `ASK_RIDDLE` deleted                             |
+| [0007-gate-microphone-during-tts.md](0007-gate-microphone-during-tts.md)                                             | Mic is gated while Kali speaks, so she never transcribes herself; no barge-in              |
