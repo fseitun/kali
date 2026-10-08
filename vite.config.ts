@@ -3,10 +3,16 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { defineConfig } from "vite";
 import { VitePWA } from "vite-plugin-pwa";
-import type { ManifestEntry } from "workbox-build";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-type ManifestTransformEntry = ManifestEntry & { size: number };
+
+/** Entry shape workbox passes to `manifestTransforms` (inlined; workbox-build is not a direct dependency). */
+interface ManifestTransformEntry {
+  url: string;
+  revision: string | null;
+  integrity?: string;
+  size: number;
+}
 
 export default defineConfig({
   resolve: {
@@ -35,7 +41,6 @@ export default defineConfig({
       workbox: {
         globPatterns: ["**/*.{js,css,html,ico,png,svg}"],
         navigateFallback: null,
-        maximumFileSizeToCacheInBytes: 10 * 1024 * 1024,
         manifestTransforms: [
           (entries: ManifestTransformEntry[]): { manifest: ManifestTransformEntry[] } => ({
             manifest: entries.filter((e) => {
@@ -90,8 +95,6 @@ export default defineConfig({
   ],
   build: {
     target: "esnext",
-    // Vosk chunk is ~6 MB (WASM/speech); loaded on demand when user uses voice, not in debug.
-    chunkSizeWarningLimit: 6144,
     rollupOptions: {
       input: {
         main: "./index.html",

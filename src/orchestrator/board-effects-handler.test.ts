@@ -10,7 +10,6 @@ import { StateManager } from "@/state-manager";
 describe("Product scenario: Board Effects Handler", () => {
   let boardEffectsHandler: BoardEffectsHandler;
   let stateManager: StateManager;
-  let mockProcessTranscript: ReturnType<typeof vi.fn>;
   let mockSpeak: ReturnType<typeof vi.fn>;
   let mockIndicator: { setState: ReturnType<typeof vi.fn> };
   let mockSetLastNarration: ReturnType<typeof vi.fn>;
@@ -79,16 +78,11 @@ describe("Product scenario: Board Effects Handler", () => {
       },
     });
 
-    mockProcessTranscript = vi.fn().mockResolvedValue(true);
     mockSpeak = vi.fn().mockResolvedValue(undefined);
     mockIndicator = { setState: vi.fn() };
     mockSetLastNarration = vi.fn();
     boardEffectsHandler = new BoardEffectsHandler(
       stateManager,
-      mockProcessTranscript as unknown as (
-        transcript: string,
-        context: ExecutionContext,
-      ) => Promise<boolean>,
       { speak: mockSpeak } as unknown as ISpeechService,
       mockIndicator as unknown as IStatusIndicator,
       mockSetLastNarration as unknown as (text: string) => void,
@@ -167,12 +161,15 @@ describe("Product scenario: Board Effects Handler", () => {
       );
     });
 
-    it("Expected outcome: Should not apply magic door bounce after return To187 teleport in the same resolution", async () => {
+    it("Expected outcome: Should send return To187 to the snake head once the door has been opened", async () => {
       stateManager.set("board.squares", {
         "186": { name: "Magic Door", effect: "magicDoorCheck", target: 6 },
         "190": { effect: "returnTo187", name: "Calavera" },
         "196": { effect: "win" },
       });
+      // The anaconda path is only reachable through an opened door (Kalimba §9); with it shut,
+      // 190 is behind the door and the overshoot bounces instead.
+      stateManager.set("players.p1.magicDoorOpened", true);
       stateManager.set("players.p1.position", 190);
       const context: ExecutionContext = {};
 
@@ -189,12 +186,13 @@ describe("Product scenario: Board Effects Handler", () => {
       );
     });
 
-    it("Expected outcome: Should not apply magic door bounce after destination based backward teleport to 187", async () => {
+    it("Expected outcome: Should send a destination based skull to the snake head once the door has been opened", async () => {
       stateManager.set("board.squares", {
         "186": { name: "Magic Door", effect: "magicDoorCheck", target: 6 },
         "190": { destination: 187, name: "Calavera" },
         "196": { effect: "win" },
       });
+      stateManager.set("players.p1.magicDoorOpened", true);
       stateManager.set("players.p1.position", 190);
       const context: ExecutionContext = {};
 
@@ -463,18 +461,25 @@ describe("Product scenario: Board Effects Handler", () => {
       );
     });
 
-    it("Expected outcome: Should not set magic Door Bounce on nested calls", async () => {
+    it("Expected outcome: Should bounce when a bonus-dice roll overshoots exactly onto the win square", async () => {
       stateManager.set("board.squares", {
         "186": { name: "Magic Door", effect: "magicDoorCheck", target: 6 },
         "196": { effect: "win" },
       });
-      stateManager.set("players.p1.position", 188);
-      const context: ExecutionContext = { isNestedCall: true };
+      stateManager.set("players.p1.position", 196);
+      const context: ExecutionContext = {};
 
       await boardEffectsHandler.checkAndApplyBoardMoves("players.p1.position", context);
 
-      expect(stateManager.get("players.p1.position")).toBe(184);
-      expect(context.domainEvents).toBeUndefined();
+      expect(stateManager.get("players.p1.position")).toBe(176);
+      expect(context.domainEvents).toContainEqual(
+        expect.objectContaining({
+          kind: "magicDoorBounce",
+          doorPosition: 186,
+          overshotPosition: 196,
+          finalPosition: 176,
+        }),
+      );
     });
 
     it("Expected outcome: Should not apply magic Door Bounce after door was opened", async () => {
@@ -560,7 +565,7 @@ describe("Product scenario: Board Effects Handler", () => {
 
       await boardEffectsHandler.checkAndApplySquareEffects("players.p1.hearts", baseContext);
 
-      expect(mockProcessTranscript).not.toHaveBeenCalled();
+      expect(mockSpeak).not.toHaveBeenCalled();
     });
 
     it("Expected outcome: Should do nothing for non player paths", async () => {
@@ -570,7 +575,7 @@ describe("Product scenario: Board Effects Handler", () => {
 
       await boardEffectsHandler.checkAndApplySquareEffects("game.lastRoll", baseContext);
 
-      expect(mockProcessTranscript).not.toHaveBeenCalled();
+      expect(mockSpeak).not.toHaveBeenCalled();
     });
 
     it("Expected outcome: Should do nothing when no board squares config exists", async () => {
@@ -578,7 +583,7 @@ describe("Product scenario: Board Effects Handler", () => {
 
       await boardEffectsHandler.checkAndApplySquareEffects("players.p1.position", baseContext);
 
-      expect(mockProcessTranscript).not.toHaveBeenCalled();
+      expect(mockSpeak).not.toHaveBeenCalled();
     });
 
     it("Expected outcome: Should do nothing when square has no effect data", async () => {
@@ -587,7 +592,7 @@ describe("Product scenario: Board Effects Handler", () => {
 
       await boardEffectsHandler.checkAndApplySquareEffects("players.p1.position", baseContext);
 
-      expect(mockProcessTranscript).not.toHaveBeenCalled();
+      expect(mockSpeak).not.toHaveBeenCalled();
     });
 
     it("Expected outcome: Should do nothing when square has empty effect data", async () => {
@@ -596,7 +601,7 @@ describe("Product scenario: Board Effects Handler", () => {
 
       await boardEffectsHandler.checkAndApplySquareEffects("players.p1.position", baseContext);
 
-      expect(mockProcessTranscript).not.toHaveBeenCalled();
+      expect(mockSpeak).not.toHaveBeenCalled();
     });
 
     it("Expected outcome: Should do nothing for hydrated topology only squares", async () => {
@@ -607,7 +612,7 @@ describe("Product scenario: Board Effects Handler", () => {
 
       await boardEffectsHandler.checkAndApplySquareEffects("players.p1.position", baseContext);
 
-      expect(mockProcessTranscript).not.toHaveBeenCalled();
+      expect(mockSpeak).not.toHaveBeenCalled();
     });
 
     it("Expected outcome: Animal encounter speaks deterministic prompt and sets pending riddle", async () => {
@@ -621,7 +626,6 @@ describe("Product scenario: Board Effects Handler", () => {
 
       await boardEffectsHandler.checkAndApplySquareEffects("players.p1.position", baseContext);
 
-      expect(mockProcessTranscript).not.toHaveBeenCalled();
       expect(mockSpeak).toHaveBeenCalledTimes(1);
       expect(stateManager.get("game.pending")).toMatchObject({
         kind: "riddle",
@@ -640,33 +644,7 @@ describe("Product scenario: Board Effects Handler", () => {
       ).rejects.toThrow('Missing encounterQuestions for animal "Unknown beast"');
     });
 
-    it("Expected outcome: Should set is Processing Square Effect flag during processing", async () => {
-      const squareData = { name: "Bear", power: 1 };
-      stateManager.set("board.squares", { "5": squareData });
-      stateManager.set("players.p1.position", 5);
-
-      let flagDuringProcessing = false;
-      mockSpeak.mockImplementation(async () => {
-        flagDuringProcessing = boardEffectsHandler.isProcessingEffect();
-        return undefined;
-      });
-
-      await boardEffectsHandler.checkAndApplySquareEffects("players.p1.position", baseContext);
-
-      expect(flagDuringProcessing).toBe(true);
-    });
-
-    it("Expected outcome: Should clear flag after processing completes", async () => {
-      const squareData = { name: "Bear", power: 1 };
-      stateManager.set("board.squares", { "5": squareData });
-      stateManager.set("players.p1.position", 5);
-
-      await boardEffectsHandler.checkAndApplySquareEffects("players.p1.position", baseContext);
-
-      expect(boardEffectsHandler.isProcessingEffect()).toBe(false);
-    });
-
-    it("Expected outcome: Should clear flag even if deterministic speak throws error", async () => {
+    it("Expected outcome: Should propagate a deterministic speak failure on an animal square", async () => {
       const squareData = { name: "Bear", power: 1 };
       stateManager.set("board.squares", { "5": squareData });
       stateManager.set("players.p1.position", 5);
@@ -676,11 +654,9 @@ describe("Product scenario: Board Effects Handler", () => {
       await expect(
         boardEffectsHandler.checkAndApplySquareEffects("players.p1.position", baseContext),
       ).rejects.toThrow("Test error");
-
-      expect(boardEffectsHandler.isProcessingEffect()).toBe(false);
     });
 
-    it("Expected outcome: Should clear flag even if deterministic speak throws error", async () => {
+    it("Expected outcome: Should propagate a deterministic speak failure on a hazard square", async () => {
       const squareData = { name: "Quicksand", effect: "skipTurn" };
       stateManager.set("board.squares", { "5": squareData });
       stateManager.set("players.p1.position", 5);
@@ -690,18 +666,15 @@ describe("Product scenario: Board Effects Handler", () => {
       await expect(
         boardEffectsHandler.checkAndApplySquareEffects("players.p1.position", baseContext),
       ).rejects.toThrow("TTS error");
-
-      expect(boardEffectsHandler.isProcessingEffect()).toBe(false);
     });
 
-    it("Expected outcome: Deterministic squares do not call process Transcript (nested interpreter)", async () => {
+    it("Expected outcome: Deterministic hazard squares speak their own landing line", async () => {
       const squareData = { name: "Quicksand", effect: "skipTurn" };
       stateManager.set("board.squares", { "5": squareData });
       stateManager.set("players.p1.position", 5);
 
       await boardEffectsHandler.checkAndApplySquareEffects("players.p1.position", baseContext);
 
-      expect(mockProcessTranscript).not.toHaveBeenCalled();
       expect(mockSpeak).toHaveBeenCalledWith(expect.stringMatching(/square 5|Quicksand|skip/i));
     });
 
@@ -714,7 +687,6 @@ describe("Product scenario: Board Effects Handler", () => {
 
       await boardEffectsHandler.checkAndApplySquareEffects("players.p1.position", baseContext);
 
-      expect(mockProcessTranscript).not.toHaveBeenCalled();
       expect(mockSpeak).toHaveBeenCalledTimes(1);
       expect(mockSpeak).toHaveBeenCalledWith(t("game.winner", { name: "Alice" }));
       setLocale("en-US");
@@ -731,7 +703,6 @@ describe("Product scenario: Board Effects Handler", () => {
 
       await boardEffectsHandler.checkAndApplySquareEffects("players.p1.position", baseContext);
 
-      expect(mockProcessTranscript).not.toHaveBeenCalled();
       expect(mockSpeak).toHaveBeenCalledTimes(1);
       const text = String(mockSpeak.mock.calls[0]?.[0] ?? "");
       expect(text).toMatch(/Alice, caíste justo en la Puerta Mágica, casillero 186/i);
@@ -801,7 +772,6 @@ describe("Product scenario: Board Effects Handler", () => {
 
       await boardEffectsHandler.checkAndApplySquareEffects("players.p1.position", baseContext);
 
-      expect(mockProcessTranscript).not.toHaveBeenCalled();
       expect(stateManager.get("game.pending")).toMatchObject({
         kind: "riddle",
         position: 8,
@@ -817,7 +787,6 @@ describe("Product scenario: Board Effects Handler", () => {
       stateManager.set("players.p1.position", 5);
 
       await boardEffectsHandler.checkAndApplySquareEffects("players.p1.position", baseContext);
-      expect(mockProcessTranscript).not.toHaveBeenCalled();
       expect(mockSpeak).toHaveBeenCalledTimes(1);
       expect(stateManager.get("game.pending")).toMatchObject({
         kind: "riddle",
@@ -857,7 +826,6 @@ describe("Product scenario: Board Effects Handler", () => {
 
         expect(stateManager.get("players.p1.hearts")).toBe(1);
         expect(stateManager.get("game.pending")).toBeNull();
-        expect(mockProcessTranscript).not.toHaveBeenCalled();
         expect(mockSpeak).toHaveBeenCalledWith(expect.stringMatching(label));
         expect(mockSpeak).toHaveBeenCalledWith(expect.stringMatching(/heart/i));
       },
@@ -873,7 +841,6 @@ describe("Product scenario: Board Effects Handler", () => {
       await boardEffectsHandler.checkAndApplySquareEffects("players.p2.position", baseContext);
 
       expect(stateManager.get("players.p2.skipTurns")).toBe(1);
-      expect(mockProcessTranscript).not.toHaveBeenCalled();
       expect(mockSpeak).toHaveBeenCalledWith(
         expect.stringMatching(/Quicksand|skip your next turn/i),
       );
@@ -964,7 +931,6 @@ describe("Product scenario: Board Effects Handler", () => {
         power: 3,
         playerId: "p1",
       });
-      expect(mockProcessTranscript).not.toHaveBeenCalled();
       expect(mockSpeak).toHaveBeenCalledTimes(1);
     });
 
@@ -987,7 +953,6 @@ describe("Product scenario: Board Effects Handler", () => {
         position: 55,
         dice: 2,
       });
-      expect(mockProcessTranscript).not.toHaveBeenCalled();
       expect(mockSpeak).toHaveBeenCalledWith(
         expect.stringMatching(/Jivaro Indians|Roll 2|two|dice/i),
       );
@@ -1008,7 +973,6 @@ describe("Product scenario: Board Effects Handler", () => {
 
       await boardEffectsHandler.checkAndApplySquareEffects("players.p1.position", baseContext);
 
-      expect(mockProcessTranscript).not.toHaveBeenCalled();
       expect(mockSpeak).toHaveBeenCalledWith(
         expect.stringMatching(/Ocean-Forest Portal|already|crossed|stay/i),
       );
@@ -1031,7 +995,6 @@ describe("Product scenario: Board Effects Handler", () => {
 
       await boardEffectsHandler.checkAndApplySquareEffects("players.p1.position", context);
 
-      expect(mockProcessTranscript).not.toHaveBeenCalled();
       expect(mockSpeak).toHaveBeenCalledWith(expect.stringMatching(/45|portal|stay|Alice/i));
     });
 
@@ -1046,7 +1009,6 @@ describe("Product scenario: Board Effects Handler", () => {
       await boardEffectsHandler.checkAndApplySquareEffects("players.p1.position", baseContext);
 
       expect(stateManager.get("players.p1.skipTurns")).toBe(1);
-      expect(mockProcessTranscript).not.toHaveBeenCalled();
       expect(mockSpeak).toHaveBeenCalledWith(expect.stringMatching(/skip your next turn|torch/i));
     });
 
@@ -1062,7 +1024,6 @@ describe("Product scenario: Board Effects Handler", () => {
 
       expect(stateManager.get("players.p1.items")).toEqual([]);
       expect(stateManager.get("players.p1.skipTurns")).toBe(0);
-      expect(mockProcessTranscript).not.toHaveBeenCalled();
       expect(mockSpeak).toHaveBeenCalledWith(expect.stringMatching(/torch|skip/i));
     });
 
@@ -1077,7 +1038,6 @@ describe("Product scenario: Board Effects Handler", () => {
       await boardEffectsHandler.checkAndApplySquareEffects("players.p1.position", baseContext);
 
       expect(stateManager.get("players.p1.skipTurns")).toBe(1);
-      expect(mockProcessTranscript).not.toHaveBeenCalled();
       expect(mockSpeak).toHaveBeenCalledWith(expect.stringMatching(/anti-wasp|skip/i));
     });
 
@@ -1093,7 +1053,6 @@ describe("Product scenario: Board Effects Handler", () => {
 
       expect(stateManager.get("players.p1.items")).toEqual([]);
       expect(stateManager.get("players.p1.skipTurns")).toBe(0);
-      expect(mockProcessTranscript).not.toHaveBeenCalled();
       expect(mockSpeak).toHaveBeenCalledWith(expect.stringMatching(/anti-wasp|suit|skip/i));
     });
 
@@ -1115,39 +1074,178 @@ describe("Product scenario: Board Effects Handler", () => {
 
       await boardEffectsHandler.checkAndApplySquareEffects("players.p1.position", baseContext);
 
-      expect(mockProcessTranscript).not.toHaveBeenCalled();
+      expect(mockSpeak).not.toHaveBeenCalled();
     });
   });
 
-  describe("Product scenario: Is Processing Effect", () => {
-    it("Expected outcome: Should return false initially", () => {
-      expect(boardEffectsHandler.isProcessingEffect()).toBe(false);
+  describe("Product scenario: Pending Encounter State", () => {
+    it("Expected outcome: Should grade the riddle it just read aloud and advance the bank cursor once", async () => {
+      stateManager.set("game.encounterQuestions", {
+        Wolf: {
+          "en-US": [
+            {
+              kali: "A wolf blocks the trail...",
+              question: "First question?",
+              options: ["A1", "A2", "A3", "A4"],
+              correctOption: "A2",
+            },
+            {
+              kali: "The wolf circles...",
+              question: "Second question?",
+              options: ["B1", "B2", "B3", "B4"],
+              correctOption: "B3",
+            },
+          ],
+        },
+      });
+      stateManager.set("board.squares", { "7": { name: "Wolf", power: 4 } });
+      stateManager.set("players.p1.position", 7);
+
+      await boardEffectsHandler.checkAndApplySquareEffects("players.p1.position", {});
+
+      const pending = stateManager.get("game.pending") as {
+        riddlePrompt: string;
+        riddleOptions: string[];
+        correctOption: string;
+      };
+      const spoken = mockSpeak.mock.calls.at(-1)?.[0] as string;
+
+      expect(pending.riddlePrompt).toBe("First question?");
+      expect(pending.correctOption).toBe("A2");
+      expect(spoken).toContain(pending.riddlePrompt);
+      expect(spoken).toContain(pending.correctOption);
+      expect(spoken).not.toContain("Second question?");
+      expect(stateManager.get("game.encounterQuestionCursor.Wolf")).toBe(1);
     });
 
-    it("Expected outcome: Should return true during effect processing", async () => {
-      const squareData = { name: "Bear", power: 1 };
-      stateManager.set("board.squares", { "5": squareData });
-      stateManager.set("players.p1.position", 5);
-
-      let statusDuringProcessing = false;
-      mockSpeak.mockImplementation(async () => {
-        statusDuringProcessing = boardEffectsHandler.isProcessingEffect();
-        return undefined;
+    it("Expected outcome: Should fail loudly instead of landing silently on an animal with no riddle", async () => {
+      // `players..position` has no player id, so no riddle is prepared for the landing. Production
+      // is voice-only: returning quietly here leaves the table with no idea what just happened.
+      stateManager.set("board.squares", { "5": { name: "Bear", power: 3 } });
+      stateManager.set("players", {
+        ...(stateManager.get("players") as Record<string, unknown>),
+        "": { id: "", name: "", position: 5 },
       });
 
-      await boardEffectsHandler.checkAndApplySquareEffects("players.p1.position", {});
-
-      expect(statusDuringProcessing).toBe(true);
+      await expect(
+        boardEffectsHandler.checkAndApplySquareEffects("players..position", {}),
+      ).rejects.toThrow(/no riddle to ask/);
     });
 
-    it("Expected outcome: Should return false after processing completes", async () => {
-      const squareData = { name: "Bear", power: 1 };
-      stateManager.set("board.squares", { "5": squareData });
-      stateManager.set("players.p1.position", 5);
+    it("Expected outcome: Should advance the bank cursor for an animal whose name contains a dot", async () => {
+      // "T. rex" as a dot path would nest under game.encounterQuestionCursor.T." rex" and never
+      // be found again by the map lookup, so every landing would re-ask the first riddle.
+      stateManager.set("game.encounterQuestions", {
+        "T. rex": {
+          "en-US": [
+            {
+              kali: "The tyrant lizard roars...",
+              question: "First question?",
+              options: ["A1", "A2", "A3", "A4"],
+              correctOption: "A2",
+            },
+            {
+              kali: "It circles again...",
+              question: "Second question?",
+              options: ["B1", "B2", "B3", "B4"],
+              correctOption: "B3",
+            },
+          ],
+        },
+      });
+      stateManager.set("board.squares", { "7": { name: "T. rex", power: 4 } });
+      stateManager.set("players.p1.position", 7);
+
+      await boardEffectsHandler.checkAndApplySquareEffects("players.p1.position", {});
+      await boardEffectsHandler.checkAndApplySquareEffects("players.p1.position", {});
+
+      const pending = stateManager.get("game.pending") as { riddlePrompt: string };
+      expect(pending.riddlePrompt).toBe("Second question?");
+      expect(stateManager.get("game.encounterQuestionCursor")).toEqual({ "T. rex": 2 });
+    });
+
+    it("Expected outcome: Should keep another player's pending revenge when this player lands on a plain square", async () => {
+      stateManager.set("game.pending", {
+        kind: "revenge",
+        playerId: "p1",
+        position: 5,
+        power: 4,
+      });
+      stateManager.set("board.squares", { "156": { name: "Gorilla", heart: true } });
+      stateManager.set("game.turn", "p2");
+      stateManager.set("players.p2.position", 156);
+
+      await boardEffectsHandler.checkAndApplySquareEffects("players.p2.position", {});
+
+      expect(stateManager.get("game.pending")).toMatchObject({
+        kind: "revenge",
+        playerId: "p1",
+      });
+      expect(stateManager.get("players.p2.hearts")).toBe(1);
+    });
+
+    it("Expected outcome: Should clear the landing player's own pending on a plain square", async () => {
+      stateManager.set("game.pending", {
+        kind: "revenge",
+        playerId: "p1",
+        position: 5,
+        power: 4,
+      });
+      stateManager.set("board.squares", { "156": { name: "Gorilla", heart: true } });
+      stateManager.set("players.p1.position", 156);
 
       await boardEffectsHandler.checkAndApplySquareEffects("players.p1.position", {});
 
-      expect(boardEffectsHandler.isProcessingEffect()).toBe(false);
+      expect(stateManager.get("game.pending")).toBeNull();
+    });
+  });
+
+  describe("Product scenario: Encounter options read out loud", () => {
+    it("Expected outcome: The es AR encounter prompt is spoken with its accents", async () => {
+      setLocale("es-AR");
+      stateManager.set("board.squares", { "12": { name: "Halcón", power: 2 } });
+      stateManager.set("players.p1.position", 12);
+
+      await boardEffectsHandler.checkAndApplySquareEffects("players.p1.position", {});
+
+      const spoken = String(mockSpeak.mock.calls[0][0]);
+      expect(spoken).toContain("Decime cuál opción es correcta.");
+      expect(spoken).toContain("Opciones: A) Acercarse corriendo.");
+      setLocale("en-US");
+    });
+  });
+
+  describe("Product scenario: Golden fox with nobody ahead", () => {
+    beforeEach(() => {
+      stateManager.set("board.squares", {
+        "54": { effect: "jumpToLeader", name: "Zorro dorado" },
+      });
+      stateManager.set("game.playerOrder", ["p1", "p2"]);
+      stateManager.set("players.p1.position", 54);
+      stateManager.set("players.p2.position", 30);
+    });
+
+    it("Expected outcome: The leader landing on the golden fox is told the fox leaves them where they are", async () => {
+      await boardEffectsHandler.checkAndApplyBoardMoves("players.p1.position", {});
+      await boardEffectsHandler.checkAndApplySquareEffects("players.p1.position", {});
+
+      expect(stateManager.get("players.p1.position")).toBe(54);
+      expect(mockSpeak).toHaveBeenCalledTimes(1);
+      expect(mockSpeak).toHaveBeenCalledWith(
+        t("squares.goldenFoxAlreadyLeader", {
+          name: "Alice",
+          position: 54,
+          squareName: "Zorro dorado",
+        }),
+      );
+    });
+
+    it("Expected outcome: No prompt-engineering instruction is ever read out to the table", async () => {
+      await boardEffectsHandler.checkAndApplyBoardMoves("players.p1.position", {});
+      await boardEffectsHandler.checkAndApplySquareEffects("players.p1.position", {});
+
+      const spoken = mockSpeak.mock.calls.map((call) => String(call[0])).join(" ");
+      expect(spoken).not.toMatch(/your narration|in your narration|kids know where they are/i);
     });
   });
 });

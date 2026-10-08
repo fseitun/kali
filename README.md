@@ -12,17 +12,24 @@ A voice-first game moderator for kids to play board games independently. Uses sp
    npm install
    ```
 
-2. Configure the LLM provider (create `.env` file):
+2. Configure the environment:
 
    ```bash
-   # DeepInfra (get key at https://deepinfra.com/dash/api_keys)
-   VITE_DEEPINFRA_API_KEY=your_api_key_here
-   VITE_LLM_PROVIDER=deepinfra
-   # VITE_DEEPINFRA_MODEL=Qwen/Qwen2.5-72B-Instruct  # optional, default
-
-   # Optional: show export-logs button in production UI
-   VITE_SHOW_EXPORT_BUTTON=true
+   cp .env.example .env
    ```
+
+   Two keys are required — the app throws `ConfigValidationError` at startup without them:
+
+   ```bash
+   # Speech-to-text (get key at https://console.deepgram.com/)
+   VITE_DEEPGRAM_API_KEY=your_api_key_here
+
+   # LLM (get key at https://deepinfra.com/dash/api_keys)
+   VITE_LLM_PROVIDER=deepinfra
+   VITE_DEEPINFRA_API_KEY=your_api_key_here
+   ```
+
+   `.env.example` lists every other variable the app reads, with its default.
 
 3. Start development server:
 
@@ -67,7 +74,9 @@ Kali is built on a strict separation between the **LLM** (interprets natural lan
 - `npm run preview` - Preview production build
 - `npm run lint` - Run ESLint
 - `npm run lint:fix` - Auto-fix ESLint issues
-- `npm run type-check` - Check TypeScript types
+- `npm run type-check` - Check TypeScript types (app + `worker/`)
+- `npm run knip` - Find unused files, exports, and dependencies
+- `npm run full-check` - lint:fix + type-check + test + format (run before calling a change done)
 
 ## Project Structure & Development
 

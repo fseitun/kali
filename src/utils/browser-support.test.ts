@@ -16,8 +16,8 @@ describe("Product scenario: Browser support", () => {
       vi.stubGlobal("window", {
         AudioContext: vi.fn(),
         webkitAudioContext: vi.fn(),
-        WebAssembly: {},
-        indexedDB: {},
+        AudioWorklet: vi.fn(),
+        WebSocket: vi.fn(),
       });
 
       vi.stubGlobal("navigator", {
@@ -29,8 +29,8 @@ describe("Product scenario: Browser support", () => {
 
     it("Expected outcome: Should throw error when Audio Context is missing", () => {
       vi.stubGlobal("window", {
-        WebAssembly: {},
-        indexedDB: {},
+        AudioWorklet: vi.fn(),
+        WebSocket: vi.fn(),
       });
 
       vi.stubGlobal("navigator", {
@@ -43,8 +43,8 @@ describe("Product scenario: Browser support", () => {
     it("Expected outcome: Should pass when webkit Audio Context is available", () => {
       vi.stubGlobal("window", {
         webkitAudioContext: vi.fn(),
-        WebAssembly: {},
-        indexedDB: {},
+        AudioWorklet: vi.fn(),
+        WebSocket: vi.fn(),
       });
 
       vi.stubGlobal("navigator", {
@@ -57,8 +57,8 @@ describe("Product scenario: Browser support", () => {
     it("Expected outcome: Should throw error when Media Devices is missing", () => {
       vi.stubGlobal("window", {
         AudioContext: vi.fn(),
-        WebAssembly: {},
-        indexedDB: {},
+        AudioWorklet: vi.fn(),
+        WebSocket: vi.fn(),
       });
 
       vi.stubGlobal("navigator", {});
@@ -66,30 +66,30 @@ describe("Product scenario: Browser support", () => {
       expect(() => checkBrowserSupport()).toThrow("MediaDevices API not supported");
     });
 
-    it("Expected outcome: Should throw error when Web Assembly is missing", () => {
+    it("Expected outcome: Should throw error when Audio Worklet is missing", () => {
       vi.stubGlobal("window", {
         AudioContext: vi.fn(),
-        indexedDB: {},
+        WebSocket: vi.fn(),
       });
 
       vi.stubGlobal("navigator", {
         mediaDevices: {},
       });
 
-      expect(() => checkBrowserSupport()).toThrow("WebAssembly API not supported");
+      expect(() => checkBrowserSupport()).toThrow("AudioWorklet API not supported");
     });
 
-    it("Expected outcome: Should throw error when Indexed DB is missing", () => {
+    it("Expected outcome: Should throw error when Web Socket is missing", () => {
       vi.stubGlobal("window", {
         AudioContext: vi.fn(),
-        WebAssembly: {},
+        AudioWorklet: vi.fn(),
       });
 
       vi.stubGlobal("navigator", {
         mediaDevices: {},
       });
 
-      expect(() => checkBrowserSupport()).toThrow("IndexedDB API not supported");
+      expect(() => checkBrowserSupport()).toThrow("WebSocket API not supported");
     });
 
     it("Expected outcome: Should throw error for first missing API", () => {

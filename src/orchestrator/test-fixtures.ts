@@ -1,16 +1,9 @@
-import { GamePhase, type GameState } from "./types";
-
-type PlayerFixture = {
-  id: string;
-  name: string;
-  position: number;
-  activeChoices?: Record<string, number>;
-};
+import { GamePhase, type GameState, type Player } from "./types";
 
 export function createPlayingStateFixture(params: {
   turn?: string;
   playerOrder?: string[];
-  players: Record<string, PlayerFixture>;
+  players: Record<string, Player>;
   squares: Record<string, Record<string, unknown>>;
   winner?: string | null;
   lastRoll?: number;

@@ -4,11 +4,22 @@
  */
 
 /**
- * Strip optional leading "A) ", "B) ", etc. from option text, then trim and lowercase.
+ * Lowercase and drop accents/ñ on both sides of every comparison: STT writes "un telefono
+ * celular" for an option authored "Un teléfono celular", and that is a correct answer.
+ */
+function normalizeForMatch(text: string): string {
+  return text
+    .trim()
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "");
+}
+
+/**
+ * Strip optional leading "A) ", "B) ", etc. from option text, then normalize for comparison.
  */
 function normalizeOptionText(option: string): string {
-  const stripped = option.replace(/^[A-Da-d][.)]\s*/i, "").trim();
-  return stripped.toLowerCase();
+  return normalizeForMatch(option.replace(/^[A-Da-d][.)]\s*/i, ""));
 }
 
 /**
@@ -50,14 +61,9 @@ function resolveRiddleOptionBySpokenIndex(trimmed: string, riddleOptions: string
   return null;
 }
 
-/**
- * Fuzzy match user text to exactly one of four options (equals / contains), or null if ambiguous.
- */
-function matchRiddleOptionByFuzzyText(
-  normalizedAnswer: string,
-  riddleOptions: string[],
-): string | null {
-  let matchedOption: string | null = null;
+/** Every option the answer touches (equals / contains, either direction). */
+function fuzzyMatchedOptions(normalizedAnswer: string, riddleOptions: string[]): string[] {
+  const matches: string[] = [];
   for (let i = 0; i < 4; i++) {
     const opt = riddleOptions[i];
     if (typeof opt !== "string") {
@@ -68,13 +74,45 @@ function matchRiddleOptionByFuzzyText(
     const answerContainsOption = normalizedAnswer.includes(normalizedOpt);
     const optionContainsAnswer = normalizedOpt.includes(normalizedAnswer);
     if (equals || answerContainsOption || optionContainsAnswer) {
-      if (matchedOption !== null) {
-        return null;
-      }
-      matchedOption = opt;
+      matches.push(opt);
     }
   }
-  return matchedOption;
+  return matches;
+}
+
+/**
+ * Fuzzy match user text to exactly one of four options (equals / contains), or null if ambiguous.
+ */
+function matchRiddleOptionByFuzzyText(
+  normalizedAnswer: string,
+  riddleOptions: string[],
+): string | null {
+  const matches = fuzzyMatchedOptions(normalizedAnswer, riddleOptions);
+  return matches.length === 1 ? matches[0] : null;
+}
+
+/**
+ * Ambiguity resolved in the child's favour: "pez" sits inside two options at once, so we cannot
+ * tell which one they meant — but grading them wrong would punish a child who may well have said
+ * the right thing, out loud, in a game they cannot see. The riddle only decides one extra
+ * power-check die, so credit the correct option when it is one of the candidates.
+ *
+ * Only reachable when the answer was not a spoken index or letter: those resolve first in
+ * `resolveRiddleAnswerToOption`, so "a" keeps meaning option A rather than every option
+ * containing the letter.
+ */
+function ambiguousMatchIncludesCorrect(
+  normalizedAnswer: string,
+  riddleOptions: string[] | undefined,
+  normalizedCorrect: string,
+): boolean {
+  if (!Array.isArray(riddleOptions) || riddleOptions.length !== 4) {
+    return false;
+  }
+  const matches = fuzzyMatchedOptions(normalizedAnswer, riddleOptions);
+  return (
+    matches.length > 1 && matches.some((opt) => normalizeOptionText(opt) === normalizedCorrect)
+  );
 }
 
 /**
@@ -100,7 +138,7 @@ export function resolveRiddleAnswerToOption(
     return byIndex;
   }
 
-  return matchRiddleOptionByFuzzyText(trimmed.toLowerCase(), riddleOptions);
+  return matchRiddleOptionByFuzzyText(normalizeForMatch(trimmed), riddleOptions);
 }
 
 function matchesCorrectOptionSynonyms(
@@ -114,7 +152,7 @@ function matchesCorrectOptionSynonyms(
     if (typeof syn !== "string") {
       continue;
     }
-    const normalizedSyn = syn.trim().toLowerCase();
+    const normalizedSyn = normalizeForMatch(syn);
     if (!normalizedSyn) {
       continue;
     }
@@ -145,12 +183,19 @@ export function isStrictRiddleCorrect(
     return false;
   }
 
-  const normalizedAnswer = trimmed.toLowerCase();
+  const normalizedAnswer = normalizeForMatch(trimmed);
   const normalizedCorrect = normalizeOptionText(correctOption);
 
   // Match to one of the four options
   const matchedOption = resolveRiddleAnswerToOption(answer, riddleOptions);
-  if (matchedOption !== null && normalizeOptionText(matchedOption) === normalizedCorrect) {
+  if (matchedOption !== null) {
+    return (
+      normalizeOptionText(matchedOption) === normalizedCorrect ||
+      matchesCorrectOptionSynonyms(normalizedAnswer, correctOptionSynonyms)
+    );
+  }
+
+  if (ambiguousMatchIncludesCorrect(normalizedAnswer, riddleOptions, normalizedCorrect)) {
     return true;
   }
 

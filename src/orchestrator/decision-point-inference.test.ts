@@ -1,6 +1,8 @@
-import { describe, expect, it } from "vitest";
-import { inferDecisionPoints } from "./decision-point-inference";
-import type { BoardConfig } from "./types";
+import { afterEach, describe, expect, it } from "vitest";
+import { getDecisionPoints, inferDecisionPoints } from "./decision-point-inference";
+import type { BoardConfig, GameState } from "./types";
+import { GamePhase } from "./types";
+import { setLocale } from "@/i18n/translations";
 
 describe("Product scenario: Infer Decision Points", () => {
   it("Expected outcome: Returns empty array when board has no squares", () => {
@@ -90,6 +92,47 @@ describe("Product scenario: Infer Decision Points", () => {
     expect(result[0].choiceKeywords).toEqual({
       "1": ["izquierda", "corto", "1"],
       "15": ["derecha", "largo", "15"],
+    });
+  });
+  describe("Product scenario: Localized fork prompts", () => {
+    afterEach(() => {
+      setLocale("es-AR");
+    });
+
+    function boardState(squares: BoardConfig["squares"]): GameState {
+      return {
+        game: {
+          name: "Kalimba",
+          phase: GamePhase.PLAYING,
+          turn: "p1",
+          playerOrder: ["p1"],
+          winner: null,
+        },
+        players: { p1: { id: "p1", name: "Ana", position: 0 } },
+        board: { squares },
+      };
+    }
+
+    it("Expected outcome: Speaks English fork prompts in en-US", () => {
+      setLocale("en-US");
+      const forward = inferDecisionPoints({ squares: { "96": { next: [97, 99] } } });
+      const start = inferDecisionPoints({ squares: { "0": { next: [1, 15] } } });
+
+      expect(start[0].prompt).toBe("Do you want to go left or right?");
+      expect(forward[0].prompt).toBe("Do you want to go to 97 or 99?");
+    });
+
+    it("Expected outcome: Speaks English backward fork prompts in en-US", () => {
+      setLocale("en-US");
+      const state = boardState({
+        "104": { next: [106] },
+        "105": { next: [106] },
+        "106": { prev: [104, 105] },
+      });
+
+      const backward = getDecisionPoints(state).find((dp) => dp.direction === "backward");
+
+      expect(backward?.prompt).toBe("Going back, to 104 or 105?");
     });
   });
 });

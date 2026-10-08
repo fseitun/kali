@@ -22,11 +22,12 @@ export class NameCollector {
   private playerCount = 0;
   private minPlayers: number;
   private maxPlayers: number;
+  private isHandlingTranscript = false;
 
   constructor(
     private speechService: ISpeechService,
     private gameName: string,
-    private enableDirectTranscription: () => void,
+    private beginPromptedCapture: () => void,
     private llmClient: LLMClient,
     gameMetadata: GameMetadata,
   ) {
@@ -48,8 +49,8 @@ export class NameCollector {
       Logger.info("Starting name collection phase");
 
       await this.speechService.speak(t("setup.welcome", { game: this.gameName }));
-      this.enableDirectTranscription();
-      Logger.info("Direct transcription enabled for setup collection");
+      this.beginPromptedCapture();
+      Logger.info("Prompted capture enabled for setup collection");
 
       this.playerCount = await this.askPlayerCount(onTranscript);
       Logger.info(`Collecting names for ${this.playerCount} players`);
@@ -71,6 +72,32 @@ export class NameCollector {
       Logger.error("Name collection error:", error);
       throw error;
     }
+  }
+
+  /**
+   * Serializes transcript handling. Handlers await the LLM, so two utterances arriving in quick
+   * succession would otherwise both run and confirm the same answer twice. The overlapping one is
+   * dropped, so the question is asked again — setup is voice-only and silence is a dead end.
+   */
+  private serialized(
+    handler: (text: string) => Promise<void>,
+    reaskMessage: string,
+  ): (text: string) => Promise<void> {
+    return async (text: string) => {
+      if (this.isHandlingTranscript) {
+        // ponytail: one re-ask per dropped fragment, so a burst of three repeats the question
+        // three times. Add a one-shot flag per wait if that turns out to be noisy at the table.
+        Logger.info(`Overlapping setup transcript, re-asking: "${text}"`);
+        await this.speechService.speak(reaskMessage);
+        return;
+      }
+      this.isHandlingTranscript = true;
+      try {
+        await handler(text);
+      } finally {
+        this.isHandlingTranscript = false;
+      }
+    };
   }
 
   /**
@@ -144,11 +171,10 @@ export class NameCollector {
         );
       };
 
-      onTranscript(handler);
+      const prompt = t("setup.playerCount", { min: this.minPlayers, max: this.maxPlayers });
+      onTranscript(this.serialized(handler, prompt));
 
-      void this.speechService.speak(
-        t("setup.playerCount", { min: this.minPlayers, max: this.maxPlayers }),
-      );
+      void this.speechService.speak(prompt);
     });
   }
 
@@ -214,9 +240,10 @@ export class NameCollector {
         await this.speechService.speak(t("setup.playerName", { number: playerNumber }));
       };
 
-      onTranscript(handler);
+      const prompt = t("setup.playerName", { number: playerNumber });
+      onTranscript(this.serialized(handler, prompt));
 
-      void this.speechService.speak(t("setup.playerName", { number: playerNumber }));
+      void this.speechService.speak(prompt);
     });
   }
 
@@ -232,22 +259,22 @@ export class NameCollector {
     Logger.info("Resolving name conflicts:", conflictIndices);
 
     for (const index of conflictIndices) {
-      if (
-        index > 0 &&
-        areNamesSimilar(this.collectedNames[index], this.collectedNames[index - 1])
-      ) {
-        const baseName = this.collectedNames[index];
-        const usedNames = this.collectedNames.slice(0, index);
-        const suggestion = generateNickname(baseName, usedNames);
-
-        await this.speechService.speak(t("setup.nameConflict", { name: baseName, suggestion }));
-
-        const response = await this.waitForConfirmation(onTranscript, suggestion, baseName);
-        this.collectedNames[index] = response;
+      const baseName = this.collectedNames[index];
+      const usedNames = this.collectedNames.slice(0, index);
+      if (!usedNames.some((earlier) => areNamesSimilar(baseName, earlier))) {
+        continue;
       }
+      const suggestion = generateNickname(baseName, usedNames);
+
+      await this.speechService.speak(t("setup.nameConflict", { name: baseName, suggestion }));
+
+      const response = await this.waitForConfirmation(onTranscript, suggestion, baseName);
+      this.collectedNames[index] = response;
     }
 
-    const allNames = this.collectedNames.join(", ").replace(/, ([^,]*)$/, " y $1");
+    const allNames = this.collectedNames
+      .join(", ")
+      .replace(/, ([^,]*)$/, (_match, last: string) => `${t("setup.nameListLastJoiner")}${last}`);
     await this.speechService.speak(t("setup.allNamesReady", { names: allNames }));
   }
 
@@ -285,7 +312,9 @@ export class NameCollector {
         }
       };
 
-      onTranscript(handler);
+      onTranscript(
+        this.serialized(handler, t("setup.nameConflict", { name: original, suggestion })),
+      );
     });
   }
 
@@ -321,6 +350,6 @@ export class NameCollector {
       resolve(kindName);
     };
 
-    onTranscript(handler);
+    onTranscript(this.serialized(handler, t("setup.nameConflictAlternative")));
   }
 }

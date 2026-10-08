@@ -1,13 +1,11 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { tryFastPathTranscript } from "./transcript-fast-path";
-import { GamePhase, type ExecutionContext, type GameState } from "./types";
+import { GamePhase, type GameState } from "./types";
 import { setLocale } from "@/i18n/translations";
 import { StateManager } from "@/state-manager";
 
 describe("Product scenario: Try Fast Path Transcript", () => {
   let state: GameState;
-  const topContext: ExecutionContext = {};
-  const nestedContext: ExecutionContext = { isNestedCall: true };
 
   beforeEach(() => {
     setLocale("en-US");
@@ -34,27 +32,14 @@ describe("Product scenario: Try Fast Path Transcript", () => {
     state = sm.getState();
   });
 
-  it("Expected outcome: Returns null for nested calls", () => {
-    expect(
-      tryFastPathTranscript(state, "5", nestedContext, { isProcessingEffect: false }),
-    ).toBeNull();
-  });
-
   it("Expected outcome: Returns NARRATE for help phrase", () => {
-    const actions = tryFastPathTranscript(state, "help", topContext, {
-      isProcessingEffect: false,
-    });
+    const actions = tryFastPathTranscript(state, "help");
     expect(actions).toEqual([{ action: "NARRATE", text: expect.any(String) }]);
   });
 
   it("Expected outcome: Returns PLAYER ROLLED for plain digit when valid", () => {
-    const actions = tryFastPathTranscript(state, "4", topContext, { isProcessingEffect: false });
+    const actions = tryFastPathTranscript(state, "4");
     expect(actions).toEqual([{ action: "PLAYER_ROLLED", value: 4 }]);
-  });
-
-  it("Expected outcome: Returns null during square effect processing for movement roll", () => {
-    const actions = tryFastPathTranscript(state, "4", topContext, { isProcessingEffect: true });
-    expect(actions).toBeNull();
   });
 
   it("Expected outcome: Returns PLAYER ANSWERED for revenge roll in range", () => {
@@ -64,7 +49,7 @@ describe("Product scenario: Try Fast Path Transcript", () => {
       position: 3,
       power: 3,
     };
-    const actions = tryFastPathTranscript(state, "4", topContext, { isProcessingEffect: false });
+    const actions = tryFastPathTranscript(state, "4");
     expect(actions).toEqual([{ action: "PLAYER_ANSWERED", answer: "4" }]);
   });
 
@@ -78,7 +63,7 @@ describe("Product scenario: Try Fast Path Transcript", () => {
       correctOption: "A",
       riddlePrompt: "Q?",
     };
-    const actions = tryFastPathTranscript(state, "1", topContext, { isProcessingEffect: false });
+    const actions = tryFastPathTranscript(state, "1");
     expect(actions).toEqual([{ action: "PLAYER_ANSWERED", answer: "A" }]);
   });
 
@@ -92,7 +77,7 @@ describe("Product scenario: Try Fast Path Transcript", () => {
       correctOption: "A",
       riddlePrompt: "Q?",
     };
-    const actions = tryFastPathTranscript(state, "a", topContext, { isProcessingEffect: false });
+    const actions = tryFastPathTranscript(state, "a");
     expect(actions).toEqual([{ action: "PLAYER_ANSWERED", answer: "A" }]);
   });
 });

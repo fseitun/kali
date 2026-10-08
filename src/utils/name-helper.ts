@@ -35,7 +35,8 @@ export function validateName(name: string): {
     }
   }
 
-  cleaned = cleaned.replace(/[^a-zA-Z0-9\s\-']/g, "");
+  // Unicode-aware: es-AR is the default locale, "Sofía" must not become "Sofa".
+  cleaned = cleaned.replace(/[^\p{L}\p{N}\s\-']/gu, "");
 
   if (cleaned.length === 0) {
     return { valid: false, cleaned: "" };

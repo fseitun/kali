@@ -24,12 +24,6 @@ export const CONFIG = {
   LLM_PROVIDER: (import.meta.env.VITE_LLM_PROVIDER ?? "deepinfra") as "deepinfra" | "mock",
 
   STT: {
-    /** Command capture timeout for post-wake Deepgram STT. */
-    COMMAND_TIMEOUT_MS: parsePositiveIntEnv(
-      import.meta.env.VITE_STT_COMMAND_TIMEOUT_MS as string | undefined,
-      6_000,
-      "VITE_STT_COMMAND_TIMEOUT_MS",
-    ),
     /**
      * Delay before considering deepgram stream endpointing as final enough for command handoff.
      * Tuning knob for environments with brief pauses.
@@ -85,7 +79,6 @@ export const CONFIG = {
     API_KEY: import.meta.env.VITE_DEEPGRAM_API_KEY,
     MODEL: import.meta.env.VITE_DEEPGRAM_MODEL ?? "nova-3",
     LANGUAGE: import.meta.env.VITE_DEEPGRAM_LANGUAGE ?? "es",
-    API_URL: import.meta.env.VITE_DEEPGRAM_API_URL ?? "https://api.deepgram.com/v1/listen",
     WS_URL: import.meta.env.VITE_DEEPGRAM_WS_URL ?? "wss://api.deepgram.com/v1/listen",
   },
 
@@ -94,8 +87,7 @@ export const CONFIG = {
     CHANNEL_COUNT: 1,
     ECHO_CANCELLATION: true,
     NOISE_SUPPRESSION: true,
-    WORKLET_BUFFER_SIZE: 2048,
-    WORKLET_PROCESSOR_NAME: "vosk-audio-processor",
+    WORKLET_PROCESSOR_NAME: "pcm-processor",
   },
 
   UI: {
@@ -112,7 +104,6 @@ export const CONFIG = {
   TTS: {
     RATE: 1.0,
     PITCH: 1.0,
-    VOICE_LANG: "es-AR",
   },
 
   GAME: {

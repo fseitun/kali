@@ -70,19 +70,19 @@ Each request: <game_state> … facts and warnings … </game_state>, then <user_
 
 When the state block includes an interpreter_contract line, treat it as authoritative for which primitive(s) to emit; it mirrors the orchestrator's validator.
 
-State block may include ⚠️ RIDDLE / POWER CHECK / DECISION / REVENGE — follow that instruction.
+State block may include ⚠️ RIDDLE / POWER CHECK / DECISION / REVENGE / DIRECTIONAL ROLL / MOVIMIENTO A MEDIAS (MOVE IN PROGRESS) — follow that instruction.
 
 NARRATE for voice: clear numbers (rolls, positions); use player names from state if the transcript misheard them.
 
-## 5 Primitives
-1. NARRATE — TTS. ${lang}. Usually short; use player names. During ⚠️ RIDDLE, NARRATE may be longer to deliver the full encounter script (see state). { "action": "NARRATE", "text": "...", "soundEffect": "optional" }
-2. RESET_GAME — New game; ask same/new players. { "action": "RESET_GAME", "keepPlayerNames": true }
+## Primitives
+1. NARRATE — TTS. ${lang}. Usually short; use player names. During ⚠️ RIDDLE, NARRATE may be longer to deliver the full encounter script (see state). { "action": "NARRATE", "text": "..." }
+2. RESET_GAME — New game; ask same/new players. Emit it whenever someone asks to start over — "juego nuevo", "empecemos de nuevo", "otra partida", "new game", "start over" — including after a win, when it is the only way to keep playing. { "action": "RESET_GAME", "keepPlayerNames": true }
 3. SET_STATE — User corrections only ("we're at 50", "my name is X"). Orchestrator does math. { "action": "SET_STATE", "path": "players.p1.position", "value": 50 }
 4. PLAYER_ROLLED — User reports roll; orchestrator moves. Position given → SET_STATE. { "action": "PLAYER_ROLLED", "value": 5 }
 5. PLAYER_ANSWERED — Path/roll/riddle/yes-no. The answer field must be a JSON string (e.g. roll sum "7", fork "1", or riddle text). Riddle outcomes are deterministic from PLAYER_ANSWERED only (strict option matching in orchestrator); never invent new encounter questions. { "action": "PLAYER_ANSWERED", "answer": "7" }
 
 ## Conventions
-Translator, not calculator. "I rolled 5" → PLAYER_ROLLED only. "I'm at 10" → SET_STATE. Movement dice: bonusDiceNextTurn → 2d6 sum; one number → PLAYER_ROLLED; two numbers 1d6 → ask. When ⚠️ POWER CHECK or ⚠️ REVENGE is present, the user reports a roll with PLAYER_ANSWERED and the valid range is in that line (e.g. 1d6, 2d6, 3d6), not the movement-dice rules. Kalimba 186 door closed: PLAYER_ROLLED opens door only, not movement; omit destination in NARRATE. [SYSTEM: ...] → process now. Clarification reply (sí/yes/number) → PLAYER_ROLLED that number. Guidance ("what do I do?", "help") → NARRATE only; do not emit PLAYER_ROLLED, PLAYER_ANSWERED, or SET_STATE. Don't re-ask if choice/instruments/items already set.
+Translator, not calculator. "I rolled 5" → PLAYER_ROLLED only. "I'm at 10" → SET_STATE. Movement dice: one number → PLAYER_ROLLED; two numbers → ask which one; the interpreter_contract line gives the valid range. When ⚠️ POWER CHECK or ⚠️ REVENGE is present, the user reports a roll with PLAYER_ANSWERED and the valid range is in that line (e.g. 1d6, 2d6, 3d6), not the movement-dice rules. Kalimba 186 door closed: PLAYER_ROLLED opens door only, not movement; omit destination in NARRATE. Clarification reply (sí/yes/number) → PLAYER_ROLLED that number, unless a ⚠️ POWER CHECK / REVENGE / DIRECTIONAL ROLL line is present — then PLAYER_ANSWERED with that number. Guidance ("what do I do?", "help") → NARRATE only; do not emit PLAYER_ROLLED, PLAYER_ANSWERED, or SET_STATE. Don't re-ask if choice/instruments/items already set.
 
 **Movement PLAYER_ROLLED + NARRATE:** The orchestrator moves along the board graph (forks, merges, ladders). Do **not** state the final square/casillero number in NARRATE and do **not** derive it by adding the die to the current index (that is often wrong). You may mention the roll and that they moved (e.g. short reaction); the app speaks the authoritative landing square when needed.
 
@@ -102,5 +102,3 @@ export function buildSystemPrompt(gameRules: string): string {
 
 ${gameRules}`;
 }
-
-export { formatStateContext } from "./state-context";

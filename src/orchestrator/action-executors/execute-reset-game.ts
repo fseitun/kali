@@ -1,65 +1,43 @@
-import type { ExecutionContext, PrimitiveAction } from "../types";
+import { GamePhase, type ExecutionContext, type GameState, type PrimitiveAction } from "../types";
 import type { ActionExecutorContext } from "./shared";
-import { playerStatePath } from "@/state-paths";
 import { Logger } from "@/utils/logger";
 
-function extractPlayerNames(
-  state: Readonly<{ players?: Record<string, { name: string }> }>,
-): Map<string, string> {
-  const playerNames = new Map<string, string>();
-  const players = state.players;
-  if (!players) {
-    return playerNames;
+/**
+ * Names worth carrying into the new game: only a roster that finished setup has real ones, and
+ * only a complete roster can be rebuilt (`initialState` holds just `minPlayers` templates).
+ */
+function keptPlayerNames(state: GameState): string[] {
+  if (state.game.phase === GamePhase.SETUP) {
+    return [];
   }
-  for (const [id, player] of Object.entries(players)) {
-    playerNames.set(id, player.name);
-  }
-  return playerNames;
+  const playerOrder = state.game.playerOrder ?? [];
+  const names = playerOrder.map((id) => state.players?.[id]?.name);
+  const allNamed = names.every((name) => typeof name === "string" && name.trim() !== "");
+  return playerOrder.length > 0 && allNamed ? names : [];
 }
 
-function restorePlayerNames(ctx: ActionExecutorContext, playerNames: Map<string, string>): void {
-  const state = ctx.stateManager.getState();
-  const playerOrder = state.game.playerOrder;
-  if (!playerOrder?.length) {
-    Logger.warn("keepPlayerNames=true but no playerOrder found after reset");
-    return;
-  }
-  Logger.info(`Restoring ${playerNames.size} player names`);
-  for (const playerId of playerOrder) {
-    const savedName = playerNames.get(playerId);
-    if (savedName) {
-      ctx.stateManager.set(playerStatePath(playerId, "name"), savedName);
-      Logger.info(`Restored player ${playerId}: "${savedName}"`);
-    }
-  }
-}
-
+/**
+ * Restarts the game. With the roster kept, the orchestrator rebuilds it and play resumes at the
+ * first player; otherwise the game drops to SETUP and the app collects names again. Either way
+ * `gameReset` on the result tells the app to finish the restart out loud — a reset that leaves
+ * the app silent in SETUP is the bug this shape exists to prevent.
+ */
 export async function executeResetGame(
   ctx: ActionExecutorContext,
   primitive: Extract<PrimitiveAction, { action: "RESET_GAME" }>,
   _execCtx: ExecutionContext,
 ): Promise<void> {
-  Logger.info(`Resetting game state (keepPlayerNames: ${primitive.keepPlayerNames})`);
-
-  let playerNames = new Map<string, string>();
-  if (primitive.keepPlayerNames) {
-    const currentState = ctx.stateManager.getState();
-    playerNames = extractPlayerNames(currentState);
-    if (playerNames.size > 0) {
-      Logger.info(
-        `Extracted ${playerNames.size} player names: [${Array.from(playerNames.values()).join(", ")}]`,
-      );
-    } else {
-      Logger.warn("keepPlayerNames=true but no players found in current state");
-    }
-  }
+  const names = primitive.keepPlayerNames ? keptPlayerNames(ctx.stateManager.getState()) : [];
 
   ctx.stateManager.resetState(ctx.initialState);
-  Logger.info("State reset to initial state");
 
-  if (primitive.keepPlayerNames && playerNames.size > 0) {
-    restorePlayerNames(ctx, playerNames);
+  if (names.length === 0) {
+    ctx.transitionPhase(GamePhase.SETUP);
+    Logger.info("Game reset to SETUP; names will be collected again");
+    return;
   }
 
-  Logger.info("Game state reset complete");
+  ctx.setupPlayers(names);
+  ctx.transitionPhase(GamePhase.PLAYING);
+  Logger.info(`Game reset keeping ${names.length} player(s): [${names.join(", ")}]`);
 }

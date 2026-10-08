@@ -1,7 +1,6 @@
 import { resolveNarrationPlan } from "../narration-policy";
 import type { ExecutionContext, PrimitiveAction } from "../types";
 import type { ActionExecutorContext } from "./shared";
-import { GAME_PATH } from "@/state-paths";
 
 function recordNarrationPlan(
   execCtx: ExecutionContext,
@@ -15,13 +14,11 @@ function recordNarrationPlan(
 function applyDeterministicNarration(
   ctx: ActionExecutorContext,
   execCtx: ExecutionContext,
-  incomingNarrationText: string | undefined,
 ): string | undefined {
   const state = ctx.stateManager.getState();
   const deterministicPlan = resolveNarrationPlan({
     state,
     events: execCtx.domainEvents ?? [],
-    incomingNarrationText,
   });
   if (!deterministicPlan) {
     return undefined;
@@ -36,42 +33,22 @@ function applyDeterministicNarration(
   return deterministicPlan.text;
 }
 
-function syncRiddlePromptForCurrentNarrate(
-  ctx: ActionExecutorContext,
-  incomingNarrationText: string | undefined,
-): void {
-  if (!incomingNarrationText) {
-    return;
-  }
-  const state = ctx.stateManager.getState();
-  const pending = state.game.pending as { kind?: string; riddlePrompt?: string } | null | undefined;
-  if (!ctx.boardEffectsHandler.isProcessingEffect() || pending?.kind !== "riddle") {
-    return;
-  }
-  ctx.stateManager.set(GAME_PATH.pending, {
-    ...pending,
-    riddlePrompt: incomingNarrationText,
-  });
-}
-
 function computeNarrateSpeech(
   ctx: ActionExecutorContext,
   primitive: Extract<PrimitiveAction, { action: "NARRATE" }>,
   execCtx: ExecutionContext,
 ): string {
-  const incomingNarrationText = primitive.text;
-  const deterministicSpeech = applyDeterministicNarration(ctx, execCtx, incomingNarrationText);
+  const incomingNarrationText = primitive.text?.trim() ?? "";
+  const deterministicSpeech = applyDeterministicNarration(ctx, execCtx);
   if (deterministicSpeech !== undefined) {
     return deterministicSpeech;
   }
-
-  syncRiddlePromptForCurrentNarrate(ctx, incomingNarrationText);
 
   if (incomingNarrationText) {
     ctx.setLastNarration(incomingNarrationText);
     recordNarrationPlan(execCtx, incomingNarrationText, "llm");
   }
-  return incomingNarrationText ?? "";
+  return incomingNarrationText;
 }
 
 export async function executeNarrate(
@@ -81,9 +58,14 @@ export async function executeNarrate(
 ): Promise<void> {
   const textToSpeak = computeNarrateSpeech(ctx, primitive, execCtx);
 
-  ctx.statusIndicator.setState("speaking");
   if (primitive.soundEffect) {
     ctx.speechService.playSound(primitive.soundEffect);
   }
+  // An empty NARRATE must not reach speak(): MeteredSpeechService would count the turn as
+  // narrated and applySilentSuccessFallback would leave a genuinely silent turn alone.
+  if (textToSpeak === "") {
+    return;
+  }
+  ctx.statusIndicator.setState("speaking");
   await ctx.speechService.speak(textToSpeak);
 }

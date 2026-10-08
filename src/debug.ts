@@ -16,6 +16,8 @@ import {
 import { Logger } from "@/utils/logger";
 
 setLocale(getLocale());
+// The markup ships the default locale; VITE_LOCALE or a stored override can make it a lie.
+document.documentElement.lang = getLocale();
 
 const DEBUG_BOARD_POLL_MS = 400;
 

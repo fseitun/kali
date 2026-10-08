@@ -27,6 +27,16 @@ describe("Product scenario: Parse OpenAI Response", () => {
     expect(result).toBe('[{"action":"NARRATE","text":"ok"}]');
   });
 
+  it("Expected outcome: Returns empty string for non string content instead of throwing", () => {
+    const errorSpy = vi.spyOn(Logger, "error").mockImplementation(() => {});
+    const payload = {
+      choices: [{ message: { content: [{ type: "text", text: "hello" }] } }],
+    };
+
+    expect(parseOpenAIResponse(payload, "DeepInfra")).toBe("");
+    expect(errorSpy).toHaveBeenCalledWith("No content in DeepInfra response:", payload);
+  });
+
   it("Expected outcome: Returns empty string and logs when content is missing", () => {
     const errorSpy = vi.spyOn(Logger, "error").mockImplementation(() => {});
     const payload = { choices: [{ message: {} }] };

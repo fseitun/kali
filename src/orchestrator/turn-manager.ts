@@ -1,6 +1,6 @@
 import { getPendingForkPromptIfAny, hasMovementForkBlockingPlay } from "./fork-roll-policy";
 import { hasPendingForCurrentTurn } from "./pending-types";
-import type { GameState } from "./types";
+import type { GameState, NextPlayer } from "./types";
 import { GamePhase } from "./types";
 import type { StateManager } from "@/state-manager";
 import { GAME_PATH, playerStatePath, STATE_PLAYERS_PREFIX } from "@/state-paths";
@@ -62,7 +62,6 @@ export class TurnManager {
    * Advances to the next player's turn with automatic blocking.
    *
    * Blocks advancement if:
-   * - Square effect is being processed
    * - Current player has pending decisions
    * - Game has a winner
    * - Game is not in PLAYING phase
@@ -72,13 +71,9 @@ export class TurnManager {
    *
    * AUTHORITY: Only the turn manager (via orchestrator) can advance turns.
    *
-   * @param isProcessingSquareEffect - Flag indicating if square effect is currently being processed
    * @returns The next player's ID and details, or null if unable to advance. Includes skippedPlayers (all skipped in order).
    */
-  private canAdvanceTurn(
-    game: Record<string, unknown>,
-    isProcessingSquareEffect: boolean,
-  ): string | null {
+  private canAdvanceTurn(game: Record<string, unknown>): string | null {
     const phase = game.phase as string | undefined;
     if (phase !== GamePhase.PLAYING) {
       return null;
@@ -97,10 +92,6 @@ export class TurnManager {
       Logger.warn("No playerOrder set, cannot advance");
       return null;
     }
-    if (isProcessingSquareEffect) {
-      Logger.info("Turn advancement blocked: square effect being processed");
-      return null;
-    }
     if (this.hasPendingDecisions()) {
       Logger.info("Turn advancement blocked: current player has pending decisions");
       return null;
@@ -114,62 +105,66 @@ export class TurnManager {
     return currentTurn;
   }
 
-  private async advanceTurnWithSkips(
-    nextPlayerId: string,
-    nextPlayer: Record<string, unknown> | undefined,
-    nextPlayerName: string,
-    skipTurns: number,
-    isProcessingSquareEffect: boolean,
-  ): Promise<{
-    playerId: string;
-    name: string;
-    position: number;
-    skippedPlayers: Array<{ playerId: string; name: string }>;
-  }> {
-    this.stateManager.set(playerStatePath(nextPlayerId, "skipTurns"), skipTurns - 1);
-    Logger.info(`⏭️ Skipping ${nextPlayerName} (had ${skipTurns} skip(s), now ${skipTurns - 1})`);
-    this.stateManager.set(GAME_PATH.turn, nextPlayerId);
-    const currentSkipped = { playerId: nextPlayerId, name: nextPlayerName };
-    const afterSkipped = await this.advanceTurn(isProcessingSquareEffect);
-    if (afterSkipped) {
-      return {
-        ...afterSkipped,
-        skippedPlayers: [currentSkipped, ...afterSkipped.skippedPlayers],
-      };
-    }
+  /**
+   * Walks forward from `currentTurn`, consuming one `skipTurns` from every player it passes,
+   * until it reaches a player who is not skipping. Shared by both advancement paths so a run
+   * of consecutive skippers is fully consumed and every skipped player is reported.
+   */
+  private readPlayerTurnInfo(
+    players: Record<string, Record<string, unknown>>,
+    playerId: string,
+  ): { name: string; position: number; skipTurns: number } {
+    const player = players[playerId];
+    const skipTurns = player?.skipTurns;
+    // Clamped at read: SET_STATE can write any player field, and a negative or fractional
+    // skipTurns would shrink the step budget below the turns the wheel needs, throwing.
+    const skips =
+      typeof skipTurns === "number" && Number.isFinite(skipTurns)
+        ? Math.max(0, Math.trunc(skipTurns))
+        : 0;
     return {
-      playerId: nextPlayerId,
-      name: nextPlayerName,
-      position: (nextPlayer?.position as number) || 0,
-      skippedPlayers: [currentSkipped],
+      name: (player?.name as string) || playerId,
+      position: (player?.position as number) ?? 0,
+      skipTurns: skips,
     };
   }
 
-  private getNextPlayerInfo(
+  private resolveNextPlayerConsumingSkips(
     players: Record<string, Record<string, unknown>>,
     playerOrder: string[],
     currentTurn: string,
-  ): {
-    nextPlayerId: string;
-    nextPlayer: Record<string, unknown> | undefined;
-    nextPlayerName: string;
-    skipTurns: number;
-  } {
-    const currentIndex = playerOrder.indexOf(currentTurn);
-    const nextIndex = (currentIndex + 1) % playerOrder.length;
-    const nextPlayerId = playerOrder[nextIndex];
-    const nextPlayer = players[nextPlayerId];
-    const nextPlayerName = (nextPlayer?.name as string) || nextPlayerId;
-    const skipTurns = (nextPlayer?.skipTurns as number) ?? 0;
-    return { nextPlayerId, nextPlayer, nextPlayerName, skipTurns };
+  ): NextPlayer {
+    const skippedPlayers: Array<{ playerId: string; name: string }> = [];
+    // `players` is a snapshot taken before the loop, so spent skips are tracked here rather than
+    // re-read: a player the wheel passes twice must not spend the same skip twice.
+    const spent = new Map<string, number>();
+    // Every step either returns or spends one skip, so the wheel can turn at most once per
+    // outstanding skip plus once more to reach whoever plays.
+    const steps =
+      playerOrder.reduce((total, id) => total + this.readPlayerTurnInfo(players, id).skipTurns, 0) +
+      1;
+    let index = playerOrder.indexOf(currentTurn);
+
+    for (let step = 0; step < steps; step++) {
+      index = (index + 1) % playerOrder.length;
+      const playerId = playerOrder[index];
+      const { name, position, skipTurns } = this.readPlayerTurnInfo(players, playerId);
+      const remaining = skipTurns - (spent.get(playerId) ?? 0);
+      if (remaining <= 0) {
+        return { playerId, name, position, skippedPlayers };
+      }
+      spent.set(playerId, (spent.get(playerId) ?? 0) + 1);
+      this.stateManager.set(playerStatePath(playerId, "skipTurns"), remaining - 1);
+      Logger.info(`⏭️ Skipping ${name} (had ${remaining} skip(s), now ${remaining - 1})`);
+      skippedPlayers.push({ playerId, name });
+    }
+
+    // Unreachable: the last step always meets a player with nothing left to spend. Throwing beats
+    // handing the turn to someone who still owes a skip — the bug this bound replaced.
+    throw new Error("Turn advancement exhausted its skip budget without finding a player to play");
   }
 
-  async advanceTurn(isProcessingSquareEffect: boolean): Promise<{
-    playerId: string;
-    name: string;
-    position: number;
-    skippedPlayers: Array<{ playerId: string; name: string }>;
-  } | null> {
+  async advanceTurn(): Promise<NextPlayer | null> {
     const state = this.stateManager.getState();
     const game = state.game as Record<string, unknown> | undefined;
     const players = state.players as Record<string, Record<string, unknown>> | undefined;
@@ -177,7 +172,7 @@ export class TurnManager {
       return null;
     }
 
-    const currentTurn = this.canAdvanceTurn(game, isProcessingSquareEffect);
+    const currentTurn = this.canAdvanceTurn(game);
     if (!currentTurn) {
       return null;
     }
@@ -187,69 +182,25 @@ export class TurnManager {
       return null;
     }
 
-    const nextInfo = this.getNextPlayerInfo(players, playerOrder, currentTurn);
-
     try {
-      const { nextPlayerId, nextPlayer, nextPlayerName, skipTurns } = nextInfo;
-
-      if (skipTurns > 0) {
-        return this.advanceTurnWithSkips(
-          nextPlayerId,
-          nextPlayer,
-          nextPlayerName,
-          skipTurns,
-          isProcessingSquareEffect,
-        );
-      }
-
-      Logger.info(`Auto-advancing turn: ${currentTurn} → ${nextPlayerId}`);
-      this.stateManager.set(GAME_PATH.turn, nextPlayerId);
-
-      const nextPlayerPosition = (nextPlayer?.position as number) || 0;
-
-      return {
-        playerId: nextPlayerId,
-        name: nextPlayerName,
-        position: nextPlayerPosition,
-        skippedPlayers: [],
-      };
+      const next = this.resolveNextPlayerConsumingSkips(players, playerOrder, currentTurn);
+      Logger.info(`Auto-advancing turn: ${currentTurn} → ${next.playerId}`);
+      this.stateManager.set(GAME_PATH.turn, next.playerId);
+      this.restoreParkedRevenge(next.playerId);
+      return next;
     } catch (error) {
       Logger.error("Failed to auto-advance turn:", error);
       return null;
     }
   }
 
-  private applySkipTurns(
-    players: Record<string, Record<string, unknown>>,
-    playerOrder: string[],
-    nextIndex: number,
-  ): { nextPlayerId: string; nextPlayerName: string; nextPlayer: Record<string, unknown> } {
-    let nextPlayerId = playerOrder[nextIndex];
-    let nextPlayer = players[nextPlayerId];
-    let nextPlayerName = (nextPlayer?.name as string) || nextPlayerId;
-    const skipTurns = (nextPlayer?.skipTurns as number) ?? 0;
-    if (skipTurns > 0) {
-      this.stateManager.set(playerStatePath(nextPlayerId, "skipTurns"), skipTurns - 1);
-      Logger.info(`⏭️ Skipping ${nextPlayerName} (power check lose advance)`);
-      const skipIndex = (nextIndex + 1) % playerOrder.length;
-      nextPlayerId = playerOrder[skipIndex];
-      nextPlayer = players[nextPlayerId];
-      nextPlayerName = (nextPlayer?.name as string) || nextPlayerId;
-    }
-    return { nextPlayerId, nextPlayerName, nextPlayer };
-  }
-
   /**
-   * Mechanical turn advance: find next player, handle skipTurns, set game.turn.
+   * Mechanical turn advance: find next player, consume skipTurns, set game.turn.
    * No guards (phase, winner, pending decisions, pending encounter). Used when
    * the caller has already cleared blockers (e.g. power-check lose).
    * @returns Next player details, or null if advance not possible
    */
-  advanceTurnMechanical(): {
-    playerId: string;
-    name: string;
-    position: number;
-  } | null {
+  advanceTurnMechanical(): NextPlayer | null {
     const state = this.stateManager.getState();
     const game = state.game as Record<string, unknown> | undefined;
     const players = state.players as Record<string, Record<string, unknown>> | undefined;
@@ -260,17 +211,24 @@ export class TurnManager {
       return null;
     }
 
-    const currentIndex = playerOrder.indexOf(currentTurn);
-    const nextIndex = (currentIndex + 1) % playerOrder.length;
-    const { nextPlayerId, nextPlayerName, nextPlayer } = this.applySkipTurns(
-      players,
-      playerOrder,
-      nextIndex,
-    );
+    const next = this.resolveNextPlayerConsumingSkips(players, playerOrder, currentTurn);
+    this.stateManager.set(GAME_PATH.turn, next.playerId);
+    this.restoreParkedRevenge(next.playerId);
+    return next;
+  }
 
-    this.stateManager.set(GAME_PATH.turn, nextPlayerId);
-    const position = (nextPlayer?.position as number) ?? 0;
-    return { playerId: nextPlayerId, name: nextPlayerName, position };
+  /**
+   * Puts a parked revenge (Kalimba §2C) back in `game.pending` when its owner's turn comes round.
+   *
+   * The global slot is whatever the player in turn owes, so an opponent's riddle or directional
+   * roll overwrites it while the revenge waits. Restore only — never clear — so the losing player
+   * keeps the revenge visible in `game.pending` for the rest of the turn they lost it on.
+   */
+  private restoreParkedRevenge(playerId: string): void {
+    const parked = this.stateManager.get(playerStatePath(playerId, "pendingRevenge"));
+    if (parked) {
+      this.stateManager.set(GAME_PATH.pending, parked);
+    }
   }
 
   /**

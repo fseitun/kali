@@ -4,38 +4,32 @@ export const enUS = {
     playerCount: "How many players? The maximum is {max}.",
     playerCountInvalid: "Please say a number from {min} to {max}.",
     playerName: "Player {number}, what's your name?",
-    nameInvalid: "Sorry, I didn't catch that. What's your name?",
-    nameConfirm: "{name}, is that correct?",
     nameConfirmYes: "Great, {name}!",
-    nameConfirmRetry: "Okay, what should I call you?",
     nameConflict: "We already have a {name}. How about {suggestion} for you?",
     nameConflictPerfect: "Perfect!",
     nameConflictAlternative: "What would you like to be called instead?",
     nameConflictFallback: "Let's go with {name}.",
     allNamesReady: "Excellent! We have {names}. Let's go!",
+    nameListLastJoiner: " and ",
     ready: "Perfect! Let's begin. {name}, you go first.",
     extractionFailed: "I didn't catch that.",
   },
   game: {
     proactiveStart: "Start the game and explain the current situation.",
+    restarted: "All right, we're starting over. Everyone goes back to the start.",
     turnAnnouncement:
       "{name}, it's your turn. You're at position {position}. Roll the dice and tell me what you got.",
     turnAnnouncementMagicDoor:
       "{name}, it's your turn. You're on square {position}, the magic door. You have {heartsPhrase}. Roll one die only to try to open it: think of it like this, needed die = {target} minus your hearts. With what you have now, you need at least a {minDie} on the die. Tell me what you rolled.",
-    turnHandoff: "Now it's {name}'s turn.",
     turnAnnouncementWithDecision: "{name}, it's your turn. You're at position {position}. {prompt}",
+    turnAnnouncementRevenge:
+      "{name}, it's your revenge roll on square {position}. Roll one die: {power} or more beats {animalScorePhrase} and you move on. Tell me what you rolled.",
     skipTurnAnnouncement: "{name}, you're skipping this turn.",
-    readyToPlay: "Ready to play!",
-    yourTurn: "Your turn, {name}.",
-    moved: "{name} moved to {position}.",
     winner: "{name} won! Congratulations!",
-    position: "You're at position {position}.",
     powerCheckPass: "You passed.",
     powerCheckPassForkPrompt:
       "{name}, you have {remainingSteps} spaces left to move. You're at the fork on square {forkSquare}: say whether you're going to {options}.",
     powerCheckPassLandedAt: "{name}, you landed on square {position}.",
-    powerCheckPassBoardJump:
-      "{name}, you landed on square {fromSquare} and a board shortcut takes you to square {toSquare}{suffix}.",
     afterEncounterRollPrompt:
       "{name}, you're still on square {position}. Roll the dice and tell me what you got.",
     powerCheckFail: "No luck.",
@@ -61,6 +55,10 @@ export const enUS = {
     magicDoorBounce:
       "{name}, on the magic door you must land exactly on square {door}: you overshot to {overshot}, so you bounce back to {final}.",
     forkChoiceAsk: "{name}, {prompt}",
+    forkOptionSeparator: " or ",
+    forkPromptLeftRight: "Do you want to go left or right?",
+    forkPromptTargets: "Do you want to go to {options}?",
+    forkPromptBackward: "Going back, to {options}?",
     helpGameplay:
       "Listen to what I just said and follow that. If you need to roll, say the number you got. If you need to pick a path, say the square number or left or right.",
   },
@@ -72,6 +70,8 @@ export const enUS = {
     directionalMovementBackward: "backward along the path that many spaces",
     directionalMovementForwardRetreat:
       "forward along the path that many spaces (retreat squares are flipped for you after the forest–ocean portal)",
+    encounterOptionsPrompt:
+      "{name}, {kaliLine} {question} Options: A) {a}. B) {b}. C) {c}. D) {d}. Tell me which option is correct.",
     landedBase: "{name}, you're on square {position}: {squareName}.",
     landedWithApplied: "{base} {applied}",
     appliedHeart: "You gain a heart.",
@@ -85,19 +85,18 @@ export const enUS = {
     landedPortalNoChoice:
       " You came through the portal from square {fromSquare}. You stay here — no choice to make.",
     landedTeleportHint: " Say the square number you're on so everyone knows.",
+    goldenFoxAlreadyLeader:
+      "{name}, you landed on square {position}: {squareName}. But you're already in front! The golden fox has nobody to take you to, so you stay here.",
     magicDoorHeartsOne: "one heart",
     magicDoorHeartsMany: "{hearts} hearts",
     magicDoorLanding:
-      "{name}, you landed exactly on square {position} ({squareName}). Your move roll is done — you don't advance further until you open the door. The others play now — {nextPlayer} is next. When it's your turn again, I'll remind you how many hearts you have and you'll roll one die only to open: your die plus your hearts must add up to {target} or more. Right now you have {heartsPhrase}; when you try to open, you'll need at least a {minDie} on the die.",
+      "{name}, you landed exactly on square {position}, the magic door. Your move roll is done — you don't advance further until you open the door. The others play now. When it's your turn again, I'll remind you how many hearts you have and you'll roll one die only to open: your die plus your hearts must add up to {target} or more. Right now you have {heartsPhrase}; when you try to open, you'll need at least a {minDie} on the die.",
   },
   ui: {
-    startButton: "Start",
-    stopButton: "Stop",
     startKali: "Start Kali",
     iosInstallHint:
       "Install this web app on your iPhone: tap the Share icon below and select 'Add to Home Screen'.",
     initializationFailed: "Initialization failed",
-    listeningForCommand: "Listening for command...",
     wakeWordInstruction: 'Say "{wakeWord}" before speaking',
     wakeWordReady: 'Say "{wakeWord}" to wake me up',
     savedGameDetected: 'Saved game detected. Say "{wakeWord}, continue" or "{wakeWord}, new game"',
@@ -105,52 +104,40 @@ export const enUS = {
     versionNoticeMessage: "New version available.",
     versionRefreshButton: "Refresh",
     buildLabel: "Build: ",
-    upToDate: "Up to date",
     status: {
       initializing: "Initializing...",
-      loading: "Loading model...",
       ready: "Ready",
-      listening: "Listening...",
-      processing: "Processing...",
-      speaking: "Speaking...",
-      error: "Error",
     },
   },
   errors: {
     validationFailed: "I couldn't process that.",
     invalidDiceRoll: "That number isn't possible with the dice. Roll again.",
     chooseForkFirst: "You still need to pick a path at the fork. After that you can roll.",
-    resolveSquareEffectFirst: "You still need to finish what's happening on this square first.",
     answerRiddleFirst: "Answer the animal question first. You can roll for your move after that.",
     sayEncounterRollAsAnswer:
       "For this step, just say the number you rolled out loud - not like a normal turn roll yet.",
+    sayRollNumber: "I didn't catch a number. Just say the number you rolled on the dice.",
     finishForkMoveFirst:
       "Pick your path at the fork first (say the target square number). That dice roll already counted for your move.",
-    wrongPhaseForRoll: "That roll isn't what I need right now.",
+    wrongPhaseForRoll: 'The game is already over. If you want to play again, say "new game".',
+    setupNotFinished: "We're still setting the game up. Answer what I just asked you.",
     invalidAnswer: "I didn't catch that. Try again with a clear answer.",
     wrongTurn: "It's not your turn to change that.",
     setStateForbidden: "I can't change that for you.",
     pathNotAllowed: "That move isn't allowed right now.",
     microphoneAccess: "Cannot access microphone.",
-    modelDownload: "Error downloading model.",
     ttsNotSupported: "Text-to-Speech is not supported.",
     somethingWentWrong: "Something went wrong. Please try again.",
-    sttFallbackLocal: "Online transcription failed. Switching to local listening mode.",
     sttOnlineTimeout: "I couldn't hear clearly due to noise. Please repeat.",
     sttOnlineFailed: "Online transcription failed. Let's try again.",
   },
   llm: {
     retrying: "Let me try that again...",
     allRetriesFailed: "I couldn't reach the assistant. Please try again in a moment.",
-    networkError: "I'm having connection problems. Please try again.",
   },
   items: {
     torch: "Torch",
     "anti-wasp": "Anti-wasp suit",
-  },
-  narration: {
-    stateSquareNumber:
-      "Always state the destination square number explicitly (e.g. 'You reached square 145' or 'You're at square 82'). Do not say 'look where you landed' — say the number directly so kids know where they are.",
   },
   nicknames: [
     "the Great",

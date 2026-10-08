@@ -2,7 +2,7 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { GamePhase } from "./types";
 import type { GameState } from "./types";
-import { validateActions } from "./validator";
+import { validateActions, type ValidationResult } from "./validator";
 import type { StateManager } from "@/state-manager";
 
 type MockStateManager = Pick<StateManager, "pathExists" | "getByPath">;
@@ -11,7 +11,6 @@ describe("Product scenario: Rule validation New Primitives", () => {
   let mockState: GameState;
   let mockStateManager: MockStateManager;
   let mockValidatorContext: {
-    isProcessingEffect: boolean;
     allowScenarioOnlyStatePaths?: boolean;
     allowBypassPositionDecisionGate?: boolean;
   };
@@ -64,7 +63,7 @@ describe("Product scenario: Rule validation New Primitives", () => {
       },
     };
 
-    mockValidatorContext = { isProcessingEffect: false };
+    mockValidatorContext = {};
   });
 
   describe("Product scenario: Player rolls", () => {
@@ -329,116 +328,6 @@ describe("Product scenario: Rule validation New Primitives", () => {
     });
   });
 
-  describe("Product scenario: Game asks a riddle", () => {
-    it("Expected outcome: Accepts valid ASK RIDDLE with four options and correct Option", () => {
-      const stateWithRiddle = {
-        ...mockState,
-        game: {
-          ...mockState.game,
-          pending: {
-            position: 5,
-            power: 3,
-            playerId: "p1",
-            kind: "riddle",
-          },
-        },
-      };
-      const actions = [
-        {
-          action: "ASK_RIDDLE",
-          text: "Where does the penguin live?",
-          options: ["Desert", "Ocean", "Arctic", "Forest"],
-          correctOption: "Arctic",
-        },
-      ];
-      const result = validateActions(
-        actions,
-        stateWithRiddle,
-        mockStateManager as unknown as StateManager,
-        mockValidatorContext,
-      );
-      expect(result.valid).toBe(true);
-    });
-
-    it("Expected outcome: Accepts ASK RIDDLE with optional correct Option Synonyms", () => {
-      const stateWithRiddle = {
-        ...mockState,
-        game: {
-          ...mockState.game,
-          pending: { position: 5, power: 3, playerId: "p1", kind: "riddle" },
-        },
-      };
-      const actions = [
-        {
-          action: "ASK_RIDDLE",
-          text: "Q?",
-          options: ["Ballena", "Cangrejo", "Paloma", "Murciélago"],
-          correctOption: "Cangrejo",
-          correctOptionSynonyms: ["crustáceo", "cangrejos"],
-        },
-      ];
-      const result = validateActions(
-        actions,
-        stateWithRiddle,
-        mockStateManager as unknown as StateManager,
-        mockValidatorContext,
-      );
-      expect(result.valid).toBe(true);
-    });
-
-    it("Expected outcome: Rejects ASK RIDDLE with wrong options length", () => {
-      const stateWithRiddle = {
-        ...mockState,
-        game: {
-          ...mockState.game,
-          pending: { position: 5, power: 3, playerId: "p1", kind: "riddle" },
-        },
-      };
-      const actions = [
-        {
-          action: "ASK_RIDDLE",
-          text: "Q?",
-          options: ["A", "B", "C"],
-          correctOption: "A",
-        },
-      ];
-      const result = validateActions(
-        actions,
-        stateWithRiddle,
-        mockStateManager as unknown as StateManager,
-        mockValidatorContext,
-      );
-      expect(result.valid).toBe(false);
-      expect(result.error).toContain("options");
-    });
-
-    it("Expected outcome: Rejects ASK RIDDLE with missing or empty correct Option", () => {
-      const stateWithRiddle = {
-        ...mockState,
-        game: {
-          ...mockState.game,
-          pending: { position: 5, power: 3, playerId: "p1", kind: "riddle" },
-        },
-      };
-      const actions = [
-        {
-          action: "ASK_RIDDLE",
-          text: "Q?",
-          options: ["A", "B", "C", "D"],
-          correctOption: "",
-        },
-      ];
-      const result = validateActions(
-        actions,
-        stateWithRiddle,
-        mockStateManager as unknown as StateManager,
-        mockValidatorContext,
-      );
-      expect(result.valid).toBe(false);
-      expect(result.error).toContain("correctOption");
-    });
-  });
-
   describe("Product scenario: PLAYER ANSWERED during riddle phase", () => {
     it("Expected outcome: Allows any non empty answer when pending riddle has correct Option", () => {
       const stateWithRiddle = {
@@ -627,7 +516,6 @@ describe("Product scenario: Rule validation New Primitives", () => {
             power: 3,
             playerId: "p1",
             riddleCorrect: false,
-            phase: "powerCheck",
           },
         },
         players: {
@@ -1222,29 +1110,14 @@ describe("Product scenario: Rule validation New Primitives", () => {
     });
   });
 
-  describe("Product scenario: Context Aware Validation Square Effect Processing", () => {
-    it("Expected outcome: Blocks PLAYER ROLLED when orchestrator is processing square effect", () => {
+  describe("Product scenario: Context Aware Validation Pending Encounters", () => {
+    it("Expected outcome: Allows PLAYER ROLLED when nothing is pending", () => {
       const actions = [{ action: "PLAYER_ROLLED", value: 4 }];
       const result = validateActions(
         actions,
         mockState,
         mockStateManager as unknown as StateManager,
-        { isProcessingEffect: true },
-      );
-
-      expect(result.valid).toBe(false);
-      expect(result.errorCode).toBe("resolveSquareEffectFirst");
-      expect(result.error).toContain("during square effect processing");
-      expect(result.error).toContain("must be resolved first");
-    });
-
-    it("Expected outcome: Allows PLAYER ROLLED when orchestrator is not processing square effect", () => {
-      const actions = [{ action: "PLAYER_ROLLED", value: 4 }];
-      const result = validateActions(
-        actions,
-        mockState,
-        mockStateManager as unknown as StateManager,
-        { isProcessingEffect: false },
+        mockValidatorContext,
       );
 
       expect(result.valid).toBe(true);
@@ -1417,19 +1290,7 @@ describe("Product scenario: Rule validation New Primitives", () => {
       expect(result.errorCode).toBe("answerRiddleFirst");
     });
 
-    it("Expected outcome: Allows NARRATE during square effect processing", () => {
-      const actions = [{ action: "NARRATE", text: "You encounter an animal!" }];
-      const result = validateActions(
-        actions,
-        mockState,
-        mockStateManager as unknown as StateManager,
-        { isProcessingEffect: true },
-      );
-
-      expect(result.valid).toBe(true);
-    });
-
-    it("Expected outcome: Allows SET STATE for active Choices during square effect processing", () => {
+    it("Expected outcome: Allows SET STATE for active Choices", () => {
       (mockState.players as Record<string, Record<string, unknown>>).p1.activeChoices = {};
 
       const actions = [{ action: "SET_STATE", path: "players.p1.activeChoices", value: { 0: 1 } }];
@@ -1437,37 +1298,10 @@ describe("Product scenario: Rule validation New Primitives", () => {
         actions,
         mockState,
         mockStateManager as unknown as StateManager,
-        { isProcessingEffect: true },
+        mockValidatorContext,
       );
 
       expect(result.valid).toBe(true);
-    });
-
-    it("Expected outcome: Rejects SET STATE for points during square effect (points removed from game)", () => {
-      const actions = [{ action: "SET_STATE", path: "players.p1.points", value: 3 }];
-      const result = validateActions(
-        actions,
-        mockState,
-        mockStateManager as unknown as StateManager,
-        { isProcessingEffect: true },
-      );
-
-      expect(result.valid).toBe(false);
-      expect(result.errorCode).toBe("resolveSquareEffectFirst");
-    });
-
-    it("Expected outcome: Rejects SET STATE for skip Turns during square effect processing", () => {
-      const actions = [{ action: "SET_STATE", path: "players.p1.skipTurns", value: 1 }];
-      const result = validateActions(
-        actions,
-        mockState,
-        mockStateManager as unknown as StateManager,
-        { isProcessingEffect: true },
-      );
-
-      expect(result.valid).toBe(false);
-      expect(result.errorCode).toBe("resolveSquareEffectFirst");
-      expect(result.error).toContain("during square effect processing");
     });
   });
 
@@ -1542,6 +1376,30 @@ describe("Product scenario: Rule validation New Primitives", () => {
       expect(result.error).toContain("INVALID_ACTION");
     });
 
+    it("Expected outcome: Rejects a batch that would say nothing at all", () => {
+      const run = (actions: unknown[]): ValidationResult =>
+        validateActions(
+          actions,
+          mockState,
+          mockStateManager as unknown as StateManager,
+          mockValidatorContext,
+        );
+
+      // Voice-only: a lone empty NARRATE reports success and leaves the table in silence.
+      expect(run([{ action: "NARRATE", text: "" }]).valid).toBe(false);
+      expect(run([{ action: "NARRATE", text: "   \n" }]).valid).toBe(false);
+      expect(run([{ action: "NARRATE", text: "" }]).errorCode).toBe("invalidActionFormat");
+
+      // A blank NARRATE riding along with real work is not silence: the orchestrator speaks the
+      // deterministic movement line, so the roll must still be applied.
+      expect(
+        run([
+          { action: "PLAYER_ROLLED", value: 3 },
+          { action: "NARRATE", text: "" },
+        ]).valid,
+      ).toBe(true);
+    });
+
     it("Expected outcome: Rejects non array input", () => {
       const actions = { action: "NARRATE", text: "Not an array" };
       const result = validateActions(
@@ -1553,6 +1411,296 @@ describe("Product scenario: Rule validation New Primitives", () => {
       expect(result.valid).toBe(false);
       expect(result.errorCode).toBe("invalidActionFormat");
       expect(result.error).toContain("must be an array");
+    });
+  });
+
+  describe("Product scenario: SET STATE authority (whole object and nested paths)", () => {
+    const run = (actions: unknown[], context = mockValidatorContext): ValidationResult =>
+      validateActions(actions, mockState, mockStateManager as unknown as StateManager, context);
+
+    it("Expected outcome: Rejects writing the whole game object", () => {
+      const actions = [
+        {
+          action: "SET_STATE",
+          path: "game",
+          value: { phase: "FINISHED", winner: "p1", turn: "p1", playerOrder: ["p1"] },
+        },
+      ];
+      const result = run(actions);
+      expect(result.valid).toBe(false);
+      expect(result.errorCode).toBe("pathNotAllowed");
+    });
+
+    it("Expected outcome: Rejects nested paths under game.pending", () => {
+      const correct = run([
+        { action: "SET_STATE", path: "game.pending.riddleCorrect", value: true },
+      ]);
+      expect(correct.valid).toBe(false);
+      expect(correct.errorCode).toBe("setStateForbidden");
+
+      const option = run([
+        { action: "SET_STATE", path: "game.pending.correctOption", value: "Cobra" },
+      ]);
+      expect(option.valid).toBe(false);
+      expect(option.errorCode).toBe("setStateForbidden");
+    });
+
+    it("Expected outcome: Scenario null escape hatch covers only game.pending itself", () => {
+      const scenarioContext = { ...mockValidatorContext, allowScenarioOnlyStatePaths: true };
+
+      const nested = run(
+        [{ action: "SET_STATE", path: "game.pending.riddleCorrect", value: null }],
+        scenarioContext,
+      );
+      expect(nested.valid).toBe(false);
+      expect(nested.errorCode).toBe("setStateForbidden");
+
+      const exact = run(
+        [{ action: "SET_STATE", path: "game.pending", value: null }],
+        scenarioContext,
+      );
+      expect(exact.valid).toBe(true);
+    });
+
+    it("Expected outcome: Rejects writing a whole player object", () => {
+      const actions = [
+        {
+          action: "SET_STATE",
+          path: "players.p1",
+          value: { id: "p1", name: "Player 1", position: 180 },
+        },
+      ];
+      const result = run(actions);
+      expect(result.valid).toBe(false);
+      expect(result.errorCode).toBe("pathNotAllowed");
+    });
+
+    it("Expected outcome: Rejects game.playerOrder and board topology", () => {
+      const order = run([{ action: "SET_STATE", path: "game.playerOrder", value: ["p1"] }]);
+      expect(order.valid).toBe(false);
+      expect(order.errorCode).toBe("setStateForbidden");
+
+      (mockState as Record<string, unknown>).board = { squares: { "5": { next: [6] } } };
+      const board = run([{ action: "SET_STATE", path: "board.squares.5.next", value: [99] }]);
+      expect(board.valid).toBe(false);
+      expect(board.errorCode).toBe("pathNotAllowed");
+    });
+
+    it("Expected outcome: Rejects reserved prototype segments", () => {
+      const proto = run([{ action: "SET_STATE", path: "players.p1.__proto__", value: {} }]);
+      expect(proto.valid).toBe(false);
+      expect(proto.errorCode).toBe("pathNotAllowed");
+
+      const ctor = run([{ action: "SET_STATE", path: "game.constructor", value: {} }]);
+      expect(ctor.valid).toBe(false);
+      expect(ctor.errorCode).toBe("pathNotAllowed");
+    });
+
+    it("Expected outcome: Still allows player field corrections and game.lastRoll", () => {
+      expect(run([{ action: "SET_STATE", path: "players.p1.position", value: 10 }]).valid).toBe(
+        true,
+      );
+      expect(run([{ action: "SET_STATE", path: "players.p1.hearts", value: 3 }]).valid).toBe(true);
+      expect(run([{ action: "SET_STATE", path: "game.lastRoll", value: 5 }]).valid).toBe(true);
+    });
+  });
+
+  describe("Product scenario: SET STATE value shape", () => {
+    const run = (actions: unknown[]): ValidationResult =>
+      validateActions(
+        actions,
+        mockState,
+        mockStateManager as unknown as StateManager,
+        mockValidatorContext,
+      );
+
+    it("Expected outcome: Rejects a spoken number sent as a string position", () => {
+      const result = run([{ action: "SET_STATE", path: "players.p1.position", value: "50" }]);
+      expect(result.valid).toBe(false);
+      expect(result.errorCode).toBe("invalidActionFormat");
+    });
+
+    it("Expected outcome: Rejects negative, fractional and off board positions", () => {
+      expect(run([{ action: "SET_STATE", path: "players.p1.position", value: -5 }]).valid).toBe(
+        false,
+      );
+      expect(run([{ action: "SET_STATE", path: "players.p1.position", value: 3.7 }]).valid).toBe(
+        false,
+      );
+      expect(run([{ action: "SET_STATE", path: "players.p1.position", value: 9999 }]).valid).toBe(
+        false,
+      );
+    });
+
+    it("Expected outcome: Rejects a value whose type differs from the stored one", () => {
+      const result = run([{ action: "SET_STATE", path: "players.p1.hearts", value: "3" }]);
+      expect(result.valid).toBe(false);
+      expect(result.errorCode).toBe("invalidActionFormat");
+    });
+  });
+
+  describe("Product scenario: Phase gate", () => {
+    const runWithPhase = (actions: unknown[], phase: GamePhase): ValidationResult => {
+      (mockState.game as Record<string, unknown>).phase = phase;
+      return validateActions(
+        actions,
+        mockState,
+        mockStateManager as unknown as StateManager,
+        mockValidatorContext,
+      );
+    };
+
+    it("Expected outcome: Rejects rolls after the game is finished", () => {
+      const result = runWithPhase([{ action: "PLAYER_ROLLED", value: 4 }], GamePhase.FINISHED);
+      expect(result.valid).toBe(false);
+      expect(result.errorCode).toBe("wrongPhaseForRoll");
+    });
+
+    it("Expected outcome: Rejects rolls and answers during setup", () => {
+      expect(runWithPhase([{ action: "PLAYER_ROLLED", value: 4 }], GamePhase.SETUP).valid).toBe(
+        false,
+      );
+      expect(
+        runWithPhase([{ action: "PLAYER_ANSWERED", answer: "4" }], GamePhase.SETUP).valid,
+      ).toBe(false);
+    });
+
+    it("Expected outcome: Rejects answers after the game is finished", () => {
+      const result = runWithPhase([{ action: "PLAYER_ANSWERED", answer: "4" }], GamePhase.FINISHED);
+      expect(result.valid).toBe(false);
+      expect(result.errorCode).toBe("wrongPhaseForRoll");
+    });
+
+    it("Expected outcome: Keeps SET STATE available in setup but not after the win", () => {
+      const setup = runWithPhase(
+        [{ action: "SET_STATE", path: "players.p1.name", value: "Sofía" }],
+        GamePhase.SETUP,
+      );
+      expect(setup.valid).toBe(true);
+
+      const finished = runWithPhase(
+        [{ action: "SET_STATE", path: "players.p1.name", value: "Sofía" }],
+        GamePhase.FINISHED,
+      );
+      expect(finished.valid).toBe(false);
+      expect(finished.errorCode).toBe("setStateForbidden");
+    });
+
+    it("Expected outcome: Still narrates after the game is finished", () => {
+      expect(
+        runWithPhase([{ action: "NARRATE", text: "¡Ganaste!" }], GamePhase.FINISHED).valid,
+      ).toBe(true);
+    });
+  });
+
+  describe("Product scenario: Roll and answer shape", () => {
+    it("Expected outcome: Rejects fractional dice rolls", () => {
+      const result = validateActions(
+        [{ action: "PLAYER_ROLLED", value: 3.5 }],
+        mockState,
+        mockStateManager as unknown as StateManager,
+        mockValidatorContext,
+      );
+      expect(result.valid).toBe(false);
+      expect(result.errorCode).toBe("invalidActionFormat");
+    });
+
+    it("Expected outcome: Accepts a word answer that merely starts with A or B at a fork game", () => {
+      (mockState as Record<string, unknown>).board = {
+        squares: { "0": { next: [1, 15], prev: [] } },
+      };
+      (mockState.players as Record<string, Record<string, unknown>>).p1.position = 5;
+
+      const result = validateActions(
+        [{ action: "PLAYER_ANSWERED", answer: "Bosque" }],
+        mockState,
+        mockStateManager as unknown as StateManager,
+        mockValidatorContext,
+      );
+      expect(result.valid).toBe(true);
+    });
+  });
+
+  describe("Product scenario: Pending roll answers", () => {
+    const stateWithPowerCheck = (mock: GameState): GameState => ({
+      ...mock,
+      game: {
+        ...mock.game,
+        turn: "p1",
+        pending: {
+          position: 16,
+          power: 4,
+          playerId: "p1",
+          kind: "powerCheck",
+          riddleCorrect: true,
+        },
+      },
+    });
+
+    it("Expected outcome: Rejects an answer with two numbers instead of scoring a false win", () => {
+      const result = validateActions(
+        [{ action: "PLAYER_ANSWERED", answer: "1 y 6" }],
+        stateWithPowerCheck(mockState),
+        mockStateManager as unknown as StateManager,
+        mockValidatorContext,
+      );
+      expect(result.valid).toBe(false);
+      expect(result.errorCode).toBe("invalidDiceRoll");
+    });
+
+    it("Expected outcome: Asks again for the number when the answer is a word no path can read", () => {
+      const result = validateActions(
+        [{ action: "PLAYER_ANSWERED", answer: "por el bosque" }],
+        stateWithPowerCheck(mockState),
+        mockStateManager as unknown as StateManager,
+        mockValidatorContext,
+      );
+      expect(result.valid).toBe(false);
+      expect(result.errorCode).toBe("sayRollNumber");
+    });
+
+    it("Expected outcome: Still accepts a single number in range", () => {
+      const result = validateActions(
+        [{ action: "PLAYER_ANSWERED", answer: "tiré un 7" }],
+        stateWithPowerCheck(mockState),
+        mockStateManager as unknown as StateManager,
+        mockValidatorContext,
+      );
+      expect(result.valid).toBe(true);
+    });
+  });
+
+  describe("Product scenario: Interpreter tries to ask its own riddle", () => {
+    const askRiddle = {
+      action: "ASK_RIDDLE",
+      text: "¿Quién soy?",
+      options: ["Cobra", "Jirafa", "Morsa", "Águila"],
+      correctOption: "Cobra",
+    };
+    const run = (actions: unknown[]): ValidationResult =>
+      validateActions(
+        actions,
+        mockState,
+        mockStateManager as unknown as StateManager,
+        mockValidatorContext,
+      );
+
+    it("Expected outcome: Rejects ASK RIDDLE outright, riddles come from the deterministic bank", () => {
+      const result = run([askRiddle]);
+      expect(result.valid).toBe(false);
+      expect(result.errorCode).toBe("invalidActionFormat");
+    });
+
+    it("Expected outcome: Cannot overwrite the riddle already stored in pending", () => {
+      (mockState.game as Record<string, unknown>).pending = {
+        kind: "riddle",
+        playerId: "p1",
+        riddleOptions: ["Cobra", "Jirafa", "Morsa", "Águila"],
+        correctOption: "Morsa",
+      };
+      const result = run([askRiddle]);
+      expect(result.valid).toBe(false);
+      expect(mockState.game.pending).toMatchObject({ correctOption: "Morsa" });
     });
   });
 });

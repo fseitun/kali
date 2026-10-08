@@ -2,7 +2,7 @@ import type { LLMClient } from "./LLMClient";
 import type { GameState, PrimitiveAction } from "@/orchestrator/types";
 import { Logger } from "@/utils/logger";
 
-export type MockScenario = "happy-path" | "scripted";
+type MockScenario = "happy-path" | "scripted";
 
 /**
  * Mock LLM client for development (no API key) and tests.
@@ -49,9 +49,10 @@ export class MockLLMClient implements LLMClient {
     Logger.info(`MockLLMClient.extractName: "${transcript}"`);
 
     // Simple pattern matching for common name phrases
+    // Unicode-aware like the real client: "me llamo Sofía" must not become "Sof".
     const patterns = [
-      /(?:call me|my name is|llámame|me llamo|i am|soy)\s+(\w+)/i,
-      /^(\w+)$/i, // Just a single word
+      /(?:call me|my name is|llámame|me llamo|i am|soy)\s+([\p{L}\p{N}'-]+)/iu,
+      /^([\p{L}\p{N}'-]+)$/u, // Just a single word
     ];
 
     for (const pattern of patterns) {
@@ -149,7 +150,13 @@ export class MockLLMClient implements LLMClient {
       return [];
     }
 
-    const index = Math.min(this.callCount - 1, this.scriptedResponses.length - 1);
+    const index = this.callCount - 1;
+    if (index >= this.scriptedResponses.length) {
+      // Replaying the last entry hides missing llmScript steps; fail where the gap is.
+      throw new Error(
+        `MockLLMClient: scripted responses exhausted at call #${String(this.callCount)} (${String(this.scriptedResponses.length)} scripted). Add the missing llmScript entry.`,
+      );
+    }
     return this.scriptedResponses[index];
   }
 
@@ -206,14 +213,6 @@ export class MockLLMClient implements LLMClient {
 
   private sleep(ms: number): Promise<void> {
     return new Promise((resolve) => setTimeout(resolve, ms));
-  }
-
-  /**
-   * Reset the call counter (useful for testing)
-   */
-  reset(): void {
-    this.callCount = 0;
-    Logger.info("MockLLMClient: Call counter reset");
   }
 
   /**

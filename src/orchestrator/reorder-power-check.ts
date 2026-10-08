@@ -14,35 +14,31 @@ export function isPowerCheckNumericAnswer(answer: string): boolean {
  * PLAYER_ROLLED and PLAYER_ANSWERED (numeric), reorder so all power-check answers run before
  * any PLAYER_ROLLED. Ensures "Pasaste" is spoken before square-effect narration (e.g. plants).
  */
+function isPowerCheckAnswerAction(a: PrimitiveAction): boolean {
+  return (
+    a.action === "PLAYER_ANSWERED" &&
+    "answer" in a &&
+    typeof (a as { answer: string }).answer === "string" &&
+    isPowerCheckNumericAnswer((a as { answer: string }).answer)
+  );
+}
+
 export function reorderPowerCheckBeforeRoll(
   actions: PrimitiveAction[],
   state: GameState,
 ): PrimitiveAction[] {
   const game = state.game as Record<string, unknown> | undefined;
-  const pending = game?.pending as { kind?: string } | null | undefined;
+  const pending = game?.pending as { kind?: string; playerId?: string } | null | undefined;
   const kind = pending?.kind;
-  if (kind !== "powerCheck" && kind !== "revenge") {
+  // Only the current player's own power check reorders their batch; another player's surviving
+  // encounter must not reshuffle this turn's actions.
+  if ((kind !== "powerCheck" && kind !== "revenge") || pending?.playerId !== game?.turn) {
     return actions;
   }
   const hasRoll = actions.some((a) => a.action === "PLAYER_ROLLED");
-  const powerCheckAnswers = actions.filter(
-    (a) =>
-      a.action === "PLAYER_ANSWERED" &&
-      "answer" in a &&
-      typeof (a as { answer: string }).answer === "string" &&
-      isPowerCheckNumericAnswer((a as { answer: string }).answer),
-  );
+  const powerCheckAnswers = actions.filter(isPowerCheckAnswerAction);
   if (!hasRoll || powerCheckAnswers.length === 0) {
     return actions;
   }
-  const rest = actions.filter(
-    (a) =>
-      !(
-        a.action === "PLAYER_ANSWERED" &&
-        "answer" in a &&
-        typeof (a as { answer: string }).answer === "string" &&
-        isPowerCheckNumericAnswer((a as { answer: string }).answer)
-      ),
-  );
-  return [...powerCheckAnswers, ...rest];
+  return [...powerCheckAnswers, ...actions.filter((a) => !isPowerCheckAnswerAction(a))];
 }

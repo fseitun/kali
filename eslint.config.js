@@ -8,8 +8,7 @@ export default tseslint.config(
   ...tseslint.configs.recommended,
   prettierConfig,
   {
-    // worker/ is a separate Cloudflare deploy target with its own runtime types and tsconfig.
-    ignores: ["dist/**", "node_modules/**", "public/**", "worker/**", "eslint.config.js"],
+    ignores: ["dist/**", "node_modules/**", "public/**", "eslint.config.js"],
   },
   {
     files: ["src/audio-worklet/*.js"],
@@ -75,6 +74,16 @@ export default tseslint.config(
       "no-param-reassign": "error",
       "@typescript-eslint/no-floating-promises": "error",
       curly: ["error", "all"],
+    },
+  },
+  {
+    // worker/ is a separate Cloudflare deploy target: workerd globals, its own tsconfig.
+    files: ["worker/**/*.ts"],
+    languageOptions: {
+      parserOptions: {
+        project: "./worker/tsconfig.json",
+        tsconfigRootDir: import.meta.dirname,
+      },
     },
   },
   {

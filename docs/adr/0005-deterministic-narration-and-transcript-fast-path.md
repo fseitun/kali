@@ -2,17 +2,17 @@
 
 ## Status
 
-Accepted
+Accepted. Amended by [ADR 0006](0006-remove-ask-riddle-primitive.md): the riddle bank landed, so the `ASK_RIDDLE` carve-out in Decision 1 is withdrawn and the primitive is gone.
 
 ## Context
 
 Kali’s voice loop paid an LLM round-trip for work the orchestrator already knows how to do: fork prompts, most special-square landing copy, and rigid user replies (digits for pending rolls, option indices for riddles, pure-digit movement rolls, “help”-style queries). That added latency, cost, and variance without strengthening authority—the orchestrator still had to validate every primitive.
 
-Animal encounters (riddle trivia generation and grading policy) remain interpreter-assisted for now; a follow-up is sketched in [`docs/plans/riddle-bank-llm-removal.md`](../plans/riddle-bank-llm-removal.md).
+Animal encounters (riddle trivia generation and grading policy) were still interpreter-assisted when this was written; the follow-up sketched in [`docs/plans/riddle-bank-llm-removal.md`](../plans/riddle-bank-llm-removal.md) has since landed (ADR 0006).
 
 ## Decision
 
-1. **Orchestrator-owned narration (no nested LLM)** — Fork enforcement and **non-animal** square landings speak via `ISpeechService` and i18n (`DecisionPointEnforcer`, `BoardEffectsHandler`). Do not route those prompts through `processTranscript` / `getActions` as synthetic `[SYSTEM:…]` transcripts. Animal encounter landings may still invoke the interpreter for `ASK_RIDDLE` + `NARRATE` until the riddle-bank plan lands.
+1. **Orchestrator-owned narration (no nested LLM)** — Fork enforcement and **non-animal** square landings speak via `ISpeechService` and i18n (`DecisionPointEnforcer`, `BoardEffectsHandler`). Do not route those prompts through `processTranscript` / `getActions` as synthetic `[SYSTEM:…]` transcripts. ~~Animal encounter landings may still invoke the interpreter for `ASK_RIDDLE` + `NARRATE` until the riddle-bank plan lands.~~ The bank landed; animal landings are deterministic too (ADR 0006).
 
 2. **Transcript fast path** — Before calling `getActions`, attempt pattern-based mapping to the same `PrimitiveAction[]` shape the model would return (`tryFastPathTranscript` in [`src/orchestrator/transcript-fast-path.ts`](../../src/orchestrator/transcript-fast-path.ts)). Fast-path output must run through the **same** validation and execution pipeline as LLM output—no duplicate game logic in the app layer.
 
@@ -28,6 +28,6 @@ Animal encounters (riddle trivia generation and grading policy) remain interpret
 ## Links
 
 - Rules: [`CLAUDE.md`](../../CLAUDE.md) (architecture, state axioms), [ADR 0003](0003-always-prompt-next-player-action.md) (next-action voice UX)
-- Plan (deferred): [`docs/plans/riddle-bank-llm-removal.md`](../plans/riddle-bank-llm-removal.md)
+- Plan (landed): [`docs/plans/riddle-bank-llm-removal.md`](../plans/riddle-bank-llm-removal.md)
 - Code: [`src/orchestrator/transcript-fast-path.ts`](../../src/orchestrator/transcript-fast-path.ts), [`src/orchestrator/decision-point-enforcer.ts`](../../src/orchestrator/decision-point-enforcer.ts), [`src/orchestrator/board-effects-handler.ts`](../../src/orchestrator/board-effects-handler.ts), [`src/llm/interpretation-contract.ts`](../../src/llm/interpretation-contract.ts), [`src/llm/state-context.ts`](../../src/llm/state-context.ts)
 - Tests: [`src/orchestrator/transcript-fast-path.test.ts`](../../src/orchestrator/transcript-fast-path.test.ts), [`src/orchestrator/orchestrator.integration.test.ts`](../../src/orchestrator/orchestrator.integration.test.ts), [`src/orchestrator/orchestrator-authority.test.ts`](../../src/orchestrator/orchestrator-authority.test.ts)

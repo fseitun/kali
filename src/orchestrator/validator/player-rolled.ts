@@ -2,7 +2,7 @@ import { isMagicDoorOpeningRollState } from "../board-helpers";
 import { forkChoiceBlockingValidation } from "../fork-roll-policy";
 import type { GameState, PrimitiveAction } from "../types";
 import { validateField } from "./common";
-import type { ValidationResult, ValidatorContext } from "./types";
+import type { ValidationResult } from "./types";
 
 type Pending = { kind?: string; playerId?: string } | null | undefined;
 
@@ -59,25 +59,6 @@ function checkPendingBlocksRoll(
   return null;
 }
 
-function validatePlayerRolledPhaseRestrictions(
-  state: GameState,
-  index: number,
-  context: ValidatorContext,
-): ValidationResult | null {
-  const game = state.game as Record<string, unknown> | undefined;
-  const currentTurn = game?.turn as string | undefined;
-  const pending = game?.pending as Pending;
-
-  if (context.isProcessingEffect) {
-    return {
-      valid: false,
-      errorCode: "resolveSquareEffectFirst",
-      error: `PLAYER_ROLLED at index ${index}: Cannot roll dice during square effect processing. The square effect must be resolved first (fight/flee decision, etc.).`,
-    };
-  }
-  return checkPendingBlocksRoll(pending, currentTurn, index);
-}
-
 function getRollLimits(state: GameState): { min: number; max: number; label: string } {
   if (isMagicDoorOpeningRollState(state)) {
     return { min: 1, max: 6, label: "1d6" };
@@ -107,27 +88,43 @@ function validatePlayerRolledValueRange(
   return null;
 }
 
-export function validatePlayerRolled(
+function validatePlayerRolledValueShape(
   action: PrimitiveAction,
-  state: GameState,
   index: number,
-  context: ValidatorContext,
-): ValidationResult {
+): ValidationResult | null {
   const actionRecord = action as unknown as Record<string, unknown>;
   const valueValidation = validateField(actionRecord, "value", "number", "PLAYER_ROLLED", index);
   if (!valueValidation.valid) {
     return valueValidation;
   }
 
-  if ("value" in action && typeof action.value === "number" && action.value <= 0) {
+  const value = actionRecord.value;
+  if (typeof value === "number" && (value <= 0 || !Number.isInteger(value))) {
     return {
       valid: false,
-      error: `PLAYER_ROLLED at index ${index} requires positive value, got ${action.value}`,
+      error: `PLAYER_ROLLED at index ${index} requires positive value, got ${value}`,
       errorCode: "invalidActionFormat",
     };
   }
+  return null;
+}
 
-  const phaseErr = validatePlayerRolledPhaseRestrictions(state, index, context);
+export function validatePlayerRolled(
+  action: PrimitiveAction,
+  state: GameState,
+  index: number,
+): ValidationResult {
+  const shapeErr = validatePlayerRolledValueShape(action, index);
+  if (shapeErr) {
+    return shapeErr;
+  }
+
+  const game = state.game as Record<string, unknown> | undefined;
+  const phaseErr = checkPendingBlocksRoll(
+    game?.pending as Pending,
+    game?.turn as string | undefined,
+    index,
+  );
   if (phaseErr) {
     return phaseErr;
   }

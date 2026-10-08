@@ -72,6 +72,17 @@ describe("Product scenario: Name helper", () => {
       });
     });
 
+    it("Expected outcome: Should preserve accented and non ASCII letters (es AR default locale)", () => {
+      expect(validateName("Sofía")).toEqual({ valid: true, cleaned: "Sofía" });
+      expect(validateName("José")).toEqual({ valid: true, cleaned: "José" });
+      expect(validateName("Martín")).toEqual({ valid: true, cleaned: "Martín" });
+      expect(validateName("Ñoño")).toEqual({ valid: true, cleaned: "Ñoño" });
+      expect(validateName("Renée Ürsula")).toEqual({
+        valid: true,
+        cleaned: "Renée Ürsula",
+      });
+    });
+
     it("Expected outcome: Should preserve allowed special characters", () => {
       expect(validateName("O'Connor")).toEqual({
         valid: true,

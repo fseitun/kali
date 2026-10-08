@@ -7,6 +7,7 @@ import { getDecisionPointApplyState } from "./decision-helpers";
 import { forkChoiceBlockingValidation, getMovementDirectionForState } from "./fork-roll-policy";
 import {
   getPendingRollSpec,
+  isPendingRiddleForCurrentTurn,
   isPendingRollKind,
   type Pending,
   type PendingPowerCheck,
@@ -15,9 +16,8 @@ import {
 } from "./pending-types";
 import { resolveRiddleAnswerToOption } from "./riddle-answer";
 import { parseRollLikeInput } from "./roll-parser";
-import type { ExecutionContext, GameState, PrimitiveAction } from "./types";
+import type { GameState, PrimitiveAction } from "./types";
 import { validatePlayerRolled } from "./validator/player-rolled";
-import type { ValidatorContext } from "./validator/types";
 import { t } from "@/i18n/translations";
 
 const HELP_RE =
@@ -25,12 +25,6 @@ const HELP_RE =
 
 function trimTranscript(transcript: string): string {
   return transcript.trim();
-}
-
-function isPendingAnimalRiddleForCurrentTurn(game: Record<string, unknown> | undefined): boolean {
-  const currentTurn = game?.turn as string | undefined;
-  const pending = game?.pending as { kind?: string; playerId?: string } | null | undefined;
-  return pending?.kind === "riddle" && Boolean(currentTurn) && pending.playerId === currentTurn;
 }
 
 function parseSingleInt(transcript: string): number | null {
@@ -56,7 +50,7 @@ function tryRiddleFastPath(
   trimmed: string,
   game: Record<string, unknown> | undefined,
 ): PrimitiveAction[] | null {
-  if (!isPendingAnimalRiddleForCurrentTurn(game)) {
+  if (!isPendingRiddleForCurrentTurn(game)) {
     return null;
   }
   const pending = game?.pending as {
@@ -139,45 +133,25 @@ function tryForkAnswerFastPath(
   return [{ action: "PLAYER_ANSWERED", answer: trimmed }];
 }
 
-function tryMovementRollFastPath(
-  state: GameState,
-  trimmed: string,
-  validatorContext: ValidatorContext,
-): PrimitiveAction[] | null {
-  if (validatorContext.isProcessingEffect) {
-    return null;
-  }
+function tryMovementRollFastPath(state: GameState, trimmed: string): PrimitiveAction[] | null {
   const rollValue = parseSingleInt(trimmed);
   if (rollValue === null) {
     return null;
   }
   const rolled: PrimitiveAction = { action: "PLAYER_ROLLED", value: rollValue };
-  const v = validatePlayerRolled(rolled, state, 0, validatorContext);
+  const v = validatePlayerRolled(rolled, state, 0);
   if (!v.valid) {
     return null;
   }
   return [rolled];
 }
 
-/**
- * If the transcript can be mapped to primitives without the LLM, returns those actions.
- * Otherwise returns null (caller should call the LLM).
- *
- * @param state - Current game state
- * @param transcript - Raw user transcript
- * @param context - Execution context; skipped when nested
- * @param validatorContext - Same as validateActions (e.g. isProcessingEffect)
- */
 function readFastPathGameContext(
   transcript: string,
-  context: ExecutionContext,
   state: GameState,
 ): { trimmed: string; game: Record<string, unknown>; currentTurn: string | undefined } | null {
-  if (context.isNestedCall) {
-    return null;
-  }
   const trimmed = trimTranscript(transcript);
-  if (!trimmed || trimmed.startsWith("[SYSTEM:")) {
+  if (!trimmed) {
     return null;
   }
   const game = state.game as Record<string, unknown> | undefined;
@@ -191,13 +165,18 @@ function readFastPathGameContext(
   };
 }
 
+/**
+ * If the transcript can be mapped to primitives without the LLM, returns those actions.
+ * Otherwise returns null (caller should call the LLM).
+ *
+ * @param state - Current game state
+ * @param transcript - Raw user transcript
+ */
 export function tryFastPathTranscript(
   state: GameState,
   transcript: string,
-  context: ExecutionContext,
-  validatorContext: ValidatorContext,
 ): PrimitiveAction[] | null {
-  const ctx = readFastPathGameContext(transcript, context, state);
+  const ctx = readFastPathGameContext(transcript, state);
   if (!ctx) {
     return null;
   }
@@ -219,5 +198,5 @@ export function tryFastPathTranscript(
   if (fork) {
     return fork;
   }
-  return tryMovementRollFastPath(state, trimmed, validatorContext);
+  return tryMovementRollFastPath(state, trimmed);
 }

@@ -636,7 +636,6 @@ class StateManager {
 
 - `src/orchestrator/name-collector.ts`
 - `src/state-manager.ts`
-- `src/wake-word.ts`
 
 ---
 
@@ -695,8 +694,7 @@ class StateManager {
 
 **Files:**
 
-- `src/audio-worklet/vosk-processor.js`
-- `src/wake-word.ts`
+- `src/audio-worklet/pcm-processor.js`
 
 **Note:** Only needed if performance issues observed
 
@@ -722,25 +720,6 @@ class StateManager {
 
 ---
 
-### Improve Model Download Error Recovery 🎨
-
-**Value: 5/10 | Complexity: 4/10 | Ratio: 1.25**
-
-**Problem:** If model download fails, app shows error but no retry mechanism.
-
-**Implementation:**
-
-- Add retry button/mechanism for failed downloads
-- Show progress more clearly (currently just percentage)
-- Consider chunked download with resume capability for poor connections
-
-**Files:**
-
-- `src/model-manager.ts`
-- `src/main.ts`
-
----
-
 ### PWA Manifest: Screenshots & Square Icons 🎨
 
 **Value: 3/10 | Complexity: 2/10 | Ratio: 1.5 | Priority: Low**
@@ -750,28 +729,13 @@ class StateManager {
 **Implementation:**
 
 - Add `screenshots` to manifest: one with `form_factor: "wide"` (desktop), one with `form_factor: "narrow"` or unset (mobile); add `public/screenshot-wide.png` and `public/screenshot-narrow.png` (real app screenshots).
-- Add square PNG icons: `public/icon-192.png` and `public/icon-512.png` (or generate from existing SVGs); add PNG entries to `manifest.icons` in `vite.config.ts` and `public/manifest.json`.
+- Add square PNG icons: `public/icon-192.png` and `public/icon-512.png` (or generate from existing SVGs); add PNG entries to `manifest.icons` in `vite.config.ts` (the sole manifest source since VitePWA generates `/manifest.webmanifest`).
 - Ensure icon/screenshot paths work in production (root-relative, assets in `public/`).
 
 **Files:**
 
 - `vite.config.ts` (VitePWA `manifest.icons` and `manifest.screenshots`)
-- `public/manifest.json`
 - `public/` (new: `icon-192.png`, `icon-512.png`, `screenshot-wide.png`, `screenshot-narrow.png`)
-
----
-
-### Revisit: Vosk Model Source (alphacephei CDN) 🔄
-
-**Value: 6/10 | Complexity: 3/10 | Ratio: 2.0**
-
-**Context:** Model now defaults to alphacephei.com CDN (no public/ shipping). AlphaCephei is the canonical Vosk maintainer but is a small Russia-based operation with no hosting SLA. CORS may block fetch in some environments.
-
-**Revisit:**
-
-- Monitor alphacephei reliability and CORS behavior in production
-- If issues arise: consider self-hosting the model on project CDN (S3/R2), or publishing an npm package (e.g. `@kali/vosk-model-es`) served via jsDelivr (CORS-enabled)
-- Update docs with real-world findings
 
 ---
 

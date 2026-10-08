@@ -43,8 +43,61 @@ function validateSquareAtEnd(sq: SquareData, boardLength: number): void {
   }
 }
 
-function validateSquareMiddle(_key: string, _sq: SquareData): void {
-  // Middle squares may omit next and/or prev; board-next applies i±1 fallbacks at runtime.
+const EDGE_FIELDS = ["next", "prev", "nextOnLanding", "prevOnLanding"] as const;
+
+function assertEdgeTarget(target: unknown, key: string, field: string, winPosition: number): void {
+  if (
+    typeof target !== "number" ||
+    !Number.isInteger(target) ||
+    target < 0 ||
+    target > winPosition
+  ) {
+    throw new Error(
+      `Invalid game config: square ${key} ${field} target ${JSON.stringify(target)} must be an integer in 0..${String(winPosition)}`,
+    );
+  }
+  if (target === Number(key)) {
+    throw new Error(
+      `Invalid game config: square ${key} ${field} target ${String(target)} points at itself — the player would never leave the square`,
+    );
+  }
+}
+
+function validateEdgeField(key: string, field: string, edges: unknown, winPosition: number): void {
+  if (Array.isArray(edges)) {
+    for (const target of edges) {
+      assertEdgeTarget(target, key, field, winPosition);
+    }
+    return;
+  }
+  const isFork = (field === "next" || field === "prev") && typeof edges === "object";
+  if (isFork) {
+    for (const forkKey of Object.keys(edges as object)) {
+      if (!/^\d+$/.test(forkKey)) {
+        throw new Error(
+          `Invalid game config: square ${key} ${field} fork key "${forkKey}" must be a square index`,
+        );
+      }
+      assertEdgeTarget(Number(forkKey), key, field, winPosition);
+    }
+    return;
+  }
+  throw new Error(
+    `Invalid game config: square ${key} ${field} must be an array of square indices, got ${JSON.stringify(edges)}`,
+  );
+}
+
+/**
+ * Every authored edge must land on a real square. Missing next/prev are fine — board traversal
+ * applies the i±1 linear fallbacks at runtime.
+ */
+function validateSquareEdges(key: string, sq: SquareData, winPosition: number): void {
+  for (const field of EDGE_FIELDS) {
+    const edges = sq[field];
+    if (edges != null) {
+      validateEdgeField(key, field, edges, winPosition);
+    }
+  }
 }
 
 /**
@@ -63,7 +116,8 @@ function mergeMissingSquareKeys(
 }
 
 /**
- * Validates every square 0..boardLength exists (after merge); enforces explicit next on 0 and empty next on win.
+ * Validates every square 0..boardLength exists (after merge), that every authored edge points at a
+ * real square, and enforces explicit next on 0 and empty next on win.
  * Other cells may omit next/prev when the default linear graph applies.
  */
 function validateBoardTopology(
@@ -76,28 +130,17 @@ function validateBoardTopology(
     if (!sq) {
       throw new Error(`Invalid game config: missing square ${key}`);
     }
+    validateSquareEdges(key, sq, boardLength);
     if (i === 0) {
       validateSquareAtStart(sq);
     } else if (i === boardLength) {
       validateSquareAtEnd(sq, boardLength);
-    } else {
-      validateSquareMiddle(key, sq);
     }
   }
 }
 
 /**
- * Derives board config from squares. Win position used only for topology validation (local).
- * Magic door and teleports (portals, returnTo187) are read from squares at runtime.
- */
-function deriveBoardFromSquares(squares: Record<string, SquareData>): {
-  squares: Record<string, SquareData>;
-} {
-  return { squares };
-}
-
-/**
- * Turns one habitat entry into segments. Values are **flat** `number | number[]` only (see ADR 0004).
+ * Turns one habitat entry into segments. Values are **flat** `number | number[]` only.
  *
  * - `[lo, hi]` → one inclusive range.
  * - Several ranges: `[lo1, hi1, lo2, hi2, …]` (even length ≥ 4).
@@ -115,7 +158,7 @@ function habitatDefinitionToSegments(name: string, raw: HabitatDefinition): Habi
   }
   if (raw.some((x) => Array.isArray(x))) {
     throw new Error(
-      `Invalid game config: habitat "${name}" must not use nested arrays; use flat [lo, hi] or a number (see docs/adr/0004-game-config-habitat-flat.md)`,
+      `Invalid game config: habitat "${name}" must not use nested arrays; use flat [lo, hi] or a number`,
     );
   }
   if (!raw.every((x) => typeof x === "number" && Number.isInteger(x))) {
@@ -460,8 +503,7 @@ function buildInitialStateFromParts(config: GameConfigInput): GameState {
         )
       : squaresComplete;
 
-  const boardDerived = deriveBoardFromSquares(squaresForBoard);
-  const board: BoardConfig = { ...boardDerived };
+  const board: BoardConfig = { squares: squaresForBoard };
 
   const playerOrder = Array.from({ length: metadata.minPlayers }, (_, i) => `p${i + 1}`);
   const players: Record<string, Player> = {};
@@ -477,6 +519,12 @@ function buildInitialStateFromParts(config: GameConfigInput): GameState {
             hearts: 0,
             items: [],
             instruments: [],
+            /**
+             * Unwired: nothing in production ever sets this true, so movement is always 1d6.
+             * The validator and the interpreter contract both already honour it, so granting
+             * the bonus needs only a square effect (or executor) that flips it and clears it
+             * after the roll — the prompt deliberately no longer mentions the field.
+             */
             bonusDiceNextTurn: false,
             activeChoices: {},
             skipTurns: 0,
@@ -545,7 +593,6 @@ export class GameLoader {
         soundEffects: config.soundEffects,
         habitatAudio: resolveHabitatAudioRuntime(config),
         customActions: config.customActions,
-        stateDisplay: config.stateDisplay,
       };
 
       Logger.info(`Game module loaded: ${module.metadata.name}`);

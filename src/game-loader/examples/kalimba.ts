@@ -9,7 +9,7 @@ export interface GameExample {
   actions: PrimitiveAction[];
 }
 
-/** Kalimba LLM prompt examples. First 6 are sent to the LLM (includes animal riddle flow). */
+/** Kalimba LLM prompt examples; the app sends up to 6. */
 export const KALIMBA_EXAMPLES: GameExample[] = [
   {
     user: "Quiero el más corto",
@@ -36,20 +36,5 @@ export const KALIMBA_EXAMPLES: GameExample[] = [
   {
     user: "Ocho (during power check)",
     actions: [{ action: "PLAYER_ANSWERED", answer: "8" }],
-  },
-  {
-    user: "(landed on animal square)",
-    actions: [
-      {
-        action: "ASK_RIDDLE",
-        text: "¿Dónde vive el pingüino?",
-        options: ["Desierto", "Océano", "Ártico", "Bosque"],
-        correctOption: "Ártico",
-      },
-      {
-        action: "NARRATE",
-        text: "Sofi, te encontraste con un pingüino en la costa. Para seguir tu viaje, primero tenés una adivinanza. Si la acertás, ganás un dado extra para intentar superar al pingüino.\n\nEscuchá con atención:\n\n¿Dónde vive el pingüino?\n\nOpciones:\nA) Desierto\nB) Océano\nC) Ártico\nD) Bosque\n\nDecime cuál opción creés que es la correcta.",
-      },
-    ],
   },
 ];

@@ -1,4 +1,4 @@
-import { applyRollMovementResolvingForks, simulateRollFromState } from "../board-traversal";
+import { applyRollMovementResolvingForks, type ApplyRollMovementResult } from "../board-traversal";
 import { getDecisionPointApplyState } from "../decision-helpers";
 import { getMovementDirectionForState } from "../fork-roll-policy";
 import type { PendingCompleteRollMovement } from "../pending-types";
@@ -120,7 +120,7 @@ function getCompleteRollMovementResolution(
   pending: PendingCompleteRollMovement | null | undefined,
   currentTurn: string | undefined,
   getPosition: (path: string) => unknown,
-): { path: string; pos: number; newPos: number } | null {
+): { path: string; pos: number; movement: ApplyRollMovementResult; playerId: string } | null {
   if (
     pending?.kind !== "completeRollMovement" ||
     pending.playerId !== currentTurn ||
@@ -134,17 +134,16 @@ function getCompleteRollMovementResolution(
   if (typeof pos !== "number") {
     return null;
   }
-  const player = state.players[currentTurn];
-  const activeChoices = (player?.activeChoices as Record<string, number>) ?? {};
-  const newPos = simulateRollFromState(
+  // The remainder can cross further forks (a retreat of 4 may hit two): pause and ask at each one
+  // instead of silently taking the first branch.
+  const movement = applyRollMovementResolvingForks(
     state,
     currentTurn,
     pos,
     pending.remainingSteps,
     pending.direction,
-    activeChoices,
   );
-  return { path, pos, newPos };
+  return { path, pos, movement, playerId: currentTurn };
 }
 
 async function tryCompletePendingRollAfterForkChoice(
@@ -160,13 +159,43 @@ async function tryCompletePendingRollAfterForkChoice(
   if (!resolved) {
     return false;
   }
-  const { path, pos, newPos } = resolved;
-  ctx.stateManager.set(path, newPos);
+  const { path, pos, movement, playerId } = resolved;
+
+  if (movement.kind === "forkPause") {
+    ctx.stateManager.set(path, movement.positionAtFork);
+    ctx.stateManager.set(GAME_PATH.pending, {
+      kind: "completeRollMovement",
+      playerId,
+      remainingSteps: movement.remainingSteps,
+      direction: movement.direction,
+    } satisfies PendingCompleteRollMovement);
+    Logger.write(
+      `Fork-paused movement hit another fork: ${path} ${pos} → ${movement.positionAtFork} (${movement.remainingSteps} step(s) left)`,
+    );
+    await ctx.boardEffectsHandler.checkAndApplyBoardMoves(path, execCtx);
+    return true;
+  }
+
+  ctx.stateManager.set(path, movement.finalPosition);
   ctx.stateManager.set(GAME_PATH.pending, null);
-  Logger.write(`Completed fork-paused movement: ${path} ${pos} → ${newPos}`);
+  Logger.write(`Completed fork-paused movement: ${path} ${pos} → ${movement.finalPosition}`);
   await ctx.boardEffectsHandler.checkAndApplyBoardMoves(path, execCtx);
   await ctx.boardEffectsHandler.checkAndApplySquareEffects(path, execCtx);
   ctx.checkAndApplyWinCondition(path);
+
+  // The branch choice finished the roll that paused here, so this is the landing the roll owes the
+  // player. A plain final square narrates nothing on its own, and the same movement event a normal
+  // roll emits is what makes the orchestrator say where they ended up.
+  const finalSquare = ctx.stateManager.get(path);
+  const roll = ctx.stateManager.get(GAME_PATH.lastRoll);
+  if (typeof finalSquare === "number" && typeof roll === "number") {
+    recordDomainEvent(execCtx, {
+      kind: "movementRollResolved",
+      playerId,
+      roll,
+      square: finalSquare,
+    });
+  }
   return true;
 }
 
@@ -230,10 +259,7 @@ export async function executePlayerAnswered(
   Logger.info(`Player answered: "${primitive.answer}"`);
   ctx.stateManager.set(GAME_PATH.lastAnswer, primitive.answer);
 
-  const riddleResult = await ctx.riddlePowerCheckHandler.tryHandleRiddleAnswer(
-    primitive.answer,
-    execCtx,
-  );
+  const riddleResult = await ctx.riddlePowerCheckHandler.tryHandleRiddleAnswer(primitive.answer);
   if (riddleResult) {
     execCtx.skipTrailingNarrateForPowerCheck = true;
     await speakAfterRiddleOutcome(ctx, riddleResult);

@@ -1,5 +1,16 @@
+import { readFileSync } from "node:fs";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
 import { describe, it, expect } from "vitest";
 import { resolveRiddleAnswerToOption, isStrictRiddleCorrect } from "./riddle-answer";
+
+const _dir = dirname(fileURLToPath(import.meta.url));
+const kalimbaConfigPath = join(_dir, "../../public/games/kalimba/config.json");
+
+/** What STT hands us when it drops the accents an es-AR option was authored with. */
+function withoutAccents(text: string): string {
+  return text.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+}
 
 describe("Product scenario: Resolve Riddle Answer To Option", () => {
   const animalOptions = ["A) Hormiga", "B) Elefante", "C) Puma", "D) Delfín"];
@@ -74,5 +85,80 @@ describe("Product scenario: Is Strict Riddle Correct", () => {
 
   it("Expected outcome: Returns false when no match and no synonyms", () => {
     expect(isStrictRiddleCorrect("nada", options, correctOption)).toBe(false);
+  });
+
+  it("Expected outcome: A short answer sitting inside two options is credited when one of them is the correct one", () => {
+    const fishOptions = ["A. Un pez globo", "B. Un pez espada", "C. Una tortuga", "D. Un pulpo"];
+
+    expect(isStrictRiddleCorrect("pez", fishOptions, "B. Un pez espada")).toBe(true);
+    expect(isStrictRiddleCorrect("pez", fishOptions, "C. Una tortuga")).toBe(false);
+  });
+
+  it("Expected outcome: Naming an option by its letter still grades that option, not a lucky substring", () => {
+    // "a" is a substring of nearly every option; the letter must keep meaning option A.
+    expect(isStrictRiddleCorrect("a", options, correctOption)).toBe(false);
+    expect(isStrictRiddleCorrect("b", options, correctOption)).toBe(true);
+  });
+});
+
+describe("Product scenario: Riddle grading survives dropped accents (Deepgram)", () => {
+  // Real es-AR options from the shipped Kalimba bank.
+  const phoneOptions = [
+    "Sus adaptaciones naturales",
+    "Un teléfono celular",
+    "La ropa humana",
+    "Los semáforos",
+  ];
+  const safetyOptions = [
+    "Respetar señales y mantener distancia",
+    "Acercarse para sacarse selfies",
+    "Correr alrededor del animal",
+    "Intentar tocarlo entre todos",
+  ];
+
+  it("Expected outcome: Grades an accentless answer to an accented option correct", () => {
+    expect(
+      isStrictRiddleCorrect(
+        "respetar senales y mantener distancia",
+        safetyOptions,
+        "Respetar señales y mantener distancia",
+      ),
+    ).toBe(true);
+    expect(isStrictRiddleCorrect("un telefono celular", phoneOptions, "Un teléfono celular")).toBe(
+      true,
+    );
+    expect(resolveRiddleAnswerToOption("los semaforos", phoneOptions)).toBe("Los semáforos");
+  });
+
+  it("Expected outcome: Still grades the wrong option wrong without accents", () => {
+    expect(
+      isStrictRiddleCorrect("un telefono celular", phoneOptions, "Sus adaptaciones naturales"),
+    ).toBe(false);
+  });
+
+  it("Expected outcome: Matches accentless synonyms too", () => {
+    expect(
+      isStrictRiddleCorrect("el crustaceo", ["A. X", "B. Y", "C. Z", "D. W"], "B. Y", [
+        "crustáceo",
+      ]),
+    ).toBe(true);
+  });
+
+  it("Expected outcome: Every accented correct option in the shipped bank grades correct without accents", () => {
+    const config = JSON.parse(readFileSync(kalimbaConfigPath, "utf-8")) as {
+      encounterQuestions?: Record<
+        string,
+        Record<string, Array<{ options: string[]; correctOption: string }>>
+      >;
+    };
+    const accented = Object.values(config.encounterQuestions ?? {})
+      .flatMap((byLocale) => byLocale["es-AR"] ?? [])
+      .filter((q) => withoutAccents(q.correctOption) !== q.correctOption);
+
+    expect(accented.length).toBeGreaterThan(0);
+    for (const q of accented) {
+      const said = withoutAccents(q.correctOption);
+      expect([said, isStrictRiddleCorrect(said, q.options, q.correctOption)]).toEqual([said, true]);
+    }
   });
 });

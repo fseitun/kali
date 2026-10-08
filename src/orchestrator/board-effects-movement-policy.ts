@@ -1,18 +1,4 @@
 /**
- * Returns true when a teleport moved the player backward from the landing square.
- *
- * @param landingPosition - Position where the player originally landed
- * @param currentPosition - Position after teleport resolution step
- * @returns True when current position is lower than landing position
- */
-export function isBackwardTeleportApplied(
-  landingPosition: number,
-  currentPosition: number,
-): boolean {
-  return typeof currentPosition === "number" && currentPosition < landingPosition;
-}
-
-/**
  * Returns true when a jump-to-leader move should also resolve the leader square portal.
  *
  * @param landingSquareData - Square config where the player landed
@@ -88,22 +74,23 @@ export function shouldSkipBackwardTeleport(
 /**
  * Computes magic-door bounce destination when overshooting the door before opening it.
  *
+ * Kalimba §9: you must land exactly on the door. Overshooting all the way to (or past) the win
+ * square is still an overshoot — reaching the treasure with the door shut does not win.
+ *
  * @param overshotPosition - Current post-roll position
  * @param magicDoorPosition - Position of the magic door
- * @param winPosition - Win square position
  * @param hasOpenedDoor - Whether player already opened the magic door
  * @returns Bounce target position or undefined if no bounce applies
  */
 export function computeMagicDoorBounceDestination(
   overshotPosition: number,
   magicDoorPosition: number | undefined,
-  winPosition: number,
   hasOpenedDoor: boolean,
 ): number | undefined {
   if (hasOpenedDoor || typeof magicDoorPosition !== "number") {
     return undefined;
   }
-  if (overshotPosition <= magicDoorPosition || overshotPosition >= winPosition) {
+  if (overshotPosition <= magicDoorPosition) {
     return undefined;
   }
   return magicDoorPosition - (overshotPosition - magicDoorPosition);

@@ -1,20 +1,21 @@
-const AUDIO_SAMPLE_RATE = 16000;
 const WORKLET_BUFFER_SIZE = 2048;
 const INT16_MAX = 32768;
 
-class VoskAudioProcessor extends AudioWorkletProcessor {
+/**
+ * Converts mic frames to the Int16 PCM chunks Deepgram expects.
+ * No resampling here: the AudioContext is created at the target sample rate, so the browser
+ * resamples with a proper anti-alias filter before the audio ever reaches this processor.
+ */
+class PcmAudioProcessor extends AudioWorkletProcessor {
   constructor() {
     super();
     this.buffer = [];
     this.isRecording = false;
-    this.resampleRatio = sampleRate / AUDIO_SAMPLE_RATE;
-    this.resampleCounter = 0;
 
     this.port.onmessage = (event) => {
       if (event.data.type === "start") {
         this.isRecording = true;
         this.buffer = [];
-        this.resampleCounter = 0;
       } else if (event.data.type === "stop") {
         this.isRecording = false;
         if (this.buffer.length > 0) {
@@ -39,13 +40,8 @@ class VoskAudioProcessor extends AudioWorkletProcessor {
     const channelData = input[0];
 
     for (let i = 0; i < channelData.length; i++) {
-      this.resampleCounter += 1;
-
-      if (this.resampleCounter >= this.resampleRatio) {
-        this.resampleCounter -= this.resampleRatio;
-        const sample = Math.max(-INT16_MAX, Math.min(INT16_MAX - 1, channelData[i] * INT16_MAX));
-        this.buffer.push(sample);
-      }
+      const sample = Math.max(-INT16_MAX, Math.min(INT16_MAX - 1, channelData[i] * INT16_MAX));
+      this.buffer.push(sample);
     }
 
     if (this.buffer.length >= WORKLET_BUFFER_SIZE) {
@@ -60,4 +56,4 @@ class VoskAudioProcessor extends AudioWorkletProcessor {
   }
 }
 
-registerProcessor("vosk-audio-processor", VoskAudioProcessor);
+registerProcessor("pcm-processor", PcmAudioProcessor);

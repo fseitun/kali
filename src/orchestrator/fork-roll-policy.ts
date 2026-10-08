@@ -9,13 +9,19 @@ export function getMovementDirectionForState(
   playerId: string,
 ): RollMovementDirection {
   const game = state.game as Record<string, unknown> | undefined;
-  const pending = game?.pending as { kind?: string; playerId?: string } | undefined;
-  if (pending?.kind === "directional" && pending.playerId === playerId) {
+  const pending = game?.pending as
+    { kind?: string; playerId?: string; direction?: RollMovementDirection } | undefined;
+  if (pending?.playerId !== playerId) {
+    return "forward";
+  }
+  if (pending.kind === "directional") {
     const player = (state.players as Record<string, Record<string, unknown>>)?.[playerId];
-    if (player?.retreatEffectsReversed === true) {
-      return "forward";
-    }
-    return "backward";
+    return player?.retreatEffectsReversed === true ? "forward" : "backward";
+  }
+  // A move paused mid-flight at a fork keeps travelling the way it was already going,
+  // so the fork we prompt about is the one the token is actually standing on.
+  if (pending.kind === "completeRollMovement") {
+    return pending.direction ?? "forward";
   }
   return "forward";
 }
@@ -148,6 +154,23 @@ export function forkChoiceBlockingValidation(
 }
 
 /**
+ * A move paused mid-flight stopped *on* the fork: its remainder cannot run until `activeChoices`
+ * fixes the branch, so the choice is owed no matter what the dice could have done. Asking off the
+ * 1d6/2d6 range instead would skip the question whenever the branches rejoin, stranding the
+ * pending — nothing else clears it and the turn cannot advance.
+ */
+function hasMovementPausedAtFork(state: GameState, playerId: string): boolean {
+  const pending = (state.game as Record<string, unknown> | undefined)?.pending as
+    { kind?: string; playerId?: string; remainingSteps?: number } | null | undefined;
+  return (
+    pending?.kind === "completeRollMovement" &&
+    pending.playerId === playerId &&
+    typeof pending.remainingSteps === "number" &&
+    pending.remainingSteps > 0
+  );
+}
+
+/**
  * True if some roll in [min,max] produces more than one possible landing square (fork choice matters).
  */
 function forkMattersForSomeRollInRange(
@@ -169,6 +192,9 @@ function forkMattersForSomeRollInRange(
   const choices = player.activeChoices as Record<string, number> | undefined;
   if (choices?.[String(position)] !== undefined) {
     return false;
+  }
+  if (hasMovementPausedAtFork(state, playerId)) {
+    return true;
   }
   for (let r = minRoll; r <= maxRoll; r++) {
     if (distinctEndPositionsAfterRoll(state, playerId, position, r, direction).size > 1) {

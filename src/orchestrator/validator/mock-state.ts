@@ -4,7 +4,7 @@ import { getDecisionPointApplyState } from "../decision-helpers";
 import { getMovementDirectionForState } from "../fork-roll-policy";
 import { isStrictRiddleCorrect } from "../riddle-answer";
 import { parseRollInRange } from "../roll-parser";
-import type { GameState, PrimitiveAction } from "../types";
+import { GamePhase, type GameState, type PrimitiveAction } from "../types";
 
 type MockStateHandler = (
   primitive: PrimitiveAction,
@@ -258,41 +258,34 @@ function handlePlayerAnswered(
   applyDecisionPointAnswerToMock(mockState, answer);
 }
 
-function handleAskRiddle(
-  primitive: PrimitiveAction,
-  mockState: GameState,
-  _originalState: GameState,
-): void {
-  if (!("options" in primitive) || !("correctOption" in primitive)) {
-    return;
+/**
+ * Mirrors `executeResetGame`: a kept roster resumes play at the first player, an unkept one drops
+ * to SETUP. Either way the turn lands on the first player — the unkept path resets to
+ * `initialState`, whose turn is `p1` — so later actions in the same batch are gated against the
+ * phase *and* the owner execution will really produce.
+ */
+function handleResetGame(primitive: PrimitiveAction, mockState: GameState): void {
+  const keepPlayerNames = "keepPlayerNames" in primitive && primitive.keepPlayerNames === true;
+  const playerOrder = mockState.game.playerOrder ?? [];
+  const keeps =
+    keepPlayerNames && mockState.game.phase !== GamePhase.SETUP && playerOrder.length > 0;
+  for (const id of playerOrder) {
+    const player = mockState.players?.[id];
+    if (player) {
+      player.position = 0;
+    }
   }
-  const game = mockState.game as Record<string, unknown>;
-  const pending = game?.pending as Record<string, unknown> | null | undefined;
-  if (pending?.kind !== "riddle") {
-    return;
-  }
-  const p = primitive as {
-    text?: string;
-    options: unknown;
-    correctOption: string;
-    correctOptionSynonyms?: string[];
-  };
-  game.pending = {
-    ...pending,
-    riddlePrompt: p.text,
-    riddleOptions: p.options,
-    correctOption: p.correctOption,
-    ...(Array.isArray(p.correctOptionSynonyms) && p.correctOptionSynonyms.length > 0
-      ? { correctOptionSynonyms: p.correctOptionSynonyms }
-      : {}),
-  };
+  mockState.game.winner = null;
+  mockState.game.pending = null;
+  mockState.game.phase = keeps ? GamePhase.PLAYING : GamePhase.SETUP;
+  mockState.game.turn = playerOrder[0] ?? null;
 }
 
 const MOCK_STATE_HANDLERS: Partial<Record<string, MockStateHandler>> = {
   SET_STATE: handleSetState,
+  RESET_GAME: handleResetGame,
   PLAYER_ROLLED: handlePlayerRolled,
   PLAYER_ANSWERED: handlePlayerAnswered,
-  ASK_RIDDLE: handleAskRiddle,
 };
 
 /**

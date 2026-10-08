@@ -1,6 +1,5 @@
 import {
   computeMagicDoorBounceDestination as computeMagicDoorBounceDestinationPolicy,
-  isBackwardTeleportApplied as isBackwardTeleportAppliedPolicy,
   isKalimbaOceanForestPortal82Hop as isKalimbaOceanForestPortal82HopPolicy,
   readSquarePortalForwardTarget as readSquarePortalForwardTargetPolicy,
   shouldApplyLeaderSquarePortal as shouldApplyLeaderSquarePortalPolicy,
@@ -12,7 +11,8 @@ import {
   consumeProtectionItem,
   incrementCounter,
 } from "./board-effects-reward-policy";
-import { findSquareByEffect, getWinPosition, minDieToOpenMagicDoor } from "./board-helpers";
+import { findSquareByEffect, minDieToOpenMagicDoor } from "./board-helpers";
+import type { Pending } from "./pending-types";
 import {
   getDirectionalRollDice,
   getSquareKind,
@@ -31,6 +31,17 @@ import type { StateManager } from "@/state-manager";
 import { GAME_PATH, playerStatePath, STATE_PLAYERS_PREFIX } from "@/state-paths";
 import { Logger } from "@/utils/logger";
 
+/** Per-animal riddle cursor map; written whole so animal names are keys, never path segments. */
+const ENCOUNTER_QUESTION_CURSOR_PATH = "game.encounterQuestionCursor";
+
+/** One animal-encounter riddle drawn from the per-animal bank in `game.encounterQuestions`. */
+interface EncounterQuestion {
+  kali: string;
+  question: string;
+  options: [string, string, string, string];
+  correctOption: string;
+}
+
 /**
  * Handles automatic board mechanics and square-based effects for Kalimba.
  *
@@ -42,11 +53,8 @@ import { Logger } from "@/utils/logger";
  * - Prepare deterministic encounter riddles for animal squares; other squares use deterministic TTS
  */
 export class BoardEffectsHandler {
-  private isProcessingSquareEffect = false;
-
   constructor(
     private stateManager: StateManager,
-    _processTranscriptFn: (transcript: string, context: ExecutionContext) => Promise<boolean>,
     private speechService: ISpeechService,
     private statusIndicator: IStatusIndicator,
     private setLastNarration: (text: string) => void,
@@ -56,7 +64,7 @@ export class BoardEffectsHandler {
     context: ExecutionContext | undefined,
     event: DomainEventPayload,
   ): void {
-    if (!context || context.isNestedCall) {
+    if (!context) {
       return;
     }
     const eventId = (context.nextDomainEventId ?? 0) + 1;
@@ -66,15 +74,6 @@ export class BoardEffectsHandler {
     context.domainEvents.push(withId);
     context.domainEventHistory = context.domainEventHistory ?? [];
     context.domainEventHistory.push(withId);
-  }
-
-  /**
-   * Checks if currently processing a square effect.
-   * Used by turn manager to block turn advancement during effect resolution.
-   * @returns true if processing effect, false otherwise
-   */
-  isProcessingEffect(): boolean {
-    return this.isProcessingSquareEffect;
   }
 
   /**
@@ -106,22 +105,26 @@ export class BoardEffectsHandler {
     const squareData = squares[position.toString()];
     const landingPosition = position;
     const landingSquareData = squareData;
+
+    // Kalimba §9: the shut door is impassable, so an overshoot never really reaches the square it
+    // flew onto — it bounces before that square's own mechanics (e.g. a skull at 190) can fire.
+    this.applyMagicDoorBounceIfApplicable(path, squares, context);
+    if ((this.stateManager.get(path) as number) !== landingPosition) {
+      return;
+    }
+
     this.applyTeleportIfApplicable(path, position, squareData, state, context);
 
     const afterJumpToLeader = this.stateManager.get(path) as number;
-    const backwardTeleportApplied = isBackwardTeleportAppliedPolicy(
-      landingPosition,
-      afterJumpToLeader,
-    );
     if (
       shouldApplyLeaderSquarePortalPolicy(landingSquareData, landingPosition, afterJumpToLeader)
     ) {
       this.applyJumpToLeaderLeaderSquarePortal(path, afterJumpToLeader, squares, context);
     }
 
-    if (!backwardTeleportApplied) {
-      this.applyMagicDoorBounceIfApplicable(path, squares, context);
-    }
+    // A teleport can also carry the player past a shut door; the same rule applies to where it
+    // dropped them.
+    this.applyMagicDoorBounceIfApplicable(path, squares, context);
 
     const finalPosition = this.stateManager.get(path) as number;
     this.setJumpToLeaderRelocatedIfNeeded(
@@ -178,7 +181,7 @@ export class BoardEffectsHandler {
    *
    * @param path - Player position path being resolved
    * @param squares - Board squares map
-   * @param context - When present and not a nested LLM call, records bounce for post-roll narration
+   * @param context - When present, records the bounce for post-roll narration
    */
   private applyMagicDoorBounceIfApplicable(
     path: string,
@@ -192,11 +195,9 @@ export class BoardEffectsHandler {
     const overshotPosition = this.stateManager.get(path) as number;
     const magicDoorFound = findSquareByEffect(squares, "magicDoorCheck");
     const magicDoorPosition = magicDoorFound?.position;
-    const winPosition = getWinPosition(squares);
     const bounceTo = computeMagicDoorBounceDestinationPolicy(
       overshotPosition,
       magicDoorPosition,
-      winPosition,
       false,
     );
     if (typeof bounceTo === "number" && typeof magicDoorPosition === "number") {
@@ -557,7 +558,8 @@ export class BoardEffectsHandler {
   }
 
   /**
-   * Ocean–forest one-shot portal: player already consumed 82→45; short LLM path on later visits to 82.
+   * Ocean–forest one-shot portal: player already consumed 82→45; later visits to 82 get the
+   * short "you already paid this one" line instead of the teleport.
    */
   private isRepeatOceanForestPortalVisit(
     squareData: Record<string, unknown>,
@@ -572,11 +574,11 @@ export class BoardEffectsHandler {
 
   /**
    * Applies deterministic square effects from config (heart, skipTurn, item, instrument).
-   * Mutates state for the current player only. Used before asking LLM to narrate.
+   * Mutates state for the current player only. Runs before the landing line is spoken.
    *
    * @param path - State path that was mutated (e.g. players.p1.position)
    * @param squareData - Square config from board.squares[position]
-   * @returns Summary of applied effects for narration prompt
+   * @returns Summary of applied effects, used to build the spoken landing line
    */
   private applyDeterministicSquareEffects(
     path: string,
@@ -621,13 +623,6 @@ export class BoardEffectsHandler {
     return applied;
   }
 
-  /**
-   * Applies deterministic square effects from config, then triggers LLM for narration only.
-   * Reads board.squares config; orchestrator owns all state mutations for game rules.
-   *
-   * @param path - State path that was mutated
-   * @param context - Execution context
-   */
   private isValidPositionPath(path: string): boolean {
     return path.endsWith(".position") && path.startsWith(STATE_PLAYERS_PREFIX);
   }
@@ -680,29 +675,43 @@ export class BoardEffectsHandler {
     return { position, squareData, squares, playerId, kind, squareName, power };
   }
 
-  private syncAnimalEncounterState(
-    kind: ReturnType<typeof getSquareKind>,
+  /**
+   * Stores the riddle the player is about to hear. The question object is picked once per
+   * landing and reused for the spoken prompt, so grading matches what was read aloud.
+   */
+  private setPendingAnimalEncounter(
     playerId: string,
     position: number,
     power: number,
-    squareName: string,
-    isSetup: boolean,
+    question: EncounterQuestion,
   ): void {
-    if (isSetup && isAnimalEncounterKind(kind) && playerId) {
-      const question = this.getEncounterQuestion(squareName, position);
-      this.stateManager.set(GAME_PATH.pending, {
-        kind: "riddle",
-        position,
-        power,
-        playerId,
-        phase: "riddle",
-        riddlePrompt: question.question,
-        riddleOptions: question.options,
-        correctOption: question.correctOption,
-      });
-    } else if (!isSetup && !isAnimalEncounterKind(kind) && !isRollDirectionalKind(kind)) {
-      this.stateManager.set(GAME_PATH.pending, null);
+    this.stateManager.set(GAME_PATH.pending, {
+      kind: "riddle",
+      position,
+      power,
+      playerId,
+      riddlePrompt: question.question,
+      riddleOptions: question.options,
+      correctOption: question.correctOption,
+    });
+  }
+
+  /**
+   * A square with no encounter mechanic clears only the landing player's own pending:
+   * another player's cross-turn revenge (Kalimba §2C) must survive their opponents' landings.
+   */
+  private clearOwnPendingOnPlainSquare(
+    kind: ReturnType<typeof getSquareKind>,
+    playerId: string,
+  ): void {
+    if (isAnimalEncounterKind(kind) || isRollDirectionalKind(kind)) {
+      return;
     }
+    const pending = this.stateManager.get(GAME_PATH.pending) as Pending | null | undefined;
+    if (pending && pending.playerId !== playerId) {
+      return;
+    }
+    this.stateManager.set(GAME_PATH.pending, null);
   }
 
   private setPendingDirectionalRoll(
@@ -777,8 +786,9 @@ export class BoardEffectsHandler {
     return parts.join(" ");
   }
 
-  private async speakDeterministicLanding(text: string): Promise<void> {
+  private async speakDeterministicLanding(text: string, context: ExecutionContext): Promise<void> {
     this.setLastNarration(text);
+    context.spokeDeterministicLanding = true;
     this.statusIndicator.setState("speaking");
     await this.speechService.speak(text);
   }
@@ -786,31 +796,13 @@ export class BoardEffectsHandler {
   private getEncounterQuestionBank(
     squareName: string,
     locale: "es-AR" | "en-US",
-  ): Array<{
-    kali: string;
-    question: string;
-    options: [string, string, string, string];
-    correctOption: string;
-  }> {
+  ): EncounterQuestion[] {
     const fallbackLocale = locale === "es-AR" ? "en-US" : "es-AR";
     const state = this.stateManager.getState() as {
       game?: {
         encounterQuestions?: Record<
           string,
-          {
-            "es-AR"?: Array<{
-              kali: string;
-              question: string;
-              options: [string, string, string, string];
-              correctOption: string;
-            }>;
-            "en-US"?: Array<{
-              kali: string;
-              question: string;
-              options: [string, string, string, string];
-              correctOption: string;
-            }>;
-          }
+          { "es-AR"?: EncounterQuestion[]; "en-US"?: EncounterQuestion[] }
         >;
       };
     };
@@ -820,18 +812,8 @@ export class BoardEffectsHandler {
 
   private pickEncounterQuestionFromBank(
     squareName: string,
-    bank: Array<{
-      kali: string;
-      question: string;
-      options: [string, string, string, string];
-      correctOption: string;
-    }>,
-  ): {
-    kali: string;
-    question: string;
-    options: [string, string, string, string];
-    correctOption: string;
-  } | null {
+    bank: EncounterQuestion[],
+  ): EncounterQuestion | null {
     if (bank.length === 0) {
       return null;
     }
@@ -843,7 +825,12 @@ export class BoardEffectsHandler {
     const cursorMap = state.game?.encounterQuestionCursor ?? {};
     const cursor = cursorMap[squareName] ?? 0;
     const picked = bank[cursor % bank.length];
-    this.stateManager.set(`game.encounterQuestionCursor.${squareName}`, cursor + 1);
+    // Whole-map write: a dot-path key would split an animal name containing "." into two levels
+    // and never be read back by the map lookup above.
+    this.stateManager.set(ENCOUNTER_QUESTION_CURSOR_PATH, {
+      ...cursorMap,
+      [squareName]: cursor + 1,
+    });
     return {
       kali: picked.kali,
       question: picked.question,
@@ -852,15 +839,7 @@ export class BoardEffectsHandler {
     };
   }
 
-  private getEncounterQuestion(
-    squareName: string,
-    position: number,
-  ): {
-    kali: string;
-    question: string;
-    options: [string, string, string, string];
-    correctOption: string;
-  } {
+  private getEncounterQuestion(squareName: string, position: number): EncounterQuestion {
     const locale = getLocale();
     const bank = this.getEncounterQuestionBank(squareName, locale);
     const bankQuestion = this.pickEncounterQuestionFromBank(squareName, bank);
@@ -874,11 +853,10 @@ export class BoardEffectsHandler {
 
   private buildAnimalEncounterSpeech(args: {
     playerName: string;
-    question: { kali: string; question: string; options: [string, string, string, string] };
+    question: EncounterQuestion;
   }): string {
     const { playerName, question } = args;
     return buildAnimalEncounterLandingSpeech(
-      getLocale(),
       playerName,
       question.kali,
       question.question,
@@ -956,12 +934,18 @@ export class BoardEffectsHandler {
     const portalSuffix =
       portalFrom !== undefined ? t("squares.landedPortalNoChoice", { fromSquare: portalFrom }) : "";
     const teleportHint =
-      isTeleport && portalFrom === undefined
-        ? `${t("squares.landedTeleportHint")} ${t("narration.stateSquareNumber")}`
-        : "";
+      isTeleport && portalFrom === undefined ? t("squares.landedTeleportHint") : "";
     return `${base}${portalSuffix}${teleportHint}`.trim();
   }
 
+  /**
+   * Applies the landing square's deterministic effects, opens any pending phase it requires,
+   * and speaks the deterministic landing line. Reads board.squares config; the orchestrator
+   * subsystem owns every state mutation for game rules.
+   *
+   * @param path - State path that was mutated
+   * @param context - Execution context
+   */
   async checkAndApplySquareEffects(path: string, context: ExecutionContext): Promise<void> {
     const params = this.getSquareEffectParams(path);
     if (!params) {
@@ -974,22 +958,15 @@ export class BoardEffectsHandler {
       `🎯 Orchestrator enforcing square effect at position ${position}: ${kind ?? "unknown"} (${squareName})`,
     );
 
-    this.syncAnimalEncounterState(kind, playerId, position, power, squareName, true);
-
-    if (kind === "rollDirectional") {
-      this.setPendingDirectionalRoll(playerId, position, squareData.effect as string | undefined);
-    }
+    const encounterQuestion = this.openPendingForLanding(params);
 
     const repeatOceanForestPortal = this.isRepeatOceanForestPortalVisit(squareData, kind, playerId);
     const applied = this.applyDeterministicSquareEffects(path, squareData);
     if (applied.some((label) => label.includes("skip next turn"))) {
       context.advanceTurnDespitePowerCheckSuppress = true;
     }
-    const encounterQuestion = isAnimalEncounterKind(kind)
-      ? this.getEncounterQuestion(squareName, position)
-      : null;
 
-    this.syncAnimalEncounterState(kind, playerId, position, power, squareName, false);
+    this.clearOwnPendingOnPlainSquare(kind, playerId);
 
     const state = this.stateManager.getState() as {
       players?: Record<string, Record<string, unknown>>;
@@ -998,24 +975,40 @@ export class BoardEffectsHandler {
     const playerName =
       typeof rawName === "string" && rawName.trim() !== "" ? rawName.trim() : playerId;
 
-    this.isProcessingSquareEffect = true;
-    try {
-      await this.deliverSquareLandingSpeech({
-        kind,
-        position,
-        squareName,
-        power,
-        playerName,
-        playerId,
-        squareData,
-        encounterQuestion,
-        applied,
-        repeatOceanForestPortal,
-        arrivedViaTeleportFrom: context.arrivedViaTeleportFrom,
-      });
-    } finally {
-      this.isProcessingSquareEffect = false;
+    await this.deliverSquareLandingSpeech({
+      kind,
+      position,
+      squareName,
+      power,
+      playerName,
+      playerId,
+      squareData,
+      encounterQuestion,
+      applied,
+      repeatOceanForestPortal,
+      arrivedViaTeleportFrom: context.arrivedViaTeleportFrom,
+      context,
+    });
+  }
+
+  /**
+   * Opens the pending phase the landing square requires (animal riddle or directional roll) and
+   * returns the riddle that was picked, so the spoken prompt is the one that will be graded.
+   */
+  private openPendingForLanding(
+    params: NonNullable<ReturnType<BoardEffectsHandler["getSquareEffectParams"]>>,
+  ): EncounterQuestion | null {
+    const { kind, playerId, position, power, squareName, squareData } = params;
+    if (kind === "rollDirectional") {
+      this.setPendingDirectionalRoll(playerId, position, squareData.effect as string | undefined);
+      return null;
     }
+    if (!isAnimalEncounterKind(kind) || !playerId) {
+      return null;
+    }
+    const question = this.getEncounterQuestion(squareName, position);
+    this.setPendingAnimalEncounter(playerId, position, power, question);
+    return question;
   }
 
   private async deliverSquareLandingSpeech(args: {
@@ -1026,15 +1019,11 @@ export class BoardEffectsHandler {
     playerName: string;
     playerId: string;
     squareData: Record<string, unknown>;
-    encounterQuestion: {
-      kali: string;
-      question: string;
-      options: [string, string, string, string];
-      correctOption: string;
-    } | null;
+    encounterQuestion: EncounterQuestion | null;
     applied: string[];
     repeatOceanForestPortal: boolean;
     arrivedViaTeleportFrom: number | undefined;
+    context: ExecutionContext;
   }): Promise<void> {
     const {
       kind,
@@ -1047,14 +1036,20 @@ export class BoardEffectsHandler {
       applied,
       repeatOceanForestPortal,
       arrivedViaTeleportFrom,
+      context,
     } = args;
 
     if (isAnimalEncounterKind(kind)) {
       if (!encounterQuestion) {
-        return;
+        // ADR 0006: an animal with no riddle to ask is a loud failure, never a silent landing —
+        // the player would otherwise be left owing an answer to a question nobody read out.
+        throw new Error(
+          `Animal encounter at position ${position} ("${squareName}") has no riddle to ask`,
+        );
       }
       await this.speakDeterministicLanding(
         this.buildAnimalEncounterSpeech({ playerName, question: encounterQuestion }),
+        context,
       );
       return;
     }
@@ -1062,6 +1057,7 @@ export class BoardEffectsHandler {
     if (repeatOceanForestPortal) {
       await this.speakDeterministicLanding(
         t("squares.oceanForestRepeat", { name: playerName, position, squareName }),
+        context,
       );
       return;
     }
@@ -1075,6 +1071,7 @@ export class BoardEffectsHandler {
           squareData,
           playerId,
         ),
+        context,
       );
       return;
     }
@@ -1082,12 +1079,24 @@ export class BoardEffectsHandler {
     if (kind === "magicDoor") {
       await this.speakDeterministicLanding(
         this.buildMagicDoorLandingSpeech(playerName, playerId, position, squareData),
+        context,
       );
       return;
     }
 
     if (kind === "win") {
-      await this.speakDeterministicLanding(this.buildWinLandingSpeech(playerName));
+      await this.speakDeterministicLanding(this.buildWinLandingSpeech(playerName), context);
+      return;
+    }
+
+    if (kind === "goldenFox") {
+      // Board moves already ran, so still standing on the fox square means the jump found nobody
+      // ahead: the mover *is* the leader (`getLeaderPosition` counts them). The fox is a no-op,
+      // and the table has to hear why nothing happened.
+      await this.speakDeterministicLanding(
+        t("squares.goldenFoxAlreadyLeader", { name: playerName, position, squareName }),
+        context,
+      );
       return;
     }
 
@@ -1101,6 +1110,7 @@ export class BoardEffectsHandler {
         arrivedViaTeleportFrom,
         squareData,
       ),
+      context,
     );
   }
 }

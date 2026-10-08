@@ -15,7 +15,9 @@ export interface LLMClient {
    * @param transcript - The user's voice command
    * @param state - The current game state
    * @param lastBotUtterance - Optional. Last thing Kali said (e.g. a clarification question). When present, the LLM can interpret short replies (sí/no, a number) as answers to that question.
-   * @returns Array of primitive actions to execute
+   * @returns Array of primitive actions to execute. Empty means the interpreter was reached and
+   * found no action that fits — not a failure.
+   * @throws LLMUnavailableError when the interpreter could not be reached or understood, retry included.
    */
   getActions(
     transcript: string,
@@ -63,11 +65,4 @@ export interface LLMClient {
    * @param maxAttempts - Maximum number of attempts
    */
   onRetry?: (attempt: number, maxAttempts: number) => void;
-
-  /**
-   * Optional callback invoked when an error occurs.
-   * @param error - The error that occurred
-   * @param willRetry - Whether another retry attempt will be made
-   */
-  onError?: (error: Error, willRetry: boolean) => void;
 }

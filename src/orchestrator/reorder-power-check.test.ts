@@ -120,6 +120,28 @@ describe("Product scenario: Reorder power check", () => {
       expect(reordered).toEqual(actions);
     });
 
+    it("Expected outcome: Does not reorder when the pending power check belongs to another player", () => {
+      const pending = (stateWithPowerCheck.game as Record<string, unknown>).pending as Record<
+        string,
+        unknown
+      >;
+      // Bob is rolling; Alice's revenge survived her own turn (Kalimba §2C) and is none of his business.
+      const stateForeignPending: GameState = {
+        ...stateWithPowerCheck,
+        game: {
+          ...stateWithPowerCheck.game,
+          turn: "p2",
+          pending: { ...pending, kind: "revenge", playerId: "p1" },
+        },
+      };
+      const actions: PrimitiveAction[] = [
+        { action: "PLAYER_ROLLED", value: 2 },
+        { action: "PLAYER_ANSWERED", answer: "7" },
+      ];
+      const reordered = reorderPowerCheckBeforeRoll(actions, stateForeignPending);
+      expect(reordered).toEqual(actions);
+    });
+
     it("Expected outcome: Works with revenge phase", () => {
       const pending = (stateWithPowerCheck.game as Record<string, unknown>).pending as Record<
         string,

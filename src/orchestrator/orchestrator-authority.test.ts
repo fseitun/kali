@@ -629,10 +629,23 @@ describe("Product scenario: Game orchestrator Authority interpreter Adversarial 
     });
 
     it("Expected outcome: Animal squares orchestrator does not apply rewards on landing; defers to after riddle", async () => {
+      // The bank entry is what makes this landing reach the riddle at all: without it the
+      // encounter throws (ADR 0006) and the deferral below would never be exercised.
+      (testState.game as any).encounterQuestions.Wolf = {
+        "en-US": [
+          {
+            kali: "A wolf blocks the trail...",
+            question: "What keeps you safest?",
+            options: ["Run away", "Stand tall and back off slowly", "Shout", "Feed it"],
+            correctOption: "Stand tall and back off slowly",
+          },
+        ],
+      };
       (testState.board as any).squares = {
         "8": {
           name: "Wolf",
           power: 3,
+          heart: true,
         },
       };
       (testState.game as any).turn = "p1";

@@ -27,6 +27,27 @@ function validateRiddlePhaseAnswer(
   return { valid: true };
 }
 
+/**
+ * Nothing downstream can read this answer: fork keywords already returned valid above, and the
+ * executors all parse digits. Passing it would report success, speak nothing and still owe the
+ * roll — so name what to say instead. Several numbers ("1 y 6") get the dice message; no number
+ * at all ("cuatro", "no sé") gets the plainer "just say the number".
+ */
+function gradeUnparseableRollAnswer(answer: string, index: number): ValidationResult {
+  if (!/\d/.test(answer)) {
+    return {
+      valid: false,
+      error: `PLAYER_ANSWERED at index ${index}: "${answer}" holds no roll number. Say the number you rolled.`,
+      errorCode: "sayRollNumber",
+    };
+  }
+  return {
+    valid: false,
+    error: `PLAYER_ANSWERED at index ${index}: "${answer}" is not a single roll number. Report one number.`,
+    errorCode: "invalidDiceRoll",
+  };
+}
+
 function validatePendingRollAnswer(
   pending: Pending | null | undefined,
   currentTurn: string,
@@ -39,16 +60,13 @@ function validatePendingRollAnswer(
   }
   const roll = parseRollLikeInput(answer);
   if (roll === null) {
-    return { valid: true };
+    return gradeUnparseableRollAnswer(answer, index);
   }
   const { min, max, label } = getPendingRollSpec(
     pending as Parameters<typeof getPendingRollSpec>[0],
     state,
   );
   if (roll < min || roll > max) {
-    if (getDecisionPointApplyState(state, answer) !== null) {
-      return null;
-    }
     return {
       valid: false,
       error: `PLAYER_ANSWERED at index ${index}: Roll must be ${min}-${max} (${label}), got ${roll}.`,
@@ -76,8 +94,13 @@ function validatePathChoiceAB(
   hasChoiceAt: (pos: number) => boolean,
   index: number,
 ): ValidationResult | null {
-  const firstChar = answer.charAt(0).toUpperCase();
-  if (firstChar !== "A" && firstChar !== "B") {
+  // Only a bare "A"/"B" is a fork letter. Words that merely start with those letters
+  // ("Bosque", "Adelante") are ordinary answers and must not be rejected here.
+  const letter = answer
+    .trim()
+    .replace(/[).,!?¡¿]/g, "")
+    .toUpperCase();
+  if (letter !== "A" && letter !== "B") {
     return null;
   }
   const pathChoiceDp = decisionPoints.find(

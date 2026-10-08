@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
-import { BaseLLMClient } from "./BaseLLMClient";
+import { BaseLLMClient, LLMUnavailableError } from "./BaseLLMClient";
 import { GamePhase } from "@/orchestrator/types";
 import type { GameState, PrimitiveAction } from "@/orchestrator/types";
 
@@ -107,11 +107,11 @@ describe("Product scenario: Interpreter Pure JSON Parsing", () => {
 
     it("Expected outcome: Coalesces two newline separated root objects into an action array", () => {
       const ndjson =
-        '{"action":"ASK_RIDDLE","text":"q","options":["a","b","c","d"],"correctOption":"a"}\n{"action":"NARRATE","text":"Asked."}';
+        '{"action":"PLAYER_ANSWERED","answer":"Ártico"}\n{"action":"NARRATE","text":"Asked."}';
       const actions = client.testExtractActions(ndjson);
 
       expect(actions).toHaveLength(2);
-      expect(actions[0].action).toBe("ASK_RIDDLE");
+      expect(actions[0].action).toBe("PLAYER_ANSWERED");
       expect(actions[1]).toEqual({ action: "NARRATE", text: "Asked." });
     });
 
@@ -145,16 +145,25 @@ describe("Product scenario: Interpreter Pure JSON Parsing", () => {
       expect(actions[0]).toEqual({ action: "NARRATE", text: "Retry success" });
     });
 
-    it("Expected outcome: Returns empty array after retry failure", async () => {
+    it("Expected outcome: Reports the interpreter as unavailable after retry failure", async () => {
       client.responseQueue = ["invalid json{", "still invalid{"];
 
-      const actions = await client.getActions("test", mockState);
-
+      await expect(client.getActions("test", mockState)).rejects.toBeInstanceOf(
+        LLMUnavailableError,
+      );
       expect(client.callCount).toBe(2);
-      expect(actions).toHaveLength(0);
     });
 
-    it("Expected outcome: Handles empty response from interpreter", async () => {
+    it("Expected outcome: An empty body is a failure worth retrying, not a decision", async () => {
+      client.responseQueue = ["", ""];
+
+      await expect(client.getActions("test", mockState)).rejects.toBeInstanceOf(
+        LLMUnavailableError,
+      );
+      expect(client.callCount).toBe(2);
+    });
+
+    it("Expected outcome: An empty action list stays a plain result, no action fits", async () => {
       client.responseQueue = ["[]"];
 
       const actions = await client.getActions("test", mockState);
@@ -261,16 +270,18 @@ describe("Product scenario: Interpreter Pure JSON Parsing", () => {
       expect(mockState).toEqual(originalState);
     });
 
-    it("Expected outcome: Deduplication is string based only, no logic", async () => {
+    it("Expected outcome: Answers a repeated transcript instead of silently dropping it", async () => {
       client.responseQueue = [
         '[{"action":"NARRATE","text":"First"}]',
         '[{"action":"NARRATE","text":"Second"}]',
       ];
 
-      await client.getActions("same command", mockState);
-      await client.getActions("same command", mockState);
+      const first = await client.getActions("same command", mockState);
+      const second = await client.getActions("same command", mockState);
 
-      expect(client.callCount).toBe(1);
+      expect(client.callCount).toBe(2);
+      expect(first).toHaveLength(1);
+      expect(second).toHaveLength(1);
     });
 
     it("Expected outcome: Does not validate turn ownership (orchestrator job)", async () => {
@@ -325,9 +336,9 @@ describe("Product scenario: Interpreter Pure JSON Parsing", () => {
     it("Expected outcome: Propagates parsing errors for orchestrator to handle", async () => {
       client.responseQueue = ["not valid json at all", "still not valid json"];
 
-      const actions = await client.getActions("bad json", mockState);
-
-      expect(actions).toHaveLength(0);
+      await expect(client.getActions("bad json", mockState)).rejects.toBeInstanceOf(
+        LLMUnavailableError,
+      );
       expect(client.callCount).toBe(2);
     });
   });

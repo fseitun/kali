@@ -114,6 +114,8 @@ export interface GameConfigInput {
 
 /**
  * Complete game module definition loaded from JSON.
+ * `stateDisplay` is not repeated here: `resolveInitialState` writes it into `initialState`,
+ * which is the only copy anything reads (`src/llm/state-context.ts`).
  */
 export interface GameModule {
   metadata: GameMetadata;
@@ -121,5 +123,4 @@ export interface GameModule {
   soundEffects?: Record<string, string>;
   habitatAudio?: Record<string, HabitatAudioRuntimeEntry>;
   customActions?: string[];
-  stateDisplay?: StateDisplayMetadata;
 }

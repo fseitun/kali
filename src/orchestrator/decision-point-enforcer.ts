@@ -1,6 +1,5 @@
 import { getEnforceableForkContext } from "./fork-roll-policy";
-import { shouldDeferForkPromptForPendingEncounter } from "./pending-types";
-import type { ExecutionContext } from "./types";
+import { GamePhase } from "./types";
 import type { IStatusIndicator } from "@/components/status-indicator";
 import { t } from "@/i18n/translations";
 import type { ISpeechService } from "@/services/speech-service";
@@ -28,12 +27,14 @@ export class DecisionPointEnforcer {
    * If player is at a decision point and hasn't filled required field,
    * speaks the configured fork prompt via TTS.
    *
-   * @param context - Execution context
+   * Only while play is running: outside PLAYING the "current player" is a template
+   * (`Player 1` at position 0 after a reset to SETUP), and asking it which way to go
+   * is a question nobody at the table can answer.
    */
-  async enforceDecisionPoints(_context: ExecutionContext): Promise<void> {
+  async enforceDecisionPoints(): Promise<void> {
     try {
       const state = this.stateManager.getState();
-      if (shouldDeferForkPromptForPendingEncounter(state)) {
+      if (state.game?.phase !== GamePhase.PLAYING) {
         return;
       }
       const info = getEnforceableForkContext(state);
