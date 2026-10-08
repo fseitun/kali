@@ -11,6 +11,7 @@ Node 24.x and npm 11.x (`engine-strict=true`). Tests and checks need no `.env` �
 ```bash
 npm run dev                  # dev server: / (orb UI), /debug (console UI)
 npm run full-check           # lint:fix + type-check + test + format — run after ANY code change
+npm run lint                 # the strict lint CI runs — full-check does not cover it (see below)
 npm run test                 # all Vitest tests (src/ + integration/); the whole suite takes seconds
 npm run test:src             # unit + colocated *.integration.test.ts only
 npm run test:integration     # JSON orchestrator scenarios only
@@ -24,7 +25,9 @@ npm run knip                 # unused files, exports, types, dependencies
 
 `full-check` never runs rollup and never touches static assets. Deleting a module or a `public/` file therefore passes it and dies at build time, so run `npm run build` too after that kind of change, and `npm run knip` after deleting exports — neither is part of `full-check` or CI.
 
-`npm run type-check` covers both projects: the app (`tsconfig.json`) and `worker/` (`worker/tsconfig.json`). CI (`.github/workflows/ci.yml`) runs the read-only forms — `format:check`, `lint`, `type-check`, `test`. The husky pre-commit hook runs lint-staged, `type-check`, and the full test suite, so a commit fails on a red suite.
+`npm run type-check` covers both projects: the app (`tsconfig.json`) and `worker/` (`worker/tsconfig.json`). CI (`.github/workflows/ci.yml`) runs `format:check`, `lint`, `type-check`, `test`. The husky pre-commit hook runs lint-staged, `type-check`, and the full test suite, so a commit fails on a red suite.
+
+**A green `full-check` can still fail CI.** `full-check` and the hook lint with `eslint --fix`, which exits 0 on warnings; CI's `npm run lint` adds `--max-warnings 0` and `--report-unused-disable-directives`. Run `npm run lint` before pushing.
 
 ## Architecture
 
@@ -106,9 +109,9 @@ Everything the model sees comes from these places. Before editing any of them, r
 ## Conventions
 
 - **No backward compatibility.** Unreleased project: no deprecation shims, dual code paths, or legacy fallbacks. Pick one shape, update all call sites and tests, record non-obvious choices in `docs/adr/` (copy `template.md`, add the row to the index in `docs/adr/README.md`).
-- **i18n everything user-facing.** Use `t(key)` and add the key to _both_ `src/i18n/locales/en-US.ts` and `es-AR.ts`. Default locale is `es-AR` (Rioplatense/vos); no hardcoded copy in HTML or TS. The two locales must flatten to identical key sets _and_ identical placeholder sets per key. Only one direction is checked for you: a key missing from `en-US` fails `type-check`. A key missing from `es-AR`, or a placeholder mismatch, passes every check — and a placeholder no call site passes gets read aloud literally as `{squareName}`.
+- **i18n everything user-facing.** Use `t(key)` and add the key to _both_ `src/i18n/locales/en-US.ts` and `es-AR.ts`. Default locale is `es-AR` (Rioplatense/vos); no hardcoded copy in HTML or TS. The two locales must flatten to identical key sets _and_ identical placeholder sets per key. Only one direction is checked for you: a key missing from `en-US` fails `type-check`. A key missing from `es-AR` passes every check, and nothing compares placeholders — a placeholder no call site passes gets read aloud literally as `{squareName}`.
 - **Strict TypeScript** (ES2022), no `any` in production code — prefer `unknown` plus a type guard, and `interface` over `type` for object shapes.
-- **Lint runs with `--max-warnings 0`,** so warnings fail too. The rules that bite: cyclomatic `complexity` ≤ 10 per function (extract helpers — nothing in the tree disables it), explicit return types, no `console.log` (use `Logger`), braces on every branch, no `!` non-null assertions, `??` over `||`, `import type` for type-only imports, alphabetized imports with no blank lines between groups, no parameter reassignment, no floating promises.
+- **Lint rules that bite.** Errors, which fail `full-check`: cyclomatic `complexity` ≤ 10 per function (extract helpers — nothing in the tree disables it), braces on every branch, no `!` non-null assertions, `??` over `||`, `import type` for type-only imports, alphabetized imports with no blank lines between groups, no parameter reassignment, no floating promises. Warnings, which only CI's `npm run lint` rejects: a missing explicit return type, `console.log` (use `Logger`), and an `eslint-disable` that no longer suppresses anything.
 - **State paths** go through `GAME_PATH` and `playerStatePath()` (`src/state-paths.ts`), not string literals.
 - **Tests** read as specs: `describe("Product scenario: …")` and `it("Expected outcome: …")`. They are otherwise pragmatic — `eslint-disable` and `@ts-nocheck` are fine there.
 - Regressions: add the failing test or scenario step first, then fix (ADR 0002).
