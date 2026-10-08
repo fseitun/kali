@@ -30,6 +30,6 @@ When **`winJumpTo`** applies and the token **remains** on that jump square after
 
 ## Links
 
-- Rule: [`CLAUDE.md`](../../CLAUDE.md) (Voice UX invariants — next-action clarity)
+- Rule: [`AGENTS.md`](../../AGENTS.md) (Voice UX invariants — next-action clarity)
 - Code: [`src/orchestrator/riddle-power-check.ts`](../../src/orchestrator/riddle-power-check.ts) (`afterEncounterRollPrompt`), [`src/kali-app-core.ts`](../../src/kali-app-core.ts) (`checkAndAdvanceTurn`, `announceCurrentTurnIfPending`), [`src/voice/gameplay-voice-policy.ts`](../../src/voice/gameplay-voice-policy.ts) (`VoiceOutcomeHints`)
 - Tests: [`src/orchestrator/orchestrator.integration.test.ts`](../../src/orchestrator/orchestrator.integration.test.ts) (power-check win speech order; portal/snake chain + `afterEncounterRollPrompt`)

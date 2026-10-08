@@ -20,6 +20,6 @@ Kali splits the **LLM** (untrusted interpreter) from the **orchestrator** (deter
 
 ## Links
 
-- Rules: [`CLAUDE.md`](../../CLAUDE.md) (state axioms, architecture)
+- Rules: [`AGENTS.md`](../../AGENTS.md) (state axioms, architecture)
 - Tests: `src/orchestrator/**/*.test.ts`, especially `orchestrator-authority.test.ts`, `orchestrator.integration.test.ts`
 - Code: `src/orchestrator/`, `src/orchestrator/validator/`
